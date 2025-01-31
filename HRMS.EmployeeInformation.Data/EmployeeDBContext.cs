@@ -145,7 +145,6 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<AssignedAsset> AssignedAssets { get; set; }
     public virtual DbSet<HrEmployeeUserRelation> HrEmployeeUserRelations { get; set; }
     public virtual DbSet<CommonField> CommonFields { get; set; }
-    public virtual DbSet<HrmsCommonField01> HrmsCommonField01s { get; set; }
     public virtual DbSet<PersonalDetailsHistory> PersonalDetailsHistories { get; set; }
 
     public virtual DbSet<AdmCodegenerationmaster> AdmCodegenerationmasters { get; set; }
@@ -155,6 +154,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<LevelSettingsAccess00> LevelSettingsAccess00s { get; set; }
 
     public virtual DbSet<TransactionMaster> TransactionMasters { get; set; }
+    public virtual DbSet<HrmsCommonField01> HrmsCommonField01s { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -2196,18 +2196,17 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false);
         });
 
-        //modelBuilder.Entity<HrmsCommonField01>(entity =>
-        //{
-        //    entity.HasKey(e => e.CommonFieldId);
+        modelBuilder.Entity<HrmsCommonField01>(entity =>
+        {
+            entity.HasKey(e => e.CommonFieldId);
 
-        //    entity.ToTable("HRMS_CommonField01");
+            entity.ToTable("HRMS_CommonField01");
 
-        //    entity.Property(e => e.CommonFieldId).HasColumnName("CommonFieldID");
-        //    entity.Property(e => e.CommonVal)
-        //        .HasMaxLength(150)
-        //        .IsUnicode(false);
-        //});
-        
+            entity.Property(e => e.CommonFieldId).HasColumnName("CommonFieldID");
+            entity.Property(e => e.CommonVal)
+                .HasMaxLength(150)
+                .IsUnicode(false);
+        });
 
         modelBuilder.Entity<HrmsCommonMaster00>(entity =>
         {
@@ -2304,17 +2303,7 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<HrmsCommonField01>(entity =>
-        {
-            entity.HasKey(e => e.CommonFieldId);
-
-            entity.ToTable("HRMS_CommonField01");
-
-            entity.Property(e => e.CommonFieldId).HasColumnName("CommonFieldID");
-            entity.Property(e => e.CommonVal)
-                .HasMaxLength(150)
-                .IsUnicode(false);
-        });
+       
         modelBuilder.Entity<PersonalDetailsHistory>(entity =>
         {
             entity
