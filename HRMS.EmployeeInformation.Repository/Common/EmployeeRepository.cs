@@ -51,13 +51,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                     where a.ParameterCode == parameterCode && a.Type == type
                                     select new
                                     {
+
                                         b.ParamControlDesc,
                                         IsMultiple = b.IsMultiple ?? 0 // Handle null with ISNULL equivalent
                                     }).FirstOrDefault();
 
             if (paramControlData == null)
             {
-                // Handle case where no data is found
+                
                 return byte.MinValue.ToString();
             }
 
