@@ -1,0 +1,53 @@
+﻿ 
+
+namespace MPLOYEE_INFORMATION.DTO.DTOs
+{
+    public class EmployeeSettings
+    {
+        public string? ActiveStatus { get; set; }
+
+        public string? OnNotice { get; set; }
+
+        public string? ValueType { get; set; }
+
+        public string? ParameterCode { get; set; }
+
+        public string? ReasonType { get; set; }
+
+        public string? Monthly { get; set; }
+        public string? DailyWage { get; set; }
+
+        public string? UserSettings { get; set; }
+
+        public string[]? ActiveStatusCodes { get; set; }
+
+        public string[]? Extended { get; set; }
+
+        public string? Sep { get; set; }
+
+        public string? EmpStatus { get; set; }
+
+        public string? Statuses { get; set; }
+        public string? EmployeeReportingType { get; set; }
+
+        public string? companyParameterCodes { get; set; }
+        public string? companyParameterCodesType { get; set; }
+
+        public string? CompanyParameterEmpInfoFormat { get; set; }
+        public string? CompanyParameterType { get; set; }
+
+        public string? DateFormat { get; set; }
+
+        //public EmployeeSettings(string activeStatus, string onNotice, string valueType, string parameterCode, string reasonType)
+        //{
+        //    ActiveStatus = activeStatus;
+        //    OnNotice = onNotice;
+        //    ValueType = valueType;
+        //    ParameterCode = parameterCode;
+        //    ReasonType = reasonType;
+        //}
+
+    }
+
+}
+

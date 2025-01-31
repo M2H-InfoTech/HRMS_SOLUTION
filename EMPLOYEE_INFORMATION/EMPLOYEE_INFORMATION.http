@@ -1,0 +1,6 @@
+@EMPLOYEE_INFORMATION_HostAddress = http://localhost:5133
+
+GET {{EMPLOYEE_INFORMATION_HostAddress}}/Employee/
+Accept: application/json
+
+###

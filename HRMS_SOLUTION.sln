@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EMPLOYEE_INFORMATION", "EMPLOYEE_INFORMATION\EMPLOYEE_INFORMATION.csproj", "{83820A66-7199-4BE6-A8C5-E31C6146F789}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRMS.EmployeeInformation.Data", "HRMS.EmployeeInformation.Data\HRMS.EmployeeInformation.Data.csproj", "{D15D8F3D-5A0F-40EC-9ACE-3FD84574FDAA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRMS.EmployeeInformation.Models", "HRMS.EmployeeInformation.Models\HRMS.EmployeeInformation.Models.csproj", "{806D0AE7-E3D2-4545-A7DC-66DA55DEF212}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRMS.EmployeeInformation.DTO", "HRMS.EmployeeInformation.DTO\HRMS.EmployeeInformation.DTO.csproj", "{9DD7B3C3-52D4-46D6-B290-5A9ABB0F60C5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRMS.EmployeeInformation.Mapping", "HRMS.EmployeeInformation.Mapping\HRMS.EmployeeInformation.Mapping.csproj", "{54C395B7-AC6D-4E55-B36F-36F81BE266FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRMS.EmployeeInformation.Repository", "HRMS.EmployeeInformation.Repository\HRMS.EmployeeInformation.Repository.csproj", "{0E925732-3001-4E15-8A30-DF22AD5CDF2B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRMS.EmployeeInformation.Service", "HRMS.EmployeeInformation.Service\HRMS.EmployeeInformation.Service.csproj", "{2381155C-90D8-4344-BBE2-EE2C1FFC7366}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{83820A66-7199-4BE6-A8C5-E31C6146F789}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83820A66-7199-4BE6-A8C5-E31C6146F789}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83820A66-7199-4BE6-A8C5-E31C6146F789}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83820A66-7199-4BE6-A8C5-E31C6146F789}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D15D8F3D-5A0F-40EC-9ACE-3FD84574FDAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D15D8F3D-5A0F-40EC-9ACE-3FD84574FDAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D15D8F3D-5A0F-40EC-9ACE-3FD84574FDAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D15D8F3D-5A0F-40EC-9ACE-3FD84574FDAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{806D0AE7-E3D2-4545-A7DC-66DA55DEF212}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{806D0AE7-E3D2-4545-A7DC-66DA55DEF212}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{806D0AE7-E3D2-4545-A7DC-66DA55DEF212}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{806D0AE7-E3D2-4545-A7DC-66DA55DEF212}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DD7B3C3-52D4-46D6-B290-5A9ABB0F60C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DD7B3C3-52D4-46D6-B290-5A9ABB0F60C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DD7B3C3-52D4-46D6-B290-5A9ABB0F60C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DD7B3C3-52D4-46D6-B290-5A9ABB0F60C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54C395B7-AC6D-4E55-B36F-36F81BE266FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54C395B7-AC6D-4E55-B36F-36F81BE266FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54C395B7-AC6D-4E55-B36F-36F81BE266FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54C395B7-AC6D-4E55-B36F-36F81BE266FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E925732-3001-4E15-8A30-DF22AD5CDF2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E925732-3001-4E15-8A30-DF22AD5CDF2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E925732-3001-4E15-8A30-DF22AD5CDF2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E925732-3001-4E15-8A30-DF22AD5CDF2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2381155C-90D8-4344-BBE2-EE2C1FFC7366}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2381155C-90D8-4344-BBE2-EE2C1FFC7366}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2381155C-90D8-4344-BBE2-EE2C1FFC7366}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2381155C-90D8-4344-BBE2-EE2C1FFC7366}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
