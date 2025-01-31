@@ -16,6 +16,7 @@ namespace EMPLOYEE_INFORMATION.Services.Mapping
             CreateMap<EmployeeLanguageSkill,LanguageSkillResultDto>().ReverseMap();
             CreateMap<HrEmpProfdtlsApprl, HrEmpProfdtlsApprlDto>().ReverseMap();
             CreateMap<HrEmpProfdtlsApprl, HrEmpProfdtl>().ReverseMap();
+
              
         }
     }
