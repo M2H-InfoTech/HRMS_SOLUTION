@@ -35,6 +35,8 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<PersonalDetailsHistoryDto> InsertOrUpdatePersonalData(PersonalDetailsHistoryDto persnldtlsApprlDto);
 
         Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID);
+        Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid);
+        Task<List<TrainingDto>> Training(int employeeid);
     }
 
 }

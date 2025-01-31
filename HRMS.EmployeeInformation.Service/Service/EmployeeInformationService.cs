@@ -119,6 +119,15 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetProfessionalByIdAsync(updateType, detailID, empID);
         }
+
+        public async Task <List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid)
+        {
+            return await _employeeRepository.GetPersonalDetailsById(employeeid);
+        }
+        public async Task<List<TrainingDto>> Training(int employeeid)
+        {
+            return await _employeeRepository.Training(employeeid);
+        }
     }
 
 }

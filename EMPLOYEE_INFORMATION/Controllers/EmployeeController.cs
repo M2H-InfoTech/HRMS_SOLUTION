@@ -212,6 +212,19 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var ProfessionalData = await _employeeInformation.GetProfessionalByIdAsync(updateType, detailID, empID);
             return new JsonResult(ProfessionalData);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetPersonalDetailsById(int employeeId)
+        {
+            var personalDetails = await _employeeInformation.GetPersonalDetailsById(employeeId);
+            return new JsonResult(personalDetails);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Training(int employeeId)
+        {
+            var Training = await _employeeInformation.Training(employeeId);
+            return new JsonResult(Training);
+        }
 
 
     }
