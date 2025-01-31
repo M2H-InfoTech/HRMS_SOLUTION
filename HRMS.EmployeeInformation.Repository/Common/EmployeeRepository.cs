@@ -3345,113 +3345,131 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result;
         }
 
-        public Task<List<AssetDetailsDto>> AssetDetails(int employeeId)
+        public async Task<List<AssetDetailsDto>> AssetDetails(int employeeId)
         {
-            throw new NotImplementedException();
+
+
+            var paramVal01 = (from a in _context.CompanyParameters
+                              where a.ParameterCode == "AST" && a.Type == "COM"
+                              select new
+                              {
+                                  a.Value
+                              }).FirstOrDefault();
+            int paramVal = paramVal01?.Value ?? 0;
+
+            var paramDynVal01 = (from a in _context.CompanyParameters
+                                 where a.ParameterCode == "ASTDYN" && a.Type == "COM"
+                                 select new
+                                 {
+                                     a.Value
+                                 }).FirstOrDefault();
+            int paramDynVal = paramDynVal01?.Value ?? 0;
+
+
+            if (paramDynVal == 1)
+            {
+                var result = await (from a in _context.EmployeesAssetsAssigns
+                                    join b in _context.EmployeeDetails on a.EmpId equals b.EmpId
+                                    join c in _context.GeneralCategories on Convert.ToInt32(a.AssetGroup) equals c.Id
+                                    join f in _context.GeneralCategoryFields on c.Id equals f.GeneralCategoryId into fg
+                                    from f in fg.DefaultIfEmpty()
+                                    join d in _context.ReasonMasters on Convert.ToInt32(a.Asset) equals d.ReasonId into dg
+                                    from d in dg.DefaultIfEmpty()
+                                    join e in _context.ReasonMasterFieldValues on new { ReasonId = (int?)d.ReasonId, CategoryFieldId = (int?)f.CategoryFieldId } equals new { e.ReasonId, e.CategoryFieldId } into eg
+                                    from e in eg.DefaultIfEmpty()
+                                    where a.EmpId == employeeId && a.IsActive == true
+                                    select new AssetDetailsDto
+                                    {
+                                        AssetId = c.Id,
+                                        AssetGroup = c.Description,
+                                        FieldDescription = f.FieldDescription,
+                                        Asset = d.Description,
+                                        AssetModel = a.AssetModel ?? "NA",
+                                        Monitor = a.Monitor ?? "NA",
+                                        IWDate = a.InWarranty.HasValue ? a.InWarranty.Value.ToString("dd/MM/yyyy") : "NA",
+                                        OWDate = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString("dd/MM/yyyy") : "NA",
+                                        FieldValues = e.FieldValues,
+                                        ReceivedDate = a.ReceivedDate.HasValue ? a.ReceivedDate.Value.ToString("dd/MM/yyyy") : "N/A",
+                                        Status = a.Status,
+                                        ParamVal = paramDynVal,
+                                        ParamDynVal = paramDynVal,
+                                        AssignID = a.AssignId,
+                                        Remarks = a.Remarks ?? "",
+                                        ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                        ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                        EmplinkID = c.EmplinkId ?? 0
+
+                                    }).ToListAsync();
+                return result;
+            }
+            else if (paramVal == 1)
+            {
+
+                var result = await (from a in _context.EmployeesAssetsAssigns
+                                    join c in _context.GeneralCategories on Convert.ToInt32(a.AssetGroup) equals c.Id
+                                    join d in _context.EmployeeDetails on a.EmpId equals d.EmpId
+                                    join b in _context.ReasonMasters on Convert.ToInt32(a.Asset) equals b.ReasonId into rm
+                                    from b in rm.DefaultIfEmpty()
+                                    where a.EmpId == employeeId && a.IsActive == true
+                                    select new AssetDetailsDto
+                                    {
+                                        AssetGroup = c.Description,
+                                        Asset = b.Description,
+                                        AssetNo = a.AssetNo,
+                                        AssetModel = a.AssetModel == null ? "NA" : a.AssetModel,
+                                        Monitor = a.Monitor == null ? "NA" : a.Monitor,
+                                        InWarranty = a.InWarranty.HasValue ? a.InWarranty.Value.ToString("dd/MM/yyyy") : "NA",
+                                        OutOfWarranty = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString("dd/MM/yyyy") : "NA",
+                                        ReceivedDate = a.ReceivedDate.HasValue ? a.ReceivedDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                        Status = a.Status,
+                                        ParamVal = paramVal,
+                                        ParamDynVal = 0,
+                                        AssignID = a.AssignId,
+                                        Remarks = a.Remarks == null ? "NA" : a.Remarks,
+                                        ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                        ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString("dd/MM/yyyy") : "NA"
+
+
+
+
+
+                                    }).ToListAsync();
+                return result;
+
+            }
+            else
+            {
+                var result = await (from aa in _context.AssignedAssets
+                                     join hcf in _context.HrmsCommonField01s on Convert.ToInt32(aa.AssestId) equals hcf.ComMasId
+                                    join cf in _context.CommonFields on hcf.ComFieldId equals Convert.ToInt32(cf.ComFieldId)
+                                    join rl in _context.HrEmployeeUserRelations on aa.CreatedBy equals rl.UserId
+                                    join empd in _context.EmployeeDetails on rl.EmpId equals empd.EmpId
+                                    join efd1 in _context.EmployeeDetails on aa.EmpId equals efd1.EmpId
+                                    where cf.ComId == cf.ComId && aa.EmpId == employeeId
+                                    select new AssetDetailsDto
+                                    {
+                                        AssestRequestID = aa.AssestRequestId,
+                                        AssignID = aa.AssignId,
+                                        Employee = efd1.Name,
+                                        AssestType = aa.AssestType,
+                                        Asset = hcf.CommonVal,
+                                        AssignedBy = empd.Name,
+                                        Status = aa.Status,
+                                        AssignedDate = aa.CreatedDate.HasValue ? aa.CreatedDate.Value.ToString("dd-MM-yyyy") : null,
+                                        ComMasId = hcf.ComMasId,
+                                        ParamVal = paramVal,
+
+                                    }).OrderByDescending(x => x.AssignedDate).ToListAsync();
+
+
+                return result;
+            }
+
+
+
         }
 
-        //public async Task<List<AssetDetailsDto>> AssetDetails(int employeeId)
-        //{
-        //    var paramVal = _context.CompanyParameters
-        //      .Where(p => p.ParameterCode == "AST" && p.Type == "COM")
-        //      .Select(p => p.Value)
-        //      .FirstOrDefault();
-
-        //    var paramDynVal = _context.CompanyParameters
-        //        .Where(p => p.ParameterCode == "ASTDYN" && p.Type == "COM")
-        //        .Select(p => p.Value)
-        //        .FirstOrDefault();
-
-        //    if ((paramDynVal ?? 0) == 1)
-        //    {
-        //        var result = (from a in _context.EmployeesAssetsAssigns
-        //                      join b in _context.EmployeeDetails on a.EmpId equals b.EmpId
-        //                      join c in _context.GeneralCategories on Convert.ToInt32(a.AssetGroup) equals c.Id
-        //                      join f in _context.GeneralCategoryFields on c.Id equals f.GeneralCategoryId into fg
-        //                      from f in fg.DefaultIfEmpty()
-        //                      join d in _context.ReasonMasters on Convert.ToInt32(a.Asset) equals d.ReasonId into dg
-        //                      from d in dg.DefaultIfEmpty()
-        //                      join e in _context.ReasonMasterFieldValues on new { d.ReasonId, f.CategoryFieldId } equals new { e.ReasonId, e.CategoryFieldId } into eg
-        //                      from e in eg.DefaultIfEmpty()
-        //                      where a.Emp_Id == employeeId && a.IsActive
-        //                      select new
-        //                      {
-        //                          AssetId = c.Id,
-        //                          AssetGroup = c.Description,
-        //                          FieldDescription = f.FieldDescription,
-        //                          Asset = d.Description,
-        //                          AssetModel = a.AssetModel ?? "NA",
-        //                          Monitor = a.Monitor ?? "NA",
-        //                          IWDate = a.InWarranty.HasValue ? a.InWarranty.Value.ToString("dd/MM/yyyy") : "NA",
-        //                          OWDate = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString("dd/MM/yyyy") : "NA",
-        //                          FieldValues = e.FieldValues,
-        //                          ReceivedDate = string.IsNullOrEmpty(a.ReceivedDate) ? "N/A" : Convert.ToDateTime(a.ReceivedDate).ToString("dd/MM/yyyy"),
-        //                          Status = a.Status,
-        //                          ParamVal = paramDynVal,
-        //                          ParamDynVal = paramDynVal,
-        //                          AssignID = a.AssignID,
-        //                          Remarks = a.Remarks ?? "",
-        //                          ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString("dd/MM/yyyy") : "NA",
-        //                          ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString("dd/MM/yyyy") : "NA"
-        //                          EmplinkID = c.EmplinkID ?? 0,
-        //                          RepeatRank = _context.EmployeesAssetsAssigns
-        //                              .Where(x => x.AssetGroup == c.Id)
-        //                              .OrderByDescending(x => x.Id)
-        //                              .Select((x, index) => new { x.Id, Rank = index + 1 })
-        //                              .FirstOrDefault()?.Rank
-        //                      }).ToList();
-        //    }
-        //    else if ((paramVal ?? 1) == 1)
-        //    {
-        //        var result = (from a in _context.EmployeesAssetsAssigns
-        //                      join b in _context.EmployeeDetails on a.EmpId equals b.EmpId
-        //                      join c in _context.GeneralCategories on Convert.ToInt32(a.AssetGroup) equals c.Id
-        //                      join d in _context.ReasonMasters on Convert.ToInt32(a.Asset) equals d.ReasonId into dg
-        //                      from d in dg.DefaultIfEmpty()
-        //                      where a.EmpId == employeeId && a.IsActive == true
-        //                      select new
-        //                      {
-        //                          AssetGroup = c.Description,
-        //                          Asset = d.Description,
-        //                          AssetNo = a.AssetNo,
-        //                          AssetModel = a.AssetModel ?? "NA",
-        //                          Monitor = a.Monitor ?? "NA",
-        //                          InWarranty = a.InWarranty.HasValue ? a.InWarranty.Value.ToString("dd/MM/yyyy") : "NA",
-        //                          OutOfWarranty = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString("dd/MM/yyyy") : "NA",
-        //                          ReceivedDate = a.ReceivedDate.HasValue ? a.ReceivedDate.Value.ToString("dd/MM/yyyy") : "NA",
-        //                          Status = a.Status,
-        //                          ParamVal = paramVal,
-        //                          ParamDynVal = 0,
-        //                          AssignID = a.AssignId,
-        //                          Remarks = a.Remarks ?? "NA",
-        //                          ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString("dd/MM/yyyy") : "NA",
-        //                          ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString("dd/MM/yyyy") : "NA"
-        //                      }).ToList();
-        //    }
-        //    else
-        //    {
-        //        var result = (from aa in _context.AssignedAssets
-        //                      join hcf in _context.HrmsCommonField01s on aa.AssestId equals hcf.ComMasId
-        //                      join cf in _context.CommonFields on hcf.ComFieldId equals cf.ComFieldId
-        //                      join rl in _context.HrEmployeeUserRelations on aa.CreatedBy equals rl.UserId
-        //                      join empd in _context.EmployeeDetails on rl.Emp_Id equals empd.EmpId
-        //                      join efd1 in _context.EmployeeDetails on aa.EmpID equals efd1.EmpId
-        //                      where cf.ComID == cf.ComID && aa.EmpID == employeeId
-        //                      select new
-        //                      {
-        //                          AssestRequestID = aa.AssestRequestID,
-        //                          AssignID = aa.AssignID,
-        //                          Employee = efd1.Name,
-        //                          AssestType = aa.AssestType,
-        //                          Asset = hcf.CommonVal,
-        //                          AssignedBy = empd.Name,
-        //                          Status = aa.Status,
-        //                          AssignedDate = aa.CreatedDate.ToString("dd-MM-yyyy"),
-        //                          ComMasId = hcf.ComMasId,
-        //                          ParamVal = paramVal
-        //                      }).OrderByDescending(x => x.AssignedDate).ToList();
-        //    }
-        //}
+      
 
         public async Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdown_Professional()
         {
