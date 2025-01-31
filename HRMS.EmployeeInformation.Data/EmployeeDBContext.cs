@@ -155,7 +155,9 @@ public partial class EmployeeDBContext : DbContext
 
     public virtual DbSet<TransactionMaster> TransactionMasters { get; set; }
     public virtual DbSet<HrmsCommonField01> HrmsCommonField01s { get; set; }
-
+    public virtual DbSet<TrainingSchedule> TrainingSchedules { get; set; }
+    public virtual DbSet<TrainingMaster> TrainingMasters { get; set; }
+    public virtual DbSet<TrainingMaster01> TrainingMaster01s { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
         => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NOV-2-9-2024;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -2419,6 +2421,90 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.Transactionbit).HasColumnName("transactionbit");
             entity.Property(e => e.TrxParam).HasDefaultValue(0);
+        });
+
+        modelBuilder.Entity<TrainingSchedule>(entity =>
+        {
+            entity.HasKey(e => e.TrSchd);
+
+            entity.ToTable("TrainingSchedule");
+
+            entity.Property(e => e.TrSchd).HasColumnName("trSchd");
+            entity.Property(e => e.AttDate).HasColumnType("datetime");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.SelectStatus)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("selectStatus");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("status");
+            entity.Property(e => e.TrMasterId).HasColumnName("trMasterId");
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<TrainingMaster>(entity =>
+        {
+            entity.HasKey(e => e.TrMasterId);
+
+            entity.ToTable("TRAINING_MASTER");
+
+            entity.Property(e => e.TrMasterId).HasColumnName("trMasterId");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("active");
+            entity.Property(e => e.Description)
+                .HasMaxLength(1000)
+                .IsUnicode(false)
+                .HasColumnName("description");
+            entity.Property(e => e.EntryBy).HasColumnName("Entry_by");
+            entity.Property(e => e.EntryDate)
+                .HasColumnType("datetime")
+                .HasColumnName("Entry_date");
+            entity.Property(e => e.FileUrl)
+                .HasMaxLength(1000)
+                .IsUnicode(false)
+                .HasColumnName("fileUrl");
+            entity.Property(e => e.FromDate).HasColumnType("datetime");
+            entity.Property(e => e.IsInside).HasColumnName("isInside");
+            entity.Property(e => e.Survey)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.TargetPeople)
+                .HasMaxLength(1500)
+                .IsUnicode(false);
+            entity.Property(e => e.ToDate).HasColumnType("datetime");
+            entity.Property(e => e.TrCode)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("trCode");
+            entity.Property(e => e.TrName)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("trName");
+            entity.Property(e => e.TrainerName)
+                .HasMaxLength(150)
+                .IsUnicode(false);
+            entity.Property(e => e.TrainingLocation)
+                .HasMaxLength(150)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+        });
+
+
+        modelBuilder.Entity<TrainingMaster01>(entity =>
+        {
+            entity.HasKey(e => e.FileUpdId);
+
+            entity.ToTable("TrainingMaster01");
+
+            entity.Property(e => e.FileName).IsUnicode(false);
+            entity.Property(e => e.FileType).IsUnicode(false);
+            entity.Property(e => e.FileUrl).IsUnicode(false);
+            entity.Property(e => e.TrMasterId).HasColumnName("trMasterId");
         });
 
 
