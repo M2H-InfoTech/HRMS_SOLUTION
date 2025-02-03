@@ -1,11 +1,9 @@
 ﻿using EMPLOYEE_INFORMATION.Helpers;
-using EMPLOYEE_INFORMATION.Models.DTOs;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Repository.Common;
 using HRMS.EmployeeInformation.Service.Interface;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace EMPLOYEE_INFORMATION.Controllers
@@ -36,7 +34,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(result);
         }
         [HttpGet]
-        public async Task<IActionResult> GetActiveStatus(int employeeId , string parameterCode , string type)
+        public async Task<IActionResult> GetActiveStatus(int employeeId, string parameterCode, string type)
         {
             var activeStatus = await _employeeInformation.EmployeeStatus(employeeId, parameterCode, type);
             return new JsonResult(activeStatus);
@@ -63,7 +61,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(Communicationdata);
         }
         [HttpGet]
-        public async Task<IActionResult>CommunicationExtra(int employeeId)
+        public async Task<IActionResult> CommunicationExtra(int employeeId)
         {
             var CommunicationExtra = await _employeeInformation.CommunicationExtra(employeeId);
             return new JsonResult(CommunicationExtra);
@@ -80,7 +78,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> HobbiesData(int employeeId)
         {
-            var VisaDetailsReport=await _employeeInformation.HobbiesData(employeeId);
+            var VisaDetailsReport = await _employeeInformation.HobbiesData(employeeId);
             return new JsonResult(VisaDetailsReport);
         }
 
@@ -108,7 +106,16 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> Documents(int employeeId)
         {
-            var DocumentsData = await _employeeInformation.Documents(employeeId);
+            List<string> excludedDocTypes = new List<string> { "Statutory", "BANK DETAILS", "VISA" };
+            var DocumentsData = await _employeeInformation.Documents(employeeId, excludedDocTypes);
+            return new JsonResult(DocumentsData);
+        }
+        [HttpGet]
+
+        public async Task<IActionResult> BankDetails(int employeeId)
+        {
+            List<string> excludedDocTypes = new List<string> { "Passport", "VISA", "Normal", "Statutory" };
+            var DocumentsData = await _employeeInformation.Documents(employeeId, excludedDocTypes);
             return new JsonResult(DocumentsData);
         }
         [HttpGet]
@@ -176,7 +183,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             var CurrencyDropdown_Professional = await _employeeInformation.CurrencyDropdown_Professional();
             return new JsonResult(CurrencyDropdown_Professional);
-                                    
+
         }
 
         [HttpPost]

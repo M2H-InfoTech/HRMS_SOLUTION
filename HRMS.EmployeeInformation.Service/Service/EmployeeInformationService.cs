@@ -1,4 +1,5 @@
 ﻿using HRMS.EmployeeInformation.DTO.DTOs;
+using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Repository.Common;
 using HRMS.EmployeeInformation.Service.Interface;
 using MPLOYEE_INFORMATION.DTO.DTOs;
@@ -63,11 +64,14 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.SkillSets(employeeId);
         }
-
-        public async Task<List<DocumentsDto>> Documents(int employeeId)
+        public async Task<List<AllDocumentsDto>> Documents(int employeeId, List<string> excludedDocTypes)
         {
-            return await _employeeRepository.Documents(employeeId);
+            return await _employeeRepository.Documents(employeeId, excludedDocTypes);
         }
+        //public async Task<List<AllDocumentsDto>> BankDetails(int employeeId)
+        //{
+        //    return await _employeeRepository.BankDetails(employeeId);
+        //}
         public async Task<List<DependentDto>> Dependent(int employeeId)
         {
             return await _employeeRepository.Dependent(employeeId);

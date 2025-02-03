@@ -1,4 +1,5 @@
 ﻿using HRMS.EmployeeInformation.DTO.DTOs;
+using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -26,7 +27,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<List<SkillSetDto>> SkillSets(int employeeId);
 
-        Task<List<DocumentsDto>> Documents(int employeeId);
+        Task<List<AllDocumentsDto>> Documents(int employeeId, List<string> excludedDocTypes);
+
+        //Task<List<AllDocumentsDto>> BankDetails(int employeeId);
 
         Task<List<DependentDto>> Dependent(int employeeId);
         Task<List<CertificationDto>> Certification(int employeeId);

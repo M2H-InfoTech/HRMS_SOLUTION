@@ -4,10 +4,10 @@ using EMPLOYEE_INFORMATION.DTO.DTOs;
 using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
+using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
-//using System.Data.Entity;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -256,25 +256,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             };
             return await Task.FromResult(result);
         }
-        public string GetCachedData(string cacheKey)
-        {
-            // Check if data exists in the cache
-            if (!_memoryCache.TryGetValue(cacheKey, out string cachedValue))
-            {
-                // If not, fetch data (simulate fetching data from a database or API)
-                cachedValue = $"Data fetched at {DateTime.Now}";
 
-                // Define cache options
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetSlidingExpiration(TimeSpan.FromMinutes(5))  // Refresh expiration after access
-                    .SetAbsoluteExpiration(TimeSpan.FromHours(1)); // Max expiration time
-
-                // Save data to the cache
-                _memoryCache.Set(cacheKey, cachedValue, cacheEntryOptions);
-            }
-
-            return cachedValue;
-        }
         public async Task<PaginatedResult<EmployeeResultDto>> GetEmpData(EmployeeInformationParameters employeeInformationParameters)
         {
 
@@ -505,68 +487,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
             return new PaginatedResult<EmployeeResultDto>();
 
-        }
-
-        public async Task<List<EmployeeResultDto>> GetEmployeeDetails(string ageFormat, IQueryable<EmployeeResultDto> cteEmployeeDetails)
-        {
-            var query = await (
-                from emp in cteEmployeeDetails
-                join addr in _context.HrEmpAddresses on emp.EmpId equals addr.EmpId into addrGroup
-                from addr in addrGroup.DefaultIfEmpty()
-                join pers in _context.HrEmpPersonals on emp.EmpId equals pers.EmpId into persGroup
-                from pers in persGroup.DefaultIfEmpty()
-                join rep in _context.HrEmpReportings on emp.EmpId equals rep.EmpId into repGroup
-                from rep in repGroup.DefaultIfEmpty()
-                join highView in _context.HighLevelViewTables on emp.LastEntity equals highView.LastEntityId into highViewGroup
-                from highView in highViewGroup.DefaultIfEmpty()
-                join img in _context.HrEmpImages on emp.EmpId equals img.EmpId into imgGroup
-                from img in imgGroup.DefaultIfEmpty()
-                join currStatus in _context.EmployeeCurrentStatuses on emp.CurrentStatus equals currStatus.Status into currStatusGroup
-                from currStatus in currStatusGroup.DefaultIfEmpty()
-                join empStatusSettings in _context.HrEmpStatusSettings on Convert.ToInt32(emp.EmpStatus) equals empStatusSettings.StatusId into empStatusGroup
-                from empStatusSettings in empStatusGroup.DefaultIfEmpty()
-                join reason in _context.ReasonMasters on Convert.ToInt32(emp.ResignationReason) equals reason.ReasonId into reasonGroup
-                from reason in reasonGroup.DefaultIfEmpty()
-                join country in _context.AdmCountryMasters on pers.Nationality equals country.CountryId into countryGroup
-                from country in countryGroup.DefaultIfEmpty()
-                select new EmployeeResultDto
-                {
-                    EmpId = emp.EmpId,
-                    ImageUrl = img.ImageUrl,
-                    EmpCode = emp.EmpCode,
-                    Name = emp.Name,
-                    JoinDate = emp.JoinDate.ToString(),
-                    DataDate = emp.JoinDate.ToString(),
-                    EmpStatusDesc = currStatus.StatusDesc.ToString(),
-                    EmpStatus = empStatusSettings.StatusDesc,
-                    Gender = emp.Gender.ToString(),
-                    SeperationStatus = emp.SeperationStatus,
-                    OfficialEmail = addr.OfficialEmail,
-                    PersonalEmail = addr.PersonalEmail,
-                    Phone = addr.Phone,
-                    MaritalStatus = pers.MaritalStatus,
-                    Age = emp.Age,
-                    ProbationDt = emp.ProbationDt.ToString(),
-                    LevelOneDescription = highView.LevelOneDescription,
-                    LevelTwoDescription = highView.LevelTwoDescription,
-                    LevelThreeDescription = highView.LevelThreeDescription,
-                    LevelFourDescription = highView.LevelFourDescription,
-                    LevelFiveDescription = highView.LevelFiveDescription,
-                    LevelSixDescription = highView.LevelSixDescription,
-                    LevelSevenDescription = highView.LevelSevenDescription,
-                    LevelEightDescription = highView.LevelEightDescription,
-                    LevelNineDescription = highView.LevelNineDescription,
-                    LevelTenDescription = highView.LevelTenDescription,
-                    LevelElevenDescription = highView.LevelElevenDescription,
-                    //ResignationType = emp.re.ToString(),
-                    ProbationStatus = emp.IsProbation.ToString(),
-                    Nationality = country.Nationality,
-                    IsSave = emp.IsSave,
-                    EmpFileNumber = emp.EmpFileNumber,
-                    CurrentStatus = emp.CurrentStatus
-                }).ToListAsync();
-
-            return query;
         }
 
         public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
@@ -2519,35 +2439,37 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         public async Task<List<LanguageSkillResultDto>> LanguageSkill(int employeeId)
         {
-            var result = await (from emp in _context.EmployeeLanguageSkills
-                                join empdet in _context.EmployeeDetails
-                                on emp.EmpId equals empdet.EmpId
-                                join hrm in _context.HrEmpLanguagemasters on Convert.ToInt32(emp.LanguageId) equals hrm.LanguageId
-                                where emp.EmpId == employeeId && emp.Status == "A"
-                                select new LanguageSkillResultDto
-                                {
-                                    Emp_LangId = emp.EmpLangId,
-                                    Name = empdet.Name,
-                                    LanguageId = Convert.ToInt32(emp.LanguageId),
-                                    Code = hrm.Code,
-                                    Description = hrm.Description,
-                                    Read = Convert.ToInt32(emp.Read),
-                                    Write = Convert.ToInt32(emp.Write),
-                                    Speak = Convert.ToInt32(emp.Speak),
-                                    Comprehend = Convert.ToInt32(emp.Comprehend),
-                                    MotherTongue = Convert.ToInt32(emp.MotherTongue)
 
-                                }).ToListAsync();
+            return await (from emp in _context.EmployeeLanguageSkills
+                          join empdet in _context.EmployeeDetails
+                          on emp.EmpId equals empdet.EmpId
+                          join hrm in _context.HrEmpLanguagemasters on Convert.ToInt32(emp.LanguageId) equals hrm.LanguageId
+                          where emp.EmpId == employeeId && emp.Status == _employeeSettings.EmployeeStatus
+                          select new LanguageSkillResultDto
+                          {
+                              Emp_LangId = emp.EmpLangId,
+                              Name = empdet.Name,
+                              LanguageId = (byte)(emp.LanguageId == "1" ? 1 : 0),
+                              Code = hrm.Code,
+                              Description = hrm.Description,
+                              Read = (byte)(emp.Read == true ? 1 : 0),
+                              Write = (byte)(emp.Write == true ? 1 : 0),
+                              Speak = (byte)(emp.Speak == true ? 1 : 0),
+                              Comprehend = (byte)(emp.Comprehend == true ? 1 : 0),
+                              MotherTongue = (byte)(emp.MotherTongue == true ? 1 : 0)
 
-            return result;
+                          }).ToListAsync();
+
+
         }
 
         public async Task<CommunicationResultDto> Communication(int employeeId)
         {
             var communationtable = await (from a in _context.HrEmpAddresses
-                                          join b in _context.AdmCountryMasters on a.Country equals b.CountryId
+                                          join b in _context.AdmCountryMasters on a.Country equals b.CountryId into admGroup
+                                          from b in admGroup.DefaultIfEmpty()
                                           where a.EmpId == employeeId
-                                          select new CommunicationTableDto
+                                          select new CommunicationTable1Dto
                                           {
                                               Inst_Id = a.InstId,
                                               Add_Id = a.AddId,
@@ -2563,13 +2485,14 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                               Extension = a.Extension,
                                               EMail = a.OfficialEmail,
                                               PersonalEMail = a.PersonalEmail,
-                                              Status = "A"
+                                              Status =  "A"
 
 
                                           }).ToListAsync();
 
             var communationtable1 = await (from a in _context.HrEmpAddressApprls
-                                           join b in _context.AdmCountryMasters on a.Country equals b.CountryId
+                                           join b in _context.AdmCountryMasters on a.Country equals b.CountryId into admGroup
+                                           from b in admGroup.DefaultIfEmpty()
                                            join c in _context.CommunicationRequestWorkFlowstatuses on a.AddId equals c.RequestId
                                            where a.EmpId == employeeId
                                            select new CommunicationTable1Dto
@@ -3810,88 +3733,180 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             throw new NotImplementedException();
         }
 
-        public async Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid)
+
+        public async Task<List<AllDocumentsDto>> Documents(int employeeId,List<string> excludedDocTypes)
         {
 
-            var enableWeddingDate = await GetDefaultCompanyParameter(employeeid, "ENABLEWEDDINGDATE", "EMP1");
+            var tempDocumentFill = from a in _context.ReasonMasterFieldValues
+                                   join b in _context.GeneralCategoryFields on a.CategoryFieldId equals b.CategoryFieldId
+                                   join c in _context.HrmsDatatypes on b.DataTypeId equals c.DataTypeId into dataTypeJoin
+                                   from c in dataTypeJoin.DefaultIfEmpty()
+                                   join d in _context.AdmCountryMasters on a.FieldValues equals d.CountryId.ToString() into countryJoin
+                                   from d in countryJoin.DefaultIfEmpty()
+                                   join e in _context.ReasonMasters on a.FieldValues equals e.ReasonId.ToString() into reasonJoin
+                                   from e in reasonJoin.DefaultIfEmpty()
+                                   select new DocumentFillDto
+                                   {
+                                       ReasonId = a.ReasonId,
+                                       CategoryFieldId = a.CategoryFieldId,
+                                       FieldValues = null,
+                                       FieldDescription = b.FieldDescription,
+                                       DataTypeId = b.DataTypeId
+                                   };
+            var tempDocumentFillList = await tempDocumentFill.ToListAsync();
+            var tempDocumentFillDict = tempDocumentFillList.ToDictionary(x => x.ReasonId, x => x);
 
-            var employeeDetails = await (from a in _context.HrEmpMasters
-                                         join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId
-                                         join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into personalEmailGroup
-                                         from b in personalEmailGroup.DefaultIfEmpty()
-                                         join d in _context.AdmCountryMasters on c.Country equals d.CountryId into countryGroup
-                                         from d in countryGroup.DefaultIfEmpty()
-                                         join e in _context.AdmCountryMasters on c.Nationality equals e.CountryId into nationalityGroup
-                                         from e in nationalityGroup.DefaultIfEmpty()
-                                         join f in _context.AdmCountryMasters on c.CountryOfBirth equals f.CountryId into countryOfBirthGroup
-                                         from f in countryOfBirthGroup.DefaultIfEmpty()
-                                         join g in _context.AdmReligionMasters on c.Religion equals g.ReligionId into religionGroup
-                                         from g in religionGroup.DefaultIfEmpty()
-                                         where a.EmpId == employeeid
-                                         select new PersonalDetailsDto
-                                         {
-                                             DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString("dd/MM/yyyy") : "NA",
+            // Step 2: Retrieve Approved Documents
 
-                                             Wedding_Date = Convert.ToInt32(enableWeddingDate) == 1 ? (c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : "") : "",
-                                             EMail = b.PersonalEmail ?? "",
-                                             CountryID = c.Country,
-                                             NationalityID = c.Nationality,
-                                             CountryOfBirthID = c.CountryOfBirth,
-                                             Blood_Grp = c.BloodGrp ?? "",
-                                             ReligionID = c.Religion,
-                                             Religion_Name = g.ReligionName ?? "",
-                                             Ident_Mark = c.IdentMark ?? "",
-                                             Height = c.Height ?? "",
-                                             Weight = c.Weight ?? "",
-                                             GenderID = c.Gender,
-                                             Gender = c.Gender == "M" ? "Male" : c.Gender == "F" ? "Female" : c.Gender == "O" ? "Others" : "",
-                                             Marital_Status = c.MaritalStatus == "S" ? "Single" :
-                                                             c.MaritalStatus == "M" ? "Married" :
-                                                             c.MaritalStatus == "W" ? "Widowed" :
-                                                             c.MaritalStatus == "X" ? "Separated" :
-                                                             c.MaritalStatus == "D" ? "Divorcee" : "",
-                                             Marital_StatusID = c.MaritalStatus,
-                                             Guardians_Name = a.GuardiansName ?? "",
-                                             Country = d.CountryName ?? "",
-                                             Nationality = e.CountryName ?? "",
-                                             CountryOfBirth = f.CountryName ?? "",
-                                             bloodgroupnew = string.IsNullOrEmpty(c.BloodGrp) ? "" :
-                                                             c.BloodGrp == "HH" ? "HH Group" : c.BloodGrp + "ve"
-                                         }).ToListAsync();
 
-            return employeeDetails;
+            var ApprovedDos = await (
+                                        from t1 in _context.HrmsEmpdocumentsApproved00s
+                                        join t2 in _context.HrmsEmpdocumentsApproved01s on t1.DetailId equals t2.DetailId
+                                        join t3 in _context.HrmsDocumentField00s on Convert.ToInt32(t2.DocFields) equals t3.DocFieldId into docFieldJoin
+                                        from t3 in docFieldJoin.DefaultIfEmpty()
+                                        join t4 in _context.HrmsDocument00s on Convert.ToInt32(t1.DocId) equals t4.DocId
+                                        join t5 in _context.HrmsDocTypeMasters on Convert.ToInt32(t4.DocType) equals t5.DocTypeId
+                                        join t6 in _context.HrmsDatatypes on t3.DataTypeId equals t6.DataTypeId into dataTypeJoin
+                                        from t6 in dataTypeJoin.DefaultIfEmpty()
+                                        join t7 in _context.AdmCountryMasters on t2.DocValues equals t7.CountryId.ToString() into countryJoin
+                                        from t7 in countryJoin.DefaultIfEmpty()
+                                        join t8 in _context.ReasonMasters on t2.DocValues equals t8.ReasonId.ToString() into reasonJoin
+                                        from t8 in reasonJoin.DefaultIfEmpty()
+                                        where t1.EmpId == employeeId
+                                                && t1.Status == "A"
+                                                && !excludedDocTypes.Contains(t5.DocType)
+                                                && t3.DocDescription != "IsActive"
+
+                                        select new DocumentsDto
+                                        {
+                                            DetailID = t1.DetailId,
+                                            DocID = t1.DocId,
+                                            EmpID = t1.EmpId,
+                                            DocFieldID = t3.DocFieldId,
+                                            DocDescription = t3.DocDescription,
+                                            DocValues = t2.DocValues,
+                                            IsGeneralCategory = t6.IsGeneralCategory,
+                                            DataType = t6.DataType,
+                                            DocName = t4.DocName.ToUpper(),
+                                            IsDate = t6.IsDate,
+                                            repeatrank = (
+                                                from innerT2 in _context.HrmsEmpdocumentsApproved01s
+                                                join innerT3 in _context.HrmsDocumentField00s on Convert.ToInt32(innerT2.DocFields) equals innerT3.DocFieldId
+                                                where innerT2.DetailId == t1.DetailId
+                                                orderby innerT3.DocFieldId descending
+                                                select innerT3.DocFieldId
+                                            ).Count()
+                                        }
+                                    ).OrderBy(x => x.DocID).ToListAsync();
+
+
+            
+
+            var docList = await (from a in _context.HrmsDocument00s
+                                 join b in _context.HrmsDocTypeMasters on (a.DocType.HasValue ? (long)a.DocType.Value : -1L) equals b.DocTypeId
+                                 //join c in _context.EmpDocumentAccesses  on new { DocID = (long)a.DocId , EmpID = employeeId } equals new { c.DocId, c.EmpId }
+                                 join c in _context.EmpDocumentAccesses
+                                on new { DocID = (long)a.DocId, EmpID = (long)employeeId }
+                                equals new { DocID = c.DocId ?? -1L, EmpID = c.EmpId ?? -1L }
+                                 where !(
+                                     from e in _context.HrmsEmpdocuments00s
+                                     join f in _context.HrmsEmpdocuments01s on e.DetailId equals f.DetailId
+                                     where e.EmpId == employeeId && e.Status != "R" && e.Status != "D" && e.DocId == a.DocId
+                                     select e.DocId
+                                 ).Any()
+                                 && (!excludedDocTypes.Contains(b.DocType) ||
+                                     (from d in _context.HrmsDocument00s
+                                      join e in _context.HrmsDocTypeMasters on (a.DocType.HasValue ? (long)a.DocType.Value : -1L) equals e.DocTypeId
+                                      where d.IsAllowMultiple == 1 && !excludedDocTypes.Contains(e.DocType)
+                                      select d.DocId).Contains(a.DocId))
+                                 select new DocumentListDto
+                                 {
+                                     DocID = a.DocId,
+                                     DocName = a.DocName.ToUpper(),
+                                     DocDescription = "Submit Document"
+                                 }).Distinct().ToListAsync();
+
+
+            // Step 3: Retrieve Pending Documents
+
+
+            var pendingDocuments = await (from t1 in _context.HrmsEmpdocuments00s
+                                          join t2 in _context.HrmsEmpdocuments01s on t1.DetailId equals t2.DetailId
+                                          join t3 in _context.HrmsDocumentField00s on Convert.ToInt32(t2.DocFields) equals t3.DocFieldId into docFieldJoin
+                                          from t3 in docFieldJoin.DefaultIfEmpty()
+                                          join t4 in _context.HrmsDocument00s on Convert.ToInt32(t1.DocId) equals t4.DocId
+                                          join t5 in _context.HrmsDocTypeMasters on Convert.ToInt32(t4.DocType) equals t5.DocTypeId
+                                          join t6 in _context.HrmsDatatypes on t3.DataTypeId equals t6.DataTypeId into dataTypeJoin
+                                          from t6 in dataTypeJoin.DefaultIfEmpty()
+                                          join t7 in _context.AdmCountryMasters on t2.DocValues equals t7.CountryId.ToString() into countryJoin
+                                          from t7 in countryJoin.DefaultIfEmpty()
+                                          join t8 in _context.ReasonMasters on t2.DocValues equals t8.ReasonId.ToString() into reasonJoin
+                                          from t8 in reasonJoin.DefaultIfEmpty()
+                                          where t1.EmpId == employeeId &&
+                                                !_context.HrmsEmpdocumentsApproved00s.Any(ap => ap.DetailId == t1.DetailId && ap.EmpId == employeeId && ap.Status == "A") &&
+                                                t1.Status == "P" && t3.DocDescription != "IsActive" && !excludedDocTypes.Contains(t5.DocType)
+                                          select new DocumentsDto
+                                          {
+                                              DetailID = t1.DetailId,
+                                              DocID = t1.DocId,
+                                              EmpID = t1.EmpId,
+                                              DocFieldID = Convert.ToInt32(t3.DocFieldId),
+                                              DocDescription = t3.DocDescription,
+
+                                              IsGeneralCategory = t6.IsGeneralCategory,
+                                              DataType = t6.DataType,
+                                              DocName = t4.DocName.ToUpper(),
+                                              IsDate = t6.IsDate,
+                                              repeatrank = (from innerT1 in _context.HrmsEmpdocuments00s
+                                                            join innerT2 in _context.HrmsEmpdocuments01s on innerT1.DetailId equals innerT2.DetailId
+                                                            where innerT1.DetailId == t1.DetailId
+                                                            orderby t3.DocFieldId descending
+                                                            select innerT1).Count(),
+
+                                              MatchedDoc = tempDocumentFillDict.ContainsKey(t8.ReasonId) ? tempDocumentFillDict[t8.ReasonId] : null
+                                          }).ToListAsync();
+
+
+
+            //--Pending files
+            var files = from a in _context.HrmsEmpdocuments02s
+                        join b in _context.HrmsEmpdocuments00s on a.DetailId equals b.DetailId
+                        join c in _context.HrmsDocument00s on b.DocId equals Convert.ToInt16(c.DocId)
+                        where b.EmpId == employeeId
+                        select new FilesDto
+                        {
+                            DocID = b.DocId,
+                            DetailID = a.DetailId,
+                            FileName = c.FolderName + a.FileName,
+                            Status = b.Status
+                        };
+            var pendingFiles = files.Where(f => f.Status == "P").ToList();
+            var approvedFiles = files.Where(f => f.Status == "A").ToList();
+
+            return new List<AllDocumentsDto>
+     {
+                 new AllDocumentsDto
+                 {
+                     TempDocumentFill = tempDocumentFillList,
+                     ApprovedDocuments = ApprovedDos,
+                     DocumentList = docList,
+                     PendingDocumentsDto = pendingDocuments,
+                     PendingFiles = pendingFiles,
+                     ApprovedFiles = approvedFiles
+                 }
+      };
+
         }
 
-
-        public async Task<List<TrainingDto>> Training(int employeeid)
+        public Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid)
         {
-            var result = await (from hem in _context.HrEmpMasters
-                                join ts in _context.TrainingSchedules on hem.EmpId equals ts.EmpId
-                                join tm in _context.TrainingMasters on ts.TrMasterId equals tm.TrMasterId
-                                join tm01 in _context.TrainingMaster01s on tm.TrMasterId equals tm01.TrMasterId into tm01Join
-                                from tm01 in tm01Join.DefaultIfEmpty()
-                                where hem.EmpId == employeeid && ts.SelectStatus == "S" && tm.Active == "Y"
-                                select new TrainingDto
-                                {
-                                    Emp_Id = hem.EmpId,
-                                    trMasterId = Convert.ToInt32(tm.TrMasterId),
-                                    Emp_Code = hem.EmpCode,
-                                    trName = tm.TrName,
-                                    FileUrl = tm01.FileUrl,
-                                    FileUpdId = tm01.FileUpdId,
-                                    FileName = tm01.FileName,
-                                    EmpName = hem.FirstName,//(hem.First_Name ?? " ") + " " + (hem.Middle_Name ?? " ") + " " + (hem.Last_Name ?? " "),
-                                    IsSurvey = tm.IsSurvey,
-                                    Survey = tm.Survey,
-                                    Join_Dt = hem.JoinDt,
-                                    selectStatus = ts.SelectStatus,
-                                    AttDate = ts.AttDate.HasValue ? ts.AttDate.Value.ToString("dd/MM/yyyy") : "NA",
-                                    IsAttended = ts.Status == "N" ? "NE" : "A"
-                                }).ToListAsync();
-
-            return result;
+            throw new NotImplementedException();
         }
 
+        public Task<List<TrainingDto>> Training(int employeeid)
+        {
+            throw new NotImplementedException();
+        }
         public async Task<List<CareerHistoryDto>> CareerHistory(int employeeid)
         {
 
