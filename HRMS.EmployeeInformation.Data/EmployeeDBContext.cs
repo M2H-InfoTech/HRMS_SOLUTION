@@ -158,6 +158,8 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<TrainingSchedule> TrainingSchedules { get; set; }
     public virtual DbSet<TrainingMaster> TrainingMasters { get; set; }
     public virtual DbSet<TrainingMaster01> TrainingMaster01s { get; set; }
+    public virtual DbSet<BiometricsDtl> BiometricsDtls { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
         => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NOV-2-9-2024;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -2505,6 +2507,23 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.FileType).IsUnicode(false);
             entity.Property(e => e.FileUrl).IsUnicode(false);
             entity.Property(e => e.TrMasterId).HasColumnName("trMasterId");
+        });
+
+        modelBuilder.Entity<BiometricsDtl>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__BIOMETRI__3213E83FE98A02B7");
+
+            entity.ToTable("BIOMETRICS_DTL");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CompanyId).HasColumnName("CompanyID");
+            entity.Property(e => e.DeviceId).HasColumnName("DeviceID");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.EntryDt).HasColumnType("datetime");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("UserID");
         });
 
 

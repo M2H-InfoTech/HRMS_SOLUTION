@@ -238,6 +238,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var CareerDetails = await _employeeInformation.CareerHistory(employeeId);
             return new JsonResult(CareerDetails);
         }
-
+        [HttpGet]
+        public async Task<IActionResult> BiometricDetails(int employeeId)
+        {
+            var BioDetails = await _employeeInformation.BiometricDetails(employeeId);
+            return new JsonResult(BioDetails);
+        }
     }
 }
