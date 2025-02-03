@@ -244,5 +244,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var BioDetails = await _employeeInformation.BiometricDetails(employeeId);
             return new JsonResult(BioDetails);
         }
+        [HttpGet]
+        public async Task<IActionResult> AccessDetails(int employeeId)
+        {
+            var AccessDetails = await _employeeInformation.AccessDetails(employeeId);
+            return new JsonResult(AccessDetails);
+        }
     }
 }

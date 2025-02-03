@@ -4079,6 +4079,45 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 }).ToListAsync();
             return result.Cast<object>().ToList();
        }
+
+        public async Task<List<object>> AccessDetails(int employeeId)
+        {
+            var result = await _context.HrEmpMasters
+                .Where(z => z.EmpId == employeeId)
+                .Select(z => new
+                {
+                    Holiday = _context.HrmHolidayMasterAccesses
+                        .Where(a => a.EmployeeId == z.EmpId)
+                        .Min(x => (long?)x.IdHolidayMasterAccess),
+
+                    Attendance = _context.AttendancepolicyMasterAccesses
+                        .Where(b => b.EmployeeId == z.EmpId)
+                        .Min(x => (long?)x.AttendanceAccessId),
+
+                    Shift = _context.ShiftMasterAccesses
+                        .Where(c => c.EmployeeId == z.EmpId)
+                        .Min(x => (long?)x.ShiftAccessId),
+
+                    Leave = _context.HrmLeaveEmployeeleaveaccesses
+                        .Where(d => d.EmployeeId == z.EmpId)
+                        .Min(x => (long?)x.IdEmployeeLeaveAccess),
+
+                    LeavePolicy = _context.LeavepolicyMasterAccesses
+                        .Where(e => e.EmployeeId == z.EmpId)
+                        .Min(x => (long?)x.LeaveAccessId),
+
+                    LeaveBasicSettings = _context.HrmLeaveBasicsettingsaccesses
+                        .Where(f => f.EmployeeId == z.EmpId)
+                        .Min(x => (long?)x.IdEmployeeSettinsAccess)
+                })
+                .ToListAsync();
+
+            return result.Cast<object>().ToList();
+        }
+
+
+
+
     }
 }
 
