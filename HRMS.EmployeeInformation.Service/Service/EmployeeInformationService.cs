@@ -128,6 +128,11 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.Training(employeeid);
         }
+
+        public async Task<List<CareerHistoryDto>> CareerHistory(int employeeid)
+        {
+            return await _employeeRepository.CareerHistory(employeeid);
+        }
     }
 
 }

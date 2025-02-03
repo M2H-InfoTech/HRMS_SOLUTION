@@ -2,19 +2,12 @@
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.DTO.DTOs;
 using EMPLOYEE_INFORMATION.Models;
-using EMPLOYEE_INFORMATION.Models.DTOs;
-using EMPLOYEE_INFORMATION.Models.Entity;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
-using HRMS.EmployeeInformation.Models;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Localization;
-using Microsoft.VisualBasic;
 using MPLOYEE_INFORMATION.DTO.DTOs;
-using System;
-using System.Linq;
+//using System.Data.Entity;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -59,7 +52,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             if (paramControlData == null)
             {
-                
+
                 return byte.MinValue.ToString();
             }
 
@@ -2958,7 +2951,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
             var cteEmployeeDetails = await (
-            from emp in _context.HrEmpMasters where emp.EmpId== employeeId
+            from emp in _context.HrEmpMasters
+            where emp.EmpId == employeeId
             select new
             {
                 emp.InstId,
@@ -3228,7 +3222,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             DateTime tempDate = fromDate.AddYears(years);
 
-            int months = toDate.Month - tempDate.Month;
+            //int months = toDate.Month - tempDate.Month;
+            int months = (toDate.Year - tempDate.Year) * 12 + (toDate.Month - tempDate.Month);
+
             if (toDate.Day < tempDate.Day)
                 months--;
 
@@ -3238,7 +3234,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 years--;
             }
 
-            tempDate = tempDate.AddMonths(months);
+              tempDate = tempDate.AddMonths(months);
 
             int days = (toDate - tempDate).Days;
 
@@ -3441,7 +3437,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             else
             {
                 var result = await (from aa in _context.AssignedAssets
-                                     join hcf in _context.HrmsCommonField01s on Convert.ToInt32(aa.AssestId) equals hcf.ComMasId
+                                    join hcf in _context.HrmsCommonField01s on Convert.ToInt32(aa.AssestId) equals hcf.ComMasId
                                     join cf in _context.CommonFields on hcf.ComFieldId equals Convert.ToInt32(cf.ComFieldId)
                                     join rl in _context.HrEmployeeUserRelations on aa.CreatedBy equals rl.UserId
                                     join empd in _context.EmployeeDetails on rl.EmpId equals empd.EmpId
@@ -3470,7 +3466,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         }
 
-      
+
 
         public async Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdown_Professional()
         {
@@ -3814,7 +3810,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             throw new NotImplementedException();
         }
 
-        public async Task<List<PersonalDetailsDto>> GetPersonalDetailsById( int employeeid)
+        public async Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid)
         {
 
             var enableWeddingDate = await GetDefaultCompanyParameter(employeeid, "ENABLEWEDDINGDATE", "EMP1");
@@ -3836,9 +3832,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                          {
                                              DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString("dd/MM/yyyy") : "NA",
 
-                                             Wedding_Date =Convert.ToInt32(  enableWeddingDate) == 1 ? (c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : "") : "",
+                                             Wedding_Date = Convert.ToInt32(enableWeddingDate) == 1 ? (c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : "") : "",
                                              EMail = b.PersonalEmail ?? "",
-                                             CountryID=c.Country,
+                                             CountryID = c.Country,
                                              NationalityID = c.Nationality,
                                              CountryOfBirthID = c.CountryOfBirth,
                                              Blood_Grp = c.BloodGrp ?? "",
@@ -3867,28 +3863,28 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
 
-        public async Task <List<TrainingDto>> Training(int employeeid)
+        public async Task<List<TrainingDto>> Training(int employeeid)
         {
             var result = await (from hem in _context.HrEmpMasters
-                         join ts in _context.TrainingSchedules on hem.EmpId equals ts.EmpId
+                                join ts in _context.TrainingSchedules on hem.EmpId equals ts.EmpId
                                 join tm in _context.TrainingMasters on ts.TrMasterId equals tm.TrMasterId
                                 join tm01 in _context.TrainingMaster01s on tm.TrMasterId equals tm01.TrMasterId into tm01Join
                                 from tm01 in tm01Join.DefaultIfEmpty()
                                 where hem.EmpId == employeeid && ts.SelectStatus == "S" && tm.Active == "Y"
                                 select new TrainingDto
                                 {
-                             Emp_Id = hem.EmpId,
+                                    Emp_Id = hem.EmpId,
                                     trMasterId = Convert.ToInt32(tm.TrMasterId),
-                                    Emp_Code =   hem.EmpCode,
-                                    trName  =tm.TrName,
-                                    FileUrl=  tm01.FileUrl,
-                                    FileUpdId= tm01.FileUpdId,
-                                    FileName= tm01.FileName,
+                                    Emp_Code = hem.EmpCode,
+                                    trName = tm.TrName,
+                                    FileUrl = tm01.FileUrl,
+                                    FileUpdId = tm01.FileUpdId,
+                                    FileName = tm01.FileName,
                                     EmpName = hem.FirstName,//(hem.First_Name ?? " ") + " " + (hem.Middle_Name ?? " ") + " " + (hem.Last_Name ?? " "),
-                                    IsSurvey=   tm.IsSurvey,
-                                    Survey=   tm.Survey,
-                                    Join_Dt=  hem.JoinDt,
-                                    selectStatus=  ts.SelectStatus,
+                                    IsSurvey = tm.IsSurvey,
+                                    Survey = tm.Survey,
+                                    Join_Dt = hem.JoinDt,
+                                    selectStatus = ts.SelectStatus,
                                     AttDate = ts.AttDate.HasValue ? ts.AttDate.Value.ToString("dd/MM/yyyy") : "NA",
                                     IsAttended = ts.Status == "N" ? "NE" : "A"
                                 }).ToListAsync();
@@ -3896,8 +3892,88 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result;
         }
 
+        public async Task<List<CareerHistoryDto>> CareerHistory(int employeeid)
+        {
 
+            var previousExpData = _context.HrEmpProfdtls
+                .Where(empProf => empProf.EmpId == employeeid)
+                .Select(empProf => new
+                {
+                    DaysWorked = EF.Functions.DateDiffDay(empProf.JoinDt, empProf.LeavingDt) ?? 0
+                })
+                .ToList(); 
+
+            var previousExp = new
+            {
+                Category = "Previous Experience",
+                Relevant = 0.00,
+                NonRelevent = previousExpData.Sum(e => e.DaysWorked),
+                Total = previousExpData.Sum(e => e.DaysWorked)
+            };
+
+            var companyExp = _context.HrEmpMasters
+                .Where(empMaster => empMaster.EmpId == employeeid)
+                .Select(empMaster => new
+                {
+                    RelevantDays = EF.Functions.DateDiffDay(empMaster.FirstEntryDate, DateTime.UtcNow) ?? 0
+                })
+                .FirstOrDefault(); 
+
+            var companyExpResult = new
+            {
+                Category = "Company Experience (First Entry Date)",
+                Relevant = companyExp?.RelevantDays ?? 0,
+                NonRelevent = 0.00,
+                Total = companyExp?.RelevantDays ?? 0
+            };
+            var tempSummary = new List<dynamic> { previousExp, companyExpResult };
+
+            //--------------------------Finish #tempSummary--------------------------------------------
+
+            var totalSummary = new
+            {
+                Category = "Total",
+                Relevant = tempSummary.Sum(x => (double)x.Relevant),
+                NonRelevent = tempSummary.Sum(x => (double)x.NonRelevent),
+                Total = tempSummary.Sum(x => (double)x.Total)
+            };
+
+            var detailedSummary = tempSummary.Select(x => new
+            {
+                Category = x.Category,
+                Relevant = x.Relevant ?? 0.00,
+                NonRelevent = x.NonRelevent ?? 0.00,
+                Total = x.Total ?? 0.00
+            }).ToList();
+
+            var tempExperienceDetails = new List<dynamic> { totalSummary }.Concat(detailedSummary).ToList();
+
+            //--------------------------Finish #TempExperienceDetails--------------------------------------------
+
+            var result1 = await Task.WhenAll(tempExperienceDetails.Select(async a =>
+            {
+                var relevant = a.Relevant == 0.00
+                                ? "0Y: 0M: 0D"
+                                : await GetEmployeeExperienceLength(employeeid, (int)a.Relevant);
+                var nonRelevent = a.NonRelevent == 0.00
+                                ? "0Y: 0M: 0D"
+                                : await GetEmployeeExperienceLength(employeeid, (int)a.NonRelevent);
+                var total = a.Total == 0.00
+                                ? "0Y: 0M: 0D"
+                                : await GetEmployeeExperienceLength(employeeid, (int)a.Total);
+
+                return new CareerHistoryDto
+                {
+                    Category = a.Category,
+                    Relevant = relevant,
+                    NonRelevent = nonRelevent,
+                    Total = total
+                };
+            }));
+
+            return result1.ToList();
+
+        }
     }
 }
-
 

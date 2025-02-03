@@ -43,6 +43,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID);
         Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid);
         Task<List<TrainingDto>> Training(int employeeid);
+        Task<List<CareerHistoryDto>> CareerHistory(int employeeid);
 
     }
 }

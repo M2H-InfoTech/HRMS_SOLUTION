@@ -225,7 +225,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var Training = await _employeeInformation.Training(employeeId);
             return new JsonResult(Training);
         }
-
+        [HttpGet]
+        public async Task<IActionResult> CareerHistory(int employeeId)
+        {
+            var CareerDetails = await _employeeInformation.CareerHistory(employeeId);
+            return new JsonResult(CareerDetails);
+        }
 
     }
 }
