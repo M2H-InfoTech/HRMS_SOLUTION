@@ -159,6 +159,13 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<TrainingMaster> TrainingMasters { get; set; }
     public virtual DbSet<TrainingMaster01> TrainingMaster01s { get; set; }
     public virtual DbSet<BiometricsDtl> BiometricsDtls { get; set; }
+    public virtual DbSet<HrmHolidayMasterAccess> HrmHolidayMasterAccesses { get; set; }
+    public virtual DbSet<AttendancepolicyMasterAccess> AttendancepolicyMasterAccesses { get; set; }
+    public virtual DbSet<ShiftMasterAccess> ShiftMasterAccesses { get; set; }
+    public virtual DbSet<HrmLeaveEmployeeleaveaccess> HrmLeaveEmployeeleaveaccesses { get; set; }
+    public virtual DbSet<LeavepolicyMasterAccess> LeavepolicyMasterAccesses { get; set; }
+    public virtual DbSet<HrmLeaveBasicsettingsaccess> HrmLeaveBasicsettingsaccesses { get; set; }
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -2524,6 +2531,108 @@ public partial class EmployeeDBContext : DbContext
                 .HasMaxLength(500)
                 .IsUnicode(false)
                 .HasColumnName("UserID");
+        });
+
+        modelBuilder.Entity<HrmHolidayMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.IdHolidayMasterAccess).HasName("PK__HRM_HOLI__1A80B3CF9CC8C054");
+
+            entity.ToTable("HRM_HOLIDAY_MASTER_ACCESS");
+
+            entity.Property(e => e.IdHolidayMasterAccess).HasColumnName("Id_HolidayMasterAccess");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.HolidayMasterId).HasColumnName("HolidayMaster_id");
+            entity.Property(e => e.ValidDateTo).HasColumnType("datetime");
+            entity.Property(e => e.ValidDatefrom).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<AttendancepolicyMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.AttendanceAccessId).HasName("PK__ATTENDAN__C979F80AA42FACFF");
+
+            entity.ToTable("ATTENDANCEPOLICY_MASTER_ACCESS");
+
+            entity.Property(e => e.AttendanceAccessId).HasColumnName("AttendanceAccessID");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.PolicyId).HasColumnName("PolicyID");
+            entity.Property(e => e.ValidDateTo).HasColumnType("datetime");
+            entity.Property(e => e.ValidDatefrom).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<ShiftMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.ShiftAccessId).HasName("PK__SHIFT_MA__D343B905E36F048C");
+
+            entity.ToTable("SHIFT_MASTER_ACCESS");
+
+            entity.Property(e => e.ShiftAccessId).HasColumnName("ShiftAccessID");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.ApprovalStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
+            entity.Property(e => e.ShiftApprovalId).HasColumnName("ShiftApprovalID");
+            entity.Property(e => e.ShiftId).HasColumnName("ShiftID");
+            entity.Property(e => e.ValidDateTo).HasColumnType("datetime");
+            entity.Property(e => e.ValidDatefrom).HasColumnType("datetime");
+            entity.Property(e => e.WeekEndMasterId).HasColumnName("WeekEndMasterID");
+        });
+
+        modelBuilder.Entity<HrmLeaveEmployeeleaveaccess>(entity =>
+        {
+            entity.HasKey(e => e.IdEmployeeLeaveAccess);
+
+            entity.ToTable("HRM_LEAVE_EMPLOYEELEAVEACCESS");
+
+            entity.Property(e => e.IdEmployeeLeaveAccess).HasColumnName("Id_EmployeeLeaveAccess");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FromDate).HasColumnType("datetime");
+            entity.Property(e => e.ValidTo).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<LeavepolicyMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.LeaveAccessId).HasName("PK__LEAVEPOL__A6D71DCE86B1D991");
+
+            entity.ToTable("LEAVEPOLICY_MASTER_ACCESS");
+
+            entity.Property(e => e.LeaveAccessId).HasColumnName("LeaveAccessID");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.Fromdate).HasColumnType("datetime");
+            entity.Property(e => e.PolicyId).HasColumnName("PolicyID");
+            entity.Property(e => e.Validto).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<HrmLeaveBasicsettingsaccess>(entity =>
+        {
+            entity.HasKey(e => e.IdEmployeeSettinsAccess);
+
+            entity.ToTable("HRM_LEAVE_BASICSETTINGSACCESS");
+
+            entity.Property(e => e.IdEmployeeSettinsAccess).HasColumnName("Id_EmployeeSettinsAccess");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FromDateBs).HasColumnType("datetime");
+            entity.Property(e => e.Laps).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ValidToBs).HasColumnType("datetime");
         });
 
 
