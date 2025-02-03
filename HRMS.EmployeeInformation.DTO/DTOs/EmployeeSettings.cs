@@ -1,4 +1,4 @@
-﻿ 
+﻿
 
 namespace MPLOYEE_INFORMATION.DTO.DTOs
 {
@@ -38,14 +38,7 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
 
         public string? DateFormat { get; set; }
 
-        //public EmployeeSettings(string activeStatus, string onNotice, string valueType, string parameterCode, string reasonType)
-        //{
-        //    ActiveStatus = activeStatus;
-        //    OnNotice = onNotice;
-        //    ValueType = valueType;
-        //    ParameterCode = parameterCode;
-        //    ReasonType = reasonType;
-        //}
+        public string? EmployeeStatus { get; set; }
 
     }
 

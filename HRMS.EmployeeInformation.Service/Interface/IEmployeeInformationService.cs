@@ -1,7 +1,9 @@
 ﻿
 
 using HRMS.EmployeeInformation.DTO.DTOs;
+using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Repository.Common;
+using Microsoft.AspNetCore.Mvc;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Service.Interface
@@ -18,7 +20,9 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<RewardAndRecognitionDto>> RewardAndRecognition(int employeeId);
         Task<List<QualificationDto>> Qualification(int employeeId);
         Task<List<SkillSetDto>> SkillSets(int employeeId);
-        Task<List<DocumentsDto>> Documents(int employeeId);
+        Task<List<AllDocumentsDto>> Documents(int employeeId, List<string> excludedDocTypes);
+
+
         Task<List<DependentDto>> Dependent(int employeeId);
         Task<List<CertificationDto>> Certification(int employeeId);
         Task<List<DisciplinaryActionsDto>> DisciplinaryActions(int employeeId);
@@ -28,9 +32,6 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<AssetDto>> Asset();
         Task<List<AssetDetailsDto>> AssetDetails(int employeeId);
         Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdown_Professional();
-
-
-        //Task<List<CareerHistoryDto>> CareerHistory(int employeeId);
         Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto);
         Task<PersonalDetailsHistoryDto> InsertOrUpdatePersonalData(PersonalDetailsHistoryDto persnldtlsApprlDto);
 
