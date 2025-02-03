@@ -3900,14 +3900,84 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         }
 
-        public Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid)
+        public async Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid)
         {
-            throw new NotImplementedException();
+            var enableWeddingDate = await GetDefaultCompanyParameter(employeeid, "ENABLEWEDDINGDATE", "EMP1");
+
+            var employeeDetails = await(from a in _context.HrEmpMasters
+                                        join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId
+                                        join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into personalEmailGroup
+                                        from b in personalEmailGroup.DefaultIfEmpty()
+                                        join d in _context.AdmCountryMasters on c.Country equals d.CountryId into countryGroup
+                                        from d in countryGroup.DefaultIfEmpty()
+                                        join e in _context.AdmCountryMasters on c.Nationality equals e.CountryId into nationalityGroup
+                                        from e in nationalityGroup.DefaultIfEmpty()
+                                        join f in _context.AdmCountryMasters on c.CountryOfBirth equals f.CountryId into countryOfBirthGroup
+                                        from f in countryOfBirthGroup.DefaultIfEmpty()
+                                        join g in _context.AdmReligionMasters on c.Religion equals g.ReligionId into religionGroup
+                                        from g in religionGroup.DefaultIfEmpty()
+                                        where a.EmpId == employeeid
+                                        select new PersonalDetailsDto
+                                        {
+                                            DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString("dd/MM/yyyy") : "NA",
+
+                                            Wedding_Date = Convert.ToInt32(enableWeddingDate) == 1 ? (c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : "") : "",
+                                            EMail = b.PersonalEmail ?? "",
+                                            CountryID = c.Country,
+                                            NationalityID = c.Nationality,
+                                            CountryOfBirthID = c.CountryOfBirth,
+                                            Blood_Grp = c.BloodGrp ?? "",
+                                            ReligionID = c.Religion,
+                                            Religion_Name = g.ReligionName ?? "",
+                                            Ident_Mark = c.IdentMark ?? "",
+                                            Height = c.Height ?? "",
+                                            Weight = c.Weight ?? "",
+                                            GenderID = c.Gender,
+                                            Gender = c.Gender == "M" ? "Male" : c.Gender == "F" ? "Female" : c.Gender == "O" ? "Others" : "",
+                                            Marital_Status = c.MaritalStatus == "S" ? "Single" :
+                                                            c.MaritalStatus == "M" ? "Married" :
+                                                            c.MaritalStatus == "W" ? "Widowed" :
+                                                            c.MaritalStatus == "X" ? "Separated" :
+                                                            c.MaritalStatus == "D" ? "Divorcee" : "",
+                                            Marital_StatusID = c.MaritalStatus,
+                                            Guardians_Name = a.GuardiansName ?? "",
+                                            Country = d.CountryName ?? "",
+                                            Nationality = e.CountryName ?? "",
+                                            CountryOfBirth = f.CountryName ?? "",
+                                            bloodgroupnew = string.IsNullOrEmpty(c.BloodGrp) ? "" :
+                                                            c.BloodGrp == "HH" ? "HH Group" : c.BloodGrp + "ve"
+                                        }).ToListAsync();
+
+            return employeeDetails;
         }
 
-        public Task<List<TrainingDto>> Training(int employeeid)
+        public async Task<List<TrainingDto>> Training(int employeeid)
         {
-            throw new NotImplementedException();
+            var result = await(from hem in _context.HrEmpMasters
+                               join ts in _context.TrainingSchedules on hem.EmpId equals ts.EmpId
+                               join tm in _context.TrainingMasters on ts.TrMasterId equals tm.TrMasterId
+                               join tm01 in _context.TrainingMaster01s on tm.TrMasterId equals tm01.TrMasterId into tm01Join
+                               from tm01 in tm01Join.DefaultIfEmpty()
+                               where hem.EmpId == employeeid && ts.SelectStatus == "S" && tm.Active == "Y"
+                               select new TrainingDto
+                               {
+                                   Emp_Id = hem.EmpId,
+                                   trMasterId = Convert.ToInt32(tm.TrMasterId),
+                                   Emp_Code = hem.EmpCode,
+                                   trName = tm.TrName,
+                                   FileUrl = tm01.FileUrl,
+                                   FileUpdId = tm01.FileUpdId,
+                                   FileName = tm01.FileName,
+                                   EmpName = hem.FirstName,//(hem.First_Name ?? " ") + " " + (hem.Middle_Name ?? " ") + " " + (hem.Last_Name ?? " "),
+                                   IsSurvey = tm.IsSurvey,
+                                   Survey = tm.Survey,
+                                   Join_Dt = hem.JoinDt,
+                                   selectStatus = ts.SelectStatus,
+                                   AttDate = ts.AttDate.HasValue ? ts.AttDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                   IsAttended = ts.Status == "N" ? "NE" : "A"
+                               }).ToListAsync();
+
+            return result;
         }
         public async Task<List<CareerHistoryDto>> CareerHistory(int employeeid)
         {
