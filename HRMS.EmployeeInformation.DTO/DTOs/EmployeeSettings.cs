@@ -1,4 +1,4 @@
-﻿
+﻿ 
 
 namespace MPLOYEE_INFORMATION.DTO.DTOs
 {
@@ -37,8 +37,8 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? CompanyParameterType { get; set; }
 
         public string? DateFormat { get; set; }
-
         public string? EmployeeStatus { get; set; }
+
 
     }
 

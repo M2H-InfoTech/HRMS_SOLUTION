@@ -280,56 +280,56 @@ namespace HRMS.EmployeeInformation.Repository.Common
             //var infoFormat = await GetDefaultCompanyParameter(employeeInformationParameters.empId, _employeeSettings.CompanyParameterEmpInfoFormat, _employeeSettings.CompanyParameterType);
             int format = Convert.ToInt32(infoFormat);
 
-            var linkLevelExists = _memoryCache.GetOrCreate(linkLevelCacheKey, entry =>
-            {
-                entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-                entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-                return IsLinkLevelExists(employeeInformationParameters.roleId);
-            });
+            //var linkLevelExists = _memoryCache.GetOrCreate(linkLevelCacheKey, entry =>
+            //{
+            //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
+            //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+            //    return IsLinkLevelExists(employeeInformationParameters.roleId);
+            //});
 
 
-            //var linkLevelExists = IsLinkLevelExists(employeeInformationParameters.roleId);
+            var linkLevelExists = IsLinkLevelExists(employeeInformationParameters.roleId);
 
-            var CurrentStatusDesc = _memoryCache.GetOrCreate(currentStatusCacheKey, entry =>
-            {
-                entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-                entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-                return (from ec in _context.EmployeeCurrentStatuses
-                        where ec.StatusDesc == _employeeSettings.OnNotice
-                        select ec.Status).FirstOrDefault();
-            });
-
-
-            //var CurrentStatusDesc = (from ec in _context.EmployeeCurrentStatuses
-            //                         where ec.StatusDesc == _employeeSettings.OnNotice
-            //                         select ec.Status).FirstOrDefault();
+            //var CurrentStatusDesc = _memoryCache.GetOrCreate(currentStatusCacheKey, entry =>
+            //{
+            //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
+            //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+            //    return (from ec in _context.EmployeeCurrentStatuses
+            //            where ec.StatusDesc == _employeeSettings.OnNotice
+            //            select ec.Status).FirstOrDefault();
+            //});
 
 
-            string? ageFormat = await _memoryCache.GetOrCreateAsync(ageFormatCacheKey, async entry =>
-            {
-                entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-                entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-                return await (from cp in _context.CompanyParameters
-                              join vt in _context.HrmValueTypes on cp.Value equals vt.Value
-                              where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
-                              select vt.Code).FirstOrDefaultAsync();
-            });
-
-            //string? ageFormat = await (from cp in _context.CompanyParameters
-            //                           join vt in _context.HrmValueTypes on cp.Value equals vt.Value
-            //                           where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
-            //                           select vt.Code).FirstOrDefaultAsync();
-
-            //bool existsEmployee =  _context.HrEmpMasters.Any(emp => (emp.IsSave ?? 0) == 1);
+            var CurrentStatusDesc = (from ec in _context.EmployeeCurrentStatuses
+                                     where ec.StatusDesc == _employeeSettings.OnNotice
+                                     select ec.Status).FirstOrDefault();
 
 
+            //string? ageFormat = await _memoryCache.GetOrCreateAsync(ageFormatCacheKey, async entry =>
+            //{
+            //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
+            //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+            //    return await (from cp in _context.CompanyParameters
+            //                  join vt in _context.HrmValueTypes on cp.Value equals vt.Value
+            //                  where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
+            //                  select vt.Code).FirstOrDefaultAsync();
+            //});
 
-            bool existsEmployee = await _memoryCache.GetOrCreateAsync(existsEmployeeCacheKey, async entry =>
-            {
-                entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-                entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-                return await _context.HrEmpMasters.AnyAsync(emp => (emp.IsSave ?? 0) == 1);
-            });
+            string? ageFormat = await (from cp in _context.CompanyParameters
+                                       join vt in _context.HrmValueTypes on cp.Value equals vt.Value
+                                       where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
+                                       select vt.Code).FirstOrDefaultAsync();
+
+            bool existsEmployee = _context.HrEmpMasters.Any(emp => (emp.IsSave ?? 0) == 1);
+
+
+
+            //bool existsEmployee = await _memoryCache.GetOrCreateAsync(existsEmployeeCacheKey, async entry =>
+            //{
+            //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
+            //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+            //    return await _context.HrEmpMasters.AnyAsync(emp => (emp.IsSave ?? 0) == 1);
+            //});
             //bool existsEmployee = await _context.HrEmpMasters.AnyAsync(emp => (emp.IsSave ?? 0) == 1);
 
             //return format switch
