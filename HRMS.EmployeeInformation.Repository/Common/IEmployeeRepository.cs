@@ -47,6 +47,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid);
         Task<List<TrainingDto>> Training(int employeeid);
         Task<List<CareerHistoryDto>> CareerHistory(int employeeid);
+        Task<List<object>> BiometricDetails(int employeeId);
+
 
     }
 }

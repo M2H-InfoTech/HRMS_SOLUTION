@@ -137,6 +137,12 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.CareerHistory(employeeid);
         }
+        public async Task<List<object>> BiometricDetails(int employeeid)
+        {
+            return await _employeeRepository.BiometricDetails(employeeid);
+        }
+
+
     }
 
 }

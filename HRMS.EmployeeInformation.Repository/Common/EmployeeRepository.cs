@@ -1,7 +1,9 @@
-﻿using AutoMapper;
+﻿using System.ComponentModel.Design;
+using AutoMapper;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.DTO.DTOs;
 using EMPLOYEE_INFORMATION.Models;
+using EMPLOYEE_INFORMATION.Models.Entity;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
@@ -3989,6 +3991,24 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result1.ToList();
 
         }
+
+       public async Task<List<object>> BiometricDetails(int employeeId)
+        {
+            var result = await (from a in _context.BiometricsDtls
+                                join b in _context.HrEmpMasters on a.EmployeeId equals b.EmpId into bio
+                                from b in bio.DefaultIfEmpty()
+                                where a.EmployeeId == employeeId
+                                select new 
+                                {
+                                    CompanyID = a.CompanyId.ToString(),
+                                    EmployeeID= a.EmployeeId.ToString(),
+                                    DeviceID=a.DeviceId.ToString(),
+                                    UserID= a.UserId,
+                                    AttMarkId = b != null && b.IsMarkAttn.HasValue
+                                    ? (b.IsMarkAttn.Value ? "1" : "2"):""
+                                }).ToListAsync();
+            return result.Cast<object>().ToList();
+       }
     }
 }
 
