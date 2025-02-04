@@ -172,6 +172,15 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.TransferAndPromotion(employeeid);
         }
+        public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails (int linkId, int linkLevel)
+            {
+            return await _employeeRepository.GetEmpWorkFlowRoleDetails (linkId, linkLevel);
+            }
+        
+     public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole (int entityID)
+            {
+            return await _employeeRepository.FillEmpWorkFlowRole (entityID);
+            }
+        
+        }
     }
-
-}

@@ -288,5 +288,25 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var getEmpReportingReport = await _employeeInformation.GetEmpReportingReport (employeeId);
             return new JsonResult (getEmpReportingReport);
             }
+        [HttpGet]
+        public async Task<IActionResult> GetEmpWorkFlowRoleDetails(int linkId, int linkLevel)
+            {
+            var getEmpWorkFlowRoleDetails = await _employeeInformation.GetEmpWorkFlowRoleDetails ( linkId,  linkLevel);
+            return new JsonResult (getEmpWorkFlowRoleDetails);
+            }
+
+        [HttpGet]
+        public async Task<IActionResult> FillEmpWorkFlowRole (int entityID)
+            {
+            var fillEmpWorkFlowRole = await _employeeInformation.FillEmpWorkFlowRole (entityID);
+            return new JsonResult (fillEmpWorkFlowRole);
+            }
+      //  [HttpGet]
+        //public async Task<IActionResult> FillEmployeesBasedOnwWorkflow (int firstEntityId)
+        //    {
+        //    var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflow (firstEntityId);
+        //    return new JsonResult (fillEmployeesBasedOnwWorkflow);
+        //    }
+
         }
-}
+    }

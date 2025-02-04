@@ -7,9 +7,11 @@ using EMPLOYEE_INFORMATION.Models.Entity;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -4422,6 +4424,69 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return query;
             }
+
+        public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails (int linkId, int linkLevel)
+            {
+            var query = (linkLevel == 13)
+                ? from a in _context.ParamRole02s
+                  join b in _context.Categorymasterparameters on a.ParameterId equals b.ParameterId into bGroup
+                  from b in bGroup.DefaultIfEmpty ( )
+                  join c in _context.EmployeeDetails on a.EmpId equals c.EmpId into cGroup
+                  from c in cGroup.DefaultIfEmpty ( )
+                  where a.LinkEmpId == linkId && b.ShowRoleInEmployeeTab == 1
+                  select new
+                      {
+                      a.ValueId,
+                      b.ParamDescription,
+                      EmployeeName = c.Name // No null check in query
+                      }
+                : from a in _context.ParamRole01s
+                  join b in _context.Categorymasterparameters on a.ParameterId equals b.ParameterId into bGroup
+                  from b in bGroup.DefaultIfEmpty ( )
+                  join c in _context.EmployeeDetails on a.EmpId equals c.EmpId into cGroup
+                  from c in cGroup.DefaultIfEmpty ( )
+                  where a.LinkId == linkId && b.ShowRoleInEmployeeTab == 1
+                  select new
+                      {
+                      a.ValueId,
+                      b.ParamDescription,
+                      EmployeeName = c.Name // No null check in query
+                      };
+
+            var result = await query.ToListAsync ( );
+
+            // Apply null check AFTER the query execution
+            return result.Select (r => new GetEmpWorkFlowRoleDetailstDto
+                {
+                ValueId = r.ValueId,
+                ParamDescription = r.ParamDescription,
+                EmployeeName = r.EmployeeName ?? "Not Assigned" // Handle nulls in memory
+                }).ToList ( );
+            }
+
+        public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole (int entityID)
+            {
+            // Construct the LINQ query
+            var query = from b in _context.ParamRole00s
+                        join c in _context.ParamRoleEntityLevel00s on b.ValueId equals c.ValueId
+                        join d in _context.Categorymasterparameters on b.ParameterId equals d.ParameterId
+                        where c.EntityLevel == entityID && d.ShowRoleInEmployeeTab == 1
+                        select new FillEmpWorkFlowRoleDto
+                            {
+                            ValueId = b.ValueId,
+                            ParameterId = b.ParameterId,
+                            ParamDescription = d.ParamDescription
+                            };
+
+            // Execute the query asynchronously and return the result as a list
+            return await query.ToListAsync ( );
+            }
+
+
+
+
+
+
         }
     }
 
