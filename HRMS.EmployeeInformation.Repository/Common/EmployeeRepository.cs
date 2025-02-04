@@ -4115,9 +4115,190 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result.Cast<object>().ToList();
         }
 
+        public async Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlow (int entityID, int linkId)
+            {
+            IQueryable<int?> excludedTransactionIds;
+
+            if (entityID == 13)
+                {
+                excludedTransactionIds = _context.ParamWorkFlow02s
+                    .Where (pwf02 => pwf02.LinkEmpId == linkId && pwf02.LinkLevel == entityID)
+                    .Select (pwf02 => pwf02.TransactionId);
+                }
+            else
+                {
+                excludedTransactionIds = _context.ParamWorkFlow01s
+                    .Where (pwf01 => pwf01.LinkId == linkId && pwf01.LinkLevel == entityID)
+                    .Select (pwf01 => pwf01.TransactionId);
+                }
+
+            var result = await
+                (from b in _context.ParamWorkFlow00s
+                 join c in _context.ParamWorkFlowEntityLevel00s
+                     on b.ValueId equals c.ValueId
+                 join d in _context.TransactionMasters
+                     on b.TransactionId equals d.TransactionId
+                 where c.EntityLevel == entityID && !excludedTransactionIds.Contains (b.TransactionId)
+                 select new Fill_ModulesWorkFlowDto
+                     {
+                     ValueId = (int?)b.ValueId,
+                     TransactionId = b.TransactionId,
+                     Description = d.Description
+                     }).ToListAsync ( );  // <-- This ensures multiple results
+
+            return result;
+            }
+
+        public async Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMaster (int emp_Id, int roleId)
+            {
+            var transid = (from t in _context.TransactionMasters
+                           where t.TransactionType == "W_Flow"
+                           select t.TransactionId).FirstOrDefault ( );
+
+            int? lnklev = (from s in _context.SpecialAccessRights
+                           where s.RoleId == roleId
+                           select s.LinkLevel).FirstOrDefault ( );
+
+            // Check if any EntityAccessRights02 record matches the roleId and LinkLevel 15
+            var exists = _context.EntityAccessRights02s
+                                  .Where (s => s.RoleId == roleId)
+                                  .Any (s => s.LinkLevel == 15);
+
+            // If condition is true, select the WorkFlowDetails
+            if (exists)
+                {
+                var workflowDetails = _context.WorkFlowDetails
+                                              .Where (w => w.IsActive == true)  // Use true for boolean fields
+                                              .Select (w => new { w.WorkFlowId, w.Description })
+                                              .ToList ( );
+
+                // Return result from workflowDetails if exists condition is true
+                return workflowDetails.Select (wf => new Fill_WorkFlowMasterDto
+                    {
+                    WorkFlowId = wf.WorkFlowId,
+                    Description = wf.Description
+                    }).ToList ( );
+                }
+            else
+                {
+                // Step 1: CTE equivalent for ctnew
+                var ctnew = SplitStrings_XML (_context.HrEmpMasters
+                     .Where (h => h.EmpId == emp_Id)
+                     .Select (h => h.EmpEntity).FirstOrDefault ( ), ',')
+             .Select ((item, index) => new LinkItemDto
+                 {
+                 Item = item,
+                 LinkLevel = index + 2
+                 }).Where (c => !string.IsNullOrEmpty (c.Item));
+
+                // Step 2: ApplicableFinal (includes union logic from EntityAccessRights02 and ctnew)
+                // Step 2: ApplicableFinal (includes union logic from EntityAccessRights02 and ctnew)
+                var applicableFinal = _context.EntityAccessRights02s
+                    .Where (s => s.RoleId == roleId)
+                    .SelectMany (s => SplitStrings_XML (s.LinkId, default), // SplitStrings_XML returns IEnumerable<string>
+                        (s, item) => new { Item = item, s.LinkLevel }) // Use 'item' directly, and create an anonymous object
+                    .Union (
+                        ctnew.Where (c => lnklev > 0 && c.LinkLevel >= lnklev)
+                             .Select (c => new { c.Item, LinkLevel = c.LinkLevel }) // Use 'Item' instead of 'item'
+                    ).ToList ( );
+
+
+                // Step 3: EntityApplicable00Final (filter by TransactionId)
+                var entityApplicable00Final = _context.EntityApplicable00s
+                    .Where (e => e.TransactionId == transid)
+                    .Select (e => new { e.LinkId, e.LinkLevel, e.MasterId })
+                    .ToList ( );
+
+                // Step 4: ApplicableFinal02 (similar to ApplicableFinal)
+                var applicableFinal02 = _context.EntityAccessRights02s
+     .Where (s => s.RoleId == roleId)
+     .SelectMany (s => SplitStrings_XML (s.LinkId, default),
+         (s, item) => new { Item = item, s.LinkLevel })
+     .Union (
+         ctnew.Where (c => lnklev > 0 && c.LinkLevel >= lnklev)
+              .Select (c => new { c.Item, LinkLevel = c.LinkLevel }) // Use 'c.Item' instead of 'c.item'
+     ).ToList ( );
+
+
+                // Step 5: ApplicableFinal02Emp (filter by EmployeeDetails, EntityApplicable01, HighLevelViewTable)
+                var applicableFinal02Emp = (from emp in _context.EmployeeDetails
+                                            join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
+                                            join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
+                                            join af2 in applicableFinal02 on hlv.LevelOneId.ToString ( ) equals af2.Item into af2LevelOne // Assuming LevelOneId is an integer and Item is a string
+                                            from af2L1 in af2LevelOne.DefaultIfEmpty ( )
+                                            where ea.TransactionId == transid
+                                            select ea.MasterId).Distinct ( ).ToList ( );
+
+
+                // Step 6: newhigh (combines several conditions using joins and union)
+                var newhigh = (from ea in entityApplicable00Final
+                               join hlv in _context.HighLevelViewTables on ea.LinkLevel equals hlv.LevelOneId
+                               join af in applicableFinal on hlv.LevelOneId equals Convert.ToInt32 (af.Item) into afLevelOne
+                               from af1 in afLevelOne.DefaultIfEmpty ( )
+                               select new { MasterId = ea.MasterId }).Distinct ( )  // Ensure MasterId is selected as part of an anonymous object
+                .Union (applicableFinal02Emp.Select (x => new { MasterId = x }))
+                .Union (entityApplicable00Final.Where (e => e.LinkLevel == 15).Select (e => new { MasterId = e.MasterId }))
+                .ToList ( );
+
+
+                // Step 7: Final query to select from WorkFlowDetails
+                var workflowDetails = (from wf in _context.WorkFlowDetails
+                                       join nh in newhigh on wf.WorkFlowId equals nh.MasterId
+                                       where wf.IsActive == true // Check if IsActive is true
+                                       select new { wf.WorkFlowId, wf.Description }).ToList ( );
+
+
+                // Return the final results as Fill_WorkFlowMasterDto list
+                return workflowDetails.Select (wf => new Fill_WorkFlowMasterDto
+                    {
+                    WorkFlowId = wf.WorkFlowId,
+                    Description = wf.Description
+                    }).ToList ( );
+                }
+            }
+
+        public Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp (int linkId, int linkLevel)
+            {
+
+            if (linkLevel == 13)
+                {
+                // If LinkLevel is 13, select from ParamWorkFlow02 and use LinkEmpId
+                var query = from a in _context.ParamWorkFlow02s
+                            join b in _context.TransactionMasters on a.TransactionId equals b.TransactionId
+                            join c in _context.WorkFlowDetails on a.WorkFlowId equals c.WorkFlowId
+                            where a.LinkEmpId == linkId
+                            select new BindWorkFlowMasterEmpDto
+                                {
+                                ValueId = (int?)a.ValueId,
+                                TDescription = b.Description,
+                                Description = c.Description,
+                                FinalRuleName = c.FinalRuleName
+                                };
+                return query.ToListAsync ( );
+                }
+            else
+                {
+                // Otherwise, select from ParamWorkFlow01 and use LinkId
+                var query = from a in _context.ParamWorkFlow01s
+                            join b in _context.TransactionMasters on a.TransactionId equals b.TransactionId
+                            join c in _context.WorkFlowDetails on a.WorkFlowId equals c.WorkFlowId
+                            where a.LinkId == linkId
+                            select new BindWorkFlowMasterEmpDto
+                                {
+                                ValueId = (int?)a.ValueId,
+                                TDescription = b.Description,
+                                Description = c.Description,
+                                FinalRuleName = c.FinalRuleName
+                                };
+                return query.ToListAsync ( );
+                }
+
+
+            }
 
 
 
-    }
+
+        }
 }
 

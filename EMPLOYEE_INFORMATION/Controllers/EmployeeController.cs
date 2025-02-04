@@ -250,5 +250,23 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var AccessDetails = await _employeeInformation.AccessDetails(employeeId);
             return new JsonResult(AccessDetails);
         }
-    }
+        [HttpGet]
+        public async Task<IActionResult> Fill_ModulesWorkFlow (int entityID, int linkId)
+            {
+            var fill_ModulesWorkFlow = await _employeeInformation.Fill_ModulesWorkFlow (entityID, linkId);
+            return new JsonResult (fill_ModulesWorkFlow);
+            }
+        [HttpGet]
+        public async Task<IActionResult> Fill_WorkFlowMaster (int emp_Id, int roleId)
+            {
+            var fill_WorkFlowMaster = await _employeeInformation.Fill_WorkFlowMaster (emp_Id, roleId);
+            return new JsonResult (fill_WorkFlowMaster);
+            }
+        [HttpGet]
+        public async Task<IActionResult> BindWorkFlowMasterEmp (int linkId, int linkLevel)
+            {
+            var bindWorkFlowMasterEmp = await _employeeInformation.BindWorkFlowMasterEmp (linkId, linkLevel);
+            return new JsonResult (bindWorkFlowMasterEmp);
+            }
+        }
 }

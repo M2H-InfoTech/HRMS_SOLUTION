@@ -49,6 +49,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<CareerHistoryDto>> CareerHistory(int employeeid);
         Task<List<object>> BiometricDetails(int employeeId);
         Task<List<object>> AccessDetails(int employeeid);
+        Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlow (int entityID, int linkId);
+        Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMaster (int emp_Id, int roleId);
+        Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp (int linkId, int linkLevel);
 
-    }
+        }
 }

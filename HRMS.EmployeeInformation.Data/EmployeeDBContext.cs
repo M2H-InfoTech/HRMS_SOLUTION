@@ -165,6 +165,12 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrmLeaveEmployeeleaveaccess> HrmLeaveEmployeeleaveaccesses { get; set; }
     public virtual DbSet<LeavepolicyMasterAccess> LeavepolicyMasterAccesses { get; set; }
     public virtual DbSet<HrmLeaveBasicsettingsaccess> HrmLeaveBasicsettingsaccesses { get; set; }
+    public virtual DbSet<ParamWorkFlow00> ParamWorkFlow00s { get; set; }
+    public virtual DbSet<ParamWorkFlowEntityLevel00> ParamWorkFlowEntityLevel00s { get; set; }
+    public virtual DbSet<ParamWorkFlow02> ParamWorkFlow02s { get; set; }
+    public virtual DbSet<ParamWorkFlow01> ParamWorkFlow01s { get; set; }
+    public virtual DbSet<WorkFlowDetail> WorkFlowDetails { get; set; }
+    public virtual DbSet<EntityApplicable01> EntityApplicable01s { get; set; }
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -2635,8 +2641,68 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.ValidToBs).HasColumnType("datetime");
         });
 
+        modelBuilder.Entity<ParamWorkFlow00> (entity =>
+        {
+            entity.HasKey (e => e.ValueId);
 
-        OnModelCreatingPartial(modelBuilder);
+            entity.ToTable ("ParamWorkFlow00");
+
+            entity.Property (e => e.AdditionalRoleNotif).IsUnicode (false);
+            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
+            entity.Property (e => e.EntityLevel).IsUnicode (false);
+            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+            entity.Property (e => e.RoleNotification).HasDefaultValue (0);
+            entity.Property (e => e.SecondLevelWorkflowId).HasDefaultValue (0);
+        });
+
+        modelBuilder.Entity<ParamWorkFlowEntityLevel00> (entity =>
+        {
+            entity.ToTable ("ParamWorkFlowEntityLevel00");
+        });
+
+        modelBuilder.Entity<ParamWorkFlow02> (entity =>
+        {
+            entity.HasKey (e => e.ValueId);
+
+            entity.ToTable ("ParamWorkFlow02");
+
+            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
+            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+        });
+
+        modelBuilder.Entity<ParamWorkFlow01> (entity =>
+        {
+            entity.HasKey (e => e.ValueId);
+
+            entity.ToTable ("ParamWorkFlow01");
+
+            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
+            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+        });
+
+        modelBuilder.Entity<WorkFlowDetail> (entity =>
+        {
+            entity.HasKey (e => e.WorkFlowId);
+
+            entity.Property (e => e.Description).IsUnicode (false);
+            entity.Property (e => e.FinalRule).IsUnicode (false);
+            entity.Property (e => e.FinalRuleName).IsUnicode (false);
+            entity.Property (e => e.InstId).HasColumnName ("Inst_Id");
+            entity.Property (e => e.OldType).HasDefaultValue (0);
+            entity.Property (e => e.ReqNotifForProxy).HasDefaultValue (0);
+            entity.Property (e => e.TransactionDate).HasColumnType ("datetime");
+        });
+
+        modelBuilder.Entity<EntityApplicable01> (entity =>
+        {
+            entity.HasKey (e => e.ApplicableId);
+
+            entity.ToTable ("EntityApplicable01");
+
+            entity.Property (e => e.EntryDate).HasColumnType ("datetime");
+        });
+
+        OnModelCreatingPartial (modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

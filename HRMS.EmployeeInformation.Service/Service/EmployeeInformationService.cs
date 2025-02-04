@@ -146,6 +146,18 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.AccessDetails(employeeid);
         }
-    }
+        public async Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlow (int entityID, int linkId)
+            {
+            return await _employeeRepository.Fill_ModulesWorkFlow (entityID, linkId);
+            }
+        public async Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMaster (int emp_Id, int roleId)
+            {
+            return await _employeeRepository.Fill_WorkFlowMaster (emp_Id, roleId);
+            }
+        public async Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp (int linkId, int linkLevel)
+            {
+            return await _employeeRepository.BindWorkFlowMasterEmp (linkId, linkLevel);
+            }
+        }
 
 }
