@@ -275,5 +275,18 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var TransferAndPromotion = await _employeeInformation.TransferAndPromotion(employeeId);
             return new JsonResult(TransferAndPromotion);
         }
-    }
+    
+        [HttpGet]
+        public async Task<IActionResult> GetRejoinReport (int employeeId)
+            {
+            var getRejoinReport = await _employeeInformation.GetRejoinReport (employeeId);
+            return new JsonResult (getRejoinReport);
+            }
+        [HttpGet]
+        public async Task<IActionResult> GetEmpReportingReport (int employeeId)
+            {
+            var getEmpReportingReport = await _employeeInformation.GetEmpReportingReport (employeeId);
+            return new JsonResult (getEmpReportingReport);
+            }
+        }
 }

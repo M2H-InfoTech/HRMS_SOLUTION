@@ -45,7 +45,9 @@ namespace HRMS.EmployeeInformation.Service.Interface
         
         Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlow (int entityID, int linkId);
         Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMaster (int emp_Id, int roleId);
-        Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp (int linkId, int linkLevel);
+        Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp (int linkId, int linkLevel); 
+        Task<List<GetRejoinReportDto>> GetRejoinReport (int employeeId);
+        Task<List<GetEmpReportingReportDto>> GetEmpReportingReport (int employeeId);
 
         }
 

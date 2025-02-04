@@ -171,6 +171,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<ParamWorkFlow01> ParamWorkFlow01s { get; set; }
     public virtual DbSet<WorkFlowDetail> WorkFlowDetails { get; set; }
     public virtual DbSet<EntityApplicable01> EntityApplicable01s { get; set; }
+    public virtual DbSet<HrEmpReportingHstry> HrEmpReportingHstries { get; set; }
     public virtual DbSet<PositionHistory> PositionHistories { get; set; }
 
 
@@ -2701,6 +2702,23 @@ public partial class EmployeeDBContext : DbContext
             entity.ToTable ("EntityApplicable01");
 
             entity.Property (e => e.EntryDate).HasColumnType ("datetime");
+        });
+
+        modelBuilder.Entity<HrEmpReportingHstry> (entity =>
+        {
+            entity.HasKey (e => e.ReportHistId).HasName ("PK__HR_EMP_R__5FC67BAAF9C61086");
+
+            entity.ToTable ("HR_EMP_REPORTING_HSTRY");
+
+            entity.Property (e => e.ReportHistId).HasColumnName ("ReportHistID");
+            entity.Property (e => e.EmpId).HasColumnName ("EmpID");
+            entity.Property (e => e.EntryDate).HasColumnType ("datetime");
+            entity.Property (e => e.FromDate).HasColumnType ("datetime");
+            entity.Property (e => e.InstId).HasColumnName ("inst_id");
+            entity.Property (e => e.ReportId).HasColumnName ("ReportID");
+            entity.Property (e => e.ResignationId).HasColumnName ("ResignationID");
+            entity.Property (e => e.ToDate).HasColumnType ("datetime");
+            entity.Property (e => e.UpdatedDate).HasColumnType ("datetime");
         });
         modelBuilder.Entity<PositionHistory>(entity =>
         {

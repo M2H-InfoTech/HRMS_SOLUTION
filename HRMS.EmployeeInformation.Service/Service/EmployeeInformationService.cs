@@ -158,6 +158,15 @@ namespace HRMS.EmployeeInformation.Service.Service
             {
             return await _employeeRepository.BindWorkFlowMasterEmp (linkId, linkLevel);
             }
+        public async Task<List<GetRejoinReportDto>> GetRejoinReport (int employeeId)
+            {
+            return await _employeeRepository.GetRejoinReport (employeeId);
+            }
+     public async Task<List<GetEmpReportingReportDto>> GetEmpReportingReport (int employeeId)
+            {
+            return await _employeeRepository.GetEmpReportingReport (employeeId);
+    }
+        
         
         public async Task<List<TransferAndPromotionDto>> TransferAndPromotion(int employeeid)
         {
