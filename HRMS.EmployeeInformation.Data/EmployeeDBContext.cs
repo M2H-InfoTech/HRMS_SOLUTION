@@ -174,7 +174,13 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrEmpReportingHstry> HrEmpReportingHstries { get; set; }
     public virtual DbSet<PositionHistory> PositionHistories { get; set; }
 
+    public virtual DbSet<ParamRole02> ParamRole02s { get; set; }
+    public virtual DbSet<Categorymasterparameter> Categorymasterparameters { get; set; }
+    public virtual DbSet<ParamRole01> ParamRole01s { get; set; }
 
+    public virtual DbSet<ParamRole00> ParamRole00s { get; set; }
+    public virtual DbSet<ParamRoleEntityLevel00> ParamRoleEntityLevel00s { get; set; }
+    public virtual DbSet<BranchDetail> BranchDetails { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
         => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NOV-2-9-2024;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -2745,6 +2751,73 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.TransferBatchId).HasColumnName("TransferBatchID");
             entity.Property(e => e.TransferId).HasColumnName("TransferID");
         });
+
+
+        modelBuilder.Entity<ParamRole02> (entity =>
+        {
+            entity.HasKey (e => e.ValueId);
+
+            entity.ToTable ("ParamRole02");
+
+            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
+            entity.Property (e => e.EmpId).HasColumnName ("Emp_Id");
+            entity.Property (e => e.LinkEmpId).HasColumnName ("LinkEmp_Id");
+            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+        });
+
+
+        modelBuilder.Entity<Categorymasterparameter> (entity =>
+        {
+            entity.HasKey (e => e.ParameterId);
+
+            entity.ToTable ("CATEGORYMASTERPARAMETERS");
+
+            entity.Property (e => e.ParameterId).HasColumnName ("ParameterID");
+            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
+            entity.Property (e => e.DataType).IsUnicode (false);
+            entity.Property (e => e.EntityId).HasColumnName ("EntityID");
+            entity.Property (e => e.InstId).HasColumnName ("Inst_Id");
+            entity.Property (e => e.ParamDescription).IsUnicode (false);
+        });
+
+        modelBuilder.Entity<ParamRole01> (entity =>
+        {
+            entity.HasKey (e => e.ValueId);
+
+            entity.ToTable ("ParamRole01");
+
+            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
+            entity.Property (e => e.EmpId).HasColumnName ("Emp_Id");
+            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+        });
+
+        modelBuilder.Entity<ParamRole00> (entity =>
+        {
+            entity.HasKey (e => e.ValueId);
+
+            entity.ToTable ("ParamRole00");
+
+            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
+            entity.Property (e => e.EmpId).HasColumnName ("Emp_Id");
+            entity.Property (e => e.EntityLevel).IsUnicode (false);
+            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+        });
+
+        modelBuilder.Entity<ParamRoleEntityLevel00> (entity =>
+        {
+            entity.ToTable ("ParamRoleEntityLevel00");
+        });
+
+        modelBuilder.Entity<BranchDetail> (entity =>
+        {
+            entity
+                .HasNoKey ( )
+                .ToView ("BranchDetails");
+
+            entity.Property (e => e.Branch).IsUnicode (false);
+            entity.Property (e => e.LinkId).HasColumnName ("LinkID");
+        });
+
 
         OnModelCreatingPartial (modelBuilder);
     }
