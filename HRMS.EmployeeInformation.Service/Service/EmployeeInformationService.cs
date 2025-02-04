@@ -158,6 +158,11 @@ namespace HRMS.EmployeeInformation.Service.Service
             {
             return await _employeeRepository.BindWorkFlowMasterEmp (linkId, linkLevel);
             }
+        
+        public async Task<List<TransferAndPromotionDto>> TransferAndPromotion(int employeeid)
+        {
+            return await _employeeRepository.TransferAndPromotion(employeeid);
         }
+    }
 
 }
