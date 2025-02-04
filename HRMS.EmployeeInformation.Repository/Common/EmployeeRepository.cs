@@ -2487,7 +2487,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                               Extension = a.Extension,
                                               EMail = a.OfficialEmail,
                                               PersonalEMail = a.PersonalEmail,
-                                              Status =  "A"
+                                              Status = "A"
 
 
                                           }).ToListAsync();
@@ -3159,7 +3159,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 years--;
             }
 
-              tempDate = tempDate.AddMonths(months);
+            tempDate = tempDate.AddMonths(months);
 
             int days = (toDate - tempDate).Days;
 
@@ -3736,7 +3736,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
 
-        public async Task<List<AllDocumentsDto>> Documents(int employeeId,List<string> excludedDocTypes)
+        public async Task<List<AllDocumentsDto>> Documents(int employeeId, List<string> excludedDocTypes)
         {
 
             var tempDocumentFill = from a in _context.ReasonMasterFieldValues
@@ -3802,7 +3802,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     ).OrderBy(x => x.DocID).ToListAsync();
 
 
-            
+
 
             var docList = await (from a in _context.HrmsDocument00s
                                  join b in _context.HrmsDocTypeMasters on (a.DocType.HasValue ? (long)a.DocType.Value : -1L) equals b.DocTypeId
@@ -3904,78 +3904,78 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         {
             var enableWeddingDate = await GetDefaultCompanyParameter(employeeid, "ENABLEWEDDINGDATE", "EMP1");
 
-            var employeeDetails = await(from a in _context.HrEmpMasters
-                                        join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId
-                                        join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into personalEmailGroup
-                                        from b in personalEmailGroup.DefaultIfEmpty()
-                                        join d in _context.AdmCountryMasters on c.Country equals d.CountryId into countryGroup
-                                        from d in countryGroup.DefaultIfEmpty()
-                                        join e in _context.AdmCountryMasters on c.Nationality equals e.CountryId into nationalityGroup
-                                        from e in nationalityGroup.DefaultIfEmpty()
-                                        join f in _context.AdmCountryMasters on c.CountryOfBirth equals f.CountryId into countryOfBirthGroup
-                                        from f in countryOfBirthGroup.DefaultIfEmpty()
-                                        join g in _context.AdmReligionMasters on c.Religion equals g.ReligionId into religionGroup
-                                        from g in religionGroup.DefaultIfEmpty()
-                                        where a.EmpId == employeeid
-                                        select new PersonalDetailsDto
-                                        {
-                                            DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString("dd/MM/yyyy") : "NA",
+            var employeeDetails = await (from a in _context.HrEmpMasters
+                                         join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId
+                                         join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into personalEmailGroup
+                                         from b in personalEmailGroup.DefaultIfEmpty()
+                                         join d in _context.AdmCountryMasters on c.Country equals d.CountryId into countryGroup
+                                         from d in countryGroup.DefaultIfEmpty()
+                                         join e in _context.AdmCountryMasters on c.Nationality equals e.CountryId into nationalityGroup
+                                         from e in nationalityGroup.DefaultIfEmpty()
+                                         join f in _context.AdmCountryMasters on c.CountryOfBirth equals f.CountryId into countryOfBirthGroup
+                                         from f in countryOfBirthGroup.DefaultIfEmpty()
+                                         join g in _context.AdmReligionMasters on c.Religion equals g.ReligionId into religionGroup
+                                         from g in religionGroup.DefaultIfEmpty()
+                                         where a.EmpId == employeeid
+                                         select new PersonalDetailsDto
+                                         {
+                                             DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString("dd/MM/yyyy") : "NA",
 
-                                            Wedding_Date = Convert.ToInt32(enableWeddingDate) == 1 ? (c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : "") : "",
-                                            EMail = b.PersonalEmail ?? "",
-                                            CountryID = c.Country,
-                                            NationalityID = c.Nationality,
-                                            CountryOfBirthID = c.CountryOfBirth,
-                                            Blood_Grp = c.BloodGrp ?? "",
-                                            ReligionID = c.Religion,
-                                            Religion_Name = g.ReligionName ?? "",
-                                            Ident_Mark = c.IdentMark ?? "",
-                                            Height = c.Height ?? "",
-                                            Weight = c.Weight ?? "",
-                                            GenderID = c.Gender,
-                                            Gender = c.Gender == "M" ? "Male" : c.Gender == "F" ? "Female" : c.Gender == "O" ? "Others" : "",
-                                            Marital_Status = c.MaritalStatus == "S" ? "Single" :
-                                                            c.MaritalStatus == "M" ? "Married" :
-                                                            c.MaritalStatus == "W" ? "Widowed" :
-                                                            c.MaritalStatus == "X" ? "Separated" :
-                                                            c.MaritalStatus == "D" ? "Divorcee" : "",
-                                            Marital_StatusID = c.MaritalStatus,
-                                            Guardians_Name = a.GuardiansName ?? "",
-                                            Country = d.CountryName ?? "",
-                                            Nationality = e.CountryName ?? "",
-                                            CountryOfBirth = f.CountryName ?? "",
-                                            bloodgroupnew = string.IsNullOrEmpty(c.BloodGrp) ? "" :
-                                                            c.BloodGrp == "HH" ? "HH Group" : c.BloodGrp + "ve"
-                                        }).ToListAsync();
+                                             Wedding_Date = Convert.ToInt32(enableWeddingDate) == 1 ? (c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : "") : "",
+                                             EMail = b.PersonalEmail ?? "",
+                                             CountryID = c.Country,
+                                             NationalityID = c.Nationality,
+                                             CountryOfBirthID = c.CountryOfBirth,
+                                             Blood_Grp = c.BloodGrp ?? "",
+                                             ReligionID = c.Religion,
+                                             Religion_Name = g.ReligionName ?? "",
+                                             Ident_Mark = c.IdentMark ?? "",
+                                             Height = c.Height ?? "",
+                                             Weight = c.Weight ?? "",
+                                             GenderID = c.Gender,
+                                             Gender = c.Gender == "M" ? "Male" : c.Gender == "F" ? "Female" : c.Gender == "O" ? "Others" : "",
+                                             Marital_Status = c.MaritalStatus == "S" ? "Single" :
+                                                             c.MaritalStatus == "M" ? "Married" :
+                                                             c.MaritalStatus == "W" ? "Widowed" :
+                                                             c.MaritalStatus == "X" ? "Separated" :
+                                                             c.MaritalStatus == "D" ? "Divorcee" : "",
+                                             Marital_StatusID = c.MaritalStatus,
+                                             Guardians_Name = a.GuardiansName ?? "",
+                                             Country = d.CountryName ?? "",
+                                             Nationality = e.CountryName ?? "",
+                                             CountryOfBirth = f.CountryName ?? "",
+                                             bloodgroupnew = string.IsNullOrEmpty(c.BloodGrp) ? "" :
+                                                             c.BloodGrp == "HH" ? "HH Group" : c.BloodGrp + "ve"
+                                         }).ToListAsync();
 
             return employeeDetails;
         }
 
         public async Task<List<TrainingDto>> Training(int employeeid)
         {
-            var result = await(from hem in _context.HrEmpMasters
-                               join ts in _context.TrainingSchedules on hem.EmpId equals ts.EmpId
-                               join tm in _context.TrainingMasters on ts.TrMasterId equals tm.TrMasterId
-                               join tm01 in _context.TrainingMaster01s on tm.TrMasterId equals tm01.TrMasterId into tm01Join
-                               from tm01 in tm01Join.DefaultIfEmpty()
-                               where hem.EmpId == employeeid && ts.SelectStatus == "S" && tm.Active == "Y"
-                               select new TrainingDto
-                               {
-                                   Emp_Id = hem.EmpId,
-                                   trMasterId = Convert.ToInt32(tm.TrMasterId),
-                                   Emp_Code = hem.EmpCode,
-                                   trName = tm.TrName,
-                                   FileUrl = tm01.FileUrl,
-                                   FileUpdId = tm01.FileUpdId,
-                                   FileName = tm01.FileName,
-                                   EmpName = hem.FirstName,//(hem.First_Name ?? " ") + " " + (hem.Middle_Name ?? " ") + " " + (hem.Last_Name ?? " "),
-                                   IsSurvey = tm.IsSurvey,
-                                   Survey = tm.Survey,
-                                   Join_Dt = hem.JoinDt,
-                                   selectStatus = ts.SelectStatus,
-                                   AttDate = ts.AttDate.HasValue ? ts.AttDate.Value.ToString("dd/MM/yyyy") : "NA",
-                                   IsAttended = ts.Status == "N" ? "NE" : "A"
-                               }).ToListAsync();
+            var result = await (from hem in _context.HrEmpMasters
+                                join ts in _context.TrainingSchedules on hem.EmpId equals ts.EmpId
+                                join tm in _context.TrainingMasters on ts.TrMasterId equals tm.TrMasterId
+                                join tm01 in _context.TrainingMaster01s on tm.TrMasterId equals tm01.TrMasterId into tm01Join
+                                from tm01 in tm01Join.DefaultIfEmpty()
+                                where hem.EmpId == employeeid && ts.SelectStatus == "S" && tm.Active == "Y"
+                                select new TrainingDto
+                                {
+                                    Emp_Id = hem.EmpId,
+                                    trMasterId = Convert.ToInt32(tm.TrMasterId),
+                                    Emp_Code = hem.EmpCode,
+                                    trName = tm.TrName,
+                                    FileUrl = tm01.FileUrl,
+                                    FileUpdId = tm01.FileUpdId,
+                                    FileName = tm01.FileName,
+                                    EmpName = hem.FirstName,//(hem.First_Name ?? " ") + " " + (hem.Middle_Name ?? " ") + " " + (hem.Last_Name ?? " "),
+                                    IsSurvey = tm.IsSurvey,
+                                    Survey = tm.Survey,
+                                    Join_Dt = hem.JoinDt,
+                                    selectStatus = ts.SelectStatus,
+                                    AttDate = ts.AttDate.HasValue ? ts.AttDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                    IsAttended = ts.Status == "N" ? "NE" : "A"
+                                }).ToListAsync();
 
             return result;
         }
@@ -3988,7 +3988,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 {
                     DaysWorked = EF.Functions.DateDiffDay(empProf.JoinDt, empProf.LeavingDt) ?? 0
                 })
-                .ToList(); 
+                .ToList();
 
             var previousExp = new
             {
@@ -4004,7 +4004,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 {
                     RelevantDays = EF.Functions.DateDiffDay(empMaster.FirstEntryDate, DateTime.UtcNow) ?? 0
                 })
-                .FirstOrDefault(); 
+                .FirstOrDefault();
 
             var companyExpResult = new
             {
@@ -4062,23 +4062,23 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         }
 
-       public async Task<List<object>> BiometricDetails(int employeeId)
+        public async Task<List<object>> BiometricDetails(int employeeId)
         {
             var result = await (from a in _context.BiometricsDtls
                                 join b in _context.HrEmpMasters on a.EmployeeId equals b.EmpId into bio
                                 from b in bio.DefaultIfEmpty()
                                 where a.EmployeeId == employeeId
-                                select new 
+                                select new
                                 {
                                     CompanyID = a.CompanyId.ToString(),
-                                    EmployeeID= a.EmployeeId.ToString(),
-                                    DeviceID=a.DeviceId.ToString(),
-                                    UserID= a.UserId,
+                                    EmployeeID = a.EmployeeId.ToString(),
+                                    DeviceID = a.DeviceId.ToString(),
+                                    UserID = a.UserId,
                                     AttMarkId = b != null && b.IsMarkAttn.HasValue
-                                    ? (b.IsMarkAttn.Value ? "1" : "2"):""
+                                    ? (b.IsMarkAttn.Value ? "1" : "2") : ""
                                 }).ToListAsync();
             return result.Cast<object>().ToList();
-       }
+        }
 
         public async Task<List<object>> AccessDetails(int employeeId)
         {
@@ -4297,8 +4297,69 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             }
 
 
+        public async Task<List<TransferAndPromotionDto>> TransferAndPromotion(int employeeId)
+        {
+            var result = await (from c in _context.PositionHistories
+                                join e in _context.HighLevelViewTables on c.LastEntity equals e.LastEntityId
+                                join em in _context.EmployeeDetails on c.EmpId equals em.EmpId into empJoin
+                                from em in empJoin.DefaultIfEmpty()
+                                where c.EmpId == employeeId 
+                                orderby c.ToDate descending
+                                select new TransferAndPromotionDto
+                                {
+                                    BandID = (int)em.BandId,
+                                    BranchID = (int)em.BranchId,
+                                    CurrentStatus = (int)em.CurrentStatus,
+                                    DateOfBirth = (DateTime)em.DateOfBirth,
+                                    DepId = (int)em.DepId,
+                                    DesigId = (int)em.DesigId,
+                                    Emp_Code = em.EmpCode,
+                                    Emp_Id = em.EmpId,
+                                    Emp_status = (int)em.EmpStatus,
+                                    EmpEntity = em.EmpEntity,
+                                    EmpFirstEntity = em.EmpFirstEntity,
+                                    Gender = em.Gender,
+                                    GradeID = em.GradeId,
+                                    Guardians_Name = em.GuardiansName,
+                                    Inst_Id = em.InstId,
+                                    Join_Dt = em.JoinDt != null ? em.JoinDt.Value.ToString("dd/MM/yyyy") : null,
+                                    LastEntity = em.LastEntity,
+                                    Name = em.Name,
+                                    Probation_Dt = em.ProbationDt,
+                                    Position_Id = c.PositionId,
+                                    From_Date = c.FromDate != null ? c.FromDate.Value.ToString("dd/MM/yyyy") : null,
+                                    To_Date = c.ToDate != null ? c.ToDate.Value.ToString("dd/MM/yyyy") : null,
+                                    Status = c.Status,
+                                    LevelOneDescription = e.LevelOneDescription,
+                                    LevelOneId = e.LevelOneId,
+                                    LevelTwoDescription = e.LevelTwoDescription,
+                                    LevelTwoId = e.LevelTwoId,
+                                    LevelThreeDescription = e.LevelThreeDescription,
+                                    LevelThreeId = e.LevelThreeId,
+                                    LevelFourDescription = e.LevelFourDescription,
+                                    LevelFourId = e.LevelFourId,
+                                    LevelFiveDescription = e.LevelFiveDescription,
+                                    LevelFiveId = e.LevelFiveId,
+                                    LevelSixDescription = e.LevelSixDescription,
+                                    LevelSixId = e.LevelSixId,
+                                    LevelSevenDescription = e.LevelSevenDescription,
+                                    LevelSevenId = e.LevelSevenId,
+                                    LevelEightDescription = e.LevelEightDescription,
+                                    LevelEightId = e.LevelEightId,
+                                    LevelNineDescription = e.LevelNineDescription,
+                                    LevelNineId = e.LevelNineId,
+                                    LevelTenDescription = e.LevelTenDescription,
+                                    LevelTenId = e.LevelTenId,
+                                    LevelElevenDescription = e.LevelElevenDescription,
+                                    LevelElevenId = e.LevelElevenId,
+                                    LevelTwelveDescription = e.LevelTwelveDescription,
+                                    LevelTwelveId = e.LevelTwelveId,
+                                    LastEntityID = e.LastEntityId
+                                }).ToListAsync();
 
+            return result;
 
         }
+    }
 }
 

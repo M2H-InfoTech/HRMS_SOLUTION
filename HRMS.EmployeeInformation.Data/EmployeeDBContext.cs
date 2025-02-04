@@ -171,6 +171,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<ParamWorkFlow01> ParamWorkFlow01s { get; set; }
     public virtual DbSet<WorkFlowDetail> WorkFlowDetails { get; set; }
     public virtual DbSet<EntityApplicable01> EntityApplicable01s { get; set; }
+    public virtual DbSet<PositionHistory> PositionHistories { get; set; }
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -2700,6 +2701,31 @@ public partial class EmployeeDBContext : DbContext
             entity.ToTable ("EntityApplicable01");
 
             entity.Property (e => e.EntryDate).HasColumnType ("datetime");
+        });
+        modelBuilder.Entity<PositionHistory>(entity =>
+        {
+            entity.HasKey(e => e.PositionId);
+
+            entity.ToTable("Position_History");
+
+            entity.Property(e => e.PositionId).HasColumnName("Position_Id");
+            entity.Property(e => e.BandId).HasColumnName("BandID");
+            entity.Property(e => e.EmpId).HasColumnName("Emp_Id");
+            entity.Property(e => e.EmpStatus).HasColumnName("Emp_status");
+            entity.Property(e => e.FromDate)
+                .HasColumnType("datetime")
+                .HasColumnName("From_Date");
+            entity.Property(e => e.OldEmpCode)
+                .IsUnicode(false)
+                .HasColumnName("OldEmp_code");
+            entity.Property(e => e.Status)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.ToDate)
+                .HasColumnType("datetime")
+                .HasColumnName("To_Date");
+            entity.Property(e => e.TransferBatchId).HasColumnName("TransferBatchID");
+            entity.Property(e => e.TransferId).HasColumnName("TransferID");
         });
 
         OnModelCreatingPartial (modelBuilder);

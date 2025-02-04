@@ -268,5 +268,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var bindWorkFlowMasterEmp = await _employeeInformation.BindWorkFlowMasterEmp (linkId, linkLevel);
             return new JsonResult (bindWorkFlowMasterEmp);
             }
+        
+        [HttpGet]
+        public async Task<IActionResult> TransferAndPromotion(int employeeId)
+        {
+            var TransferAndPromotion = await _employeeInformation.TransferAndPromotion(employeeId);
+            return new JsonResult(TransferAndPromotion);
         }
+    }
 }
