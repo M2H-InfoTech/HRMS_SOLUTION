@@ -251,30 +251,38 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(AccessDetails);
         }
         [HttpGet]
-        public async Task<IActionResult> Fill_ModulesWorkFlow (int entityID, int linkId)
-            {
-            var fill_ModulesWorkFlow = await _employeeInformation.Fill_ModulesWorkFlow (entityID, linkId);
-            return new JsonResult (fill_ModulesWorkFlow);
-            }
+        public async Task<IActionResult> Fill_ModulesWorkFlow(int entityID, int linkId)
+        {
+            var fill_ModulesWorkFlow = await _employeeInformation.Fill_ModulesWorkFlow(entityID, linkId);
+            return new JsonResult(fill_ModulesWorkFlow);
+        }
         [HttpGet]
-        public async Task<IActionResult> Fill_WorkFlowMaster (int emp_Id, int roleId)
-            {
-            var fill_WorkFlowMaster = await _employeeInformation.Fill_WorkFlowMaster (emp_Id, roleId);
-            return new JsonResult (fill_WorkFlowMaster);
-            }
+        public async Task<IActionResult> Fill_WorkFlowMaster(int emp_Id, int roleId)
+        {
+            var fill_WorkFlowMaster = await _employeeInformation.Fill_WorkFlowMaster(emp_Id, roleId);
+            return new JsonResult(fill_WorkFlowMaster);
+        }
         [HttpGet]
-        public async Task<IActionResult> BindWorkFlowMasterEmp (int linkId, int linkLevel)
-            {
-            var bindWorkFlowMasterEmp = await _employeeInformation.BindWorkFlowMasterEmp (linkId, linkLevel);
-            return new JsonResult (bindWorkFlowMasterEmp);
-            }
-        
+        public async Task<IActionResult> BindWorkFlowMasterEmp(int linkId, int linkLevel)
+        {
+            var bindWorkFlowMasterEmp = await _employeeInformation.BindWorkFlowMasterEmp(linkId, linkLevel);
+            return new JsonResult(bindWorkFlowMasterEmp);
+        }
+
         [HttpGet]
         public async Task<IActionResult> TransferAndPromotion(int employeeId)
         {
             var TransferAndPromotion = await _employeeInformation.TransferAndPromotion(employeeId);
             return new JsonResult(TransferAndPromotion);
         }
+        [HttpGet]
+        public async Task<IActionResult> SalarySeries(int employeeId,string status)
+        {
+            var TransferAndPromotion = await _employeeInformation.SalarySeries(employeeId,status);
+            return new JsonResult(TransferAndPromotion);
+        }
+    
+
     
         [HttpGet]
         public async Task<IActionResult> GetRejoinReport (int employeeId)

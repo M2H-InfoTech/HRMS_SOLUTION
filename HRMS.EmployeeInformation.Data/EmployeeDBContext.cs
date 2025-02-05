@@ -173,6 +173,15 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<EntityApplicable01> EntityApplicable01s { get; set; }
     public virtual DbSet<HrEmpReportingHstry> HrEmpReportingHstries { get; set; }
     public virtual DbSet<PositionHistory> PositionHistories { get; set; }
+    public virtual DbSet<PayscaleRequest00> PayscaleRequest00s { get; set; }
+    public virtual DbSet<PayscaleRequest01> PayscaleRequest01s { get; set; }
+    public virtual DbSet<PayscaleRequest02> PayscaleRequest02s { get; set; }
+    public virtual DbSet<PayCodeMaster01> PayCodeMaster01s { get; set; }
+    public virtual DbSet<BranchDetail> BranchDetails { get; set; }
+    public virtual DbSet<EmployeeLatestPayrollPeriod> EmployeeLatestPayrollPeriods { get; set; }
+    public virtual DbSet<EmployeeLatestPayrollBatch> EmployeeLatestPayrollBatches { get; set; }
+    public virtual DbSet<Payroll00> Payroll00s { get; set; }
+    public virtual DbSet<PayCodeMaster00> PayCodeMaster00s { get; set; }
 
     public virtual DbSet<ParamRole02> ParamRole02s { get; set; }
     public virtual DbSet<Categorymasterparameter> Categorymasterparameters { get; set; }
@@ -180,7 +189,6 @@ public partial class EmployeeDBContext : DbContext
 
     public virtual DbSet<ParamRole00> ParamRole00s { get; set; }
     public virtual DbSet<ParamRoleEntityLevel00> ParamRoleEntityLevel00s { get; set; }
-    public virtual DbSet<BranchDetail> BranchDetails { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
         => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NOV-2-9-2024;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -2750,6 +2758,146 @@ public partial class EmployeeDBContext : DbContext
                 .HasColumnName("To_Date");
             entity.Property(e => e.TransferBatchId).HasColumnName("TransferBatchID");
             entity.Property(e => e.TransferId).HasColumnName("TransferID");
+        });
+        modelBuilder.Entity<PayscaleRequest01>(entity =>
+        {
+            entity.HasKey(e => e.PayRequest01Id).HasName("PK__Payscale__5433D06BA421AAEF");
+
+            entity.ToTable("PayscaleRequest01");
+
+            entity.Property(e => e.EffectiveDate).HasColumnType("datetime");
+            entity.Property(e => e.EmployeeStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.OverrideId).HasColumnName("OverrideID");
+            entity.Property(e => e.PayscaleSlab).HasColumnName("payscaleSlab");
+            entity.Property(e => e.RevisionFrom).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<PayscaleRequest02>(entity =>
+        {
+            entity.HasKey(e => e.PayRequestId02).HasName("PK__Payscale__2CEF8F36870E9E68");
+
+            entity.ToTable("PayscaleRequest02");
+        });
+        modelBuilder.Entity<PayCodeMaster01>(entity =>
+        {
+            entity.HasKey(e => e.PayCodeId).HasName("PK__PayCodeM__8D8AC6AA45A74F0F");
+
+            entity.ToTable("PayCodeMaster01");
+
+            entity.Property(e => e.ApplicableEsipf)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("ApplicableESIPF");
+            entity.Property(e => e.ApplicableValue)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.Code)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.CompPercentage)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.PayCode)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.PayCodeDescription).IsUnicode(false);
+            entity.Property(e => e.PayCodeMasterId).HasColumnName("PayCodeMasterID");
+            entity.Property(e => e.PayRollReportId).HasColumnName("PayRollReportID");
+            entity.Property(e => e.SortOrder)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Wpsorder).HasColumnName("WPSOrder");
+        });
+        modelBuilder.Entity<PayscaleRequest00>(entity =>
+        {
+            entity.HasKey(e => e.PayRequestId);
+
+            entity.ToTable("PayscaleRequest00");
+
+            entity.Property(e => e.BatchStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.EffectiveDate).HasColumnType("datetime");
+            entity.Property(e => e.EmployeeIds).IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FlowStatus)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.PayReqCode)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.RejectReason)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.RejectStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .IsFixedLength();
+        });
+        modelBuilder.Entity<BranchDetail>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("BranchDetails");
+
+            entity.Property(e => e.Branch).IsUnicode(false);
+            entity.Property(e => e.LinkId).HasColumnName("LinkID");
+        });
+        modelBuilder.Entity<EmployeeLatestPayrollPeriod>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_ID");
+
+            entity.ToTable("EmployeeLatestPayrollPeriod");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.PayrollPeriodId).HasColumnName("PayrollPeriodID");
+        });
+        modelBuilder.Entity<EmployeeLatestPayrollBatch>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Employee__3214EC2732A48C90");
+
+            entity.ToTable("EmployeeLatestPayrollBatch");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.PayrollBatchId).HasColumnName("PayrollBatchID");
+        });
+        modelBuilder.Entity<Payroll00>(entity =>
+        {
+            entity.HasKey(e => e.PayrollPeriodId).HasName("PK__Payroll0__06190D56835A23C6");
+
+            entity.ToTable("Payroll00");
+
+            entity.Property(e => e.PayrollPeriodId).HasColumnName("PayrollPeriodID");
+            entity.Property(e => e.Description)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.IsIndia).HasColumnName("Is_india");
+            entity.Property(e => e.PeriodCode)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<PayCodeMaster00>(entity =>
+        {
+            entity.HasKey(e => e.PayCodeMasterId).HasName("PK__PayCodeM__C06729EF010E6A30");
+
+            entity.ToTable("PayCodeMaster00");
+
+            entity.Property(e => e.PayCodeMasterId).HasColumnName("PayCodeMasterID");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.Description)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.Wpsformat).HasColumnName("WPSFormat");
         });
 
 

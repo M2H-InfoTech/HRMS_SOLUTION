@@ -124,7 +124,7 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.GetProfessionalByIdAsync(updateType, detailID, empID);
         }
 
-        public async Task <List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid)
+        public async Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid)
         {
             return await _employeeRepository.GetPersonalDetailsById(employeeid);
         }
@@ -146,41 +146,47 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.AccessDetails(employeeid);
         }
-        public async Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlow (int entityID, int linkId)
-            {
-            return await _employeeRepository.Fill_ModulesWorkFlow (entityID, linkId);
-            }
-        public async Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMaster (int emp_Id, int roleId)
-            {
-            return await _employeeRepository.Fill_WorkFlowMaster (emp_Id, roleId);
-            }
-        public async Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp (int linkId, int linkLevel)
-            {
-            return await _employeeRepository.BindWorkFlowMasterEmp (linkId, linkLevel);
-            }
-        public async Task<List<GetRejoinReportDto>> GetRejoinReport (int employeeId)
-            {
-            return await _employeeRepository.GetRejoinReport (employeeId);
-            }
-     public async Task<List<GetEmpReportingReportDto>> GetEmpReportingReport (int employeeId)
-            {
-            return await _employeeRepository.GetEmpReportingReport (employeeId);
-    }
-        
-        
+        public async Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlow(int entityID, int linkId)
+        {
+            return await _employeeRepository.Fill_ModulesWorkFlow(entityID, linkId);
+        }
+        public async Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMaster(int emp_Id, int roleId)
+        {
+            return await _employeeRepository.Fill_WorkFlowMaster(emp_Id, roleId);
+        }
+        public async Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp(int linkId, int linkLevel)
+        {
+            return await _employeeRepository.BindWorkFlowMasterEmp(linkId, linkLevel);
+        }
+        public async Task<List<GetRejoinReportDto>> GetRejoinReport(int employeeId)
+        {
+            return await _employeeRepository.GetRejoinReport(employeeId);
+        }
+        public async Task<List<GetEmpReportingReportDto>> GetEmpReportingReport(int employeeId)
+        {
+            return await _employeeRepository.GetEmpReportingReport(employeeId);
+        }
+
+
         public async Task<List<TransferAndPromotionDto>> TransferAndPromotion(int employeeid)
         {
             return await _employeeRepository.TransferAndPromotion(employeeid);
         }
-        public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails (int linkId, int linkLevel)
-            {
-            return await _employeeRepository.GetEmpWorkFlowRoleDetails (linkId, linkLevel);
-            }
-        
-     public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole (int entityID)
-            {
-            return await _employeeRepository.FillEmpWorkFlowRole (entityID);
-            }
-        
+        public async Task<List<SalarySeriesDto>> SalarySeries(int employeeid, string status)
+        {
+            return await _employeeRepository.SalarySeries(employeeid, status);
         }
+
+        public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails(int linkId, int linkLevel)
+        {
+            return await _employeeRepository.GetEmpWorkFlowRoleDetails(linkId, linkLevel);
+        }
+
+        public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole(int entityID)
+        {
+           return await _employeeRepository.FillEmpWorkFlowRole(entityID);
+        }
+
+
     }
+}
