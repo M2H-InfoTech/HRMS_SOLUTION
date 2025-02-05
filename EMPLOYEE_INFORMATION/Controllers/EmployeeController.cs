@@ -245,6 +245,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(BioDetails);
         }
         [HttpGet]
+        public async Task<IActionResult> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom,string? dateto)
+        {
+            var BioDetails = await _employeeInformation.AuditInformation(employeeIDs, empId, roleId, infotype, infoDesc, datefrom, dateto);
+            return new JsonResult(BioDetails);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> AccessDetails(int employeeId)
         {
             var AccessDetails = await _employeeInformation.AccessDetails(employeeId);

@@ -4572,6 +4572,225 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             
         }
+        private IQueryable<AuditInformationSubDto> GetAuditInformation(string employeeIDs, string infoCode, string informationLabel)
+        {
+            var employeeIdss = employeeIDs?.Split(',').Select(id => id.Trim()).ToList() ?? new List<string>();
+            return from a in _context.EditInfoHistories
+                   where employeeIdss.Contains(a.EmpId.ToString()) && a.InfoCode == infoCode
+                   select new AuditInformationSubDto
+                   {
+                       InfoID = (int)a.InfoId,
+                       Info01ID = a.Info01Id,
+                       EmpID = (int)a.EmpId,
+                       Information = informationLabel,
+                       NewValue = a.Value ?? "",
+                       OldValue = a.OldValue ?? "",
+                       UpdatedBy = a.UpdatedBy,
+                       UpdatedDate = a.UpdatedDate
+                   };
+        }
+        private IQueryable<AuditInformationSubDto> GetCountryAuditInformation(string employeeIDs, string infoCode, string informationLabel)
+        {
+            var employeeIdss = employeeIDs?.Split(',').Select(id => id.Trim()).ToList() ?? new List<string>();
+
+            return from a in _context.EditInfoHistories
+                   join b in _context.AdmCountryMasters on EF.Functions.Collate(a.Value, "SQL_Latin1_General_CP1_CI_AS") equals b.CountryId.ToString()
+                   join c in _context.AdmCountryMasters on EF.Functions.Collate(a.OldValue, "SQL_Latin1_General_CP1_CI_AS") equals c.CountryId.ToString()
+                   where employeeIdss.Contains(a.EmpId.ToString()) && a.InfoCode == infoCode
+                   select new AuditInformationSubDto
+                   {
+                       InfoID = (int)a.InfoId,
+                       Info01ID = a.Info01Id,
+                       EmpID = (int)a.EmpId,
+                       Information = informationLabel,
+                       NewValue = a.Value ?? "",
+                       OldValue = a.OldValue ?? "",
+                       UpdatedBy = a.UpdatedBy,
+                       UpdatedDate = a.UpdatedDate
+                   };
+        }
+
+        public async Task<List<AuditInformationDto>> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
+        {
+            infoDesc = string.IsNullOrEmpty(infoDesc) ? "0" : infoDesc;
+            infotype = string.IsNullOrEmpty(infotype) ? "0" : infotype;
+            var employeeIdss = employeeIDs?.Split(',').Select(id => id.Trim()).ToList() ?? new List<string>();
+            if (string.IsNullOrEmpty(datefrom))
+            {
+                var joinDate = await _context.HrEmpMasters.Where(emp => employeeIdss.Contains(emp.EmpId.ToString())).Select(emp => emp.JoinDt).FirstOrDefaultAsync();
+
+                var dateFrom = joinDate?.ToString("yyyy-MM-dd");
+            }
+            var empDob = await GetAuditInformation(employeeIDs, "EMPDOB", "Date Of Birth").ToListAsync();
+            var joiningDate = await GetAuditInformation(employeeIDs, "JOINDATE", "Joining Date").ToListAsync();
+            var reviewDate = await GetAuditInformation(employeeIDs, "REVIEWDATE", "Review Date").ToListAsync();
+            var GratuityDate = await GetAuditInformation(employeeIDs, "GRATUITYDATE", "Gratuity Start Date").ToListAsync();
+            var EntryDate = await GetAuditInformation(employeeIDs, "FIRSTENTRYDATE", "First Entry Date").ToListAsync();
+            var EmpCode = await GetAuditInformation(employeeIDs, "EMPCODE", "Employee Code").ToListAsync();
+            var Country = await GetCountryAuditInformation(employeeIDs, "EMPCOUNTRY", "Country").ToListAsync();
+            var FirstName = await GetAuditInformation(employeeIDs, "FIRSTNAME", "First Name").ToListAsync();
+            var MiddleName = await GetAuditInformation(employeeIDs, "MIDDLENAME", "Middle Name").ToListAsync();
+            var LastName = await GetAuditInformation(employeeIDs, "LASTNAME", "Last Name").ToListAsync();
+            var GuardiansName = await GetAuditInformation(employeeIDs, "GUARDIANSNAME", "Guardians Name").ToListAsync();
+            var Gender = await GetAuditInformation(employeeIDs, "GENDER", "Gender").ToListAsync();
+            var maritalStatus = await GetAuditInformation(employeeIDs, "MARITAL", "Marital Status").ToListAsync();
+            var NationalId = await GetAuditInformation(employeeIDs, "NATIONALID", "National ID").ToListAsync();
+            var Passport = await GetAuditInformation(employeeIDs, "PASSPORTID", "Passport ID").ToListAsync();
+            var CompanyEmail = await GetAuditInformation(employeeIDs, "COMPANYMAIL", "Company Email").ToListAsync();
+            var PersonalEmail = await GetAuditInformation(employeeIDs, "PERSONALMAIL", "Personal Email").ToListAsync();
+            var Mobile = await GetAuditInformation(employeeIDs, "PERSONALMOBILE", "Personal Mobile").ToListAsync();
+            var HomeNo = await GetAuditInformation(employeeIDs, "HOMECOUNTRYPHONENO", "Home Country Phone Number").ToListAsync();
+            var Nationality = await GetCountryAuditInformation(employeeIDs, "NATIONALITY", "Nationality").ToListAsync();
+            var CountryName = await GetCountryAuditInformation(employeeIDs, "COUNTRYOFBIRTH", "Country of Birth").ToListAsync();
+            var BloodGroup = await GetAuditInformation(employeeIDs, "BLOODGROUP", "Blood Group").ToListAsync();
+
+
+            var Religion = await(
+             from a in _context.EditInfoHistories
+             join b in _context.AdmReligionMasters on Convert.ToInt32(a.Value) equals b.ReligionId
+             join c in _context.AdmReligionMasters on Convert.ToInt32(a.OldValue) equals c.ReligionId
+             where employeeIdss.Contains(a.EmpId.ToString()) && a.InfoCode == "RELIGION"
+             select new AuditInformationSubDto
+             {
+                 InfoID = (int)a.InfoId,
+                 Info01ID = a.Info01Id,
+                 EmpID = (int)a.EmpId,
+                 Information = "Religion",
+                 NewValue = a.Value == null ? "" : b.ReligionName,
+                 OldValue = a.OldValue == null ? "" : c.ReligionName,
+                 UpdatedBy = a.UpdatedBy,
+                 UpdatedDate = a.UpdatedDate
+             }).ToListAsync();
+
+            var Height = await GetAuditInformation(employeeIDs, "HEIGHT", "Height").ToListAsync();
+            var Weight = await GetAuditInformation(employeeIDs, "WEIGHT", "Weight").ToListAsync();
+
+
+            var Identification = await GetAuditInformation(employeeIDs, "IDENTIFICATION", "Identification Mark").ToListAsync();
+            var NoticePeriod = await GetAuditInformation(employeeIDs, "NOTICEPERIOD", "Notice Period").ToListAsync();
+            var AppNeeded = await GetAuditInformation(employeeIDs, "APPNEEDED", "Is Mobile App Needed").ToListAsync();
+            var Accomodation = await GetAuditInformation(employeeIDs, "COMPANYACCOMODATION", "Staying in Company Accomodation").ToListAsync();
+            var Expatriate = await GetAuditInformation(employeeIDs, "EXPATRIATE", "Is Expatriate").ToListAsync();
+            var CasualHoliday = await GetAuditInformation(employeeIDs, "CASUALHOLYDAY", "Enable Casual Holiday Leave").ToListAsync();
+            var Conveyance = await GetAuditInformation(employeeIDs, "COMPANYCONVEYANCE", "Company Conveyance").ToListAsync();
+            var Vehicle = await GetAuditInformation(employeeIDs, "COMPANYVEHICLE", "Company Vehicle").ToListAsync();
+            var ProbationNoticePeriod = await GetAuditInformation(employeeIDs, "PROBATIONNOTICEPERIOD", "Probation Notice Period").ToListAsync();
+            var IsProbation = await GetAuditInformation(employeeIDs, "ISPROBATION", "Is Probation").ToListAsync();
+            var ProbationStartDate = await GetAuditInformation(employeeIDs, "PROBATIONENDDATE", "Probation Start Date").ToListAsync();
+            var MealAllowanceDeduction = await GetAuditInformation(employeeIDs, "MEALALLOWANCEDEDUCTION", "Meal Allowance Deduction").ToListAsync();
+
+
+            var EmployeeReporting = await(
+                 from a in _context.EditInfoHistories
+                 join b in _context.EmployeeDetails on Convert.ToInt32(a.Value) equals b.EmpId
+                 join c in _context.EmployeeDetails on Convert.ToInt32(a.OldValue) equals c.EmpId
+                 where employeeIdss.Contains(a.EmpId.ToString()) && a.InfoCode == "EMPREPORTING"
+                 select new AuditInformationSubDto
+                 {
+                     InfoID = (int)a.InfoId,
+                     Info01ID = a.Info01Id,
+                     EmpID = (int)a.EmpId,
+                     Information = "Employee Reporting",
+                     NewValue = b.Name,
+                     OldValue = c.Name,
+                     UpdatedBy = a.UpdatedBy,
+                     UpdatedDate = a.UpdatedDate
+                 }).ToListAsync();
+
+
+
+            var Payscale = await(from a in _context.Payscale00s
+                                 join b in _context.EmployeeDetails on a.EmployeeId equals b.EmpId
+                                 join f in _context.PayscaleRequest00s on a.PayRequestId equals f.PayRequestId
+                                 join j in _context.EditInfoMaster01s on 1 equals 1
+                                 where j.Description == "Employee Payscale"
+                                       && employeeIdss.Contains(b.EmpId.ToString())
+                                 select new AuditInformationSubDto
+                                 {
+                                     InfoID = (int)j.InfoId,
+                                     Info01ID = j.Info01Id,
+                                     EmpID = b.EmpId,
+                                     Information = "Employee Payscale",
+                                     NewValue = a.EffectiveTo == null ? a.TotalEarnings.ToString() : "",
+                                     OldValue = a.EffectiveTo != null ? a.TotalEarnings.ToString() : "",
+                                     UpdatedBy = f.EntryBy,
+                                     UpdatedDate = a.EffectiveFrom
+                                 }).ToListAsync();
+            var EmployeeShift = await(from a in _context.ShiftMasterAccesses
+                                      join b in _context.EmployeeDetails on a.EmployeeId equals b.EmpId
+                                      join c in _context.HrShift00s on a.ShiftId equals c.ShiftId
+                                      from d in _context.EditInfoMaster01s.Where(d => d.Description == "Employee Shift") // Equivalent to CROSS JOIN
+                                      where employeeIdss.Contains(b.EmpId.ToString())
+                                      select new AuditInformationSubDto
+                                      {
+                                          InfoID = (int)d.InfoId,
+                                          Info01ID = d.Info01Id,
+                                          EmpID = b.EmpId,
+                                          Information = "Employee Shift",
+                                          NewValue = a.ValidDateTo == null ? c.ShiftName : "",
+                                          OldValue = a.ValidDateTo != null ? c.ShiftName : "",
+                                          UpdatedBy = a.CreatedBy,
+                                          UpdatedDate = a.ValidDatefrom
+                                      }).ToListAsync();
+
+
+
+
+            var query = (empDob).Concat(joiningDate).Concat(reviewDate).Concat(GratuityDate).Concat(EntryDate).Concat(EmpCode).Concat(Country).Concat(FirstName).Concat(MiddleName).Concat(LastName).Concat(GuardiansName).Concat(Gender).Concat(maritalStatus).Concat(NationalId).Concat(Passport).Concat(CompanyEmail).Concat(PersonalEmail).Concat(Mobile).Concat(HomeNo).Concat(Nationality).Concat(CountryName).Concat(BloodGroup).Concat(Religion).Concat(Height).Concat(Weight).Concat(Identification).Concat(NoticePeriod).Concat(AppNeeded).Concat(Accomodation).Concat(Expatriate).Concat(CasualHoliday).Concat(Conveyance).Concat(Vehicle).Concat(ProbationNoticePeriod).Concat(IsProbation).Concat(ProbationStartDate).Concat(MealAllowanceDeduction).Concat(EmployeeReporting).Concat(Payscale).Concat(EmployeeShift);
+
+
+            DateTime? startDate = null;
+            DateTime? endDate = null;
+
+            // Use HashSet for faster lookups
+            var infoDescs = new HashSet<int>(infoDesc.Split(',')
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => int.TryParse(id, out int parsedId) ? parsedId : 0)
+                .Where(id => id != 0)); // Remove default 0 values
+
+            var infotypes = new HashSet<int>(infotype.Split(',')
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => int.TryParse(id, out int parsedId) ? parsedId : 0)
+                .Where(id => id != 0));
+
+            var parsedEmployeeIds = new HashSet<int>(employeeIDs?.Split(',')
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => int.Parse(id.Trim())) ?? Enumerable.Empty<int>());
+
+            int.TryParse(infoDesc, out int parsedInfoDesc);
+            int.TryParse(infotype, out int parsedInfotype);
+
+            var result = (
+                from a in query
+                join b in _context.EmployeeDetails on a.EmpID equals b.EmpId
+                join c in _context.HrEmployeeUserRelations on a.UpdatedBy equals c.UserId
+                join d in _context.EmployeeDetails on c.EmpId equals d.EmpId
+                where
+                    (!startDate.HasValue || !endDate.HasValue || (a.UpdatedDate >= startDate && a.UpdatedDate <= endDate)) &&
+                    (parsedEmployeeIds.Count == 0 || parsedEmployeeIds.Contains(a.EmpID)) &&
+                    (parsedInfoDesc == 0 || infoDescs.Contains(parsedInfoDesc)) &&
+                    (parsedInfotype == 0 || infotypes.Contains(parsedInfotype))
+                orderby a.EmpID, a.UpdatedDate descending
+                select new AuditInformationDto
+                {
+                    InfoID = a.InfoID,
+                    Info01ID = a.Info01ID,
+                    EmpID = a.EmpID,
+                    EmpCode = b.EmpCode,
+                    Name = b.Name,
+                    InformationType = a.Information,
+                    OldValue = a.OldValue,
+                    NewValue = a.NewValue,
+                    UpdatedBy = d.Name,
+                    EffectiveFrom = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString("dd/MM/yyyy") : "NA",
+                    EffectiveTime = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString("HH:mm:ss") : "NA"
+                }
+            ).ToList();
+
+
+            return result;
+
+        }
     }
 }
 

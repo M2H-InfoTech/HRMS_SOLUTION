@@ -183,6 +183,11 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<Payroll00> Payroll00s { get; set; }
     public virtual DbSet<PayCodeMaster00> PayCodeMaster00s { get; set; }
 
+    public virtual DbSet<EditInfoHistory> EditInfoHistories { get; set; }
+
+    public virtual DbSet<EditInfoMaster01> EditInfoMaster01s { get; set; }
+
+    public virtual DbSet<HrShift00> HrShift00s { get; set; }
     public virtual DbSet<ParamRole02> ParamRole02s { get; set; }
     public virtual DbSet<Categorymasterparameter> Categorymasterparameters { get; set; }
     public virtual DbSet<ParamRole01> ParamRole01s { get; set; }
@@ -2554,6 +2559,80 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("UserID");
         });
+        modelBuilder.Entity<EditInfoHistory>(entity =>
+        {
+            entity.HasKey(e => e.InfoHistoryId).HasName("PK__EditInfo__C879104E2B85B6AB");
+
+            entity.ToTable("EditInfoHistory");
+
+            entity.Property(e => e.InfoHistoryId).HasColumnName("InfoHistoryID");
+            entity.Property(e => e.EmpId).HasColumnName("EmpID");
+            entity.Property(e => e.Info01Id).HasColumnName("Info01ID");
+            entity.Property(e => e.InfoCode)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.InfoId).HasColumnName("InfoID");
+            entity.Property(e => e.OldValue)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Value)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<EditInfoMaster01>(entity =>
+        {
+            entity.HasKey(e => e.Info01Id).HasName("PK__EditInfo__2D3D5212431B0514");
+
+            entity.ToTable("EditInfoMaster01");
+
+            entity.Property(e => e.Info01Id).HasColumnName("Info01ID");
+            entity.Property(e => e.Description)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.InfoCode)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.InfoId).HasColumnName("InfoID");
+            entity.Property(e => e.TableColumn)
+                .HasMaxLength(800)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<HrShift00>(entity =>
+        {
+            entity.HasKey(e => e.ShiftId).HasName("PK__HR_SHIFT__C0A838E123AB493F");
+
+            entity.ToTable("HR_SHIFT00");
+
+            entity.Property(e => e.ShiftId).HasColumnName("ShiftID");
+            entity.Property(e => e.CompanyId).HasColumnName("CompanyID");
+            entity.Property(e => e.EndwithNextDay)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.IsUpload)
+                .HasMaxLength(5)
+                .IsUnicode(false);
+            entity.Property(e => e.ShiftCode)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.ShiftName)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.ShiftType)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+        });
 
         modelBuilder.Entity<HrmHolidayMasterAccess>(entity =>
         {
@@ -2777,6 +2856,60 @@ public partial class EmployeeDBContext : DbContext
         modelBuilder.Entity<PayscaleRequest02>(entity =>
         {
             entity.HasKey(e => e.PayRequestId02).HasName("PK__Payscale__2CEF8F36870E9E68");
+
+        modelBuilder.Entity<PayscaleRequest00>(entity =>
+        {
+            entity.HasKey(e => e.PayRequestId);
+
+            entity.ToTable("PayscaleRequest00");
+
+            entity.Property(e => e.BatchStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.EffectiveDate).HasColumnType("datetime");
+            entity.Property(e => e.EmployeeIds).IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FlowStatus)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.PayReqCode)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.RejectReason)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.RejectStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .IsFixedLength();
+        });
+
+        modelBuilder.Entity<ShiftMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.ShiftAccessId).HasName("PK__SHIFT_MA__D343B905E36F048C");
+
+            entity.ToTable("SHIFT_MASTER_ACCESS");
+
+            entity.Property(e => e.ShiftAccessId).HasColumnName("ShiftAccessID");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.ApprovalStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
+            entity.Property(e => e.ShiftApprovalId).HasColumnName("ShiftApprovalID");
+            entity.Property(e => e.ShiftId).HasColumnName("ShiftID");
+            entity.Property(e => e.ValidDateTo).HasColumnType("datetime");
+            entity.Property(e => e.ValidDatefrom).HasColumnType("datetime");
+            entity.Property(e => e.WeekEndMasterId).HasColumnName("WeekEndMasterID");
+        });
+
 
             entity.ToTable("PayscaleRequest02");
         });
