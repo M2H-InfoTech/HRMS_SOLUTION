@@ -4471,15 +4471,15 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
         public async Task<List<SalarySeriesDto>> SalarySeries(int employeeId, string status)
         {
-            var payComponents = (from a in _context.PayscaleRequest01s
-                                 join b in _context.PayscaleRequest02s on a.PayRequest01Id equals b.PayRequestId01
-                                 join payCode in _context.PayCodeMaster01s on b.PayComponentId equals payCode.PayCodeId
-                                 where a.EmployeeId == employeeId
-                                 select new
-                                 {
-                                     b.PayType,
-                                     payCode.PayCodeDescription
-                                 }).Distinct().ToList();
+            var payComponents = await (from a in _context.PayscaleRequest01s
+                                       join b in _context.PayscaleRequest02s on a.PayRequest01Id equals b.PayRequestId01
+                                       join payCode in _context.PayCodeMaster01s on b.PayComponentId equals payCode.PayCodeId
+                                       where a.EmployeeId == employeeId
+                                       select new
+                                       {
+                                           b.PayType,
+                                           payCode.PayCodeDescription
+                                       }).Distinct().ToListAsync();
 
             var earningsDescriptions = payComponents
                 .Where(x => x.PayType == 1)
@@ -4493,84 +4493,92 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 .ToList();
             var allDescriptions = earningsDescriptions.Concat(deductionDescriptions).Distinct().ToList();
 
-            var pivoted = (from pr1 in _context.PayscaleRequest01s
-                           join pr2 in _context.PayscaleRequest02s on pr1.PayRequest01Id equals pr2.PayRequestId01
-                           join pcm in _context.PayCodeMaster01s on pr2.PayComponentId equals pcm.PayCodeId
-                           where pr1.EmployeeId == employeeId && (pr2.PayType == 1 || pr2.PayType == 2) && pr1.EmployeeStatus == status
-                           group pr2 by new { pr1.PayRequest01Id, pcm.PayCodeDescription } into g
-                           select new
-                           {
-                               g.Key.PayRequest01Id,
-                               g.Key.PayCodeDescription,
-                               Amount = (decimal?)g.Sum(x => x.Amount) ?? 0
-                           })
-                                  .AsEnumerable()
-                                  .GroupBy(x => x.PayRequest01Id)
-                                  .Select(g => new PayComponentPivotDto
-                                  {
-                                      PayRequestId01 = (int)g.Key,
-                                      PayCodeAmounts = earningsDescriptions.ToDictionary(
-                                          desc => desc,
-                                          desc => g.FirstOrDefault(x => x.PayCodeDescription == desc)?.Amount ?? 0
-                                      )
-                                  })
-                                  .ToList();
-            var pivotedDict = pivoted.ToDictionary(pe => pe.PayRequestId01, pe => pe.PayCodeAmounts);
 
-            var result = (from a in _context.PayscaleRequest00s
-                          join b in _context.PayscaleRequest01s on a.PayRequestId equals b.PayRequestId
-                          join c in _context.EmployeeDetails on b.EmployeeId equals c.EmpId
-                          join br in _context.BranchDetails on c.BranchId equals br.LinkId
-                          join d in _context.CurrencyMasters on a.CurrencyId equals d.CurrencyId
-                          join e in _context.PayscaleRequest02s on b.PayRequest01Id equals e.PayRequestId01
-                          join f in _context.PayCodeMaster01s on e.PayComponentId equals f.PayCodeId
-                          where b.EmployeeId == employeeId && b.EmployeeStatus == status
-                          orderby b.EffectiveDate ascending
-                          select new SalarySeriesDto
-                          {
-                              EmpId = c.EmpId,
-                              PayRequestId = (int)a.PayRequestId,
-                              PayRequest01Id = (int)b.PayRequest01Id,
-                              EmployeeCode = c.EmpCode,
-                              EmployeeName = c.Name,
-                              Branch = br.Branch,
-                              TotalEarnings = (decimal)b.TotalEarnings,
-                              TotalDeductions = (decimal)b.TotalDeductions,
-                              TotalPay = (decimal)b.TotalPay,
-                              EffectiveDate = b.EffectiveDate != null ? b.EffectiveDate.Value.ToString("dd/MM/yyyy") : null,
-                              CurrencyCode = d.CurrencyCode,
-                              IsArrears = (a.Type == 4) ? true : false,
-                              PaycodeBatch = (from elpb in _context.EmployeeLatestPayrollBatches
-                                              join pcm in _context.PayCodeMaster00s on elpb.PayrollBatchId equals pcm.PayCodeMasterId
-                                              where elpb.EmployeeId == employeeId
-                                              orderby elpb.EntryDate descending
-                                              select pcm.Description).FirstOrDefault() ?? "NA",
-                              PayPeriod = (from elpp in _context.EmployeeLatestPayrollPeriods
-                                           join p in _context.Payroll00s on elpp.PayrollPeriodId equals p.PayrollPeriodId
-                                           where elpp.EmployeeId == employeeId
-                                           orderby elpp.EntryDate descending
-                                           select p.Description).FirstOrDefault() ?? "NA",
-                              PayComponent = pivotedDict.ContainsKey((int)b.PayRequest01Id) ? pivotedDict[(int)b.PayRequest01Id] : new Dictionary<string, decimal>(),
-                              Remarks = b.PayscaleEmpRemarks
-                          }).Distinct().ToList();
+            var pivoted = await (from pr1 in _context.PayscaleRequest01s
+                                 join pr2 in _context.PayscaleRequest02s on pr1.PayRequest01Id equals pr2.PayRequestId01
+                                 join pcm in _context.PayCodeMaster01s on pr2.PayComponentId equals pcm.PayCodeId
+                                 where pr1.EmployeeId == employeeId &&
+                                       (pr2.PayType == 1 || pr2.PayType == 2) &&
+                                       pr1.EmployeeStatus == status
+                                 group pr2 by new { pr1.PayRequest01Id, pcm.PayCodeDescription } into g
+                                 select new
+                                 {
+                                     g.Key.PayRequest01Id,
+                                     g.Key.PayCodeDescription,
+                                     Amount = (decimal?)g.Sum(x => x.Amount) ?? 0
+                                 })
+                        .ToListAsync();
+
+            var result1 = pivoted
+        .GroupBy(x => x.PayRequest01Id)
+        .Select(g => new PayComponentPivotDto
+        {
+            PayRequestId01 = (int)g.Key,
+            PayCodeAmounts = earningsDescriptions.ToDictionary(
+                desc => desc,
+                desc => g.FirstOrDefault(x => x.PayCodeDescription == desc)?.Amount ?? 0
+            )
+        })
+        .ToList();
+
+
+
+            var pivotedDict = result1.ToDictionary(pe => pe.PayRequestId01, pe => pe.PayCodeAmounts);
+
+            var result = await (from a in _context.PayscaleRequest00s
+                                join b in _context.PayscaleRequest01s on a.PayRequestId equals b.PayRequestId
+                                join c in _context.EmployeeDetails on b.EmployeeId equals c.EmpId
+                                join br in _context.BranchDetails on c.BranchId equals br.LinkId
+                                join d in _context.CurrencyMasters on a.CurrencyId equals d.CurrencyId
+                                join e in _context.PayscaleRequest02s on b.PayRequest01Id equals e.PayRequestId01
+                                join f in _context.PayCodeMaster01s on e.PayComponentId equals f.PayCodeId
+                                where b.EmployeeId == employeeId && b.EmployeeStatus == status
+                                orderby b.EffectiveDate ascending
+                                select new SalarySeriesDto
+                                {
+                                    EmpId = c.EmpId,
+                                    PayRequestId = (int)a.PayRequestId,
+                                    PayRequest01Id = (int)b.PayRequest01Id,
+                                    EmployeeCode = c.EmpCode,
+                                    EmployeeName = c.Name,
+                                    Branch = br.Branch,
+                                    TotalEarnings = (decimal)b.TotalEarnings,
+                                    TotalDeductions = (decimal)b.TotalDeductions,
+                                    TotalPay = (decimal)b.TotalPay,
+                                    EffectiveDate = b.EffectiveDate != null ? b.EffectiveDate.Value.ToString("dd/MM/yyyy") : null,
+                                    CurrencyCode = d.CurrencyCode,
+                                    IsArrears = (a.Type == 4) ? true : false,
+                                    PaycodeBatch = (from elpb in _context.EmployeeLatestPayrollBatches
+                                                    join pcm in _context.PayCodeMaster00s on elpb.PayrollBatchId equals pcm.PayCodeMasterId
+                                                    where elpb.EmployeeId == employeeId
+                                                    orderby elpb.EntryDate descending
+                                                    select pcm.Description).FirstOrDefault() ?? "NA",
+                                    PayPeriod = (from elpp in _context.EmployeeLatestPayrollPeriods
+                                                 join p in _context.Payroll00s on elpp.PayrollPeriodId equals p.PayrollPeriodId
+                                                 where elpp.EmployeeId == employeeId
+                                                 orderby elpp.EntryDate descending
+                                                 select p.Description).FirstOrDefault() ?? "NA",
+                                    PayComponent = pivotedDict.ContainsKey((int)b.PayRequest01Id) ? pivotedDict[(int)b.PayRequest01Id] : new Dictionary<string, decimal>(),
+                                    Remarks = b.PayscaleEmpRemarks
+                                }).Distinct().ToListAsync();
             return result;
 
         }
 
         public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole(int entityID)
         {
-            return  await(from b in _context.ParamRole00s
-                        join c in _context.ParamRoleEntityLevel00s on b.ValueId equals c.ValueId
-                        join d in _context.Categorymasterparameters on b.ParameterId equals d.ParameterId
-                        where c.EntityLevel == entityID && d.ShowRoleInEmployeeTab == 1
-                        select new FillEmpWorkFlowRoleDto
-                        {
-                            ValueId = b.ValueId,
-                            ParameterId = b.ParameterId,
-                            ParamDescription = d.ParamDescription
-                        }).ToListAsync();
+            return await (from b in _context.ParamRole00s
+                          join c in _context.ParamRoleEntityLevel00s on b.ValueId equals c.ValueId
+                          join d in _context.Categorymasterparameters on b.ParameterId equals d.ParameterId
+                          where c.EntityLevel == entityID && d.ShowRoleInEmployeeTab == 1
+                          select new FillEmpWorkFlowRoleDto
+                          {
+                              ValueId = b.ValueId,
+                              ParameterId = b.ParameterId,
+                              ParamDescription = d.ParamDescription
+                          }).ToListAsync();
 
-            
+
         }
         private IQueryable<AuditInformationSubDto> GetAuditInformation(string employeeIDs, string infoCode, string informationLabel)
         {
@@ -4699,39 +4707,39 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
 
-            var Payscale = await(from a in _context.Payscale00s
-                                 join b in _context.EmployeeDetails on a.EmployeeId equals b.EmpId
-                                 join f in _context.PayscaleRequest00s on a.PayRequestId equals f.PayRequestId
-                                 join j in _context.EditInfoMaster01s on 1 equals 1
-                                 where j.Description == "Employee Payscale"
-                                       && employeeIdss.Contains(b.EmpId.ToString())
-                                 select new AuditInformationSubDto
-                                 {
-                                     InfoID = (int)j.InfoId,
-                                     Info01ID = j.Info01Id,
-                                     EmpID = b.EmpId,
-                                     Information = "Employee Payscale",
-                                     NewValue = a.EffectiveTo == null ? a.TotalEarnings.ToString() : "",
-                                     OldValue = a.EffectiveTo != null ? a.TotalEarnings.ToString() : "",
-                                     UpdatedBy = f.EntryBy,
-                                     UpdatedDate = a.EffectiveFrom
-                                 }).ToListAsync();
-            var EmployeeShift = await(from a in _context.ShiftMasterAccesses
-                                      join b in _context.EmployeeDetails on a.EmployeeId equals b.EmpId
-                                      join c in _context.HrShift00s on a.ShiftId equals c.ShiftId
-                                      from d in _context.EditInfoMaster01s.Where(d => d.Description == "Employee Shift") // Equivalent to CROSS JOIN
-                                      where employeeIdss.Contains(b.EmpId.ToString())
-                                      select new AuditInformationSubDto
-                                      {
-                                          InfoID = (int)d.InfoId,
-                                          Info01ID = d.Info01Id,
-                                          EmpID = b.EmpId,
-                                          Information = "Employee Shift",
-                                          NewValue = a.ValidDateTo == null ? c.ShiftName : "",
-                                          OldValue = a.ValidDateTo != null ? c.ShiftName : "",
-                                          UpdatedBy = a.CreatedBy,
-                                          UpdatedDate = a.ValidDatefrom
-                                      }).ToListAsync();
+            var Payscale = await (from a in _context.Payscale00s
+                                  join b in _context.EmployeeDetails on a.EmployeeId equals b.EmpId
+                                  join f in _context.PayscaleRequest00s on a.PayRequestId equals f.PayRequestId
+                                  join j in _context.EditInfoMaster01s on 1 equals 1
+                                  where j.Description == "Employee Payscale"
+                                        && employeeIdss.Contains(b.EmpId.ToString())
+                                  select new AuditInformationSubDto
+                                  {
+                                      InfoID = (int)j.InfoId,
+                                      Info01ID = j.Info01Id,
+                                      EmpID = b.EmpId,
+                                      Information = "Employee Payscale",
+                                      NewValue = a.EffectiveTo == null ? a.TotalEarnings.ToString() : "",
+                                      OldValue = a.EffectiveTo != null ? a.TotalEarnings.ToString() : "",
+                                      UpdatedBy = f.EntryBy,
+                                      UpdatedDate = a.EffectiveFrom
+                                  }).ToListAsync();
+            var EmployeeShift = await (from a in _context.ShiftMasterAccesses
+                                       join b in _context.EmployeeDetails on a.EmployeeId equals b.EmpId
+                                       join c in _context.HrShift00s on a.ShiftId equals c.ShiftId
+                                       from d in _context.EditInfoMaster01s.Where(d => d.Description == "Employee Shift") // Equivalent to CROSS JOIN
+                                       where employeeIdss.Contains(b.EmpId.ToString())
+                                       select new AuditInformationSubDto
+                                       {
+                                           InfoID = (int)d.InfoId,
+                                           Info01ID = d.Info01Id,
+                                           EmpID = b.EmpId,
+                                           Information = "Employee Shift",
+                                           NewValue = a.ValidDateTo == null ? c.ShiftName : "",
+                                           OldValue = a.ValidDateTo != null ? c.ShiftName : "",
+                                           UpdatedBy = a.CreatedBy,
+                                           UpdatedDate = a.ValidDatefrom
+                                       }).ToListAsync();
 
 
 
