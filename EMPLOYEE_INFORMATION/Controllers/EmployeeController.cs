@@ -245,7 +245,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(BioDetails);
         }
         [HttpGet]
-        public async Task<IActionResult> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom,string? dateto)
+        public async Task<IActionResult> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
         {
             var BioDetails = await _employeeInformation.AuditInformation(employeeIDs, empId, roleId, infotype, infoDesc, datefrom, dateto);
             return new JsonResult(BioDetails);
@@ -283,45 +283,63 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(TransferAndPromotion);
         }
         [HttpGet]
-        public async Task<IActionResult> SalarySeries(int employeeId,string status)
+        public async Task<IActionResult> SalarySeries(int employeeId, string status)
         {
-            var TransferAndPromotion = await _employeeInformation.SalarySeries(employeeId,status);
+            var TransferAndPromotion = await _employeeInformation.SalarySeries(employeeId, status);
             return new JsonResult(TransferAndPromotion);
         }
-    
 
-    
+
+
         [HttpGet]
-        public async Task<IActionResult> GetRejoinReport (int employeeId)
-            {
-            var getRejoinReport = await _employeeInformation.GetRejoinReport (employeeId);
-            return new JsonResult (getRejoinReport);
-            }
+        public async Task<IActionResult> GetRejoinReport(int employeeId)
+        {
+            var getRejoinReport = await _employeeInformation.GetRejoinReport(employeeId);
+            return new JsonResult(getRejoinReport);
+        }
         [HttpGet]
-        public async Task<IActionResult> GetEmpReportingReport (int employeeId)
-            {
-            var getEmpReportingReport = await _employeeInformation.GetEmpReportingReport (employeeId);
-            return new JsonResult (getEmpReportingReport);
-            }
+        public async Task<IActionResult> GetEmpReportingReport(int employeeId)
+        {
+            var getEmpReportingReport = await _employeeInformation.GetEmpReportingReport(employeeId);
+            return new JsonResult(getEmpReportingReport);
+        }
         [HttpGet]
         public async Task<IActionResult> GetEmpWorkFlowRoleDetails(int linkId, int linkLevel)
-            {
-            var getEmpWorkFlowRoleDetails = await _employeeInformation.GetEmpWorkFlowRoleDetails ( linkId,  linkLevel);
-            return new JsonResult (getEmpWorkFlowRoleDetails);
-            }
+        {
+            var getEmpWorkFlowRoleDetails = await _employeeInformation.GetEmpWorkFlowRoleDetails(linkId, linkLevel);
+            return new JsonResult(getEmpWorkFlowRoleDetails);
+        }
 
         [HttpGet]
-        public async Task<IActionResult> FillEmpWorkFlowRole (int entityID)
-            {
-            var fillEmpWorkFlowRole = await _employeeInformation.FillEmpWorkFlowRole (entityID);
-            return new JsonResult (fillEmpWorkFlowRole);
-            }
-      //  [HttpGet]
+        public async Task<IActionResult> FillEmpWorkFlowRole(int entityID)
+        {
+            var fillEmpWorkFlowRole = await _employeeInformation.FillEmpWorkFlowRole(entityID);
+            return new JsonResult(fillEmpWorkFlowRole);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EmployeeType(int employeeId)
+        {
+            var employeeType = await _employeeInformation.EmployeeType(employeeId);
+            return new JsonResult(employeeType);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GeoSpacingTypeAndCriteria(string type)
+        {
+            var GeoSpacingType = await _employeeInformation.GeoSpacingTypeAndCriteria(type);
+            return new JsonResult(GeoSpacingType);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetGeoSpacing(int employeeid)
+        {
+            var GetGeoSpacing= await _employeeInformation.GetGeoSpacing(employeeid);
+            return new JsonResult(GetGeoSpacing);
+        }
+        //  [HttpGet]
         //public async Task<IActionResult> FillEmployeesBasedOnwWorkflow (int firstEntityId)
         //    {
         //    var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflow (firstEntityId);
         //    return new JsonResult (fillEmployeesBasedOnwWorkflow);
         //    }
 
-        }
     }
+}

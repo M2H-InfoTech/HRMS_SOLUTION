@@ -194,6 +194,20 @@ public partial class EmployeeDBContext : DbContext
 
     public virtual DbSet<ParamRole00> ParamRole00s { get; set; }
     public virtual DbSet<ParamRoleEntityLevel00> ParamRoleEntityLevel00s { get; set; }
+
+
+    public virtual DbSet<Geotagging00> Geotagging00s { get; set; }
+
+    public virtual DbSet<Geotagging00A> Geotagging00As { get; set; }
+
+    public virtual DbSet<Geotagging01> Geotagging01s { get; set; }
+
+    public virtual DbSet<Geotagging01A> Geotagging01As { get; set; }
+
+    public virtual DbSet<Geotagging02> Geotagging02s { get; set; }
+
+    public virtual DbSet<Geotagging02A> Geotagging02As { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
         => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NOV-2-9-2024;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -3098,7 +3112,101 @@ public partial class EmployeeDBContext : DbContext
             entity.Property (e => e.Branch).IsUnicode (false);
             entity.Property (e => e.LinkId).HasColumnName ("LinkID");
         });
+        modelBuilder.Entity<Geotagging00>(entity =>
+        {
+            entity.HasKey(e => e.GeoCompId).HasName("PK__Geotaggi__6F155C9C1629416B");
 
+            entity.ToTable("Geotagging00");
+
+            entity.Property(e => e.GeoCompId).HasColumnName("GeoCompID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.LevelId).HasColumnName("LevelID");
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<Geotagging00A>(entity =>
+        {
+            entity.HasKey(e => e.GeoCompAid).HasName("PK__Geotaggi__02617E62AE362FCC");
+
+            entity.ToTable("Geotagging00A");
+
+            entity.Property(e => e.GeoCompAid).HasColumnName("GeoCompAID");
+            entity.Property(e => e.GeoCompId).HasColumnName("GeoCompID");
+            entity.Property(e => e.Latitude)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.Longitude)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.Radius)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<Geotagging01>(entity =>
+        {
+            entity.HasKey(e => e.GeoEntityId).HasName("PK__Geotaggi__712CC4893B84D6CE");
+
+            entity.ToTable("Geotagging01");
+
+            entity.Property(e => e.GeoEntityId).HasColumnName("GeoEntityID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.LevelId).HasColumnName("LevelID");
+            entity.Property(e => e.LinkId).HasColumnName("LinkID");
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<Geotagging01A>(entity =>
+        {
+            entity.HasKey(e => e.GeoEntityAid).HasName("PK__Geotaggi__DB6475D20DE5DD81");
+
+            entity.ToTable("Geotagging01A");
+
+            entity.Property(e => e.GeoEntityAid).HasColumnName("GeoEntityAID");
+            entity.Property(e => e.GeoEntityId).HasColumnName("GeoEntityID");
+            entity.Property(e => e.Latitude)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.Longitude)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.Radius)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<Geotagging02>(entity =>
+        {
+            entity.HasKey(e => e.GeoEmpId).HasName("PK__Geotaggi__56C49986F19D9287");
+
+            entity.ToTable("Geotagging02");
+
+            entity.Property(e => e.GeoEmpId).HasColumnName("GeoEmpID");
+            entity.Property(e => e.EmpId).HasColumnName("EmpID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.LevelId).HasColumnName("LevelID");
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<Geotagging02A>(entity =>
+        {
+            entity.HasKey(e => e.GeoEmpAid).HasName("PK__Geotaggi__43E46D224C75468B");
+
+            entity.ToTable("Geotagging02A");
+
+            entity.Property(e => e.GeoEmpAid).HasColumnName("GeoEmpAID");
+            entity.Property(e => e.Coordinates).IsUnicode(false);
+            entity.Property(e => e.GeoEmpId).HasColumnName("GeoEmpID");
+            entity.Property(e => e.Latitude)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.Longitude)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.Radius)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+        });
 
         OnModelCreatingPartial (modelBuilder);
     }

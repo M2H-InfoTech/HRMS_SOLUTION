@@ -4653,7 +4653,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var BloodGroup = await GetAuditInformation(employeeIDs, "BLOODGROUP", "Blood Group").ToListAsync();
 
 
-            var Religion = await(
+            var Religion = await (
              from a in _context.EditInfoHistories
              join b in _context.AdmReligionMasters on Convert.ToInt32(a.Value) equals b.ReligionId
              join c in _context.AdmReligionMasters on Convert.ToInt32(a.OldValue) equals c.ReligionId
@@ -4688,7 +4688,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var MealAllowanceDeduction = await GetAuditInformation(employeeIDs, "MEALALLOWANCEDEDUCTION", "Meal Allowance Deduction").ToListAsync();
 
 
-            var EmployeeReporting = await(
+            var EmployeeReporting = await (
                  from a in _context.EditInfoHistories
                  join b in _context.EmployeeDetails on Convert.ToInt32(a.Value) equals b.EmpId
                  join c in _context.EmployeeDetails on Convert.ToInt32(a.OldValue) equals c.EmpId
@@ -4799,6 +4799,260 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result;
 
         }
+
+        public async Task<List<object>> EmployeeType(int employeeid)
+        {
+            var result = await (from emp in _context.HrEmpPersonals
+                                join a in _context.HrEmpMasters on emp.EmpId equals a.EmpId
+                                where emp.EmpId == employeeid
+                                select new
+                                {
+                                    Emp_Id = emp.EmpId,
+                                    EmployeeCode = a.EmpCode,
+                                    Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
+                                    EmployeeType = emp.EmployeeType
+                                }).ToListAsync();
+
+            return result.Cast<object>().ToList();
+        }
+
+        public async Task<List<object>> GeoSpacingTypeAndCriteria(string type)
+        {
+            var result = await _context.HrmValueTypes.Where(v => v.Type == type).Select(v => new { v.Value, v.Description }).ToListAsync();
+            return result.Cast<object>().ToList();
+        }
+        public async Task<List<GeoSpacingDto>> GetGeoSpacing(int employeeid)
+        {
+            
+
+            var query1 = await( from a in _context.Geotagging02s
+                         join b in _context.Geotagging02As on a.GeoEmpId equals b.GeoEmpId
+                         join c in _context.HrmValueTypes on new { Value = a.Geotype, Type = "GeoSpacingType" } equals new { c.Value, c.Type }
+                         join d in _context.HrmValueTypes on new { Value = b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { d.Value, d.Type }
+                         where a.EmpId == employeeid
+                         select new GeoSpacingDto
+                         {
+                             GeoEmpId = a.GeoEmpId,
+                             GeoEmpAid = b.GeoEmpAid,
+                             EmpId = a.EmpId,
+                             LevelId = a.LevelId,
+                             Geotype = a.Geotype,
+                             GeotypeCode = c.Code,
+                             GeotypeDescription = c.Description,
+                             GeoCriteria = b.GeoCriteria,
+                             GeoCriteriaCode = d.Code,
+                             GeoCriteriaDescription = d.Description,
+                             Latitude = b.Latitude ?? "",
+                             Longitude = b.Longitude ?? "",
+                             Radius = b.Radius ?? "",
+                             LiveTracking = a.LiveTracking,
+                             LocationId = (int?)b.LocationId ?? -1,
+                             GeoCoordinates = b.Coordinates
+                         }).ToListAsync();
+
+            if (query1.Any())
+            {
+                return query1.ToList();
+            }
+            else
+            {
+                var ctnew = SplitStrings_XML(_context.HrEmpMasters
+                     .Where(h => h.EmpId == Convert.ToInt32(employeeid))
+                     .Select(h => h.EmpEntity).FirstOrDefault(), ',')
+                    .Select((item, index) => new LinkItemDto
+                    {
+                        Item = item,
+                        LinkLevel = index + 2
+                    }).Where(c => !string.IsNullOrEmpty(c.Item));
+
+                var query2 = await Task.Run(() => (from f in ctnew
+                                                   join b in _context.Geotagging01s on Convert.ToInt32(f.Item) equals b.LinkId
+                                                   join c in _context.Geotagging01As on b.GeoEntityId equals c.GeoEntityId
+                                                   join d in _context.HrmValueTypes on new { Value = b.Geotype, Type = "GeoSpacingType" } equals new { d.Value, d.Type }
+                                                   join e in _context.HrmValueTypes on new { Value = c.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { e.Value, e.Type }
+                                                   select new GeoSpacingDto
+                                                   {
+                                                       GeoEmpId = b.GeoEntityId,
+                                                       GeoEmpAid = c.GeoEntityAid,
+                                                       EmpId = Convert.ToInt32(employeeid),
+                                                       LevelId = b.LevelId,
+                                                       Geotype = b.Geotype,
+                                                       GeotypeCode = d.Code,
+                                                       GeotypeDescription = d.Description,
+                                                       GeoCriteria = c.GeoCriteria,
+                                                       GeoCriteriaCode = e.Code,
+                                                       GeoCriteriaDescription = e.Description,
+                                                       Latitude = c.Latitude ?? "",
+                                                       Longitude = c.Longitude ?? "",
+                                                       Radius = c.Radius ?? "",
+                                                       LiveTracking = b.LiveTracking,
+                                                       LocationId = (int?)c.LocationId ?? -1
+                                                   }).ToList());
+                //var query2 = await( from f in ctnew
+                //             join b in _context.Geotagging01s on Convert.ToInt32(f.Item) equals b.LinkId
+                //             join c in _context.Geotagging01As on b.GeoEntityId equals c.GeoEntityId
+                //             join d in _context.HrmValueTypes on new { Value = b.Geotype, Type = "GeoSpacingType" } equals new { d.Value, d.Type }
+                //             join e in _context.HrmValueTypes on new { Value = c.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { e.Value, e.Type }
+                //             select new GeoSpacingDto
+                //             {
+                //                 GeoEmpId = b.GeoEntityId,
+                //                 GeoEmpAid = c.GeoEntityAid,
+                //                 EmpId = Convert.ToInt32(employeeid),
+                //                 LevelId = b.LevelId,
+                //                 Geotype = b.Geotype,
+                //                 GeotypeCode = d.Code,
+                //                 GeotypeDescription = d.Description,
+                //                 GeoCriteria = c.GeoCriteria,
+                //                 GeoCriteriaCode = e.Code,
+                //                 GeoCriteriaDescription = e.Description,
+                //                 Latitude = c.Latitude ?? "",
+                //                 Longitude = c.Longitude ?? "",
+                //                 Radius = c.Radius ?? "",
+                //                 LiveTracking = b.LiveTracking,
+                //                 LocationId = (int?)c.LocationId ?? -1
+                //             }).ToList();
+
+                if (query2.Any())
+                {
+                    return query2.ToList();
+                }
+                else
+                {
+                    var query3 = await (from a in _context.Geotagging00s
+                                        join b in _context.Geotagging00As on a.GeoCompId equals b.GeoCompId
+                                        join c in _context.HrmValueTypes on new { Value = a.Geotype, Type = "GeoSpacingType" } equals new { c.Value, c.Type }
+                                        join d in _context.HrmValueTypes on new { Value = b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { d.Value, d.Type }
+                                        select new GeoSpacingDto
+                                        {
+                                            GeoEmpId = a.GeoCompId,
+                                            LevelId = a.LevelId,
+                                            Geotype = a.Geotype,
+                                            GeotypeCode = c.Code,
+                                            GeotypeDescription = c.Description,
+                                            GeoCriteria = b.GeoCriteria,
+                                            GeoCriteriaCode = d.Code,
+                                            GeoCriteriaDescription = d.Description,
+                                            Latitude = b.Latitude ?? "",
+                                            Longitude = b.Longitude ?? "",
+                                            Radius = b.Radius ?? "",
+                                            LiveTracking = a.LiveTracking,
+                                            LocationId = (int?)b.LocationId ?? -1
+                                        }).ToListAsync();
+
+                    return query3.ToList();
+                }
+            }
+        }
+
+
+        //       public async Task<object> GetGeoSpacing(string employeeid)
+        //       {
+
+        //           int empID = 269;
+
+        //           var query1 = from a in _context.Geotagging02s
+        //                        join b in _context.Geotagging02As on a.GeoEmpId equals b.GeoEmpId
+        //                        join c in _context.HrmValueTypes on new { Value = a.Geotype, Type = "GeoSpacingType" } equals new { c.Value, c.Type }
+        //                        join d in _context.HrmValueTypes on new { Value = b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { d.Value, d.Type }
+        //                        where a.EmpId == empID
+        //                        select new
+        //                        {
+        //                            a.GeoEmpId,
+        //                            b.GeoEmpAid,
+        //                            a.EmpId,
+        //                            a.LevelId,
+        //                            a.Geotype,
+        //                            GeotypeCode = c.Code,
+        //                            GeotypeDescription = c.Description,
+        //                            b.GeoCriteria,
+        //                            GeoCriteriaCode = d.Code,
+        //                            GeoCriteriaDescription = d.Description,
+        //                            Latitude = b.Latitude ?? "",
+        //                            Longitude = b.Longitude ?? "",
+        //                            Radius = b.Radius ?? "",
+        //                            a.LiveTracking,
+        //                            LocationId = (int?)b.LocationId ?? -1,
+        //                            GeoCoordinates = b.Coordinates
+        //                        };
+
+        //           if (query1.Any())
+        //           {
+        //               var result = query1.ToList();
+        //           }
+        //           else
+        //           {
+        //               var ctnew = SplitStrings_XML(_context.HrEmpMasters
+        //        .Where(h => h.EmpId == Convert.ToInt32(employeeid))
+        //        .Select(h => h.EmpEntity).FirstOrDefault(), ',')
+        //.Select((item, index) => new LinkItemDto
+        //{
+        //    Item = item,
+        //    LinkLevel = index + 2
+        //}).Where(c => !string.IsNullOrEmpty(c.Item));
+
+
+
+        //               var query2 = from f in ctnew
+        //                            join b in _context.Geotagging01s on Convert.ToInt32(f.Item) equals b.LinkId
+        //                            join c in _context.Geotagging01As on b.GeoEntityId equals c.GeoEntityId
+        //                            join d in _context.HrmValueTypes on new { Value = b.Geotype, Type = "GeoSpacingType" } equals new { d.Value, d.Type }
+        //                            join e in _context.HrmValueTypes on new { Value = c.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { e.Value, e.Type }
+        //                            select new
+        //                            {
+        //                                b.GeoEntityId,
+        //                                c.GeoEntityAid,
+        //                                Emp_Id = Convert.ToInt32(employeeid), // Assuming empID is the same as employeeid
+        //                                b.LinkId,
+        //                                b.LevelId,
+        //                                b.Geotype,
+        //                                GeotypeCode = d.Code,
+        //                                GeotypeDescription = d.Description,
+        //                                c.GeoCriteria,
+        //                                GeoCriteriaCode = e.Code,
+        //                                GeoCriteriaDescription = e.Description,
+        //                                Latitude = c.Latitude ?? "",
+        //                                Longitude = c.Longitude ?? "",
+        //                                Radius = c.Radius ?? "",
+        //                                b.LiveTracking,
+        //                                LocationId = (int?)c.LocationId ?? -1
+        //                            };
+
+        //               if (query2.Any())
+        //               {
+        //                   var result = query2.ToList();
+        //               }
+        //               else
+        //               {
+        //                   var query3 = await (from a in _context.Geotagging00s
+        //                                       join b in _context.Geotagging00As on a.GeoCompId equals b.GeoCompId
+        //                                       join c in _context.HrmValueTypes on new { Value = a.Geotype, Type = "GeoSpacingType" } equals new { c.Value, c.Type }
+        //                                       join d in _context.HrmValueTypes on new { Value = b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { d.Value, d.Type }
+        //                                       select new
+        //                                       {
+        //                                           a.GeoCompId,
+        //                                           a.LevelId,
+        //                                           a.Geotype,
+        //                                           GeotypeCode = c.Code,
+        //                                           GeotypeDescription = c.Description,
+        //                                           b.GeoCriteria,
+        //                                           GeoCriteriaCode = d.Code,
+        //                                           GeoCriteriaDescription = d.Description,
+        //                                           Latitude = b.Latitude ?? "",
+        //                                           Longitude = b.Longitude ?? "",
+        //                                           Radius = b.Radius ?? "",
+        //                                           a.LiveTracking,
+        //                                           LocationId = (int?)b.LocationId ?? -1
+        //                                       }).ToListAsync();
+
+        //                   var result = query3.ToList();
+
+
+        //               }
+        //               return result.Cast<object>().ToList();
+
+        //           }
+        //       }
     }
 }
+
 
