@@ -14,7 +14,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<EmployeeStatusResultDto> EmployeeStatus(int employeeId, string parameterCode, string type);
         Task<List<LanguageSkillResultDto>> LanguageSkill(int employeeId);
         Task<CommunicationResultDto> Communication(int employeeId);
-        Task<CommunicationExtraDto> CommunicationExtra(int employeeId); 
+        Task<CommunicationExtraDto> CommunicationExtra(int employeeId);
         Task<List<CommunicationEmergencyDto>> CommunicationEmergency(int employeeId);
         Task<List<string>> HobbiesData(int employeeId);
         Task<List<RewardAndRecognitionDto>> RewardAndRecognition(int employeeId);
@@ -42,20 +42,24 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> BiometricDetails(int employeeId);
         Task<List<object>> AccessDetails(int employeeId);
         Task<List<TransferAndPromotionDto>> TransferAndPromotion(int employeeId);
-        
-        Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlow (int entityID, int linkId);
-        Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMaster (int emp_Id, int roleId);
-        Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp (int linkId, int linkLevel);
-        Task <List<SalarySeriesDto>> SalarySeries(int employeeId, string status);
-   
-        Task<List<GetRejoinReportDto>> GetRejoinReport (int employeeId);
-        Task<List<GetEmpReportingReportDto>> GetEmpReportingReport (int employeeId);
-        Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails (int linkId, int linkLevel);
-        Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole (int entityID);
-   
-        Task<List<AuditInformationDto>> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom,
-      string? dateto);
 
-        }
+        Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlow(int entityID, int linkId);
+        Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMaster(int emp_Id, int roleId);
+        Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp(int linkId, int linkLevel);
+        Task<List<SalarySeriesDto>> SalarySeries(int employeeId, string status);
+
+        Task<List<GetRejoinReportDto>> GetRejoinReport(int employeeId);
+        Task<List<GetEmpReportingReportDto>> GetEmpReportingReport(int employeeId);
+        Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails(int linkId, int linkLevel);
+        Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole(int entityID);
+
+        Task<List<AuditInformationDto>> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto);
+
+        Task<List<object>> EmployeeType(int employeeid);
+
+        Task<List<object>> GeoSpacingTypeAndCriteria(string type);
+
+        Task<List<GeoSpacingDto>> GetGeoSpacing(int employeeid);
+    }
 
 }

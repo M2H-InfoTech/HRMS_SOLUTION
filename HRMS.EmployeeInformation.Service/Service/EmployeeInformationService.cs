@@ -180,7 +180,7 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.AuditInformation(employeeIDs, empId, roleId, infotype, infoDesc, datefrom, dateto);
         }
-    
+
 
         public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails(int linkId, int linkLevel)
         {
@@ -189,9 +189,22 @@ namespace HRMS.EmployeeInformation.Service.Service
 
         public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole(int entityID)
         {
-           return await _employeeRepository.FillEmpWorkFlowRole(entityID);
+            return await _employeeRepository.FillEmpWorkFlowRole(entityID);
         }
 
+        public async Task<List<object>> EmployeeType(int employeeid)
+        {
+            return await _employeeRepository.EmployeeType(employeeid);
+        }
 
+        public async Task<List<object>> GeoSpacingTypeAndCriteria(string type)
+        {
+            return await _employeeRepository.GeoSpacingTypeAndCriteria(type);
+        }
+
+        public async Task<List<GeoSpacingDto>> GetGeoSpacing(int employeeid)
+        {
+            return await _employeeRepository.GetGeoSpacing(employeeid);
+        }
     }
 }
