@@ -176,6 +176,11 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.SalarySeries(employeeid, status);
         }
+        public async Task<List<AuditInformationDto>> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
+        {
+            return await _employeeRepository.AuditInformation(employeeIDs, empId, roleId, infotype, infoDesc, datefrom, dateto);
+        }
+    
 
         public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails(int linkId, int linkLevel)
         {

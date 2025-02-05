@@ -59,6 +59,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails (int linkId, int linkLevel);
        Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole (int entityID);
        
+        Task<List<AuditInformationDto>> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom,
+string? dateto);
+
 
         }
     }
