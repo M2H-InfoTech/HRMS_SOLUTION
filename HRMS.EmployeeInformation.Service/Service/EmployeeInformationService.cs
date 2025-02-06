@@ -210,5 +210,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetGeoSpacing(employeeid);
         }
+        public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflow (int firstEntityId, int secondEntityId)
+            {
+            return await _employeeRepository.FillEmployeesBasedOnwWorkflow (firstEntityId, secondEntityId);
+            }
+
+        }
     }
-}

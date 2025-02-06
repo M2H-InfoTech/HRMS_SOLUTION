@@ -5048,6 +5048,17 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         //                                b.LiveTracking,
         //                                LocationId = (int?)c.LocationId ?? -1
         //                            };
+        public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflow (int firstEntityId, int secondEntityId)
+            {
+            // Step 1: Fetch data first, then apply SplitStrings_XML in memory
+            var entityAccessRights = await _context.EntityAccessRights02s
+                .Where (s => s.RoleId == firstEntityId)
+                .ToListAsync ( ); // Fetch first
+
+            var applicableFinal = entityAccessRights
+                .SelectMany (s => SplitStrings_XML (s.LinkId)
+                    .Select (item => new { Item = item, s.LinkLevel }))
+                .ToList ( ); // Apply in-memory processing
 
         //               if (query2.Any())
         //               {
@@ -5075,8 +5086,101 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         //                                           a.LiveTracking,
         //                                           LocationId = (int?)b.LocationId ?? -1
         //                                       }).ToListAsync();
+            // Step 2: Recursive CTE equivalent for employee hierarchy
+            var cteOrg = new HashSet<int> ( ); // Optimized lookup
+            var queue = new Queue<int> ( );
 
-        //                   var result = query3.ToList();
+            var initialEmp = await _context.HrEmpReportings
+                .Where (e => e.EmpId == secondEntityId)
+                .Select (e => e.ReprotToWhome == e.EmpId ? (int?)null : e.ReprotToWhome)
+                .FirstOrDefaultAsync ( );
+
+            if (initialEmp.HasValue)
+                {
+                queue.Enqueue (initialEmp.Value);
+                cteOrg.Add (initialEmp.Value);
+                }
+
+            while (queue.Count > 0)
+                {
+                var current = queue.Dequeue ( );
+                var subordinates = await _context.HrEmpReportings
+                    .Where (e => e.ReprotToWhome == current && e.ReprotToWhome != e.EmpId)
+                    .Select (e => e.EmpId)
+                    .ToListAsync ( );
+
+                foreach (var sub in subordinates)
+                    {
+                    if (!cteOrg.Contains (sub))
+                        {
+                        queue.Enqueue (sub);
+                        cteOrg.Add (sub);
+                        }
+                    }
+                }
+
+            
+
+            var hasRoleAccess = _context.EntityAccessRights02s
+     .Any (s => s.RoleId == firstEntityId && s.LinkLevel == 15);
+
+            var applicableHierarchyLevels = _context.EmployeeDetails
+                .Join (_context.HighLevelViewTables,
+                    d1 => d1.LastEntity,
+                    a => a.LastEntityId,
+                    (d1, a) => new { d1, a })
+                .Join (applicableFinal,
+                    _ => 1,
+                    _ => 1,
+                    (x, b) => new { x.d1, x.a, b })
+                .Where (joined =>
+                    (joined.b.LinkLevel == 1 && joined.a.LevelOneId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 2 && joined.a.LevelTwoId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 3 && joined.a.LevelThreeId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 4 && joined.a.LevelFourId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 5 && joined.a.LevelFiveId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 6 && joined.a.LevelSixId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 7 && joined.a.LevelSevenId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 8 && joined.a.LevelEightId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 9 && joined.a.LevelNineId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 10 && joined.a.LevelTenId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 11 && joined.a.LevelElevenId == int.Parse (joined.b.Item)) ||
+                    (joined.b.LinkLevel == 12 && joined.a.LevelTwelveId == int.Parse (joined.b.Item))
+                )
+                .Select (joined => joined.d1.EmpId);
+
+            var reportsToSecondEntity = _context.HrEmpReportings
+                .Where (hr => hr.ReprotToWhome == secondEntityId)
+                .Select (hr => hr.EmpId);
+
+            // Check if EntityAccessRights02s has the role and hierarchy enabled
+            var hasHierarchyAccess = _context.EntityAccessRights02s
+                .Any (s => s.RoleId == firstEntityId && s.Hierarchy == 1);
+
+            // Get all Employee IDs that exist in the hierarchical structure
+            var hierarchicalEmpIds = hasHierarchyAccess ? cteOrg.ToList ( ) : new List<int> ( );
+
+            // Main Query
+            var query = from d in _context.EmployeeDetails
+                        join e in _context.BranchDetails on d.BranchId equals e.LinkId
+                        where
+                            (hasRoleAccess ||
+                            applicableHierarchyLevels.Contains (d.EmpId) ||
+                            reportsToSecondEntity.Contains (d.EmpId) ||
+                            hierarchicalEmpIds.Contains (d.EmpId)) // Corrected usage
+                            && (d.SeperationStatus == 0 || d.SeperationStatus == -1)
+                            && !d.IsDelete
+                            && d.IsSave == 0
+                        select new FillEmployeesBasedOnwWorkflowDto
+                            {
+                            Emp_Id = d.EmpId,
+                            Employee = d.Name + " || " + d.EmpCode + " || " + e.Branch
+                            };
+
+
+
+            return await query.ToListAsync ( );
+            }
 
 
         //               }

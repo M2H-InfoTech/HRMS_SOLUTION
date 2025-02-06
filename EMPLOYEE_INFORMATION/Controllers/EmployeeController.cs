@@ -341,11 +341,17 @@ namespace EMPLOYEE_INFORMATION.Controllers
         //    return new JsonResult (fillEmployeesBasedOnwWorkflow);
         //    }
         [HttpGet]
-        public async Task<IActionResult> HraDetails(int employeeId)
-        {
-            var HraDetails = await _employeeInformation.HraDetails(employeeId);
-            return new JsonResult(HraDetails);
-        }
+        public async Task<IActionResult> HraDetails (int employeeId)
+            {
+            var HraDetails = await _employeeInformation.HraDetails (employeeId);
+            return new JsonResult (HraDetails);
+            }
+        [HttpGet]
+        public async Task<IActionResult> FillEmployeesBasedOnwWorkflow (int firstEntityId,int secondEntityId)
+            {
+            var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflow (firstEntityId, secondEntityId);
+            return new JsonResult (fillEmployeesBasedOnwWorkflow);
+            }
 
     }
 }

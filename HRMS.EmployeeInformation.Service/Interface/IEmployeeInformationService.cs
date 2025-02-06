@@ -55,7 +55,11 @@ namespace HRMS.EmployeeInformation.Service.Interface
 
         Task<List<AuditInformationDto>> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto);
 
-        Task<List<object>> EmployeeType(int employeeid);
+        Task<List<object>> EmployeeType(int employeeid);      
+   
+        Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflow (int firstEntityId, int secondEntityId);
+        
+
 
         Task<List<object>> GeoSpacingTypeAndCriteria(string type);
         Task<List<EmployeeHraDto>> HraDetails(int employeeId);

@@ -63,6 +63,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<List<object>> EmployeeType(int employeeid);
         Task<List<object>> GeoSpacingTypeAndCriteria(string type);
+        Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflow (int firstEntityId, int secondEntityId); 
 
         Task<List<GeoSpacingDto>> GetGeoSpacing(int employeeid);
         Task<List<EmployeeHraDto>> HraDetails(int employeeId);
