@@ -285,8 +285,8 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> SalarySeries(int employeeId, string status)
         {
-            var TransferAndPromotion = await _employeeInformation.SalarySeries(employeeId, status);
-            return new JsonResult(TransferAndPromotion);
+            var SalarySeries = await _employeeInformation.SalarySeries(employeeId, status);
+            return new JsonResult(SalarySeries);
         }
 
 
@@ -340,6 +340,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
         //    var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflow (firstEntityId);
         //    return new JsonResult (fillEmployeesBasedOnwWorkflow);
         //    }
+        [HttpGet]
+        public async Task<IActionResult> HraDetails(int employeeId)
+        {
+            var HraDetails = await _employeeInformation.HraDetails(employeeId);
+            return new JsonResult(HraDetails);
+        }
 
     }
 }
