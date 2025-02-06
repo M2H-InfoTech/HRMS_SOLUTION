@@ -191,6 +191,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.FillEmpWorkFlowRole(entityID);
         }
+        public async Task<List<EmployeeHraDto>> HraDetails(int employeeId)
+        {
+            return await _employeeRepository.HraDetails(employeeId);
+        }
 
         public async Task<List<object>> EmployeeType(int employeeid)
         {

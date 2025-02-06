@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.Design;
+﻿using System.ComponentModel;
+using System.ComponentModel.Design;
 using System.Diagnostics.Eventing.Reader;
 using AutoMapper;
 using EMPLOYEE_INFORMATION.Data;
@@ -4578,6 +4579,37 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                               ParamDescription = d.ParamDescription
                           }).ToListAsync();
 
+
+        }
+        public async Task<List<EmployeeHraDto>> HraDetails(int employeeId)
+        {
+            var hraHistory = await (from a in _context.HraHistories
+                                    join b in _context.EmployeeDetails on a.EmployeeId equals b.EmpId
+                                    where a.EmployeeId == employeeId && (a.Initial ?? 0) == 0
+                                    select new HraDetailsDto
+                                    {
+                                        EmpCode = b.EmpCode,
+                                        Name = b.Name,
+                                        IsHRA = a.IsHra ?? false,
+                                        HRAStatus = (a.IsHra ?? false) ? "Enabled" : "Disabled",
+                                        FromDate = a.FromDate.HasValue ? a.FromDate.Value.ToString("dd/MM/yyyy") : "",
+                                        ToDate = a.ToDate.HasValue ? a.ToDate.Value.ToString("dd/MM/yyyy") : "",
+                                        Remarks = a.Remarks ?? ""
+                                    }).ToListAsync();
+
+            var isHRA = await _context.HrEmpMasters
+                .Where(e => e.EmpId == employeeId)
+                .Select(e => e.Ishra)
+                .FirstOrDefaultAsync();
+
+            return new List<EmployeeHraDto>
+            {
+                new EmployeeHraDto
+                {
+                    HraHistory = hraHistory,
+                    IsHRA = isHRA
+                }
+            };
 
         }
         private IQueryable<AuditInformationSubDto> GetAuditInformation(string employeeIDs, string infoCode, string informationLabel)

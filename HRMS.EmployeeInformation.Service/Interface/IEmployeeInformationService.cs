@@ -58,7 +58,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> EmployeeType(int employeeid);
 
         Task<List<object>> GeoSpacingTypeAndCriteria(string type);
-
+        Task<List<EmployeeHraDto>> HraDetails(int employeeId);
         Task<List<GeoSpacingDto>> GetGeoSpacing(int employeeid);
     }
 

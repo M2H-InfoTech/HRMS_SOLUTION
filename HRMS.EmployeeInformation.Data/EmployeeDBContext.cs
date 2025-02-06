@@ -208,6 +208,7 @@ public partial class EmployeeDBContext : DbContext
 
     public virtual DbSet<Geotagging02A> Geotagging02As { get; set; }
 
+    public virtual DbSet<HraHistory> HraHistories { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
         => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NOV-2-9-2024;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -1586,47 +1587,47 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false);
         });
 
-                modelBuilder.Entity<HrEmpTechnical>(entity =>
-        {
-            entity.HasKey(e => e.TechId).HasName("PK__HR_EMP_T__F90BF03B205D1992");
+        modelBuilder.Entity<HrEmpTechnical>(entity =>
+{
+    entity.HasKey(e => e.TechId).HasName("PK__HR_EMP_T__F90BF03B205D1992");
 
-            entity.ToTable("HR_EMP_TECHNICAL");
+    entity.ToTable("HR_EMP_TECHNICAL");
 
-            entity.Property(e => e.TechId).HasColumnName("Tech_id");
-            entity.Property(e => e.ApprlId).HasColumnName("ApprlID");
-            entity.Property(e => e.Course)
-                .HasMaxLength(500)
-                .IsUnicode(false);
-            entity.Property(e => e.CourseDtls)
-                .HasMaxLength(500)
-                .IsUnicode(false)
-                .HasColumnName("Course_Dtls");
-            entity.Property(e => e.DurFrm)
-                .HasColumnType("datetime")
-                .HasColumnName("Dur_Frm");
-            entity.Property(e => e.DurTo)
-                .HasColumnType("datetime")
-                .HasColumnName("Dur_To");
-            entity.Property(e => e.EmpId).HasColumnName("Emp_Id");
-            entity.Property(e => e.EntryBy).HasColumnName("Entry_By");
-            entity.Property(e => e.EntryDt).HasColumnType("datetime");
-            entity.Property(e => e.InstId).HasColumnName("Inst_Id");
-            entity.Property(e => e.InstName)
-                .HasMaxLength(100)
-                .IsUnicode(false)
-                .HasColumnName("Inst_Name");
-            entity.Property(e => e.LangSkills)
-                .HasMaxLength(5000)
-                .IsUnicode(false)
-                .HasColumnName("langSkills");
-            entity.Property(e => e.MarkPer)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasColumnName("Mark_Per");
-            entity.Property(e => e.Year)
-                .HasMaxLength(10)
-                .IsUnicode(false);
-        });
+    entity.Property(e => e.TechId).HasColumnName("Tech_id");
+    entity.Property(e => e.ApprlId).HasColumnName("ApprlID");
+    entity.Property(e => e.Course)
+        .HasMaxLength(500)
+        .IsUnicode(false);
+    entity.Property(e => e.CourseDtls)
+        .HasMaxLength(500)
+        .IsUnicode(false)
+        .HasColumnName("Course_Dtls");
+    entity.Property(e => e.DurFrm)
+        .HasColumnType("datetime")
+        .HasColumnName("Dur_Frm");
+    entity.Property(e => e.DurTo)
+        .HasColumnType("datetime")
+        .HasColumnName("Dur_To");
+    entity.Property(e => e.EmpId).HasColumnName("Emp_Id");
+    entity.Property(e => e.EntryBy).HasColumnName("Entry_By");
+    entity.Property(e => e.EntryDt).HasColumnType("datetime");
+    entity.Property(e => e.InstId).HasColumnName("Inst_Id");
+    entity.Property(e => e.InstName)
+        .HasMaxLength(100)
+        .IsUnicode(false)
+        .HasColumnName("Inst_Name");
+    entity.Property(e => e.LangSkills)
+        .HasMaxLength(5000)
+        .IsUnicode(false)
+        .HasColumnName("langSkills");
+    entity.Property(e => e.MarkPer)
+        .HasMaxLength(20)
+        .IsUnicode(false)
+        .HasColumnName("Mark_Per");
+    entity.Property(e => e.Year)
+        .HasMaxLength(10)
+        .IsUnicode(false);
+});
 
         modelBuilder.Entity<ReasonMasterFieldValue>(entity =>
         {
@@ -2355,7 +2356,7 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
         });
 
-       
+
         modelBuilder.Entity<PersonalDetailsHistory>(entity =>
         {
             entity
@@ -2750,82 +2751,82 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.ValidToBs).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<ParamWorkFlow00> (entity =>
+        modelBuilder.Entity<ParamWorkFlow00>(entity =>
         {
-            entity.HasKey (e => e.ValueId);
+            entity.HasKey(e => e.ValueId);
 
-            entity.ToTable ("ParamWorkFlow00");
+            entity.ToTable("ParamWorkFlow00");
 
-            entity.Property (e => e.AdditionalRoleNotif).IsUnicode (false);
-            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
-            entity.Property (e => e.EntityLevel).IsUnicode (false);
-            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
-            entity.Property (e => e.RoleNotification).HasDefaultValue (0);
-            entity.Property (e => e.SecondLevelWorkflowId).HasDefaultValue (0);
+            entity.Property(e => e.AdditionalRoleNotif).IsUnicode(false);
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.EntityLevel).IsUnicode(false);
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.RoleNotification).HasDefaultValue(0);
+            entity.Property(e => e.SecondLevelWorkflowId).HasDefaultValue(0);
         });
 
-        modelBuilder.Entity<ParamWorkFlowEntityLevel00> (entity =>
+        modelBuilder.Entity<ParamWorkFlowEntityLevel00>(entity =>
         {
-            entity.ToTable ("ParamWorkFlowEntityLevel00");
+            entity.ToTable("ParamWorkFlowEntityLevel00");
         });
 
-        modelBuilder.Entity<ParamWorkFlow02> (entity =>
+        modelBuilder.Entity<ParamWorkFlow02>(entity =>
         {
-            entity.HasKey (e => e.ValueId);
+            entity.HasKey(e => e.ValueId);
 
-            entity.ToTable ("ParamWorkFlow02");
+            entity.ToTable("ParamWorkFlow02");
 
-            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
-            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<ParamWorkFlow01> (entity =>
+        modelBuilder.Entity<ParamWorkFlow01>(entity =>
         {
-            entity.HasKey (e => e.ValueId);
+            entity.HasKey(e => e.ValueId);
 
-            entity.ToTable ("ParamWorkFlow01");
+            entity.ToTable("ParamWorkFlow01");
 
-            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
-            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<WorkFlowDetail> (entity =>
+        modelBuilder.Entity<WorkFlowDetail>(entity =>
         {
-            entity.HasKey (e => e.WorkFlowId);
+            entity.HasKey(e => e.WorkFlowId);
 
-            entity.Property (e => e.Description).IsUnicode (false);
-            entity.Property (e => e.FinalRule).IsUnicode (false);
-            entity.Property (e => e.FinalRuleName).IsUnicode (false);
-            entity.Property (e => e.InstId).HasColumnName ("Inst_Id");
-            entity.Property (e => e.OldType).HasDefaultValue (0);
-            entity.Property (e => e.ReqNotifForProxy).HasDefaultValue (0);
-            entity.Property (e => e.TransactionDate).HasColumnType ("datetime");
+            entity.Property(e => e.Description).IsUnicode(false);
+            entity.Property(e => e.FinalRule).IsUnicode(false);
+            entity.Property(e => e.FinalRuleName).IsUnicode(false);
+            entity.Property(e => e.InstId).HasColumnName("Inst_Id");
+            entity.Property(e => e.OldType).HasDefaultValue(0);
+            entity.Property(e => e.ReqNotifForProxy).HasDefaultValue(0);
+            entity.Property(e => e.TransactionDate).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<EntityApplicable01> (entity =>
+        modelBuilder.Entity<EntityApplicable01>(entity =>
         {
-            entity.HasKey (e => e.ApplicableId);
+            entity.HasKey(e => e.ApplicableId);
 
-            entity.ToTable ("EntityApplicable01");
+            entity.ToTable("EntityApplicable01");
 
-            entity.Property (e => e.EntryDate).HasColumnType ("datetime");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<HrEmpReportingHstry> (entity =>
+        modelBuilder.Entity<HrEmpReportingHstry>(entity =>
         {
-            entity.HasKey (e => e.ReportHistId).HasName ("PK__HR_EMP_R__5FC67BAAF9C61086");
+            entity.HasKey(e => e.ReportHistId).HasName("PK__HR_EMP_R__5FC67BAAF9C61086");
 
-            entity.ToTable ("HR_EMP_REPORTING_HSTRY");
+            entity.ToTable("HR_EMP_REPORTING_HSTRY");
 
-            entity.Property (e => e.ReportHistId).HasColumnName ("ReportHistID");
-            entity.Property (e => e.EmpId).HasColumnName ("EmpID");
-            entity.Property (e => e.EntryDate).HasColumnType ("datetime");
-            entity.Property (e => e.FromDate).HasColumnType ("datetime");
-            entity.Property (e => e.InstId).HasColumnName ("inst_id");
-            entity.Property (e => e.ReportId).HasColumnName ("ReportID");
-            entity.Property (e => e.ResignationId).HasColumnName ("ResignationID");
-            entity.Property (e => e.ToDate).HasColumnType ("datetime");
-            entity.Property (e => e.UpdatedDate).HasColumnType ("datetime");
+            entity.Property(e => e.ReportHistId).HasColumnName("ReportHistID");
+            entity.Property(e => e.EmpId).HasColumnName("EmpID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FromDate).HasColumnType("datetime");
+            entity.Property(e => e.InstId).HasColumnName("inst_id");
+            entity.Property(e => e.ReportId).HasColumnName("ReportID");
+            entity.Property(e => e.ResignationId).HasColumnName("ResignationID");
+            entity.Property(e => e.ToDate).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
         });
         modelBuilder.Entity<PositionHistory>(entity =>
         {
@@ -3048,69 +3049,69 @@ public partial class EmployeeDBContext : DbContext
         });
 
 
-        modelBuilder.Entity<ParamRole02> (entity =>
+        modelBuilder.Entity<ParamRole02>(entity =>
         {
-            entity.HasKey (e => e.ValueId);
+            entity.HasKey(e => e.ValueId);
 
-            entity.ToTable ("ParamRole02");
+            entity.ToTable("ParamRole02");
 
-            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
-            entity.Property (e => e.EmpId).HasColumnName ("Emp_Id");
-            entity.Property (e => e.LinkEmpId).HasColumnName ("LinkEmp_Id");
-            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.EmpId).HasColumnName("Emp_Id");
+            entity.Property(e => e.LinkEmpId).HasColumnName("LinkEmp_Id");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
         });
 
 
-        modelBuilder.Entity<Categorymasterparameter> (entity =>
+        modelBuilder.Entity<Categorymasterparameter>(entity =>
         {
-            entity.HasKey (e => e.ParameterId);
+            entity.HasKey(e => e.ParameterId);
 
-            entity.ToTable ("CATEGORYMASTERPARAMETERS");
+            entity.ToTable("CATEGORYMASTERPARAMETERS");
 
-            entity.Property (e => e.ParameterId).HasColumnName ("ParameterID");
-            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
-            entity.Property (e => e.DataType).IsUnicode (false);
-            entity.Property (e => e.EntityId).HasColumnName ("EntityID");
-            entity.Property (e => e.InstId).HasColumnName ("Inst_Id");
-            entity.Property (e => e.ParamDescription).IsUnicode (false);
+            entity.Property(e => e.ParameterId).HasColumnName("ParameterID");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.DataType).IsUnicode(false);
+            entity.Property(e => e.EntityId).HasColumnName("EntityID");
+            entity.Property(e => e.InstId).HasColumnName("Inst_Id");
+            entity.Property(e => e.ParamDescription).IsUnicode(false);
         });
 
-        modelBuilder.Entity<ParamRole01> (entity =>
+        modelBuilder.Entity<ParamRole01>(entity =>
         {
-            entity.HasKey (e => e.ValueId);
+            entity.HasKey(e => e.ValueId);
 
-            entity.ToTable ("ParamRole01");
+            entity.ToTable("ParamRole01");
 
-            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
-            entity.Property (e => e.EmpId).HasColumnName ("Emp_Id");
-            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.EmpId).HasColumnName("Emp_Id");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<ParamRole00> (entity =>
+        modelBuilder.Entity<ParamRole00>(entity =>
         {
-            entity.HasKey (e => e.ValueId);
+            entity.HasKey(e => e.ValueId);
 
-            entity.ToTable ("ParamRole00");
+            entity.ToTable("ParamRole00");
 
-            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
-            entity.Property (e => e.EmpId).HasColumnName ("Emp_Id");
-            entity.Property (e => e.EntityLevel).IsUnicode (false);
-            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.EmpId).HasColumnName("Emp_Id");
+            entity.Property(e => e.EntityLevel).IsUnicode(false);
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<ParamRoleEntityLevel00> (entity =>
+        modelBuilder.Entity<ParamRoleEntityLevel00>(entity =>
         {
-            entity.ToTable ("ParamRoleEntityLevel00");
+            entity.ToTable("ParamRoleEntityLevel00");
         });
 
-        modelBuilder.Entity<BranchDetail> (entity =>
+        modelBuilder.Entity<BranchDetail>(entity =>
         {
             entity
-                .HasNoKey ( )
-                .ToView ("BranchDetails");
+                .HasNoKey()
+                .ToView("BranchDetails");
 
-            entity.Property (e => e.Branch).IsUnicode (false);
-            entity.Property (e => e.LinkId).HasColumnName ("LinkID");
+            entity.Property(e => e.Branch).IsUnicode(false);
+            entity.Property(e => e.LinkId).HasColumnName("LinkID");
         });
         modelBuilder.Entity<Geotagging00>(entity =>
         {
@@ -3187,7 +3188,24 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.LevelId).HasColumnName("LevelID");
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
         });
+        modelBuilder.Entity<HraHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__HRA_Hist__3214EC07EECA6A1D");
 
+            entity.ToTable("HRA_History");
+
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.EntryDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FromDate).HasColumnType("datetime");
+            entity.Property(e => e.Initial).HasDefaultValue(0);
+            entity.Property(e => e.IsHra).HasColumnName("IsHRA");
+            entity.Property(e => e.Remarks)
+                .HasMaxLength(5000)
+                .IsUnicode(false);
+            entity.Property(e => e.ToDate).HasColumnType("datetime");
+        });
         modelBuilder.Entity<Geotagging02A>(entity =>
         {
             entity.HasKey(e => e.GeoEmpAid).HasName("PK__Geotaggi__43E46D224C75468B");
@@ -3208,7 +3226,7 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false);
         });
 
-        OnModelCreatingPartial (modelBuilder);
+        OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
