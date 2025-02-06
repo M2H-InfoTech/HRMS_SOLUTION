@@ -214,6 +214,18 @@ namespace HRMS.EmployeeInformation.Service.Service
             {
             return await _employeeRepository.FillEmployeesBasedOnwWorkflow (firstEntityId, secondEntityId);
             }
+        public async Task<List<FillCountryDto>> FillCountry ( )
+            {
+            return await _employeeRepository.FillCountry ( );
+            }
+        public async Task<List<object>> GetBloodGroup ()
+            {
+            return await _employeeRepository.GetBloodGroup ( );
+            }
+        public async Task<List<object>> FillReligion ( )
+            {
+            return await _employeeRepository.FillReligion ( );
+            }
 
         }
     }

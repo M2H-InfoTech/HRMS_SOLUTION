@@ -67,7 +67,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<List<GeoSpacingDto>> GetGeoSpacing(int employeeid);
         Task<List<EmployeeHraDto>> HraDetails(int employeeId);
+        Task<List<FillCountryDto>> FillCountry ( );
+        Task<List<object>> GetBloodGroup ( );
+        Task<List<object>> FillReligion ( );
 
 
-    }
+        }
 }

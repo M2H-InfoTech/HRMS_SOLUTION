@@ -352,6 +352,27 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflow (firstEntityId, secondEntityId);
             return new JsonResult (fillEmployeesBasedOnwWorkflow);
             }
+        [HttpGet]
+        public async Task<IActionResult> FillCountry ( )
+            {
+            var fillCountry = await _employeeInformation.FillCountry ( ); 
+            return new JsonResult (fillCountry);
 
-    }
+            }
+        [HttpGet]
+        public async Task<IActionResult> GetBloodGroup ( )
+            {
+            var getBloodGroup = await _employeeInformation.GetBloodGroup ( );
+            return new JsonResult (getBloodGroup);
+
+            }
+        [HttpGet]
+        public async Task<IActionResult> FillReligion ( )
+            {
+            var fillReligion = await _employeeInformation.FillReligion ( );
+            return new JsonResult (fillReligion);
+
+            }
+
+        }
 }
