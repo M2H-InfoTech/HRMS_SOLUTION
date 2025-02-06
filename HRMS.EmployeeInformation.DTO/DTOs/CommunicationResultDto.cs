@@ -1,10 +1,10 @@
-﻿ 
+﻿
 
 namespace MPLOYEE_INFORMATION.DTO.DTOs
 {
     public class CommunicationResultDto
     {
-        public IEnumerable<CommunicationTable1Dto>? CommunicationTable { get; set; }
-        public IEnumerable<CommunicationTable1Dto>? CommunicationTable1 { get; set; }
+        public IEnumerable<CommunicationTableDto>? CommunicationTable { get; set; }
+        public IEnumerable<CommunicationTableDto>? CommunicationTable1 { get; set; }
     }
 }

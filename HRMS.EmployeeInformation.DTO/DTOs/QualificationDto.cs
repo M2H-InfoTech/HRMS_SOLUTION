@@ -1,4 +1,4 @@
-﻿ 
+﻿
 
 namespace MPLOYEE_INFORMATION.DTO.DTOs
 {
@@ -23,7 +23,7 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? Subjects { get; set; }
         public string? Status { get; set; }
     }
-    public class QualificationFileDto 
+    public class QualificationFileDto
     {
         public int QualAttachId { get; set; }
         public int? QualificationId { get; set; }

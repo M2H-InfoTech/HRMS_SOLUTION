@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MPLOYEE_INFORMATION.DTO.DTOs
+﻿namespace MPLOYEE_INFORMATION.DTO.DTOs
 {
     public class SkillSetDto
     {
@@ -19,6 +13,6 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? Mark_Per { get; set; }
         public string? langSkills { get; set; }
         public string? Status { get; set; }
-    
+
     }
 }

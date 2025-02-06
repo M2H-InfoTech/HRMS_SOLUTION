@@ -1,20 +1,13 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.Design;
-using System.Diagnostics.Eventing.Reader;
-using AutoMapper;
+﻿using AutoMapper;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.DTO.DTOs;
 using EMPLOYEE_INFORMATION.Models;
-using EMPLOYEE_INFORMATION.Models.Entity;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
-using HRMS.EmployeeInformation.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -2476,7 +2469,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                           join b in _context.AdmCountryMasters on a.Country equals b.CountryId into admGroup
                                           from b in admGroup.DefaultIfEmpty()
                                           where a.EmpId == employeeId
-                                          select new CommunicationTable1Dto
+                                          select new CommunicationTableDto
                                           {
                                               Inst_Id = a.InstId,
                                               Add_Id = a.AddId,
@@ -2502,7 +2495,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                            from b in admGroup.DefaultIfEmpty()
                                            join c in _context.CommunicationRequestWorkFlowstatuses on a.AddId equals c.RequestId
                                            where a.EmpId == employeeId
-                                           select new CommunicationTable1Dto
+                                           select new CommunicationTableDto
                                            {
                                                Inst_Id = a.InstId,
                                                Add_Id = a.AddId,
@@ -4855,32 +4848,32 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
         public async Task<List<GeoSpacingDto>> GetGeoSpacing(int employeeid)
         {
-            
 
-            var query1 = await( from a in _context.Geotagging02s
-                         join b in _context.Geotagging02As on a.GeoEmpId equals b.GeoEmpId
-                         join c in _context.HrmValueTypes on new { Value = a.Geotype, Type = "GeoSpacingType" } equals new { c.Value, c.Type }
-                         join d in _context.HrmValueTypes on new { Value = b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { d.Value, d.Type }
-                         where a.EmpId == employeeid
-                         select new GeoSpacingDto
-                         {
-                             GeoEmpId = a.GeoEmpId,
-                             GeoEmpAid = b.GeoEmpAid,
-                             EmpId = a.EmpId,
-                             LevelId = a.LevelId,
-                             Geotype = a.Geotype,
-                             GeotypeCode = c.Code,
-                             GeotypeDescription = c.Description,
-                             GeoCriteria = b.GeoCriteria,
-                             GeoCriteriaCode = d.Code,
-                             GeoCriteriaDescription = d.Description,
-                             Latitude = b.Latitude ?? "",
-                             Longitude = b.Longitude ?? "",
-                             Radius = b.Radius ?? "",
-                             LiveTracking = a.LiveTracking,
-                             LocationId = (int?)b.LocationId ?? -1,
-                             GeoCoordinates = b.Coordinates
-                         }).ToListAsync();
+
+            var query1 = await (from a in _context.Geotagging02s
+                                join b in _context.Geotagging02As on a.GeoEmpId equals b.GeoEmpId
+                                join c in _context.HrmValueTypes on new { Value = a.Geotype, Type = "GeoSpacingType" } equals new { c.Value, c.Type }
+                                join d in _context.HrmValueTypes on new { Value = b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { d.Value, d.Type }
+                                where a.EmpId == employeeid
+                                select new GeoSpacingDto
+                                {
+                                    GeoEmpId = a.GeoEmpId,
+                                    GeoEmpAid = b.GeoEmpAid,
+                                    EmpId = a.EmpId,
+                                    LevelId = a.LevelId,
+                                    Geotype = a.Geotype,
+                                    GeotypeCode = c.Code,
+                                    GeotypeDescription = c.Description,
+                                    GeoCriteria = b.GeoCriteria,
+                                    GeoCriteriaCode = d.Code,
+                                    GeoCriteriaDescription = d.Description,
+                                    Latitude = b.Latitude ?? "",
+                                    Longitude = b.Longitude ?? "",
+                                    Radius = b.Radius ?? "",
+                                    LiveTracking = a.LiveTracking,
+                                    LocationId = (int?)b.LocationId ?? -1,
+                                    GeoCoordinates = b.Coordinates
+                                }).ToListAsync();
 
             if (query1.Any())
             {
