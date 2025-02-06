@@ -5175,13 +5175,47 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return await query.ToListAsync ( );
             }
 
+        public Task<List<FillCountryDto>> FillCountry ( )
+            {
+            var countryDto = new FillCountryDto
+                {
+                Country_Name = string.Join ("", _context.AdmCountryMasters
+                    .Select (c => "<option value='" + c.CountryId + "'>" + c.CountryName + "</option>")
+                    .ToList ( )),
 
-        //               }
-        //               return result.Cast<object>().ToList();
+                Nationality = string.Join ("", _context.AdmCountryMasters
+                    .Select (c => "<option value='" + c.CountryId + "'>" + c.Nationality + "</option>")
+                    .ToList ( ))
+                };
 
-        //           }
-        //       }
+           
+            return Task.FromResult (new List<FillCountryDto> { countryDto });
+            }
+
+        public Task<List<object>> GetBloodGroup ( )
+            {
+           
+            var bloodGroups = _context.HrmValueTypes
+                .Where (v => v.Type == "BloodGroup") 
+                .Select (v => $"<option value='{v.Code}'>{v.Description}</option>") 
+                .ToList ( );
+
+            // Return the list of options as a Task
+            return Task.FromResult (bloodGroups.Cast<object> ( ).ToList ( ));
+            }
+
+        public Task<List<object>> FillReligion ( )
+            {
+          
+            var religions = _context.AdmReligionMasters
+        .Select (r => $"<option value='{r.ReligionId}'>{r.ReligionName}</option>") 
+        .ToList ( );
+
+            // Return the list of options as a Task
+            return Task.FromResult (religions.Cast<object> ( ).ToList ( ));
+            }
+
+        }
     }
-}
 
 

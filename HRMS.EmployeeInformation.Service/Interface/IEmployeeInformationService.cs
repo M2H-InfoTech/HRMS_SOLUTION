@@ -57,13 +57,13 @@ namespace HRMS.EmployeeInformation.Service.Interface
 
         Task<List<object>> EmployeeType(int employeeid);      
    
-        Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflow (int firstEntityId, int secondEntityId);
-        
-
-
+        Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflow (int firstEntityId, int secondEntityId);        
         Task<List<object>> GeoSpacingTypeAndCriteria(string type);
         Task<List<EmployeeHraDto>> HraDetails(int employeeId);
         Task<List<GeoSpacingDto>> GetGeoSpacing(int employeeid);
-    }
+        Task<List<FillCountryDto>> FillCountry ( );
+        Task<List<object>> GetBloodGroup ( );
+        Task<List<object>> FillReligion ( );
+        }
 
 }
