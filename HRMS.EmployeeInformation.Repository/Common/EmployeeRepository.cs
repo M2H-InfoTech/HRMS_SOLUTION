@@ -5,6 +5,7 @@ using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.Models.Models.EnumFolder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
@@ -35,7 +36,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             string? defaultValue = byte.MinValue.ToString();
             if (employeeId == 0)
             {
-                return byte.MinValue.ToString();
+                return null;// byte.MinValue.ToString();
             }
 
 
@@ -201,11 +202,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return defaultValue ?? string.Empty;
         }
 
-
         private bool IsLinkLevelExists(int? roleId)
         {
-            var exists = _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == 15).Select(x => x.LinkLevel).First();
-            return exists > 0;
+            var exists = _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == _employeeSettings.LinkLevel).Select(x => x.LinkLevel).First();
+            return exists > byte.MinValue;
         }
         public async Task<EmployeeStatusResultDto> EmployeeStatus(int employeeId, string parameterCode, string type)
         {
@@ -260,88 +260,87 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<PaginatedResult<EmployeeResultDto>> GetEmpData(EmployeeInformationParameters employeeInformationParameters)
         {
 
-            string infoFormatCacheKey = $"InfoFormat_{employeeInformationParameters.empId}";
-            string linkLevelCacheKey = $"LinkLevel_{employeeInformationParameters.roleId}";
-            string currentStatusCacheKey = $"CurrentStatusDesc";
-            string ageFormatCacheKey = $"AgeFormat_{_employeeSettings.ParameterCode}";
-            string existsEmployeeCacheKey = "ExistsEmployee";
 
 
-            var infoFormat = await _memoryCache.GetOrCreateAsync(infoFormatCacheKey, async entry =>
-            {
-                entry.SetSlidingExpiration(TimeSpan.FromMinutes(5)); // Cache expires 5 minutes after the last access
-                entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));  // Cache expires 1 hour after creation
-                return await GetDefaultCompanyParameter(employeeInformationParameters.empId, _employeeSettings.CompanyParameterEmpInfoFormat, _employeeSettings.CompanyParameterType);
-            });
+            //var infoFormat = await _memoryCache.GetOrCreateAsync(infoFormatCacheKey, async entry =>
+            //{
+            //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5)); // Cache expires 5 minutes after the last access
+            //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));  // Cache expires 1 hour after creation
+            //    return await GetDefaultCompanyParameter(employeeInformationParameters.empId, _employeeSettings.CompanyParameterEmpInfoFormat, _employeeSettings.CompanyParameterType);
+            //});
 
 
-            //var infoFormat = await GetDefaultCompanyParameter(employeeInformationParameters.empId, _employeeSettings.CompanyParameterEmpInfoFormat, _employeeSettings.CompanyParameterType);
+            var infoFormat = await GetDefaultCompanyParameter(employeeInformationParameters.empId, _employeeSettings.CompanyParameterEmpInfoFormat, _employeeSettings.CompanyParameterType);
             int format = Convert.ToInt32(infoFormat);
 
-            //var linkLevelExists = _memoryCache.GetOrCreate(linkLevelCacheKey, entry =>
-            //{
-            //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-            //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-            //    return IsLinkLevelExists(employeeInformationParameters.roleId);
-            //});
-
-
-            var linkLevelExists = IsLinkLevelExists(employeeInformationParameters.roleId);
-
-            //var CurrentStatusDesc = _memoryCache.GetOrCreate(currentStatusCacheKey, entry =>
-            //{
-            //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-            //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-            //    return (from ec in _context.EmployeeCurrentStatuses
-            //            where ec.StatusDesc == _employeeSettings.OnNotice
-            //            select ec.Status).FirstOrDefault();
-            //});
-
-
-            var CurrentStatusDesc = (from ec in _context.EmployeeCurrentStatuses
-                                     where ec.StatusDesc == _employeeSettings.OnNotice
-                                     select ec.Status).FirstOrDefault();
-
-
-            //string? ageFormat = await _memoryCache.GetOrCreateAsync(ageFormatCacheKey, async entry =>
-            //{
-            //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-            //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-            //    return await (from cp in _context.CompanyParameters
-            //                  join vt in _context.HrmValueTypes on cp.Value equals vt.Value
-            //                  where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
-            //                  select vt.Code).FirstOrDefaultAsync();
-            //});
-
-            string? ageFormat = await (from cp in _context.CompanyParameters
-                                       join vt in _context.HrmValueTypes on cp.Value equals vt.Value
-                                       where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
-                                       select vt.Code).FirstOrDefaultAsync();
-
-            bool existsEmployee = _context.HrEmpMasters.Any(emp => (emp.IsSave ?? 0) == 1);
-
-
-
-            //bool existsEmployee = await _memoryCache.GetOrCreateAsync(existsEmployeeCacheKey, async entry =>
-            //{
-            //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-            //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-            //    return await _context.HrEmpMasters.AnyAsync(emp => (emp.IsSave ?? 0) == 1);
-            //});
-            //bool existsEmployee = await _context.HrEmpMasters.AnyAsync(emp => (emp.IsSave ?? 0) == 1);
-
-            //return format switch
-            //{
-            //    0 or 1 => await HandleFormatZeroOrOne(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-            //    2 => await HandleFormatTwo(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-            //    3 => await HandleFormatThree(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-            //    4 => await HandleFormatFour(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-            //};
-            string cacheKey = $"HandleFormat_{format}_{employeeInformationParameters.empId}_{employeeInformationParameters.roleId}_{employeeInformationParameters.empStatus}";
-            return await _memoryCache.GetOrCreateAsync(cacheKey, async entry =>
+            if (infoFormat != null)
             {
-                entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-                entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+
+
+                //var linkLevelExists = _memoryCache.GetOrCreate(linkLevelCacheKey, entry =>
+                //{
+                //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
+                //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+                //    return IsLinkLevelExists(employeeInformationParameters.roleId);
+                //});
+
+
+                var linkLevelExists = IsLinkLevelExists(employeeInformationParameters.roleId);
+
+                //var CurrentStatusDesc = _memoryCache.GetOrCreate(currentStatusCacheKey, entry =>
+                //{
+                //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
+                //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+                //    return (from ec in _context.EmployeeCurrentStatuses
+                //            where ec.StatusDesc == _employeeSettings.OnNotice
+                //            select ec.Status).FirstOrDefault();
+                //});
+
+
+                var CurrentStatusDesc = (from ec in _context.EmployeeCurrentStatuses
+                                         where ec.StatusDesc == _employeeSettings.OnNotice
+                                         select ec.Status).FirstOrDefault();
+
+
+                //string? ageFormat = await _memoryCache.GetOrCreateAsync(ageFormatCacheKey, async entry =>
+                //{
+                //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
+                //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+                //    return await (from cp in _context.CompanyParameters
+                //                  join vt in _context.HrmValueTypes on cp.Value equals vt.Value
+                //                  where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
+                //                  select vt.Code).FirstOrDefaultAsync();
+                //});
+
+                string? ageFormat = await (from cp in _context.CompanyParameters
+                                           join vt in _context.HrmValueTypes on cp.Value equals vt.Value
+                                           where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
+                                           select vt.Code).FirstOrDefaultAsync();
+
+                bool existsEmployee = _context.HrEmpMasters.Any(emp => (emp.IsSave ?? 0) == 1);
+
+
+
+                //bool existsEmployee = await _memoryCache.GetOrCreateAsync(existsEmployeeCacheKey, async entry =>
+                //{
+                //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
+                //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
+                //    return await _context.HrEmpMasters.AnyAsync(emp => (emp.IsSave ?? 0) == 1);
+                //});
+                //bool existsEmployee = await _context.HrEmpMasters.AnyAsync(emp => (emp.IsSave ?? 0) == 1);
+
+                //return format switch
+                //{
+                //    0 or 1 => await HandleFormatZeroOrOne(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
+                //    2 => await HandleFormatTwo(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
+                //    3 => await HandleFormatThree(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
+                //    4 => await HandleFormatFour(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
+                //};
+                //string cacheKey = $"{employeeInformationParameters.empId}_{employeeInformationParameters.roleId}_{employeeInformationParameters.empStatus}";
+                //return await _memoryCache.GetOrCreateAsync(cacheKey, async entry =>
+                //{
+                //entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
+                //entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
 
                 return format switch
                 {
@@ -351,15 +350,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     4 => await HandleFormatFour(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
                     _ => throw new InvalidOperationException("Invalid format value.")
                 };
-            });
+                //});
 
-
-
+            }
+            return new PaginatedResult<EmployeeResultDto>();
 
         }
         private async Task<PaginatedResult<EmployeeResultDto>> HandleFormatZeroOrOne(EmployeeInformationParameters employeeInformationParameters, bool linkLevelExists, string? ageFormat, int? currentStatusDesc, bool existsEmployee)
         {
-            if (linkLevelExists)
+            //if (linkLevelExists)
+            if (!linkLevelExists)
             {
                 return await InfoFormatOneOrZeroLinkLevelExist(
                     employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
@@ -590,7 +590,8 @@ r.RejoinStatus == "P")
         DataDate = emp.DataDate.ToString(),
         EmpStatusDesc = currStatus.StatusDesc.ToString(),
         EmpStatus = empStatusSettings.StatusDesc,
-        Gender = emp.Gender.ToString(),
+        Gender = GetGender(emp.Gender).ToString(),
+
         SeperationStatus = emp.SeperationStatus,
         OfficialEmail = addr.OfficialEmail,
         PersonalEmail = addr.PersonalEmail,
@@ -730,7 +731,7 @@ r.RejoinStatus == "P")
         DataDate = emp.DataDate.ToString(),
         EmpStatusDesc = currStatus.StatusDesc.ToString(),
         EmpStatus = empStatusSettings.StatusDesc,
-        Gender = emp.Gender.ToString(),
+        Gender = GetGender(emp.Gender).ToString(),
         SeperationStatus = emp.SeperationStatus,
         OfficialEmail = addr.OfficialEmail,
         PersonalEmail = addr.PersonalEmail,
@@ -870,7 +871,8 @@ r.RejoinStatus == "P")
         DataDate = emp.DataDate.ToString(),
         EmpStatusDesc = currStatus.StatusDesc.ToString(),
         EmpStatus = empStatusSettings.StatusDesc,
-        Gender = emp.Gender.ToString(),
+        Gender = GetGender(emp.Gender).ToString(),
+
         SeperationStatus = emp.SeperationStatus,
         OfficialEmail = addr.OfficialEmail,
         PersonalEmail = addr.PersonalEmail,
@@ -1002,19 +1004,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     emp.EmpCode,
                     Name = $"{emp.FirstName} {emp.MiddleName} {emp.LastName}",
                     emp.GuardiansName,
-                    //DateOfBirth = emp.DateOfBirth.ToString("dd/MM/yyyy"),
-                    //JoinDate = emp.Join_Dt.ToString("dd/MM/yyyy"),
+                    //DateOfBirth = emp.DateOfBirth.ToString(_employeeSettings.DateFormat),
+                    //JoinDate = emp.Join_Dt.ToString(_employeeSettings.DateFormat),
                     //DataDate = emp.Join_Dt.ToString("yyyyMMdd"),
                     emp.DateOfBirth,
                     JoinDate = emp.JoinDt,
                     DataDate = emp.JoinDt,
                     emp.SeperationStatus,
-                    //Gender = emp.Gender == "M" ? "Male" : emp.Gender == "F" ? "Female" : emp.Gender == "O" ? "Other" : "NA",
+                    //Gender = emp.Gender == "M" ? "Male" : emp.Gender == "F" ? "Female" : emp.Gender == "O" ? "Other" : _employeeSettings.NotAvailable,
                     Gender = GetGender(emp.Gender),
                     //WorkingStatus = emp.SeperationStatus == 0 ? "Live" : "Resigned",
                     WorkingStatus = emp.SeperationStatus == (int)SeparationStatus.Live ? nameof(SeparationStatus.Live) : nameof(SeparationStatus.Resigned),
                     Age = CalculateAge(emp.DateOfBirth, ageFormat),
-                    //Probation_Dt = emp.Probation_Dt.ToString("dd/MM/yyyy"),
+                    //Probation_Dt = emp.Probation_Dt.ToString(_employeeSettings.DateFormat),
                     Probation_Dt = emp.ProbationDt,
                     // Probation = emp.IsProbation == false ? "CONFIRMED" : "PROBATION",
                     Probation = emp.IsProbation == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
@@ -1263,19 +1265,20 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 JoinDate = a.JoinDt.ToString(),
                 WeddingDate = c.WeddingDate,
 
-                //WeddingDate = c?.WeddingDate.ToString("dd/MM/yyyy"),
+                //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
 
                 DataDate = a.JoinDt.ToString(),
 
                 StatusDesc = j.StatusDesc,
                 EmpStatusDesc = s.StatusDesc,
-                Gender = a.Gender.ToString(),
-                //Resignation_Date = a?.ResignationDate.ToString("dd/MM/yyyy"),
+                Gender = GetGender(a.Gender).ToString(),
+
+                //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
                 ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                //RelievingDate = a?.RelievingDate.ToString("dd/MM/yyyy"),
+                //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
                 RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
                 SeperationStatus = a.SeperationStatus,
-                OfficialEmail = b.OfficialEmail ?? "NA",
+                OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
                 PersonalEmail = b.PersonalEmail,
                 Phone = b.Phone,
                 MaritalStatus = c.MaritalStatus == "S" ? "Single" :
@@ -1283,7 +1286,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                       c.MaritalStatus == "W" ? "Widowed" :
                                       c.MaritalStatus == "X" ? "Separated" :
                                       c.MaritalStatus == "D" ? "Divorcee" :
-                                      "NA",
+                                      _employeeSettings.NotAvailable,
                 Age = CalculateAge(a.DateOfBirth, ageFormat),
                 ProbationDt = a.ProbationDt.ToString(),
                 LevelOneDescription = f.LevelOneDescription,
@@ -1385,19 +1388,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 JoinDate = a.JoinDt.ToString(),
                 WeddingDate = c.WeddingDate,
 
-                //WeddingDate = c?.WeddingDate.ToString("dd/MM/yyyy"),
+                //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
 
                 DataDate = a.JoinDt.ToString(),
 
                 StatusDesc = j.StatusDesc,
                 EmpStatusDesc = s.StatusDesc,
-                Gender = a.Gender.ToString(),
-                //Resignation_Date = a?.ResignationDate.ToString("dd/MM/yyyy"),
+                Gender = GetGender(a.Gender).ToString(),
+                //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
                 ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                //RelievingDate = a?.RelievingDate.ToString("dd/MM/yyyy"),
+                //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
                 RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
                 SeperationStatus = a.SeperationStatus,
-                OfficialEmail = b.OfficialEmail ?? "NA",
+                OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
                 PersonalEmail = b.PersonalEmail,
                 Phone = b.Phone,
                 MaritalStatus = c.MaritalStatus == "S" ? "Single" :
@@ -1405,7 +1408,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                       c.MaritalStatus == "W" ? "Widowed" :
                                       c.MaritalStatus == "X" ? "Separated" :
                                       c.MaritalStatus == "D" ? "Divorcee" :
-                                      "NA",
+                                      _employeeSettings.NotAvailable,
                 Age = CalculateAge(a.DateOfBirth, ageFormat),
                 ProbationDt = a.ProbationDt.ToString(),
                 LevelOneDescription = f.LevelOneDescription,
@@ -1507,19 +1510,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 JoinDate = a.JoinDt.ToString(),
                 WeddingDate = c.WeddingDate,
 
-                //WeddingDate = c?.WeddingDate.ToString("dd/MM/yyyy"),
+                //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
 
                 DataDate = a.JoinDt.ToString(),
 
                 StatusDesc = j.StatusDesc,
                 EmpStatusDesc = s.StatusDesc,
-                Gender = a.Gender.ToString(),
-                //Resignation_Date = a?.ResignationDate.ToString("dd/MM/yyyy"),
+                Gender = GetGender(a.Gender).ToString(),
+                //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
                 ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                //RelievingDate = a?.RelievingDate.ToString("dd/MM/yyyy"),
+                //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
                 RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
                 SeperationStatus = a.SeperationStatus,
-                OfficialEmail = b.OfficialEmail ?? "NA",
+                OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
                 PersonalEmail = b.PersonalEmail,
                 Phone = b.Phone,
                 MaritalStatus = c.MaritalStatus == "S" ? "Single" :
@@ -1527,7 +1530,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                       c.MaritalStatus == "W" ? "Widowed" :
                                       c.MaritalStatus == "X" ? "Separated" :
                                       c.MaritalStatus == "D" ? "Divorcee" :
-                                      "NA",
+                                      _employeeSettings.NotAvailable,
                 Age = CalculateAge(a.DateOfBirth, ageFormat),
                 ProbationDt = a.ProbationDt.ToString(),
                 LevelOneDescription = f.LevelOneDescription,
@@ -1629,19 +1632,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 JoinDate = a.JoinDt.ToString(),
                 WeddingDate = c.WeddingDate,
 
-                //WeddingDate = c?.WeddingDate.ToString("dd/MM/yyyy"),
+                //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
 
                 DataDate = a.JoinDt.ToString(),
 
                 StatusDesc = j.StatusDesc,
                 EmpStatusDesc = s.StatusDesc,
-                Gender = a.Gender.ToString(),
-                //Resignation_Date = a?.ResignationDate.ToString("dd/MM/yyyy"),
+                Gender = GetGender(a.Gender).ToString(),
+                //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
                 ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                //RelievingDate = a?.RelievingDate.ToString("dd/MM/yyyy"),
+                //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
                 RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
                 SeperationStatus = a.SeperationStatus,
-                OfficialEmail = b.OfficialEmail ?? "NA",
+                OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
                 PersonalEmail = b.PersonalEmail,
                 Phone = b.Phone,
                 MaritalStatus = c.MaritalStatus == "S" ? "Single" :
@@ -1649,7 +1652,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                       c.MaritalStatus == "W" ? "Widowed" :
                                       c.MaritalStatus == "X" ? "Separated" :
                                       c.MaritalStatus == "D" ? "Divorcee" :
-                                      "NA",
+                                      _employeeSettings.NotAvailable,
                 Age = CalculateAge(a.DateOfBirth, ageFormat),
                 ProbationDt = a.ProbationDt.ToString(),
                 LevelOneDescription = f.LevelOneDescription,
@@ -1728,19 +1731,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                          JoinDate = a.JoinDt.ToString(),
                          WeddingDate = c.WeddingDate,
 
-                         //WeddingDate = c?.WeddingDate.ToString("dd/MM/yyyy"),
+                         //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
 
                          DataDate = a.JoinDt.ToString(),
 
                          StatusDesc = j.StatusDesc,
                          EmpStatusDesc = s.StatusDesc,
-                         Gender = a.Gender.ToString(),
-                         //Resignation_Date = a?.ResignationDate.ToString("dd/MM/yyyy"),
+                         Gender = GetGender(a.Gender).ToString(),
+                         //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
                          ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                         //RelievingDate = a?.RelievingDate.ToString("dd/MM/yyyy"),
+                         //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
                          RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
                          SeperationStatus = a.SeperationStatus,
-                         OfficialEmail = b.OfficialEmail ?? "NA",
+                         OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
                          PersonalEmail = b.PersonalEmail,
                          Phone = b.Phone,
                          MaritalStatus = c.MaritalStatus == "S" ? "Single" :
@@ -1748,7 +1751,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                       c.MaritalStatus == "W" ? "Widowed" :
                                       c.MaritalStatus == "X" ? "Separated" :
                                       c.MaritalStatus == "D" ? "Divorcee" :
-                                      "NA",
+                                      _employeeSettings.NotAvailable,
                          Age = CalculateAge(a.DateOfBirth, ageFormat),
                          ProbationDt = a.ProbationDt.ToString(),
                          LevelOneDescription = f.LevelOneDescription,
@@ -1823,19 +1826,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                          JoinDate = a.JoinDt.ToString(),
                          WeddingDate = c.WeddingDate,
 
-                         //WeddingDate = c?.WeddingDate.ToString("dd/MM/yyyy"),
+                         //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
 
                          DataDate = a.JoinDt.ToString(),
 
                          StatusDesc = j.StatusDesc,
                          EmpStatusDesc = s.StatusDesc,
-                         Gender = a.Gender.ToString(),
-                         //Resignation_Date = a?.ResignationDate.ToString("dd/MM/yyyy"),
+                         Gender = GetGender(a.Gender).ToString(),
+                         //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
                          ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                         //RelievingDate = a?.RelievingDate.ToString("dd/MM/yyyy"),
+                         //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
                          RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
                          SeperationStatus = a.SeperationStatus,
-                         OfficialEmail = b.OfficialEmail ?? "NA",
+                         OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
                          PersonalEmail = b.PersonalEmail,
                          Phone = b.Phone,
                          MaritalStatus = c.MaritalStatus == "S" ? "Single" :
@@ -1843,7 +1846,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                       c.MaritalStatus == "W" ? "Widowed" :
                                       c.MaritalStatus == "X" ? "Separated" :
                                       c.MaritalStatus == "D" ? "Divorcee" :
-                                      "NA",
+                                      _employeeSettings.NotAvailable,
                          Age = CalculateAge(a.DateOfBirth, ageFormat),
                          ProbationDt = a.ProbationDt.ToString(),
                          LevelOneDescription = f.LevelOneDescription,
@@ -1918,19 +1921,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                          JoinDate = a.JoinDt.ToString(),
                          WeddingDate = c.WeddingDate,
 
-                         //WeddingDate = c?.WeddingDate.ToString("dd/MM/yyyy"),
+                         //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
 
                          DataDate = a.JoinDt.ToString(),
 
                          StatusDesc = j.StatusDesc,
                          EmpStatusDesc = s.StatusDesc,
-                         Gender = a.Gender.ToString(),
-                         //Resignation_Date = a?.ResignationDate.ToString("dd/MM/yyyy"),
+                         Gender = GetGender(a.Gender).ToString(),
+                         //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
                          ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                         //RelievingDate = a?.RelievingDate.ToString("dd/MM/yyyy"),
+                         //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
                          RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
                          SeperationStatus = a.SeperationStatus,
-                         OfficialEmail = b.OfficialEmail ?? "NA",
+                         OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
                          PersonalEmail = b.PersonalEmail,
                          Phone = b.Phone,
                          MaritalStatus = c.MaritalStatus == "S" ? "Single" :
@@ -1938,7 +1941,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                       c.MaritalStatus == "W" ? "Widowed" :
                                       c.MaritalStatus == "X" ? "Separated" :
                                       c.MaritalStatus == "D" ? "Divorcee" :
-                                      "NA",
+                                      _employeeSettings.NotAvailable,
                          Age = CalculateAge(a.DateOfBirth, ageFormat),
                          ProbationDt = a.ProbationDt.ToString(),
                          LevelOneDescription = f.LevelOneDescription,
@@ -2013,19 +2016,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                          JoinDate = a.JoinDt.ToString(),
                          WeddingDate = c.WeddingDate,
 
-                         //WeddingDate = c?.WeddingDate.ToString("dd/MM/yyyy"),
+                         //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
 
                          DataDate = a.JoinDt.ToString(),
 
                          StatusDesc = j.StatusDesc,
                          EmpStatusDesc = s.StatusDesc,
-                         Gender = a.Gender.ToString(),
-                         //Resignation_Date = a?.ResignationDate.ToString("dd/MM/yyyy"),
+                         Gender = GetGender(a.Gender).ToString(),
+                         //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
                          ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                         //RelievingDate = a?.RelievingDate.ToString("dd/MM/yyyy"),
+                         //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
                          RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
                          SeperationStatus = a.SeperationStatus,
-                         OfficialEmail = b.OfficialEmail ?? "NA",
+                         OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
                          PersonalEmail = b.PersonalEmail,
                          Phone = b.Phone,
                          MaritalStatus = c.MaritalStatus == "S" ? "Single" :
@@ -2033,7 +2036,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                       c.MaritalStatus == "W" ? "Widowed" :
                                       c.MaritalStatus == "X" ? "Separated" :
                                       c.MaritalStatus == "D" ? "Divorcee" :
-                                      "NA",
+                                      _employeeSettings.NotAvailable,
                          Age = CalculateAge(a.DateOfBirth, ageFormat),
                          ProbationDt = a.ProbationDt.ToString(),
                          LevelOneDescription = f.LevelOneDescription,
@@ -2112,17 +2115,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             var entityAccessRights = await _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == linkSelect).ToListAsync();
 
+
+
             var part1 = entityAccessRights
-                .Where(s => !string.IsNullOrEmpty(s.LinkId)) // Ensure LinkId is not null or empty
-                .SelectMany(
-                s => SplitStrings_XML(s.LinkId), // Split LinkId
-                (s, item) => new LinkItemDto
-                {
-                    Item = item,
-                    LinkLevel = entityAccessRights.FirstOrDefault().LinkLevel // LinkLevel as per SQL logic
-                })
-                .Where(f => !string.IsNullOrEmpty(f.Item)) // Exclude empty items
-                .ToList();
+            .Where(s => !string.IsNullOrEmpty(s.LinkId)) // Ensure LinkId is not null or empty
+            .SelectMany(
+            s => SplitStrings_XML(s.LinkId, default), // Split LinkId
+            (s, item) => new LinkItemDto
+            {
+                Item = item,
+                LinkLevel = entityAccessRights.FirstOrDefault().LinkLevel // LinkLevel as per SQL logic
+            })
+            .Where(f => !string.IsNullOrEmpty(f.Item)) // Exclude empty items
+            .ToList();
 
 
 
@@ -2188,7 +2193,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var part1 = entityAccessRights
                 .Where(s => !string.IsNullOrEmpty(s.LinkId)) // Ensure LinkId is not null or empty
                 .SelectMany(
-                s => SplitStrings_XML(s.LinkId), // Split LinkId
+                s => SplitStrings_XML(s.LinkId, default), // Split LinkId
                 (s, item) => new LinkItemDto
                 {
                     Item = item,
@@ -2261,7 +2266,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var part1 = entityAccessRights
                 .Where(s => !string.IsNullOrEmpty(s.LinkId)) // Ensure LinkId is not null or empty
                 .SelectMany(
-                s => SplitStrings_XML(s.LinkId), // Split LinkId
+                s => SplitStrings_XML(s.LinkId, default), // Split LinkId
                 (s, item) => new LinkItemDto
                 {
                     Item = item,
@@ -2334,7 +2339,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var part1 = entityAccessRights
                 .Where(s => !string.IsNullOrEmpty(s.LinkId)) // Ensure LinkId is not null or empty
                 .SelectMany(
-                s => SplitStrings_XML(s.LinkId), // Split LinkId
+                s => SplitStrings_XML(s.LinkId, default), // Split LinkId
                 (s, item) => new LinkItemDto
                 {
                     Item = item,
@@ -2375,15 +2380,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                        .Select(item => item.Trim()) // Trim whitespace from each item
                        .Where(item => !string.IsNullOrEmpty(item)); // Exclude empty items
         }
-        public static IEnumerable<string> SplitStrings_XML(string input)
-        {
-            return input?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries) ?? Enumerable.Empty<string>();
-        }
-
         public static string CalculateAge(DateTime? givenDate, string ageFormat)
         {
             if (!givenDate.HasValue)
-                return "NA";
+                return "dd/MM/yyyy";
             if (givenDate.Value > DateTime.UtcNow)
                 return "0 years";
 
@@ -2429,7 +2429,18 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 _ => Gender.UnKnown
             };
         }
-
+        public static MaritalStatus GetMaritalStatus(string genderCode)
+        {
+            return genderCode switch
+            {
+                "S" => MaritalStatus.Single,
+                "M" => MaritalStatus.Married,
+                "W" => MaritalStatus.Widowed,
+                "X" => MaritalStatus.Separated,
+                "D" => MaritalStatus.Divorcee,
+                "U" => MaritalStatus.Unknown,
+            };
+        }
 
 
         public static string FormatDate(DateTime? date, string format)
@@ -2437,9 +2448,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return date.HasValue ? date.Value.ToString(format) : string.Empty; // Or any other default value
         }
 
-        public async Task<List<LanguageSkillResultDto>> LanguageSkill(int employeeId)
+        public async Task<List<LanguageSkillResultDto>> LanguageSkillAsync(int employeeId)
         {
-
             return await (from emp in _context.EmployeeLanguageSkills
                           join empdet in _context.EmployeeDetails
                           on emp.EmpId equals empdet.EmpId
@@ -2449,7 +2459,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                           {
                               Emp_LangId = emp.EmpLangId,
                               Name = empdet.Name,
-                              LanguageId = (byte)(emp.LanguageId == "1" ? 1 : 0),
+                              LanguageId = byte.Parse(emp.LanguageId),
                               Code = hrm.Code,
                               Description = hrm.Description,
                               Read = (byte)(emp.Read == true ? 1 : 0),
@@ -2458,77 +2468,74 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                               Comprehend = (byte)(emp.Comprehend == true ? 1 : 0),
                               MotherTongue = (byte)(emp.MotherTongue == true ? 1 : 0)
 
-                          }).ToListAsync();
+                          }).AsNoTracking().ToListAsync();
 
 
         }
-
-        public async Task<CommunicationResultDto> Communication(int employeeId)
+        public async Task<CommunicationResultDto> CommunicationAsync(int employeeId)
         {
-            var communationtable = await (from a in _context.HrEmpAddresses
-                                          join b in _context.AdmCountryMasters on a.Country equals b.CountryId into admGroup
-                                          from b in admGroup.DefaultIfEmpty()
-                                          where a.EmpId == employeeId
-                                          select new CommunicationTableDto
-                                          {
-                                              Inst_Id = a.InstId,
-                                              Add_Id = a.AddId,
-                                              Emp_Id = a.EmpId,
-                                              Add1 = a.Add1,
-                                              Add2 = a.Add2,
-                                              PBNo = a.Pbno,
-                                              Country_ID = b.CountryId,
-                                              Country_Name = b.CountryName,
-                                              Phone = a.Phone,
-                                              Mobile = a.Mobile,
-                                              OfficePhone = a.OfficePhone,
-                                              Extension = a.Extension,
-                                              EMail = a.OfficialEmail,
-                                              PersonalEMail = a.PersonalEmail,
-                                              Status = "A"
+            var communicationTask = (from a in _context.HrEmpAddresses
+                                     join b in _context.AdmCountryMasters
+                                         on a.Country equals b.CountryId into admGroup
+                                     from b in admGroup.DefaultIfEmpty()
+                                     where a.EmpId == employeeId
+                                     select new CommunicationTableDto
+                                     {
+                                         Inst_Id = a.InstId,
+                                         Add_Id = a.AddId,
+                                         Emp_Id = a.EmpId,
+                                         Add1 = a.Add1,
+                                         Add2 = a.Add2,
+                                         PBNo = a.Pbno,
+                                         Country_ID = b.CountryId,
+                                         Country_Name = b.CountryName,
+                                         Phone = a.Phone,
+                                         Mobile = a.Mobile,
+                                         OfficePhone = a.OfficePhone,
+                                         Extension = a.Extension,
+                                         EMail = a.OfficialEmail,
+                                         PersonalEMail = a.PersonalEmail,
+                                         Status = _employeeSettings.EmployeeStatus// "A"
+                                     }).AsNoTracking().ToListAsync();
 
+            var communicationApprTask = (from a in _context.HrEmpAddressApprls
+                                         join b in _context.AdmCountryMasters
+                                             on a.Country equals b.CountryId into admGroup
+                                         from b in admGroup.DefaultIfEmpty()
+                                         join c in _context.CommunicationRequestWorkFlowstatuses
+                                             on a.AddId equals c.RequestId
+                                         where a.EmpId == employeeId
+                                         select new CommunicationTableDto
+                                         {
+                                             Inst_Id = a.InstId,
+                                             Add_Id = a.AddId,
+                                             Emp_Id = a.EmpId,
+                                             Add1 = a.Add1,
+                                             Add2 = a.Add2,
+                                             PBNo = a.Pbno,
+                                             Country_ID = b.CountryId,
+                                             Country_Name = b.CountryName,
+                                             Phone = a.Phone,
+                                             Mobile = a.Mobile,
+                                             OfficePhone = a.OfficePhone,
+                                             Extension = a.Extension,
+                                             EMail = a.Email,
+                                             PersonalEMail = a.PersonalEmail,
+                                             Status = a.Status
+                                         }).AsNoTracking().ToListAsync();
 
-                                          }).ToListAsync();
+            // Execute both queries in parallel
+            var results = await Task.WhenAll(communicationTask, communicationApprTask);
 
-            var communationtable1 = await (from a in _context.HrEmpAddressApprls
-                                           join b in _context.AdmCountryMasters on a.Country equals b.CountryId into admGroup
-                                           from b in admGroup.DefaultIfEmpty()
-                                           join c in _context.CommunicationRequestWorkFlowstatuses on a.AddId equals c.RequestId
-                                           where a.EmpId == employeeId
-                                           select new CommunicationTableDto
-                                           {
-                                               Inst_Id = a.InstId,
-                                               Add_Id = a.AddId,
-                                               Emp_Id = a.EmpId,
-                                               Add1 = a.Add1,
-                                               Add2 = a.Add2,
-                                               PBNo = a.Pbno,
-                                               Country_ID = b.CountryId,
-                                               Country_Name = b.CountryName,
-                                               Phone = a.Phone,
-                                               Mobile = a.Mobile,
-                                               OfficePhone = a.OfficePhone,
-                                               Extension = a.Extension,
-                                               EMail = a.Email,
-                                               PersonalEMail = a.PersonalEmail,
-                                               Status = a.Status
-
-                                           }).ToListAsync();
-
-
-            var result = new CommunicationResultDto
+            return new CommunicationResultDto
             {
-                CommunicationTable = communationtable,
-                CommunicationTable1 = communationtable1,
-
+                CommunicationTable = results[0],
+                CommunicationTable1 = results[1]
             };
-            return await Task.FromResult(result);
         }
 
-        public async Task<CommunicationExtraDto> CommunicationExtra(int employeeId)
+        public async Task<List<CommunicationExtraDto>> CommunicationExtraAsync(int employeeId)
         {
-
-
             var query1 = await (
                 from a in _context.HrEmpAddress01Apprls
                 join b in _context.AdmCountryMasters on a.Addr1Country equals b.CountryId into countryGroup1
@@ -2542,75 +2549,74 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 {
                     AddrID = a.AddrId,
                     EmpID = a.EmpId,
-                    PermanentAddr = a.PermanentAddr ?? "NA",
-                    ContactAddr = a.ContactAddr ?? "NA",
-                    PinNo1 = a.PinNo1 ?? "NA",
-                    PinNo2 = a.PinNo2 ?? "NA",
+                    PermanentAddr = a.PermanentAddr ?? _employeeSettings.NotAvailable,
+                    ContactAddr = a.ContactAddr ?? _employeeSettings.NotAvailable,
+                    PinNo1 = a.PinNo1 ?? _employeeSettings.NotAvailable,
+                    PinNo2 = a.PinNo2 ?? _employeeSettings.NotAvailable,
                     CountryID1 = b.CountryId == null ? 0 : b.CountryId,
-                    Country1 = b.CountryName ?? "NA",
+                    Country1 = b.CountryName ?? _employeeSettings.NotAvailable,
                     CountryID2 = c.CountryId == null ? 0 : c.CountryId,
-                    Country2 = c.CountryName ?? "NA",
+                    Country2 = c.CountryName ?? _employeeSettings.NotAvailable,
                     Status = d.ApprovalStatus,
-                    PhoneNo = a.PhoneNo ?? "NA",
-                    AlterPhoneNo = a.AlterPhoneNo ?? "NA",
-                    MobileNo = a.MobileNo ?? "NA"
-                }).ToListAsync();
+                    PhoneNo = a.PhoneNo ?? _employeeSettings.NotAvailable,
+                    AlterPhoneNo = a.AlterPhoneNo ?? _employeeSettings.NotAvailable,
+                    MobileNo = a.MobileNo ?? _employeeSettings.NotAvailable
+                }).AsNoTracking().ToListAsync();
 
             var query2 = await (
-                        from a in _context.HrEmpAddress01s
-                        join b in _context.AdmCountryMasters on a.Addr1Country equals b.CountryId into countryGroup1
-                        from b in countryGroup1.DefaultIfEmpty()
-                        join c in _context.AdmCountryMasters on a.Addr2Country equals c.CountryId into countryGroup2
-                        from c in countryGroup2.DefaultIfEmpty()
-                        where a.EmpId == employeeId &&
-                              (a.ApprlId == null || _context.HrEmpAddress01Apprls.Any(h => h.AddrId == a.ApprlId && h.EmpId == employeeId))
-                        select new AddressDto
-                        {
-                            AddrID = a.AddrId,
-                            EmpID = a.EmpId,
-                            PermanentAddr = a.PermanentAddr ?? "NA",
-                            ContactAddr = a.ContactAddr ?? "NA",
-                            PinNo1 = a.PinNo1 ?? "NA",
-                            PinNo2 = a.PinNo2 ?? "NA",
-                            CountryID1 = b.CountryId == null ? 0 : b.CountryId,
-                            Country1 = b.CountryName ?? "NA",
-                            CountryID2 = c.CountryId == null ? 0 : c.CountryId,
-                            Country2 = c.CountryName ?? "NA",
-                            Status = "A",
-                            PhoneNo = a.PhoneNo ?? "NA",
-                            AlterPhoneNo = a.AlterPhoneNo ?? "NA",
-                            MobileNo = a.MobileNo ?? "NA"
-                        }).ToListAsync();
-
-            var finalQuery = query1.Concat(query2);
-
-            var result = finalQuery.ToList();
-
-
-
-            return new CommunicationExtraDto
-            {
-                Addresses = result.Select(r => new AddressDto
+                from a in _context.HrEmpAddress01s
+                join b in _context.AdmCountryMasters on a.Addr1Country equals b.CountryId into countryGroup1
+                from b in countryGroup1.DefaultIfEmpty()
+                join c in _context.AdmCountryMasters on a.Addr2Country equals c.CountryId into countryGroup2
+                from c in countryGroup2.DefaultIfEmpty()
+                where a.EmpId == employeeId &&
+                      (a.ApprlId == null || _context.HrEmpAddress01Apprls.Any(h => h.AddrId == a.ApprlId && h.EmpId == employeeId))
+                select new AddressDto
                 {
-                    AddrID = r.AddrID,
-                    EmpID = r.EmpID,
-                    PermanentAddr = r.PermanentAddr,
-                    ContactAddr = r.ContactAddr,
-                    PinNo1 = r.PinNo1,
-                    PinNo2 = r.PinNo2,
-                    CountryID1 = r.CountryID1,
-                    Country1 = r.Country1,
-                    CountryID2 = r.CountryID2,
-                    Country2 = r.Country2,
-                    Status = r.Status,
-                    PhoneNo = r.PhoneNo,
-                    AlterPhoneNo = r.AlterPhoneNo,
-                    MobileNo = r.MobileNo
-                }).ToList()
+                    AddrID = a.AddrId,
+                    EmpID = a.EmpId,
+                    PermanentAddr = a.PermanentAddr ?? _employeeSettings.NotAvailable,
+                    ContactAddr = a.ContactAddr ?? _employeeSettings.NotAvailable,
+                    PinNo1 = a.PinNo1 ?? _employeeSettings.NotAvailable,
+                    PinNo2 = a.PinNo2 ?? _employeeSettings.NotAvailable,
+                    CountryID1 = b.CountryId == null ? 0 : b.CountryId,
+                    Country1 = b.CountryName ?? _employeeSettings.NotAvailable,
+                    CountryID2 = c.CountryId == null ? 0 : c.CountryId,
+                    Country2 = c.CountryName ?? _employeeSettings.NotAvailable,
+                    Status = _employeeSettings.EmployeeStatus,// "A",
+                    PhoneNo = a.PhoneNo ?? _employeeSettings.NotAvailable,
+                    AlterPhoneNo = a.AlterPhoneNo ?? _employeeSettings.NotAvailable,
+                    MobileNo = a.MobileNo ?? _employeeSettings.NotAvailable
+                }).AsNoTracking().ToListAsync();
+
+            var finalQuery = query1.Concat(query2).ToList();
+
+            return new List<CommunicationExtraDto>
+            {
+                         new CommunicationExtraDto
+                         {
+                                Addresses = finalQuery.Select(r => new AddressDto
+                                {
+                                    AddrID = r.AddrID,
+                                    EmpID = r.EmpID,
+                                    PermanentAddr = r.PermanentAddr,
+                                    ContactAddr = r.ContactAddr,
+                                    PinNo1 = r.PinNo1,
+                                    PinNo2 = r.PinNo2,
+                                    CountryID1 = r.CountryID1,
+                                    Country1 = r.Country1,
+                                    CountryID2 = r.CountryID2,
+                                    Country2 = r.Country2,
+                                    Status = r.Status,
+                                    PhoneNo = r.PhoneNo,
+                                    AlterPhoneNo = r.AlterPhoneNo,
+                                    MobileNo = r.MobileNo
+                                }).ToList()
+                         }
             };
         }
 
-        public async Task<List<CommunicationEmergencyDto>> CommunicationEmergency(int employeeId)
+        public async Task<List<CommunicationEmergencyDto>> CommunicationEmergencyAsync(int employeeId)
         {
             var result = await (from a in _context.HrEmpEmergaddresses
                                 join b in _context.AdmCountryMasters on a.Country equals b.CountryId into Emergency
@@ -2627,96 +2633,89 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     PhoneNo = a.PhoneNo,
                                     AlterPhoneNo = a.AlterPhoneNo,
                                     MobileNo = a.MobileNo,
-                                    Status = "A",
+                                    Status = _employeeSettings.EmployeeStatus,// "A",
                                     EmerName = a.EmerName,
                                     EmerRelation = a.EmerRelation
-                                }).ToListAsync();
+                                }).AsNoTracking().ToListAsync();
 
             return result;
         }
 
-        public async Task<List<string>> HobbiesData(int employeeId)
+        public async Task<List<string>> HobbiesDataAsync(int employeeId)
         {
-            var Hobbies = await (from a in _context.GeneralCategories
-                                 join b in _context.ReasonMasters on a.Id equals b.Value
-                                 join c in _context.EmployeeHobbies on b.ReasonId equals Convert.ToInt32(c.HobbieId)
-                                 where a.Description == "Hobbies" && c.EmployeeId == employeeId
-                                 select b.Description
-                                     )
-                                     .ToListAsync();
+            return await (from a in _context.GeneralCategories
+                          join b in _context.ReasonMasters on a.Id equals b.Value
+                          join c in _context.EmployeeHobbies on b.ReasonId equals Convert.ToInt32(c.HobbieId)
+                          where a.Description == _employeeSettings.Hobbies && c.EmployeeId == employeeId
+                          select b.Description
+                                     ).AsNoTracking().ToListAsync();
 
-            return Hobbies;
         }
 
-        public async Task<List<RewardAndRecognitionDto>> RewardAndRecognitions(int employeeId)
+        public async Task<List<RewardAndRecognitionDto>> RewardAndRecognitionsAsync(int employeeId)
         {
-            var RewardAndRecognitionResult = await (from a in _context.EmpRewards
-                                                    join b in _context.AchievementMasters on a.AchievementId equals b.AchievementId
-                                                    join c in _context.HrmValueTypes on a.RewardType equals c.Id
-                                                    where a.EmpId == employeeId && a.Status == "A"
-                                                    select new RewardAndRecognitionDto
-                                                    {
-                                                        RewardID = a.RewardId,
-                                                        Emp_id = a.EmpId,
-                                                        Achievement = b.Description,
-                                                        RewardType = c.Description,
-                                                        RewardValue = c.Id,
-                                                        Rewarddate = a.RewardDate.HasValue ? a.RewardDate.Value.ToString("dd/MM/yyyy") : null,
-                                                        Reason = a.Reason,
-                                                        Amount = a.Amount,
-                                                        rewardidtype = a.RewardType
+            return await (from a in _context.EmpRewards
+                          join b in _context.AchievementMasters on a.AchievementId equals b.AchievementId
+                          join c in _context.HrmValueTypes on a.RewardType equals c.Id
+                          where a.EmpId == employeeId && a.Status == _employeeSettings.EmployeeStatus// "A"
+                          select new RewardAndRecognitionDto
+                          {
+                              RewardID = a.RewardId,
+                              Emp_id = a.EmpId,
+                              Achievement = b.Description,
+                              RewardType = c.Description,
+                              RewardValue = c.Id,
+                              Rewarddate = a.RewardDate.HasValue ? a.RewardDate.Value.ToString(_employeeSettings.DateFormat) : null,
+                              Reason = a.Reason,
+                              Amount = a.Amount,
+                              rewardidtype = a.RewardType
 
-                                                    }
-                ).ToListAsync();
-            return RewardAndRecognitionResult;
+                          }).AsNoTracking().ToListAsync();
+
         }
-
-        public async Task<List<QualificationDto>> Qualification(int employeeId)
+        public async Task<List<QualificationDto>> QualificationAsync(int employeeId)
         {
-            var apprlResults = (
-            from a in _context.HrEmpQualificationApprls
-            join b in _context.HrEmpMasters on a.EmpId equals b.EmpId
-            join c in _context.QualificationRequestWorkFlowstatuses on a.QlfId equals c.RequestId
-            where a.EmpId == employeeId && c.ApprovalStatus == "P"
-            select new QualificationTableDto
-            {
-                Qlf_id = a.QlfId,
-                Emp_Id = a.EmpId,
-                Course = a.Course ?? "NA",
-                University = a.University ?? "NA",
-                Inst_Name = a.InstName ?? "NA",
-                Dur_Frm = a.DurFrm.HasValue ? a.DurFrm.Value.ToString("dd/MM/yyyy") : "NA",
-                Dur_To = a.DurTo.HasValue ? a.DurTo.Value.ToString("dd/MM/yyyy") : "NA",
-                Year_Pass = a.YearPass ?? "NA",
-                Mark_Per = a.MarkPer ?? "NA",
-                Class = a.Class ?? "NA",
-                Subjects = a.Subjects ?? "NA",
-                Status = a.Status ?? "NA"
-            }).ToList();
-
-            var qualificationResults = (
-                from a in _context.HrEmpQualifications
-                join b in _context.HrEmpMasters on a.EmpId equals b.EmpId
-                where a.EmpId == employeeId &&
-                      (_context.HrEmpQualificationApprls.Any(q => q.EmpId == employeeId && q.QlfId == a.ApprlId) || a.ApprlId == null)
+            var apprlResults = await (
+                from a in _context.HrEmpQualificationApprls
+                join c in _context.QualificationRequestWorkFlowstatuses on a.QlfId equals c.RequestId
+                where a.EmpId == employeeId && c.ApprovalStatus == "P"
                 select new QualificationTableDto
                 {
                     Qlf_id = a.QlfId,
                     Emp_Id = a.EmpId,
-                    Course = a.Course ?? "NA",
-                    University = a.University ?? "NA",
-                    Inst_Name = a.InstName ?? "NA",
-                    Dur_Frm = a.DurFrm.HasValue ? a.DurFrm.Value.ToString("dd/MM/yyyy") : "NA",
-                    Dur_To = a.DurTo.HasValue ? a.DurTo.Value.ToString("dd/MM/yyyy") : "NA",
-                    Year_Pass = a.YearPass ?? "NA",
-                    Mark_Per = a.MarkPer ?? "NA",
-                    Class = a.Class ?? "NA",
-                    Subjects = a.Subjects ?? "NA",
-                    Status = "A"
-                }
-            ).ToList();
+                    Course = a.Course ?? _employeeSettings.NotAvailable,
+                    University = a.University ?? _employeeSettings.NotAvailable,
+                    Inst_Name = a.InstName ?? _employeeSettings.NotAvailable,
+                    Dur_Frm = a.DurFrm.HasValue ? a.DurFrm.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    Dur_To = a.DurTo.HasValue ? a.DurTo.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    Year_Pass = a.YearPass ?? _employeeSettings.NotAvailable,
+                    Mark_Per = a.MarkPer ?? _employeeSettings.NotAvailable,
+                    Class = a.Class ?? _employeeSettings.NotAvailable,
+                    Subjects = a.Subjects ?? _employeeSettings.NotAvailable,
+                    Status = a.Status ?? _employeeSettings.NotAvailable
+                }).AsNoTracking().ToListAsync();
 
-            var combinedResults = apprlResults.Concat(qualificationResults).ToList();
+            var qualificationResults = await (
+                from a in _context.HrEmpQualifications
+                where a.EmpId == employeeId &&
+                      !_context.HrEmpQualificationApprls.Any(q => q.EmpId == employeeId && q.QlfId == a.ApprlId)
+                select new QualificationTableDto
+                {
+                    Qlf_id = a.QlfId,
+                    Emp_Id = a.EmpId,
+                    Course = a.Course ?? _employeeSettings.NotAvailable,
+                    University = a.University ?? _employeeSettings.NotAvailable,
+                    Inst_Name = a.InstName ?? _employeeSettings.NotAvailable,
+                    Dur_Frm = a.DurFrm.HasValue ? a.DurFrm.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    Dur_To = a.DurTo.HasValue ? a.DurTo.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    Year_Pass = a.YearPass ?? _employeeSettings.NotAvailable,
+                    Mark_Per = a.MarkPer ?? _employeeSettings.NotAvailable,
+                    Class = a.Class ?? _employeeSettings.NotAvailable,
+                    Subjects = a.Subjects ?? _employeeSettings.NotAvailable,
+                    Status = _employeeSettings.EmployeeStatus// "A"
+                }).AsNoTracking().ToListAsync();
+
+            var combinedResults = apprlResults.Concat(qualificationResults);
 
             var groupedResults = combinedResults
                 .GroupBy(q => new
@@ -2735,24 +2734,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     q.Status
                 })
                 .OrderByDescending(g => DateTime.TryParse(g.Key.Dur_To, out var dateResult) ? dateResult : DateTime.MinValue)
-                .Select(g => new QualificationTableDto
-                {
-                    Qlf_id = g.Key.Qlf_id,
-                    Emp_Id = g.Key.Emp_Id,
-                    Course = g.Key.Course,
-                    University = g.Key.University,
-                    Inst_Name = g.Key.Inst_Name,
-                    Dur_Frm = g.Key.Dur_Frm,
-                    Dur_To = g.Key.Dur_To,
-                    Year_Pass = g.Key.Year_Pass,
-                    Mark_Per = g.Key.Mark_Per,
-                    Class = g.Key.Class,
-                    Subjects = g.Key.Subjects,
-                    Status = g.Key.Status
-                })
+                .Select(g => g.First())
                 .ToList();
 
-            var attachments = _context.QualificationAttachments
+            var attachments = await _context.QualificationAttachments
                 .Where(a => a.EmpId == employeeId && a.DocStatus == "A")
                 .Select(a => new QualificationFileDto
                 {
@@ -2760,165 +2745,71 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     QualificationId = a.QualificationId,
                     QualFileName = a.QualFileName,
                     DocStatus = a.DocStatus
-                })
-                .ToList();
+                }).AsNoTracking().ToListAsync();
 
-            return await Task.FromResult(new List<QualificationDto>
+            return new List<QualificationDto>
             {
-                new QualificationDto
-                {
-                    QualificationTable = groupedResults,
-                    QualificationFile = attachments
-                }
-            });
+                    new QualificationDto
+                    {
+                        QualificationTable = groupedResults,
+                        QualificationFile = attachments
+                    }
+            };
         }
-
-        public async Task<List<SkillSetDto>> SkillSets(int employeeId)
+        public async Task<List<SkillSetDto>> SkillSetsAsync(int employeeId)
         {
-            var apprlResults = (
+            var apprlResultsQuery =
                 from a in _context.HrEmpTechnicalApprls
-                join b in _context.SkillSetRequestWorkFlowstatuses on a.TechId equals b.RequestId
+                join b in _context.SkillSetRequestWorkFlowstatuses
+                    on a.TechId equals b.RequestId
                 where a.EmpId == employeeId && b.ApprovalStatus == "P"
                 select new SkillSetDto
                 {
                     Tech_id = a.TechId,
                     Emp_Id = a.EmpId,
-                    Course = a.Course ?? "NA",
-                    Course_Dtls = a.CourseDtls ?? "NA",
-                    Inst_Name = a.InstName ?? "NA",
-                    Dur_Frm = a.DurFrm.HasValue ? a.DurFrm.Value.ToString("dd/MM/yyyy") : "NA",
-                    Dur_To = a.DurTo.HasValue ? a.DurTo.Value.ToString("dd/MM/yyyy") : "NA",
-                    Year = a.Year ?? "NA",
-                    Mark_Per = a.MarkPer ?? "NA",
-                    langSkills = a.LangSkills ?? "NA",
+                    Course = a.Course ?? _employeeSettings.NotAvailable,
+                    Course_Dtls = a.CourseDtls ?? _employeeSettings.NotAvailable,
+                    Inst_Name = a.InstName ?? _employeeSettings.NotAvailable,
+                    Dur_Frm = a.DurFrm.HasValue ? a.DurFrm.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    Dur_To = a.DurTo.HasValue ? a.DurTo.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    Year = a.Year ?? _employeeSettings.NotAvailable,
+                    Mark_Per = a.MarkPer ?? _employeeSettings.NotAvailable,
+                    langSkills = a.LangSkills ?? _employeeSettings.NotAvailable,
                     Status = "P"
-                }).ToList();
+                };
 
-            var technicalResults = (
+            var technicalResultsQuery =
                 from a in _context.HrEmpTechnicals
                 where a.EmpId == employeeId &&
-                      (_context.HrEmpTechnicalApprls.Any(ta => ta.EmpId == employeeId && ta.TechId == a.ApprlId) || a.ApprlId == null)
+                      (!_context.HrEmpTechnicalApprls.Any(ta => ta.EmpId == employeeId && ta.TechId == a.ApprlId) || a.ApprlId == null)
                 select new SkillSetDto
                 {
                     Tech_id = a.TechId,
                     Emp_Id = a.EmpId,
-                    Course = a.Course ?? "NA",
-                    Course_Dtls = a.CourseDtls ?? "NA",
-                    Inst_Name = a.InstName ?? "NA",
-                    Dur_Frm = a.DurFrm.HasValue ? a.DurFrm.Value.ToString("dd/MM/yyyy") : "NA",
-                    Dur_To = a.DurTo.HasValue ? a.DurTo.Value.ToString("dd/MM/yyyy") : "NA",
-                    Year = a.Year ?? "NA",
-                    Mark_Per = a.MarkPer ?? "NA",
-                    langSkills = a.LangSkills ?? "NA",
-                    Status = "A"
-                }).ToList();
+                    Course = a.Course ?? _employeeSettings.NotAvailable,
+                    Course_Dtls = a.CourseDtls ?? _employeeSettings.NotAvailable,
+                    Inst_Name = a.InstName ?? _employeeSettings.NotAvailable,
+                    Dur_Frm = a.DurFrm.HasValue ? a.DurFrm.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    Dur_To = a.DurTo.HasValue ? a.DurTo.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    Year = a.Year ?? _employeeSettings.NotAvailable,
+                    Mark_Per = a.MarkPer ?? _employeeSettings.NotAvailable,
+                    langSkills = a.LangSkills ?? _employeeSettings.NotAvailable,
+                    Status = _employeeSettings.EmployeeStatus// "A"
+                };
 
-            // Combine both results (approval results and technical results)
-            var combinedResults = apprlResults.Concat(technicalResults).ToList();
+            // Execute queries asynchronously
+            var apprlResults = await apprlResultsQuery.AsNoTracking().ToListAsync();
+            var technicalResults = await technicalResultsQuery.AsNoTracking().ToListAsync();
 
-            // Group the results by all required fields and sort them by Dur_To
-            var groupedResults = combinedResults
-                .GroupBy(r => new
-                {
-                    r.Tech_id,
-                    r.Emp_Id,
-                    r.Course,
-                    r.Course_Dtls,
-                    r.Inst_Name,
-                    r.Dur_Frm,
-                    r.Dur_To,
-                    r.Year,
-                    r.Mark_Per,
-                    r.langSkills,
-                    r.Status
-                })
-                .OrderByDescending(g => DateTime.TryParse(g.Key.Dur_To, out var dateResult) ? dateResult : DateTime.MinValue)
-                .Select(g => new SkillSetDto
-                {
-                    Tech_id = g.Key.Tech_id,
-                    Emp_Id = g.Key.Emp_Id,
-                    Course = g.Key.Course,
-                    Course_Dtls = g.Key.Course_Dtls,
-                    Inst_Name = g.Key.Inst_Name,
-                    Dur_Frm = g.Key.Dur_Frm,
-                    Dur_To = g.Key.Dur_To,
-                    Year = g.Key.Year,
-                    Mark_Per = g.Key.Mark_Per,
-                    langSkills = g.Key.langSkills,
-                    Status = g.Key.Status
-                })
+            // Combine and order results
+            var combinedResults = apprlResults.Concat(technicalResults)
+                .OrderByDescending(r => DateTime.TryParse(r.Dur_To, out var dateResult) ? dateResult : DateTime.MinValue)
                 .ToList();
 
-            // Assuming you want to return a list of SkillSetDto
-            return groupedResults;
-
+            return combinedResults;
         }
 
-        public async Task<List<DocumentsDto>> Documents(int employeeId)
-        {
-            //var result = await (from vt in _context.HrmValueTypes
-            //              where vt.Type.Equals("EmployeeReporting")
-            //                 && vt.Value.Equals(GetDefaultCompanyParameter(employeeId, "EMPEDITBUTTN", "EMP1"))
-            //              select vt.Code).FirstOrDefaultAsync();
-
-            //var r=from a in _context.EmployeeDetails
-
-            var result = await (from vt in _context.HrmValueTypes
-                                where vt.Type == "EmployeeReporting"
-                                select vt.Code).FirstOrDefaultAsync();
-
-            var ageFormat = await (from cp in _context.CompanyParameters
-                                   join vt in _context.HrmValueTypes on cp.Value equals vt.Value
-                                   where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
-                                   select vt.Code).FirstOrDefaultAsync();
-
-
-            var cteEmployeeDetails = await (
-            from emp in _context.HrEmpMasters
-            where emp.EmpId == employeeId
-            select new
-            {
-                emp.InstId,
-                emp.EmpId,
-                emp.EmpCode,
-                Name = $"{emp.FirstName} {emp.MiddleName} {emp.LastName}",
-                emp.DateOfBirth,
-                emp.BranchId,
-                emp.DepId,
-                emp.DesigId,
-                emp.LastEntity,
-                JoinDate = FormatDate(emp.JoinDt, _employeeSettings.DateFormat),
-                Probation_Dt = FormatDate(emp.ProbationDt, _employeeSettings.DateFormat),
-                emp.GuardiansName,
-                Gender = GetGender(emp.Gender),
-                emp.EmpStatus,
-                emp.CurrentStatus,
-                emp.EmpFirstEntity,
-                emp.EmpEntity,
-                emp.SeperationStatus,
-                emp.IsExperienced,
-                emp.NoticePeriod,
-                emp.ProbationNoticePeriod,
-                emp.GratuityStrtDate,
-                emp.FirstEntryDate,
-                emp.Ishra,
-                emp.IsExpat,
-                emp.CompanyConveyance,
-                emp.CompanyVehicle,
-                emp.IsDelete,
-                emp.DeletedBy,
-                emp.DeletedDate,
-                emp.IsSave,
-
-            }).ToListAsync();
-
-
-
-
-            return new List<DocumentsDto>();
-        }
-
-        public async Task<List<DependentDto>> Dependent(int employeeId)
+        public async Task<List<DependentDto>> DependentAsync(int employeeId)
         {
             var result = await (from a in _context.Dependent00s
                                 join b in _context.DependentMasters on a.RelationshipId equals b.DependentId
@@ -2927,89 +2818,53 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 {
                                     DepId = a.DepId,
                                     Description = b.Description,
-                                    DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString("dd/MM/yyyy") : "0",
+                                    DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString(_employeeSettings.DateFormat) : "0",
                                     InterEmpID = a.InterEmpId,
                                     Type = a.Type,
                                     Phone = a.Description, // Assuming "Phone" is mapped to "Description"
-                                    Gender = a.Gender == "M" ? "Male" : (a.Gender == "O" ? "Others" : "Female")
-                                }).ToListAsync();
+                                    Gender = GetGender(a.Gender).ToString()
+                                }).AsNoTracking().ToListAsync();
 
             return result;
 
         }
-
-        public async Task<List<CertificationDto>> Certification(int employeeId)
+        public async Task<List<CertificationDto>> CertificationAsync(int employeeId)
         {
-            var ctename = from a in _context.ReasonMasters
-                          join b in _context.GeneralCategories on a.Value equals b.Id
-                          where b.Code == "CERNAME"
-                          select new
-                          {
-                              a.ReasonId,
-                              a.Description
-                          };
+            // Fetch all lookup values at once to avoid multiple queries
+            var lookupValues = await _context.ReasonMasters
+                .Join(_context.GeneralCategories, rm => rm.Value, gc => gc.Id, (rm, gc) => new { rm.ReasonId, rm.Description, gc.Code })
+                .Where(gc => new[] { "CERNAME", "CERTFIELD", "ISSUAUTH", "YRCMP" }.Contains(gc.Code))
+              .AsNoTracking().ToListAsync();
 
-            // CTE for Certificate Field
-            var ctefield = from a in _context.ReasonMasters
-                           join b in _context.GeneralCategories on a.Value equals b.Id
-                           where b.Code == "CERTFIELD"
-                           select new
-                           {
-                               a.ReasonId,
-                               a.Description
-                           };
+            // Convert to dictionaries for quick lookup
+            var certNames = lookupValues.Where(x => x.Code == "CERNAME").ToDictionary(x => x.ReasonId, x => x.Description);
+            var certFields = lookupValues.Where(x => x.Code == "CERTFIELD").ToDictionary(x => x.ReasonId, x => x.Description);
+            var issueAuths = lookupValues.Where(x => x.Code == "ISSUAUTH").ToDictionary(x => x.ReasonId, x => x.Description);
+            var yearCompletions = lookupValues.Where(x => x.Code == "YRCMP").ToDictionary(x => x.ReasonId, x => x.Description);
 
-            // CTE for Issuing Authority
-            var cteIssue = from a in _context.ReasonMasters
-                           join b in _context.GeneralCategories on a.Value equals b.Id
-                           where b.Code == "ISSUAUTH"
-                           select new
-                           {
-                               a.ReasonId,
-                               a.Description
-                           };
+            // Fetch employee certifications
+            var certifications = await _context.EmployeeCertifications
+                .Where(ec => ec.EmpId == employeeId && ec.Status != "D")
+                .Select(ec => new CertificationDto
+                {
+                    Emp_Id = ec.EmpId,
+                    CertificationID = ec.CertificationId,
+                    Certificate_Name = certNames.ContainsKey((int)ec.CertificationName) ? certNames[(int)ec.CertificationName] : null,
+                    Certificate_Field = certFields.ContainsKey((int)ec.CertificationField) ? certFields[(int)ec.CertificationField] : null,
+                    Issuing_Authority = issueAuths.ContainsKey((int)ec.IssuingAuthority) ? issueAuths[(int)ec.IssuingAuthority] : null,
+                    Year_Of_Completion = yearCompletions.ContainsKey((int)ec.YearofCompletion) ? yearCompletions[(int)ec.YearofCompletion] : null
+                }).AsNoTracking().ToListAsync();
 
-            // CTE for Year of Completion
-            var cteYear = from a in _context.ReasonMasters
-                          join b in _context.GeneralCategories on a.Value equals b.Id
-                          where b.Code == "YRCMP"
-                          select new
-                          {
-                              a.ReasonId,
-                              a.Description
-                          };
-
-            // Now, join the CTEs with the EmployeeCertifications table
-            var result = await (from a in _context.EmployeeCertifications
-                                join b in ctefield on a.CertificationField equals b.ReasonId
-                                join d in cteIssue on a.IssuingAuthority equals d.ReasonId
-                                join c in ctename on a.CertificationName equals c.ReasonId
-                                join e in cteYear on a.YearofCompletion equals e.ReasonId
-                                where a.EmpId == employeeId && a.Status != "D"
-                                select new CertificationDto
-                                {
-                                    Emp_Id = a.EmpId,
-                                    CertificationID = a.CertificationId,
-                                    Certificate_Name = c.Description,
-                                    Certificate_Field = b.Description,
-                                    Issuing_Authority = d.Description,
-                                    Year_Of_Completion = e.Description
-                                }).ToListAsync();
-
-            // Execute the query and get the results
-
-            return result;
-
+            return certifications;
         }
-
-        public async Task<List<DisciplinaryActionsDto>> DisciplinaryActions(int employeeId)
+        public async Task<List<DisciplinaryActionsDto>> DisciplinaryActionsAsync(int employeeId)
         {
             var result = await (from a in _context.AssignedLetterTypes
                                 join b in _context.LetterMaster01s on a.LetterSubType equals b.ModuleSubId
                                 join c in _context.LetterMaster00s on b.LetterTypeId equals c.LetterTypeId
                                 where a.EmpId == employeeId &&
                                       c.LetterCode == "WRNG" &&
-                                      (a.ApprovalStatus == "RE" || a.ApprovalStatus == "A")
+                                      (a.ApprovalStatus == "RE" || a.ApprovalStatus == _employeeSettings.EmployeeStatus)
                                 orderby b.LetterSubName, a.ReleaseDate
                                 select new DisciplinaryActionsDto
                                 {
@@ -3018,28 +2873,35 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     Reason = a.Remark,
                                     LetterSubName = b.LetterSubName,
                                     IsLetterAttached = Convert.ToInt32(a.IsLetterAttached),
-                                    ReleaseDate = a.ReleaseDate == null ? "NA" : a.ReleaseDate.Value.ToString("dd/MM/yyyy"),
+                                    ReleaseDate = a.ReleaseDate == null ? _employeeSettings.NotAvailable : a.ReleaseDate.Value.ToString(_employeeSettings.DateFormat),
                                     LetterReqID = Convert.ToInt32(a.LetterReqId),
                                     ApprovalStatus = "E",
                                     UploadFileName = a.UploadFileName,
-                                    IssueDate = a.IssueDate == null ? "NA" : a.IssueDate.Value.ToString("dd/MM/yyyy"),
+                                    IssueDate = a.IssueDate == null ? _employeeSettings.NotAvailable : a.IssueDate.Value.ToString(_employeeSettings.DateFormat),
                                     Template = string.IsNullOrEmpty(a.TemplateStyle) ? 0 : 1
-                                }).ToListAsync();
+                                }).AsNoTracking().ToListAsync();
             return result;
         }
-        public async Task<List<LetterDto>> Letter(int employeeId)
+
+
+
+
+
+
+
+        public async Task<List<LetterDto>> LetterAsync(int employeeId)
         {
             // Get the LetterJoinDate
-            DateTime? letterJoinDate = _context.HrEmpMasters
+            DateTime? letterJoinDate = await (_context.HrEmpMasters
                 .Where(emp => emp.EmpId == employeeId)
                 .Select(emp => emp.JoinDt)
-                .FirstOrDefault();
+                 .FirstOrDefaultAsync());
 
             // Query 1: Convert to LetterDto before Concat
             var query1 = from a in _context.AssignedLetterTypes
                          join b in _context.LetterMaster01s on a.LetterSubType equals b.ModuleSubId
                          join c in _context.LetterMaster00s on b.LetterTypeId equals c.LetterTypeId
-                         where (a.ApprovalStatus == "A" || a.ApprovalStatus == "RE")
+                         where (a.ApprovalStatus == _employeeSettings.EmployeeStatus || a.ApprovalStatus == "RE")
                                && a.EmpId == employeeId
                                && (b.AppointmentLetter ?? 0) == 0
                          group a by new { a.LetterReqId, b.LetterSubName, a.EmpId, a.ReleaseDate, b.AppointmentLetter } into grouped
@@ -3048,7 +2910,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                              LetterReqID = Convert.ToInt32(grouped.Key.LetterReqId),
                              LetterSubName = grouped.Key.LetterSubName,
                              EmpID = grouped.Key.EmpId,
-                             ReleaseDate = grouped.Key.ReleaseDate.HasValue ? grouped.Key.ReleaseDate.Value.ToString("dd/MM/yyyy") : null,
+                             ReleaseDate = grouped.Key.ReleaseDate.HasValue ? grouped.Key.ReleaseDate.Value.ToString(_employeeSettings.DateFormat) : null,
                              AppointmentLetter = grouped.Key.AppointmentLetter ?? 0
                          };
 
@@ -3061,7 +2923,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                              LetterReqID = 0,
                              LetterSubName = b.LetterSubName,
                              EmpID = employeeId,
-                             ReleaseDate = letterJoinDate.HasValue ? letterJoinDate.Value.ToString("dd/MM/yyyy") : null,
+                             ReleaseDate = letterJoinDate.HasValue ? letterJoinDate.Value.ToString(_employeeSettings.DateFormat) : null,
                              AppointmentLetter = b.AppointmentLetter ?? 0
                          };
 
@@ -3074,14 +2936,14 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                               LetterReqID = a.InvstmntFileId,
                               LetterSubName = "Form 12B",
                               EmpID = employeeId,
-                              ReleaseDate = a.CreatedDate.HasValue ? a.CreatedDate.Value.ToString("dd/MM/yyyy") : null,
+                              ReleaseDate = a.CreatedDate.HasValue ? a.CreatedDate.Value.ToString(_employeeSettings.DateFormat) : null,
                               AppointmentLetter = -1
                           }).Take(1);
 
             // Materialize all queries to in-memory lists (ToList())
-            var query1List = await query1.ToListAsync();
-            var query2List = await query2.ToListAsync();
-            var query3List = await query3.ToListAsync();
+            var query1List = await query1.AsNoTracking().ToListAsync();
+            var query2List = await query2.AsNoTracking().ToListAsync();
+            var query3List = await query3.AsNoTracking().ToListAsync();
 
             // Concatenate the results
             var concatResult = query1List.Concat(query2List).Concat(query3List).OrderByDescending(r => r.ReleaseDate);
@@ -3090,7 +2952,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return concatResult.ToList();
         }
 
-        public async Task<List<ReferenceDto>> Reference(int employeeId)
+        public async Task<List<ReferenceDto>> ReferenceAsync(int employeeId)
         {
             var result = await (from a in _context.HrEmpreferences
                                 join b in _context.ConsultantDetails on a.ConsultantId equals b.Id into consultantDetails
@@ -3105,22 +2967,22 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     RefType = a.RefType,
                                     RefMethoddet = a.RefMethod == "C" ? "Consultant" :
                                                    a.RefMethod == "O" ? "Others" :
-                                                   a.RefMethod == "D" ? "Direct" : "NA",
+                                                   a.RefMethod == "D" ? "Direct" : _employeeSettings.NotAvailable,
                                     RefMethod = a.RefMethod,
                                     Id = bDetail.Id,
-                                    ConsultantName = string.IsNullOrEmpty(bDetail.ConsultantName) ? "NA" : bDetail.ConsultantName,
-                                    RefEmpName = cDetail.Name == null ? "NA" : cDetail.Name,
-                                    Emp_Code = cDetail.EmpCode == null ? "NA" : cDetail.EmpCode,
+                                    ConsultantName = string.IsNullOrEmpty(bDetail.ConsultantName) ? _employeeSettings.NotAvailable : bDetail.ConsultantName,
+                                    RefEmpName = cDetail.Name == null ? _employeeSettings.NotAvailable : cDetail.Name,
+                                    Emp_Code = cDetail.EmpCode == null ? _employeeSettings.NotAvailable : cDetail.EmpCode,
                                     RefEmpID = a.RefEmpId == null ? 0 : a.RefEmpId,
-                                    RefName = string.IsNullOrEmpty(a.RefName) ? "NA" : a.RefName,
-                                    PhoneNo = string.IsNullOrEmpty(a.PhoneNo) ? "NA" : a.PhoneNo,
-                                    Address = string.IsNullOrEmpty(a.Address) ? "NA" : a.Address
-                                }).ToListAsync();
+                                    RefName = string.IsNullOrEmpty(a.RefName) ? _employeeSettings.NotAvailable : a.RefName,
+                                    PhoneNo = string.IsNullOrEmpty(a.PhoneNo) ? _employeeSettings.NotAvailable : a.PhoneNo,
+                                    Address = string.IsNullOrEmpty(a.Address) ? _employeeSettings.NotAvailable : a.Address
+                                }).AsNoTracking().ToListAsync();
 
             return result;
         }
 
-        private async Task<string> GetEmployeeExperienceLength(int empId, int expDays)
+        private async Task<string> GetEmployeeExperienceLengthAsync(int empId, int expDays)
         {
             DateTime? joinDate = _context.EmployeeDetails
                 .Where(e => e.EmpId == empId)
@@ -3165,7 +3027,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
 
-        public async Task<List<ProfessionalDto>> Professional(int employeeId)
+        public async Task<List<ProfessionalDto>> ProfessionalAsync(int employeeId)
         {
             var query = await (
                 from a in _context.HrEmpProfdtls
@@ -3196,9 +3058,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     CurrencyId = c.CurrencyId,
                     Currency = c.Currency,
                     a.Ctc,
-                    Status = d != null && d.ApprovalStatus == "P" ? d.ApprovalStatus : "A"
+                    Status = d != null && d.ApprovalStatus == "P" ? d.ApprovalStatus : _employeeSettings.EmployeeStatus
                 }
-            ).ToListAsync();
+            ).AsNoTracking().ToListAsync();
 
             var result = new List<ProfessionalDto>();
 
@@ -3221,26 +3083,26 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     : 0;
 
                 var lengthOfService = item.JoinDt.HasValue && item.LeavingDt.HasValue
-                    ? await GetEmployeeExperienceLength(item.EmpId, (item.LeavingDt.Value - item.JoinDt.Value).Days)
+                    ? await GetEmployeeExperienceLengthAsync(item.EmpId, (item.LeavingDt.Value - item.JoinDt.Value).Days)
                     : "0Y: 0M: 0D";
 
                 result.Add(new ProfessionalDto
                 {
                     Prof_Id = item.ProfId,
                     Emp_Id = item.EmpId,
-                    Join_Dt = item.JoinDt.HasValue ? item.JoinDt.Value.ToString("dd/MM/yyyy") : "NA",
-                    Leaving_Dt = item.LeavingDt.HasValue ? item.LeavingDt.Value.ToString("dd/MM/yyyy") : "NA",
-                    Leave_Reason = item.LeaveReason ?? "NA",
-                    Designation = item.Designation ?? "NA",
-                    Comp_Name = item.CompName ?? "NA",
-                    Comp_Address = item.CompAddress ?? "NA",
-                    PBno = item.Pbno ?? "NA",
-                    Job_Desc = item.JobDesc ?? "NA",
-                    Contact_Per = item.ContactPer ?? "NA",
-                    Contact_No = item.ContactNo ?? "NA",
+                    Join_Dt = item.JoinDt.HasValue ? item.JoinDt.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    Leaving_Dt = item.LeavingDt.HasValue ? item.LeavingDt.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    Leave_Reason = item.LeaveReason ?? _employeeSettings.NotAvailable,
+                    Designation = item.Designation ?? _employeeSettings.NotAvailable,
+                    Comp_Name = item.CompName ?? _employeeSettings.NotAvailable,
+                    Comp_Address = item.CompAddress ?? _employeeSettings.NotAvailable,
+                    PBno = item.Pbno ?? _employeeSettings.NotAvailable,
+                    Job_Desc = item.JobDesc ?? _employeeSettings.NotAvailable,
+                    Contact_Per = item.ContactPer ?? _employeeSettings.NotAvailable,
+                    Contact_No = item.ContactNo ?? _employeeSettings.NotAvailable,
                     Currency_Id = item.CurrencyId,
-                    Currency = item.Currency ?? "NA",
-                    Ctc = item.Ctc ?? "NA",
+                    Currency = item.Currency ?? _employeeSettings.NotAvailable,
+                    Ctc = item.Ctc ?? _employeeSettings.NotAvailable,
                     Status = item.Status,
                     Years = years,
                     Months = months,
@@ -3252,7 +3114,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result;
         }
 
-        public async Task<List<AssetDto>> Asset()
+        public async Task<List<AssetDto>> AsseAsynct()
         {
             var result = await (
                  from a in _context.CompanyParameters
@@ -3260,29 +3122,33 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                  select new AssetDto
                  {
                      DynamicAsset = a.Value == 0 ? 0 : a.Value
-                 }).ToListAsync();
+                 }).AsNoTracking().ToListAsync();
 
             return result;
         }
 
-        public async Task<List<AssetDetailsDto>> AssetDetails(int employeeId)
+
+
+
+
+        public async Task<List<AssetDetailsDto>> AssetDetailsAsync(int employeeId)
         {
 
 
-            var paramVal01 = (from a in _context.CompanyParameters
-                              where a.ParameterCode == "AST" && a.Type == "COM"
-                              select new
-                              {
-                                  a.Value
-                              }).FirstOrDefault();
+            var paramVal01 = await (from a in _context.CompanyParameters
+                                    where a.ParameterCode == "AST" && a.Type == "COM"
+                                    select new
+                                    {
+                                        a.Value
+                                    }).FirstOrDefaultAsync();
             int paramVal = paramVal01?.Value ?? 0;
 
-            var paramDynVal01 = (from a in _context.CompanyParameters
-                                 where a.ParameterCode == "ASTDYN" && a.Type == "COM"
-                                 select new
-                                 {
-                                     a.Value
-                                 }).FirstOrDefault();
+            var paramDynVal01 = await (from a in _context.CompanyParameters
+                                       where a.ParameterCode == "ASTDYN" && a.Type == "COM"
+                                       select new
+                                       {
+                                           a.Value
+                                       }).FirstOrDefaultAsync();
             int paramDynVal = paramDynVal01?.Value ?? 0;
 
 
@@ -3304,22 +3170,22 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                         AssetGroup = c.Description,
                                         FieldDescription = f.FieldDescription,
                                         Asset = d.Description,
-                                        AssetModel = a.AssetModel ?? "NA",
-                                        Monitor = a.Monitor ?? "NA",
-                                        IWDate = a.InWarranty.HasValue ? a.InWarranty.Value.ToString("dd/MM/yyyy") : "NA",
-                                        OWDate = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString("dd/MM/yyyy") : "NA",
+                                        AssetModel = a.AssetModel ?? _employeeSettings.NotAvailable,
+                                        Monitor = a.Monitor ?? _employeeSettings.NotAvailable,
+                                        IWDate = a.InWarranty.HasValue ? a.InWarranty.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                                        OWDate = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
                                         FieldValues = e.FieldValues,
-                                        ReceivedDate = a.ReceivedDate.HasValue ? a.ReceivedDate.Value.ToString("dd/MM/yyyy") : "N/A",
+                                        ReceivedDate = a.ReceivedDate.HasValue ? a.ReceivedDate.Value.ToString(_employeeSettings.DateFormat) : "N/A",
                                         Status = a.Status,
                                         ParamVal = paramDynVal,
                                         ParamDynVal = paramDynVal,
                                         AssignID = a.AssignId,
                                         Remarks = a.Remarks ?? "",
-                                        ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString("dd/MM/yyyy") : "NA",
-                                        ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                        ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                                        ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
                                         EmplinkID = c.EmplinkId ?? 0
 
-                                    }).ToListAsync();
+                                    }).AsNoTracking().ToListAsync();
                 return result;
             }
             else if (paramVal == 1)
@@ -3336,24 +3202,24 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                         AssetGroup = c.Description,
                                         Asset = b.Description,
                                         AssetNo = a.AssetNo,
-                                        AssetModel = a.AssetModel == null ? "NA" : a.AssetModel,
-                                        Monitor = a.Monitor == null ? "NA" : a.Monitor,
-                                        InWarranty = a.InWarranty.HasValue ? a.InWarranty.Value.ToString("dd/MM/yyyy") : "NA",
-                                        OutOfWarranty = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString("dd/MM/yyyy") : "NA",
-                                        ReceivedDate = a.ReceivedDate.HasValue ? a.ReceivedDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                        AssetModel = a.AssetModel == null ? _employeeSettings.NotAvailable : a.AssetModel,
+                                        Monitor = a.Monitor == null ? _employeeSettings.NotAvailable : a.Monitor,
+                                        InWarranty = a.InWarranty.HasValue ? a.InWarranty.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                                        OutOfWarranty = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                                        ReceivedDate = a.ReceivedDate.HasValue ? a.ReceivedDate.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
                                         Status = a.Status,
                                         ParamVal = paramVal,
                                         ParamDynVal = 0,
                                         AssignID = a.AssignId,
-                                        Remarks = a.Remarks == null ? "NA" : a.Remarks,
-                                        ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString("dd/MM/yyyy") : "NA",
-                                        ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString("dd/MM/yyyy") : "NA"
+                                        Remarks = a.Remarks == null ? _employeeSettings.NotAvailable : a.Remarks,
+                                        ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                                        ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable
 
 
 
 
 
-                                    }).ToListAsync();
+                                    }).AsNoTracking().ToListAsync();
                 return result;
 
             }
@@ -3379,7 +3245,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                         ComMasId = hcf.ComMasId,
                                         ParamVal = paramVal,
 
-                                    }).OrderByDescending(x => x.AssignedDate).ToListAsync();
+                                    }).OrderByDescending(x => x.AssignedDate).AsNoTracking().ToListAsync();
 
 
                 return result;
@@ -3399,7 +3265,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                  {
                      Currency_Id = a.CurrencyId,
                      Currency = a.Currency
-                 }).ToListAsync();
+                 }).AsNoTracking().ToListAsync();
 
             return result;
         }
@@ -3407,14 +3273,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         {
             string sequence = null;
             int? codeId = null;
-
-            // Check if 'levels' == '17'
-            //bool isLevel17 = _context.LevelSettingsAccess00s
-            //    .Any(ls => _context.TransactionMasters
-            //        .Where(tm => tm.TransactionType == "Seq_Gen")
-            //        .Select(tm => tm.TransactionId)
-            //        .Contains(ls.TransactionId) && ls.Levels == "17");
-
             bool isLevel17 = (from ls in _context.LevelSettingsAccess00s
                               join tm in _context.TransactionMasters
                               on ls.TransactionId equals tm.TransactionId
@@ -3425,21 +3283,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             {
                 if (!string.IsNullOrEmpty(entity))
                 {
-                    // Query for entity-based logic
-                    //var entityQuery = _context.EntityApplicable00s
-                    //    .Join(_context.AdmCodegenerationmasters,
-                    //        a => a.MasterId,
-                    //        c => c.CodeId,
-                    //        (a, c) => new { a, c })
-                    //    .Where(x => _context.TransactionMasters
-                    //            .Where(tm => tm.TransactionType == "Seq_Gen")
-                    //            .Select(tm => tm.TransactionId)
-                    //            .Contains(x.a.TransactionId) &&
-                    //        x.a.MainMasterId == mainMasterId &&
-                    //        x.a.LinkLevel != 1 &&
-                    //        SplitStrings_XML(entity, ',').Contains(x.a.LinkId.ToString()))
-                    //    .OrderBy(x => x.a.LinkLevel)
-                    //    .FirstOrDefault();
+
                     var entityQuery = (from a in _context.EntityApplicable00s
                                        join c in _context.AdmCodegenerationmasters
                                        on a.MasterId equals c.CodeId
@@ -3559,174 +3403,222 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return codeId?.ToString();
         }
+
+
         public async Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
         {
             var existingEntity = await _context.HrEmpProfdtlsApprls
-                                  .FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId &&
-                                                            e.JoinDt.HasValue && e.JoinDt.Value.Date == profdtlsApprlDto.JoinDt &&
-                                                            e.LeavingDt.HasValue && e.LeavingDt.Value.Date == profdtlsApprlDto.LeavingDt);
-            if (existingEntity == null)
+                .FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId &&
+                                          e.JoinDt.HasValue && e.JoinDt.Value.Date == profdtlsApprlDto.JoinDt &&
+                                          e.LeavingDt.HasValue && e.LeavingDt.Value.Date == profdtlsApprlDto.LeavingDt);
+            if (existingEntity != null)
             {
+                return _mapper.Map<HrEmpProfdtlsApprlDto>(profdtlsApprlDto);
+            }
 
-                var workFlowNeed = await (from a in _context.CompanyParameters
-                                          join b in _context.HrmValueTypes
-                                          on a.Value equals b.Value
-                                          where b.Type == "EmployeeReporting"
-                                                && a.ParameterCode == "WRKFLO"
-                                          select b.Code).FirstOrDefaultAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                bool isWorkflowNeeded = await IsWorkflowNeeded();
+                var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
 
-                if (workFlowNeed.Equals("Yes"))
+                if (isWorkflowNeeded)
                 {
-                    var transactionID = await (from a in _context.TransactionMasters where a.TransactionType == "Professional" select a.TransactionId).FirstOrDefaultAsync();
-
-                    var codeId = GetSequence(profdtlsApprlDto.EmpId, transactionID, "", 0);
+                    string? codeId = await GenerateRequestId(profdtlsApprlDto.EmpId);
                     if (codeId != null)
                     {
-                        var requestID = await (from a in _context.AdmCodegenerationmasters where a.Code == codeId select a.LastSequence).FirstOrDefaultAsync();
-                        var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
-                        hrEmpProfdtlsApprl.RequestId = requestID;
+                        hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
                         await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
-
-                        var codeGen = await _context.AdmCodegenerationmasters.Where(c => c.CodeId == Convert.ToInt32(codeId))
-                                            .Select(c => new
-                                            {
-                                                c.CodeId,
-                                                c.CurrentCodeValue,
-                                                c.NumberFormat,
-                                                c.Code
-                                            })
-                                            .FirstOrDefaultAsync();
-                        if (codeGen != null)
-                        {
-                            // Calculate new CurrentCodeValue and LastSequence
-                            var currentCodeValue = (codeGen.CurrentCodeValue ?? 0) + 1;
-
-                            var lastSequence = codeGen.Code +
-                                               codeGen.NumberFormat.Substring(0, codeGen.NumberFormat.Length - currentCodeValue.ToString().Length) +
-                                               currentCodeValue;
-
-                            // Update the entity
-                            var codeGenEntity = await _context.AdmCodegenerationmasters
-                                .FirstOrDefaultAsync(c => c.CodeId == Convert.ToInt32(codeId));
-
-                            if (codeGenEntity != null)
-                            {
-                                codeGenEntity.CurrentCodeValue = currentCodeValue;
-                                codeGenEntity.LastSequence = lastSequence;
-
-                                // Save changes to the database
-                                await _context.SaveChangesAsync();
-                            }
-                        }
+                        await UpdateCodeGeneration(codeId);
                     }
                 }
                 else
                 {
-                    var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
                     await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
-
-                    var profdtlsApprlDtow = await _context.HrEmpProfdtlsApprls
-                                            .Where(x => x.EmpId == profdtlsApprlDto.EmpId)
-                                            .Select(x => new HrEmpProfdtlsApprl
-                                            {
-
-                                                InstId = x.InstId,
-                                                EmpId = x.EmpId,
-                                                CompName = x.CompName,
-                                                Designation = x.Designation,
-                                                CompAddress = x.CompAddress,
-                                                Pbno = x.Pbno,
-                                                ContactPer = x.ContactPer,
-                                                ContactNo = x.ContactNo,
-                                                JobDesc = x.JobDesc,
-                                                JoinDt = x.JoinDt,
-                                                LeavingDt = x.LeavingDt,
-                                                LeaveReason = x.LeaveReason,
-                                                Ctc = x.Ctc,
-                                                CurrencyId = x.CurrencyId,
-                                                EntryBy = x.EntryBy,
-                                                EntryDt = x.EntryDt
-                                            })
-                                            .FirstOrDefaultAsync();
-
-
-                    var hrEmpProfdtl = _mapper.Map<HrEmpProfdtl>(profdtlsApprlDtow);
-                    hrEmpProfdtl.EntryDt = DateTime.UtcNow;
-                    await _context.HrEmpProfdtls.AddAsync(hrEmpProfdtl);
-
-                    await _context.SaveChangesAsync();
-
-                    var employee = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId);
-
-                    if (employee != null)
-                    {
-                        // Update the ModifiedDate property
-                        employee.ModifiedDate = DateTime.UtcNow;
-                    }
-
-                    // Save changes in a single transaction
-                    await _context.SaveChangesAsync();
+                    await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
                 }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return _mapper.Map<HrEmpProfdtlsApprlDto>(profdtlsApprlDto);
             }
-            return _mapper.Map<HrEmpProfdtlsApprlDto>(profdtlsApprlDto);
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
+
+        private async Task<bool> IsWorkflowNeeded()
+        {
+            return await _context.CompanyParameters
+                .Join(_context.HrmValueTypes, a => a.Value, b => b.Value, (a, b) => new { a, b })
+                .Where(x => x.b.Type == "EmployeeReporting" && x.a.ParameterCode == "WRKFLO")
+                .Select(x => x.b.Code)
+                .FirstOrDefaultAsync() == "Yes";
+        }
+
+        private async Task<string?> GenerateRequestId(int empId)
+        {
+            var transactionID = await _context.TransactionMasters
+                .Where(a => a.TransactionType == "Professional")
+                .Select(a => a.TransactionId)
+                .FirstOrDefaultAsync();
+
+            return GetSequence(empId, transactionID, "", 0);
+        }
+
+        private async Task<string?> GetLastSequence(string codeId)
+        {
+            return await _context.AdmCodegenerationmasters
+                .Where(a => a.Code == codeId)
+                .Select(a => a.LastSequence)
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task UpdateCodeGeneration(string codeId)
+        {
+            var codeGenEntity = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(c => c.CodeId == Convert.ToInt32(codeId));
+
+            if (codeGenEntity != null)
+            {
+                codeGenEntity.CurrentCodeValue = (codeGenEntity.CurrentCodeValue ?? 0) + 1;
+                codeGenEntity.LastSequence = $"{codeGenEntity.Code}{codeGenEntity.NumberFormat[..^codeGenEntity.CurrentCodeValue.ToString().Length]}{codeGenEntity.CurrentCodeValue}";
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private async Task InsertProfessionalDetails(int empId)
+        {
+            var profdtlsApprlDto = await _context.HrEmpProfdtlsApprls
+                .Where(x => x.EmpId == empId)
+                .Select(x => new HrEmpProfdtlsApprl
+                {
+                    InstId = x.InstId,
+                    EmpId = x.EmpId,
+                    CompName = x.CompName,
+                    Designation = x.Designation,
+                    CompAddress = x.CompAddress,
+                    Pbno = x.Pbno,
+                    ContactPer = x.ContactPer,
+                    ContactNo = x.ContactNo,
+                    JobDesc = x.JobDesc,
+                    JoinDt = x.JoinDt,
+                    LeavingDt = x.LeavingDt,
+                    LeaveReason = x.LeaveReason,
+                    Ctc = x.Ctc,
+                    CurrencyId = x.CurrencyId,
+                    EntryBy = x.EntryBy,
+                    EntryDt = x.EntryDt
+                })
+                .FirstOrDefaultAsync();
+
+            if (profdtlsApprlDto != null)
+            {
+                var hrEmpProfdtl = _mapper.Map<HrEmpProfdtl>(profdtlsApprlDto);
+                hrEmpProfdtl.EntryDt = DateTime.UtcNow;
+                await _context.HrEmpProfdtls.AddAsync(hrEmpProfdtl);
+            }
+
+            var employee = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == empId);
+            if (employee != null)
+            {
+                employee.ModifiedDate = DateTime.UtcNow;
+            }
+        }
+
         public async Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID)
         {
-            List<HrEmpProfdtlsApprlDto> result = new();
+            var query = (updateType == "Pending")
+                ? _context.HrEmpProfdtlsApprls
+                    .Select(a => new { a.ProfId, a.EmpId, a.CompName, a.Designation, a.CompAddress, a.Pbno, a.ContactPer, a.ContactNo, a.JobDesc, a.JoinDt, a.LeavingDt, a.LeaveReason, a.Ctc, a.CurrencyId })
+                : _context.HrEmpProfdtls
+                    .Select(a => new { a.ProfId, a.EmpId, a.CompName, a.Designation, a.CompAddress, a.Pbno, a.ContactPer, a.ContactNo, a.JobDesc, a.JoinDt, a.LeavingDt, a.LeaveReason, a.Ctc, a.CurrencyId });
 
-            if (updateType == "Pending")
-            {
-                result = await (from a in _context.HrEmpProfdtlsApprls
-                                join b in _context.CurrencyMasters
-                                on a.CurrencyId equals b.CurrencyId into currencyGroup
-                                from b in currencyGroup.DefaultIfEmpty()
-                                where a.ProfId == detailID && a.EmpId == empID
-                                select new HrEmpProfdtlsApprlDto
-                                {
-                                    ProfId = a.ProfId,
-                                    EmpId = a.EmpId,
-                                    CompName = a.CompName,
-                                    Designation = a.Designation,
-                                    CompAddress = a.CompAddress,
-                                    Pbno = a.Pbno,
-                                    ContactPer = a.ContactPer,
-                                    ContactNo = a.ContactNo,
-                                    JobDesc = a.JobDesc,
-                                    JoinDt = a.JoinDt,
-                                    LeavingDt = a.LeavingDt,
-                                    LeaveReason = a.LeaveReason,
-                                    Ctc = a.Ctc,
-                                    CurrencyId = b.CurrencyId,
-                                }).ToListAsync();
-            }
-            else if (updateType == "Approved")
-            {
-                result = await (from a in _context.HrEmpProfdtls
-                                join b in _context.CurrencyMasters
-                                on a.CurrencyId equals b.CurrencyId into currencyGroup
-                                from b in currencyGroup.DefaultIfEmpty()
-                                where a.ProfId == detailID && a.EmpId == empID
-                                select new HrEmpProfdtlsApprlDto
-                                {
-                                    ProfId = a.ProfId,
-                                    EmpId = a.EmpId,
-                                    CompName = a.CompName,
-                                    Designation = a.Designation,
-                                    CompAddress = a.CompAddress,
-                                    Pbno = a.Pbno,
-                                    ContactPer = a.ContactPer,
-                                    ContactNo = a.ContactNo,
-                                    JobDesc = a.JobDesc,
-                                    JoinDt = a.JoinDt,
-                                    LeavingDt = a.LeavingDt,
-                                    LeaveReason = a.LeaveReason,
-                                    Ctc = a.Ctc,
-                                    CurrencyId = b.CurrencyId,
-                                }).ToListAsync();
-            }
-
-            return result;
+            return await (from a in query
+                          join b in _context.CurrencyMasters
+                          on a.CurrencyId equals b.CurrencyId into currencyGroup
+                          from b in currencyGroup.DefaultIfEmpty()
+                          where a.ProfId == detailID && a.EmpId == empID
+                          select new HrEmpProfdtlsApprlDto
+                          {
+                              ProfId = a.ProfId,
+                              EmpId = a.EmpId,
+                              CompName = a.CompName,
+                              Designation = a.Designation,
+                              CompAddress = a.CompAddress,
+                              Pbno = a.Pbno,
+                              ContactPer = a.ContactPer,
+                              ContactNo = a.ContactNo,
+                              JobDesc = a.JobDesc,
+                              JoinDt = a.JoinDt,
+                              LeavingDt = a.LeavingDt,
+                              LeaveReason = a.LeaveReason,
+                              Ctc = a.Ctc,
+                              CurrencyId = b.CurrencyId,
+                          }).AsNoTracking().ToListAsync();
         }
+
+
+
+
+        //public async Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID)
+        //{
+        //    List<HrEmpProfdtlsApprlDto> result = new();
+
+        //    if (updateType == "Pending")
+        //    {
+        //        result = await (from a in _context.HrEmpProfdtlsApprls
+        //                        join b in _context.CurrencyMasters
+        //                        on a.CurrencyId equals b.CurrencyId into currencyGroup
+        //                        from b in currencyGroup.DefaultIfEmpty()
+        //                        where a.ProfId == detailID && a.EmpId == empID
+        //                        select new HrEmpProfdtlsApprlDto
+        //                        {
+        //                            ProfId = a.ProfId,
+        //                            EmpId = a.EmpId,
+        //                            CompName = a.CompName,
+        //                            Designation = a.Designation,
+        //                            CompAddress = a.CompAddress,
+        //                            Pbno = a.Pbno,
+        //                            ContactPer = a.ContactPer,
+        //                            ContactNo = a.ContactNo,
+        //                            JobDesc = a.JobDesc,
+        //                            JoinDt = a.JoinDt,
+        //                            LeavingDt = a.LeavingDt,
+        //                            LeaveReason = a.LeaveReason,
+        //                            Ctc = a.Ctc,
+        //                            CurrencyId = b.CurrencyId,
+        //                        }).ToListAsync();
+        //    }
+        //    else if (updateType == "Approved")
+        //    {
+        //        result = await (from a in _context.HrEmpProfdtls
+        //                        join b in _context.CurrencyMasters
+        //                        on a.CurrencyId equals b.CurrencyId into currencyGroup
+        //                        from b in currencyGroup.DefaultIfEmpty()
+        //                        where a.ProfId == detailID && a.EmpId == empID
+        //                        select new HrEmpProfdtlsApprlDto
+        //                        {
+        //                            ProfId = a.ProfId,
+        //                            EmpId = a.EmpId,
+        //                            CompName = a.CompName,
+        //                            Designation = a.Designation,
+        //                            CompAddress = a.CompAddress,
+        //                            Pbno = a.Pbno,
+        //                            ContactPer = a.ContactPer,
+        //                            ContactNo = a.ContactNo,
+        //                            JobDesc = a.JobDesc,
+        //                            JoinDt = a.JoinDt,
+        //                            LeavingDt = a.LeavingDt,
+        //                            LeaveReason = a.LeaveReason,
+        //                            Ctc = a.Ctc,
+        //                            CurrencyId = b.CurrencyId,
+        //                        }).ToListAsync();
+        //    }
+
+        //    return result;
+        //}
 
         public Task<PersonalDetailsHistoryDto> InsertOrUpdatePersonalData(PersonalDetailsHistoryDto persnldtlsApprlDto)
         {
@@ -3734,7 +3626,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
 
-        public async Task<List<AllDocumentsDto>> Documents(int employeeId, List<string> excludedDocTypes)
+        public async Task<List<AllDocumentsDto>> DocumentsAsync(int employeeId, List<string> excludedDocTypes)
         {
 
             var tempDocumentFill = from a in _context.ReasonMasterFieldValues
@@ -3753,7 +3645,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                        FieldDescription = b.FieldDescription,
                                        DataTypeId = b.DataTypeId
                                    };
-            var tempDocumentFillList = await tempDocumentFill.ToListAsync();
+            var tempDocumentFillList = await tempDocumentFill.AsNoTracking().ToListAsync();
             var tempDocumentFillDict = tempDocumentFillList.ToDictionary(x => x.ReasonId, x => x);
 
             // Step 2: Retrieve Approved Documents
@@ -3773,7 +3665,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                         join t8 in _context.ReasonMasters on t2.DocValues equals t8.ReasonId.ToString() into reasonJoin
                                         from t8 in reasonJoin.DefaultIfEmpty()
                                         where t1.EmpId == employeeId
-                                                && t1.Status == "A"
+                                                && t1.Status == _employeeSettings.EmployeeStatus
                                                 && !excludedDocTypes.Contains(t5.DocType)
                                                 && t3.DocDescription != "IsActive"
 
@@ -3797,7 +3689,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                 select innerT3.DocFieldId
                                             ).Count()
                                         }
-                                    ).OrderBy(x => x.DocID).ToListAsync();
+                                    ).OrderBy(x => x.DocID).AsNoTracking().ToListAsync();
 
 
 
@@ -3824,7 +3716,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                      DocID = a.DocId,
                                      DocName = a.DocName.ToUpper(),
                                      DocDescription = "Submit Document"
-                                 }).Distinct().ToListAsync();
+                                 }).Distinct().AsNoTracking().ToListAsync();
 
 
             // Step 3: Retrieve Pending Documents
@@ -3864,7 +3756,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                             select innerT1).Count(),
 
                                               MatchedDoc = tempDocumentFillDict.ContainsKey(t8.ReasonId) ? tempDocumentFillDict[t8.ReasonId] : null
-                                          }).ToListAsync();
+                                          }).AsNoTracking().ToListAsync();
 
 
 
@@ -3898,7 +3790,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         }
 
-        public async Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid)
+        public async Task<List<PersonalDetailsDto>> GetPersonalDetailsByIdAsync(int employeeid)
         {
             var enableWeddingDate = await GetDefaultCompanyParameter(employeeid, "ENABLEWEDDINGDATE", "EMP1");
 
@@ -3917,9 +3809,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                          where a.EmpId == employeeid
                                          select new PersonalDetailsDto
                                          {
-                                             DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString("dd/MM/yyyy") : "NA",
+                                             DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
 
-                                             Wedding_Date = Convert.ToInt32(enableWeddingDate) == 1 ? (c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : "") : "",
+                                             Wedding_Date = Convert.ToInt32(enableWeddingDate) == 1 ? (c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString(_employeeSettings.DateFormat) : "") : "",
                                              EMail = b.PersonalEmail ?? "",
                                              CountryID = c.Country,
                                              NationalityID = c.Nationality,
@@ -3931,12 +3823,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                              Height = c.Height ?? "",
                                              Weight = c.Weight ?? "",
                                              GenderID = c.Gender,
-                                             Gender = c.Gender == "M" ? "Male" : c.Gender == "F" ? "Female" : c.Gender == "O" ? "Others" : "",
-                                             Marital_Status = c.MaritalStatus == "S" ? "Single" :
-                                                             c.MaritalStatus == "M" ? "Married" :
-                                                             c.MaritalStatus == "W" ? "Widowed" :
-                                                             c.MaritalStatus == "X" ? "Separated" :
-                                                             c.MaritalStatus == "D" ? "Divorcee" : "",
+                                             Gender = GetGender(c.Gender).ToString(),
+                                             Marital_Status = GetMaritalStatus(c.MaritalStatus).ToString(),
                                              Marital_StatusID = c.MaritalStatus,
                                              Guardians_Name = a.GuardiansName ?? "",
                                              Country = d.CountryName ?? "",
@@ -3944,12 +3832,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                              CountryOfBirth = f.CountryName ?? "",
                                              bloodgroupnew = string.IsNullOrEmpty(c.BloodGrp) ? "" :
                                                              c.BloodGrp == "HH" ? "HH Group" : c.BloodGrp + "ve"
-                                         }).ToListAsync();
+                                         }).AsNoTracking().ToListAsync();
+
 
             return employeeDetails;
         }
 
-        public async Task<List<TrainingDto>> Training(int employeeid)
+        public async Task<List<TrainingDto>> TrainingAsync(int employeeid)
         {
             var result = await (from hem in _context.HrEmpMasters
                                 join ts in _context.TrainingSchedules on hem.EmpId equals ts.EmpId
@@ -3971,96 +3860,59 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     Survey = tm.Survey,
                                     Join_Dt = hem.JoinDt,
                                     selectStatus = ts.SelectStatus,
-                                    AttDate = ts.AttDate.HasValue ? ts.AttDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                    AttDate = ts.AttDate.HasValue ? ts.AttDate.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
                                     IsAttended = ts.Status == "N" ? "NE" : "A"
-                                }).ToListAsync();
+                                }).AsNoTracking().ToListAsync();
 
             return result;
         }
-        public async Task<List<CareerHistoryDto>> CareerHistory(int employeeid)
+
+        public async Task<List<CareerHistoryDto>> CareerHistoryAsync(int employeeId)
         {
+            // Fetch previous experience data in a single query
+            var previousExpDays = await _context.HrEmpProfdtls
+                .Where(empProf => empProf.EmpId == employeeId)
+                .SumAsync(empProf => (int?)EF.Functions.DateDiffDay(empProf.JoinDt, empProf.LeavingDt) ?? 0);
 
-            var previousExpData = _context.HrEmpProfdtls
-                .Where(empProf => empProf.EmpId == employeeid)
-                .Select(empProf => new
-                {
-                    DaysWorked = EF.Functions.DateDiffDay(empProf.JoinDt, empProf.LeavingDt) ?? 0
-                })
-                .ToList();
-
-            var previousExp = new
+            var previousExp = new CareerHistoryDto
             {
                 Category = "Previous Experience",
-                Relevant = 0.00,
-                NonRelevent = previousExpData.Sum(e => e.DaysWorked),
-                Total = previousExpData.Sum(e => e.DaysWorked)
+                Relevant = "0Y: 0M: 0D",
+                NonRelevent = await GetEmployeeExperienceLengthAsync(employeeId, previousExpDays),
+                Total = await GetEmployeeExperienceLengthAsync(employeeId, previousExpDays)
             };
 
-            var companyExp = _context.HrEmpMasters
-                .Where(empMaster => empMaster.EmpId == employeeid)
-                .Select(empMaster => new
-                {
-                    RelevantDays = EF.Functions.DateDiffDay(empMaster.FirstEntryDate, DateTime.UtcNow) ?? 0
-                })
-                .FirstOrDefault();
+            // Fetch company experience in a single query
+            var relevantDays = await _context.HrEmpMasters
+                .Where(empMaster => empMaster.EmpId == employeeId)
+                .Select(empMaster => (int?)EF.Functions.DateDiffDay(empMaster.FirstEntryDate, DateTime.UtcNow) ?? 0)
+                .FirstOrDefaultAsync();
 
-            var companyExpResult = new
+            var companyExp = new CareerHistoryDto
             {
                 Category = "Company Experience (First Entry Date)",
-                Relevant = companyExp?.RelevantDays ?? 0,
-                NonRelevent = 0.00,
-                Total = companyExp?.RelevantDays ?? 0
+                Relevant = await GetEmployeeExperienceLengthAsync(employeeId, relevantDays),
+                NonRelevent = "0Y: 0M: 0D",
+                Total = await GetEmployeeExperienceLengthAsync(employeeId, relevantDays)
             };
-            var tempSummary = new List<dynamic> { previousExp, companyExpResult };
 
-            //--------------------------Finish #tempSummary--------------------------------------------
+            // Compute total summary
+            var totalRelevantDays = relevantDays;
+            var totalNonRelevantDays = previousExpDays;
+            var totalDays = totalRelevantDays + totalNonRelevantDays;
 
-            var totalSummary = new
+            var totalSummary = new CareerHistoryDto
             {
                 Category = "Total",
-                Relevant = tempSummary.Sum(x => (double)x.Relevant),
-                NonRelevent = tempSummary.Sum(x => (double)x.NonRelevent),
-                Total = tempSummary.Sum(x => (double)x.Total)
+                Relevant = await GetEmployeeExperienceLengthAsync(employeeId, totalRelevantDays),
+                NonRelevent = await GetEmployeeExperienceLengthAsync(employeeId, totalNonRelevantDays),
+                Total = await GetEmployeeExperienceLengthAsync(employeeId, totalDays)
             };
 
-            var detailedSummary = tempSummary.Select(x => new
-            {
-                Category = x.Category,
-                Relevant = x.Relevant ?? 0.00,
-                NonRelevent = x.NonRelevent ?? 0.00,
-                Total = x.Total ?? 0.00
-            }).ToList();
-
-            var tempExperienceDetails = new List<dynamic> { totalSummary }.Concat(detailedSummary).ToList();
-
-            //--------------------------Finish #TempExperienceDetails--------------------------------------------
-
-            var result1 = await Task.WhenAll(tempExperienceDetails.Select(async a =>
-            {
-                var relevant = a.Relevant == 0.00
-                                ? "0Y: 0M: 0D"
-                                : await GetEmployeeExperienceLength(employeeid, (int)a.Relevant);
-                var nonRelevent = a.NonRelevent == 0.00
-                                ? "0Y: 0M: 0D"
-                                : await GetEmployeeExperienceLength(employeeid, (int)a.NonRelevent);
-                var total = a.Total == 0.00
-                                ? "0Y: 0M: 0D"
-                                : await GetEmployeeExperienceLength(employeeid, (int)a.Total);
-
-                return new CareerHistoryDto
-                {
-                    Category = a.Category,
-                    Relevant = relevant,
-                    NonRelevent = nonRelevent,
-                    Total = total
-                };
-            }));
-
-            return result1.ToList();
-
+            return new List<CareerHistoryDto> { totalSummary, previousExp, companyExp };
         }
 
-        public async Task<List<object>> BiometricDetails(int employeeId)
+        public async Task<List<object>> BiometricDetailsAsync(int employeeId)
         {
             var result = await (from a in _context.BiometricsDtls
                                 join b in _context.HrEmpMasters on a.EmployeeId equals b.EmpId into bio
@@ -4074,188 +3926,189 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     UserID = a.UserId,
                                     AttMarkId = b != null && b.IsMarkAttn.HasValue
                                     ? (b.IsMarkAttn.Value ? "1" : "2") : ""
-                                }).ToListAsync();
+                                }).AsNoTracking().ToListAsync();
             return result.Cast<object>().ToList();
         }
 
-        public async Task<List<object>> AccessDetails(int employeeId)
+        public async Task<object> AccessDetailsAsync(int employeeId)
         {
-            var result = await _context.HrEmpMasters
+            var employee = await _context.HrEmpMasters
                 .Where(z => z.EmpId == employeeId)
                 .Select(z => new
                 {
                     Holiday = _context.HrmHolidayMasterAccesses
                         .Where(a => a.EmployeeId == z.EmpId)
-                        .Min(x => (long?)x.IdHolidayMasterAccess),
+                        .OrderBy(x => x.IdHolidayMasterAccess)
+                        .Select(x => (long?)x.IdHolidayMasterAccess)
+                        .FirstOrDefault(),
 
                     Attendance = _context.AttendancepolicyMasterAccesses
                         .Where(b => b.EmployeeId == z.EmpId)
-                        .Min(x => (long?)x.AttendanceAccessId),
+                        .OrderBy(x => x.AttendanceAccessId)
+                        .Select(x => (long?)x.AttendanceAccessId)
+                        .FirstOrDefault(),
 
                     Shift = _context.ShiftMasterAccesses
                         .Where(c => c.EmployeeId == z.EmpId)
-                        .Min(x => (long?)x.ShiftAccessId),
+                        .OrderBy(x => x.ShiftAccessId)
+                        .Select(x => (long?)x.ShiftAccessId)
+                        .FirstOrDefault(),
 
                     Leave = _context.HrmLeaveEmployeeleaveaccesses
                         .Where(d => d.EmployeeId == z.EmpId)
-                        .Min(x => (long?)x.IdEmployeeLeaveAccess),
+                        .OrderBy(x => x.IdEmployeeLeaveAccess)
+                        .Select(x => (long?)x.IdEmployeeLeaveAccess)
+                        .FirstOrDefault(),
 
                     LeavePolicy = _context.LeavepolicyMasterAccesses
                         .Where(e => e.EmployeeId == z.EmpId)
-                        .Min(x => (long?)x.LeaveAccessId),
+                        .OrderBy(x => x.LeaveAccessId)
+                        .Select(x => (long?)x.LeaveAccessId)
+                        .FirstOrDefault(),
 
                     LeaveBasicSettings = _context.HrmLeaveBasicsettingsaccesses
                         .Where(f => f.EmployeeId == z.EmpId)
-                        .Min(x => (long?)x.IdEmployeeSettinsAccess)
+                        .OrderBy(x => x.IdEmployeeSettinsAccess)
+                        .Select(x => (long?)x.IdEmployeeSettinsAccess)
+                        .FirstOrDefault()
                 })
-                .ToListAsync();
+              .AsNoTracking().FirstOrDefaultAsync();
 
-            return result.Cast<object>().ToList();
+            return employee; // Return empty object if no employee found
         }
 
-        public async Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlow(int entityID, int linkId)
+
+
+        public async Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlowAsync(int entityID, int linkId)
         {
-            IQueryable<int?> excludedTransactionIds;
+            var excludedTransactionIds = _context.ParamWorkFlow02s
+                .Where(pwf02 => entityID == 13 && pwf02.LinkEmpId == linkId && pwf02.LinkLevel == entityID)
+                .Select(pwf02 => pwf02.TransactionId)
+                .Union(
+                    _context.ParamWorkFlow01s
+                    .Where(pwf01 => entityID != 13 && pwf01.LinkId == linkId && pwf01.LinkLevel == entityID)
+                    .Select(pwf01 => pwf01.TransactionId)
+                );
 
-            if (entityID == 13)
-            {
-                excludedTransactionIds = _context.ParamWorkFlow02s
-                    .Where(pwf02 => pwf02.LinkEmpId == linkId && pwf02.LinkLevel == entityID)
-                    .Select(pwf02 => pwf02.TransactionId);
-            }
-            else
-            {
-                excludedTransactionIds = _context.ParamWorkFlow01s
-                    .Where(pwf01 => pwf01.LinkId == linkId && pwf01.LinkLevel == entityID)
-                    .Select(pwf01 => pwf01.TransactionId);
-            }
-
-            var result = await
-                (from b in _context.ParamWorkFlow00s
-                 join c in _context.ParamWorkFlowEntityLevel00s
-                     on b.ValueId equals c.ValueId
-                 join d in _context.TransactionMasters
-                     on b.TransactionId equals d.TransactionId
-                 where c.EntityLevel == entityID && !excludedTransactionIds.Contains(b.TransactionId)
-                 select new Fill_ModulesWorkFlowDto
-                 {
-                     ValueId = (int?)b.ValueId,
-                     TransactionId = b.TransactionId,
-                     Description = d.Description
-                 }).ToListAsync();  // <-- This ensures multiple results
+            var result = await (
+                from b in _context.ParamWorkFlow00s.AsNoTracking()
+                join c in _context.ParamWorkFlowEntityLevel00s.AsNoTracking()
+                    on b.ValueId equals c.ValueId
+                join d in _context.TransactionMasters.AsNoTracking()
+                    on b.TransactionId equals d.TransactionId
+                where c.EntityLevel == entityID && !excludedTransactionIds.Any(e => e == b.TransactionId)
+                select new Fill_ModulesWorkFlowDto
+                {
+                    ValueId = (int?)b.ValueId,
+                    TransactionId = b.TransactionId,
+                    Description = d.Description
+                }
+            ).ToListAsync();
 
             return result;
         }
 
-        public async Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMaster(int emp_Id, int roleId)
+
+        public async Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMasterAsync(int emp_Id, int roleId)
         {
-            var transid = (from t in _context.TransactionMasters
-                           where t.TransactionType == "W_Flow"
-                           select t.TransactionId).FirstOrDefault();
+            var transid = await _context.TransactionMasters
+                .Where(t => t.TransactionType == "W_Flow")
+                .Select(t => t.TransactionId)
+                .FirstOrDefaultAsync();
 
-            int? lnklev = (from s in _context.SpecialAccessRights
-                           where s.RoleId == roleId
-                           select s.LinkLevel).FirstOrDefault();
+            int? lnklev = await _context.SpecialAccessRights
+                .Where(s => s.RoleId == roleId)
+                .Select(s => s.LinkLevel)
+                .FirstOrDefaultAsync();
 
-            // Check if any EntityAccessRights02 record matches the roleId and LinkLevel 15
-            var exists = _context.EntityAccessRights02s
-                                  .Where(s => s.RoleId == roleId)
-                                  .Any(s => s.LinkLevel == 15);
+            bool hasAccess = await _context.EntityAccessRights02s
+                .AnyAsync(s => s.RoleId == roleId && s.LinkLevel == 15);
 
-            // If condition is true, select the WorkFlowDetails
-            if (exists)
+            if (hasAccess)
             {
-                var workflowDetails = _context.WorkFlowDetails
-                                              .Where(w => w.IsActive == true)  // Use true for boolean fields
-                                              .Select(w => new { w.WorkFlowId, w.Description })
-                                              .ToList();
-
-                // Return result from workflowDetails if exists condition is true
-                return workflowDetails.Select(wf => new Fill_WorkFlowMasterDto
-                {
-                    WorkFlowId = wf.WorkFlowId,
-                    Description = wf.Description
-                }).ToList();
+                return await _context.WorkFlowDetails
+                    .Where(w => (bool)w.IsActive)
+                    .Select(w => new Fill_WorkFlowMasterDto
+                    {
+                        WorkFlowId = w.WorkFlowId,
+                        Description = w.Description
+                    })
+                    .ToListAsync();
             }
-            else
-            {
-                // Step 1: CTE equivalent for ctnew
-                var ctnew = SplitStrings_XML(_context.HrEmpMasters
-                     .Where(h => h.EmpId == emp_Id)
-                     .Select(h => h.EmpEntity).FirstOrDefault(), ',')
-             .Select((item, index) => new LinkItemDto
-             {
-                 Item = item,
-                 LinkLevel = index + 2
-             }).Where(c => !string.IsNullOrEmpty(c.Item));
 
-                // Step 2: ApplicableFinal (includes union logic from EntityAccessRights02 and ctnew)
-                // Step 2: ApplicableFinal (includes union logic from EntityAccessRights02 and ctnew)
-                var applicableFinal = _context.EntityAccessRights02s
-                    .Where(s => s.RoleId == roleId)
-                    .SelectMany(s => SplitStrings_XML(s.LinkId, default), // SplitStrings_XML returns IEnumerable<string>
-                        (s, item) => new { Item = item, s.LinkLevel }) // Use 'item' directly, and create an anonymous object
-                    .Union(
-                        ctnew.Where(c => lnklev > 0 && c.LinkLevel >= lnklev)
-                             .Select(c => new { c.Item, LinkLevel = c.LinkLevel }) // Use 'Item' instead of 'item'
-                    ).ToList();
+            // **Step 1: Compute `ctnew`**
+            var empEntity = await _context.HrEmpMasters
+                .Where(h => h.EmpId == emp_Id)
+                .Select(h => h.EmpEntity)
+                .FirstOrDefaultAsync();
 
-
-                // Step 3: EntityApplicable00Final (filter by TransactionId)
-                var entityApplicable00Final = _context.EntityApplicable00s
-                    .Where(e => e.TransactionId == transid)
-                    .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
-                    .ToList();
-
-                // Step 4: ApplicableFinal02 (similar to ApplicableFinal)
-                var applicableFinal02 = _context.EntityAccessRights02s
-     .Where(s => s.RoleId == roleId)
-     .SelectMany(s => SplitStrings_XML(s.LinkId, default),
-         (s, item) => new { Item = item, s.LinkLevel })
-     .Union(
-         ctnew.Where(c => lnklev > 0 && c.LinkLevel >= lnklev)
-              .Select(c => new { c.Item, LinkLevel = c.LinkLevel }) // Use 'c.Item' instead of 'c.item'
-     ).ToList();
-
-
-                // Step 5: ApplicableFinal02Emp (filter by EmployeeDetails, EntityApplicable01, HighLevelViewTable)
-                var applicableFinal02Emp = (from emp in _context.EmployeeDetails
-                                            join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
-                                            join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
-                                            join af2 in applicableFinal02 on hlv.LevelOneId.ToString() equals af2.Item into af2LevelOne // Assuming LevelOneId is an integer and Item is a string
-                                            from af2L1 in af2LevelOne.DefaultIfEmpty()
-                                            where ea.TransactionId == transid
-                                            select ea.MasterId).Distinct().ToList();
-
-
-                // Step 6: newhigh (combines several conditions using joins and union)
-                var newhigh = (from ea in entityApplicable00Final
-                               join hlv in _context.HighLevelViewTables on ea.LinkLevel equals hlv.LevelOneId
-                               join af in applicableFinal on hlv.LevelOneId equals Convert.ToInt32(af.Item) into afLevelOne
-                               from af1 in afLevelOne.DefaultIfEmpty()
-                               select new { MasterId = ea.MasterId }).Distinct()  // Ensure MasterId is selected as part of an anonymous object
-                .Union(applicableFinal02Emp.Select(x => new { MasterId = x }))
-                .Union(entityApplicable00Final.Where(e => e.LinkLevel == 15).Select(e => new { MasterId = e.MasterId }))
+            var ctnew = SplitStrings_XML(empEntity, ',')
+                .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
+                .Where(c => !string.IsNullOrEmpty(c.Item))
                 .ToList();
 
+            // **Step 2: Compute `applicableFinal`**
+            var applicableFinal = await _context.EntityAccessRights02s
+                .Where(s => s.RoleId == roleId)
+                .SelectMany(s => SplitStrings_XML(s.LinkId, default),
+                    (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
+                .ToListAsync();
 
-                // Step 7: Final query to select from WorkFlowDetails
-                var workflowDetails = (from wf in _context.WorkFlowDetails
-                                       join nh in newhigh on wf.WorkFlowId equals nh.MasterId
-                                       where wf.IsActive == true // Check if IsActive is true
-                                       select new { wf.WorkFlowId, wf.Description }).ToList();
+            if (lnklev > 0)
+            {
+                applicableFinal.AddRange(
+                    ctnew.Where(c => c.LinkLevel >= lnklev)
+                         .Select(c => new LinkItemDto { Item = c.Item, LinkLevel = c.LinkLevel })
+                );
+            }
 
+            // Convert `applicableFinal` to HashSet for fast lookup
+            //var applicableFinalSet = applicableFinal.Select(a => a.Item).ToHashSet();
+            var applicableFinalSetLong = applicableFinal.Select(a => (long?)Convert.ToInt64(a.Item)).ToHashSet();
 
-                // Return the final results as Fill_WorkFlowMasterDto list
-                return workflowDetails.Select(wf => new Fill_WorkFlowMasterDto
+            // **Step 3: Fetch `EntityApplicable00Final`**
+            var entityApplicable00Final = await _context.EntityApplicable00s
+                .Where(e => e.TransactionId == transid)
+                .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
+                .ToListAsync();
+
+            // **Step 4: Compute `applicableFinal02`**
+            var applicableFinal02 = applicableFinal.ToList(); // Already computed
+
+            // **Step 5: Compute `applicableFinal02Emp`**
+            var applicableFinal02Emp = await (
+                from emp in _context.EmployeeDetails
+                join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
+                join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
+                join af2 in applicableFinal02 on hlv.LevelOneId.ToString() equals af2.Item into af2LevelOne
+                from af2L1 in af2LevelOne.DefaultIfEmpty()
+                where ea.TransactionId == transid
+                select ea.MasterId
+            ).Distinct().ToListAsync();
+
+            // **Step 6: Compute `newhigh`**
+            var newhigh = entityApplicable00Final
+                .Where(e => applicableFinalSetLong.Contains(e.LinkId) || e.LinkLevel == 15)
+                .Select(e => e.MasterId)
+                .Union(applicableFinal02Emp)
+                .Distinct()
+                .ToList();
+
+            // **Step 7: Final WorkFlowDetails Query**
+            return await _context.WorkFlowDetails
+                .Where(wf => wf.IsActive == true && newhigh.Contains(wf.WorkFlowId))
+                .Select(wf => new Fill_WorkFlowMasterDto
                 {
                     WorkFlowId = wf.WorkFlowId,
                     Description = wf.Description
-                }).ToList();
-            }
+                })
+                .ToListAsync();
         }
 
-        public Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp(int linkId, int linkLevel)
+
+
+
+        public Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmpAsync(int linkId, int linkLevel)
         {
 
             if (linkLevel == 13)
@@ -4272,7 +4125,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 Description = c.Description,
                                 FinalRuleName = c.FinalRuleName
                             };
-                return query.ToListAsync();
+                return query.AsNoTracking().ToListAsync();
             }
             else
             {
@@ -4288,60 +4141,37 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 Description = c.Description,
                                 FinalRuleName = c.FinalRuleName
                             };
-                return query.ToListAsync();
+                return query.AsNoTracking().ToListAsync();
             }
 
-
         }
 
-        public async Task<List<GetRejoinReportDto>> GetRejoinReport(int employeeId)
+        public async Task<List<GetRejoinReportDto>> GetRejoinReportAsync(int employeeId)
         {
-            var query = from a in _context.Resignations
-                        join b in _context.EmployeeDetails on a.EmpId equals b.EmpId
-                        join c in _context.ReasonMasters on a.Reason.ToString() equals c.ReasonId.ToString()
-                        join d in _context.HrEmpStatusSettings on a.RelievingType equals d.StatusId.ToString()
-                        where a.ApprovalStatus == "RJ" && a.EmpId == employeeId
-                        select new
-                        {
-                            a.EmpId,
-                            b.EmpCode,
-                            b.Name,
-                            a.ResignationId,
-                            a.ResignationRequestId,
-                            RequestDate = a.RequestDate.HasValue ? a.RequestDate.Value.ToString("dd/MM/yyyy") : null,
-                            ResignationDate = a.ResignationDate.HasValue ? a.ResignationDate.Value.ToString("dd/MM/yyyy") : null,
-                            RelievingDate = a.RelievingDate.HasValue ? a.RelievingDate.Value.ToString("dd/MM/yyyy") : null,
-                            a.Remarks,
-                            a.RejoinRequestId,
-                            RejoinRequestDate = a.RejoinRequestDate.HasValue ? a.RejoinRequestDate.Value.ToString("dd/MM/yyyy") : null,
-                            RejoinApprovalDate = a.RejoinApprovalDate.HasValue ? a.RejoinApprovalDate.Value.ToString("dd/MM/yyyy") : null,
-                            a.RejoinRemarks
-
-                        };
-
-
-            var result = query.AsEnumerable()
-                              .Select(x => new GetRejoinReportDto
-                              {
-                                  Emp_Id = x.EmpId,
-                                  Emp_Code = x.EmpCode,
-                                  Name = x.Name,
-                                  Resignation_Id = (int?)x.ResignationId,
-                                  Resignation_Request_Id = x.ResignationRequestId,
-                                  Request_Date = x.RequestDate,
-                                  Resignation_Date = x.ResignationDate,
-                                  RelievingDate = x.RelievingDate,
-                                  Remarks = x.Remarks,
-                                  RejoinRequestID = x.RejoinRequestId,
-                                  RejoinRequestDate = x.RejoinRequestDate,
-                                  RejoinApprovalDate = x.RejoinApprovalDate,
-                                  RejoinRemarks = x.RejoinRemarks
-                              }).ToList();
-            return result;
-
+            return await (from a in _context.Resignations
+                          join b in _context.EmployeeDetails on a.EmpId equals b.EmpId
+                          join c in _context.ReasonMasters on Convert.ToInt32(a.Reason) equals c.ReasonId
+                          join d in _context.HrEmpStatusSettings on Convert.ToInt32(a.RelievingType) equals d.StatusId
+                          where a.ApprovalStatus == "RJ" && a.EmpId == employeeId
+                          select new GetRejoinReportDto
+                          {
+                              Emp_Id = a.EmpId,
+                              Emp_Code = b.EmpCode,
+                              Name = b.Name,
+                              Resignation_Id = (int?)a.ResignationId,
+                              Resignation_Request_Id = a.ResignationRequestId,
+                              Request_Date = a.RequestDate.HasValue ? a.RequestDate.Value.ToString(_employeeSettings.DateFormat) : null,
+                              Resignation_Date = a.ResignationDate.HasValue ? a.ResignationDate.Value.ToString(_employeeSettings.DateFormat) : null,
+                              RelievingDate = a.RelievingDate.HasValue ? a.RelievingDate.Value.ToString(_employeeSettings.DateFormat) : null,
+                              Remarks = a.Remarks,
+                              RejoinRequestID = a.RejoinRequestId,
+                              RejoinRequestDate = a.RejoinRequestDate.HasValue ? a.RejoinRequestDate.Value.ToString(_employeeSettings.DateFormat) : null,
+                              RejoinApprovalDate = a.RejoinApprovalDate.HasValue ? a.RejoinApprovalDate.Value.ToString(_employeeSettings.DateFormat) : null,
+                              RejoinRemarks = a.RejoinRemarks
+                          }).AsNoTracking().ToListAsync();
         }
 
-        public async Task<List<TransferAndPromotionDto>> TransferAndPromotion(int employeeId)
+        public async Task<List<TransferAndPromotionDto>> TransferAndPromotionAsync(int employeeId)
         {
             var result = await (from c in _context.PositionHistories
                                 join e in _context.HighLevelViewTables on c.LastEntity equals e.LastEntityId
@@ -4366,13 +4196,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     GradeID = em.GradeId,
                                     Guardians_Name = em.GuardiansName,
                                     Inst_Id = em.InstId,
-                                    Join_Dt = em.JoinDt != null ? em.JoinDt.Value.ToString("dd/MM/yyyy") : null,
+                                    Join_Dt = em.JoinDt != null ? em.JoinDt.Value.ToString(_employeeSettings.DateFormat) : null,
                                     LastEntity = em.LastEntity,
                                     Name = em.Name,
                                     Probation_Dt = em.ProbationDt,
                                     Position_Id = c.PositionId,
-                                    From_Date = c.FromDate != null ? c.FromDate.Value.ToString("dd/MM/yyyy") : null,
-                                    To_Date = c.ToDate != null ? c.ToDate.Value.ToString("dd/MM/yyyy") : null,
+                                    From_Date = c.FromDate != null ? c.FromDate.Value.ToString(_employeeSettings.DateFormat) : null,
+                                    To_Date = c.ToDate != null ? c.ToDate.Value.ToString(_employeeSettings.DateFormat) : null,
                                     Status = c.Status,
                                     LevelOneDescription = e.LevelOneDescription,
                                     LevelOneId = e.LevelOneId,
@@ -4399,10 +4229,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     LevelTwelveDescription = e.LevelTwelveDescription,
                                     LevelTwelveId = e.LevelTwelveId,
                                     LastEntityID = e.LastEntityId
-                                }).ToListAsync();
+                                }).AsNoTracking().ToListAsync();
             return result;
         }
-        public async Task<List<GetEmpReportingReportDto>> GetEmpReportingReport(int employeeId)
+        public async Task<List<GetEmpReportingReportDto>> GetEmpReportingReportAsync(int employeeId)
         {
             var query = await (from a in _context.HrEmpReportingHstries
                                join b in _context.EmployeeDetails on a.EmpId equals b.EmpId
@@ -4414,14 +4244,14 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                    Name = b.Name,
                                    ReportingEmpCode = d.EmpCode,
                                    ReporteeName = d.Name,
-                                   FromDate = a.EntryDate.HasValue ? a.EntryDate.Value.ToString("dd/MM/yyyy") : null,
-                                   ToDate = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString("dd/MM/yyyy") : null
-                               }).ToListAsync();
+                                   FromDate = a.EntryDate.HasValue ? a.EntryDate.Value.ToString(_employeeSettings.DateFormat) : null,
+                                   ToDate = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString(_employeeSettings.DateFormat) : null
+                               }).AsNoTracking().ToListAsync();
 
             return query;
         }
 
-        public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails(int linkId, int linkLevel)
+        public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetailsAsync(int linkId, int linkLevel)
         {
             var query = (linkLevel == 13)
                 ? from a in _context.ParamRole02s
@@ -4449,7 +4279,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                       EmployeeName = c.Name // No null check in query
                   };
 
-            var result = await query.ToListAsync();
+            var result = await query.AsNoTracking().ToListAsync();
 
             // Apply null check AFTER the query execution
             return result.Select(r => new GetEmpWorkFlowRoleDetailstDto
@@ -4463,7 +4293,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
         }
-        public async Task<List<SalarySeriesDto>> SalarySeries(int employeeId, string status)
+        public async Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeId, string status)
         {
             var payComponents = await (from a in _context.PayscaleRequest01s
                                        join b in _context.PayscaleRequest02s on a.PayRequest01Id equals b.PayRequestId01
@@ -4473,7 +4303,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                        {
                                            b.PayType,
                                            payCode.PayCodeDescription
-                                       }).Distinct().ToListAsync();
+                                       }).Distinct().AsNoTracking().ToListAsync();
 
             var earningsDescriptions = payComponents
                 .Where(x => x.PayType == 1)
@@ -4539,19 +4369,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     TotalEarnings = (decimal)b.TotalEarnings,
                                     TotalDeductions = (decimal)b.TotalDeductions,
                                     TotalPay = (decimal)b.TotalPay,
-                                    EffectiveDate = b.EffectiveDate != null ? b.EffectiveDate.Value.ToString("dd/MM/yyyy") : null,
+                                    EffectiveDate = b.EffectiveDate != null ? b.EffectiveDate.Value.ToString(_employeeSettings.DateFormat) : null,
                                     CurrencyCode = d.CurrencyCode,
                                     IsArrears = (a.Type == 4) ? true : false,
                                     PaycodeBatch = (from elpb in _context.EmployeeLatestPayrollBatches
                                                     join pcm in _context.PayCodeMaster00s on elpb.PayrollBatchId equals pcm.PayCodeMasterId
                                                     where elpb.EmployeeId == employeeId
                                                     orderby elpb.EntryDate descending
-                                                    select pcm.Description).FirstOrDefault() ?? "NA",
+                                                    select pcm.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
                                     PayPeriod = (from elpp in _context.EmployeeLatestPayrollPeriods
                                                  join p in _context.Payroll00s on elpp.PayrollPeriodId equals p.PayrollPeriodId
                                                  where elpp.EmployeeId == employeeId
                                                  orderby elpp.EntryDate descending
-                                                 select p.Description).FirstOrDefault() ?? "NA",
+                                                 select p.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
                                     PayComponent = pivotedDict.ContainsKey((int)b.PayRequest01Id) ? pivotedDict[(int)b.PayRequest01Id] : new Dictionary<string, decimal>(),
                                     Remarks = b.PayscaleEmpRemarks
                                 }).Distinct().ToListAsync();
@@ -4559,7 +4389,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         }
 
-        public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole(int entityID)
+        public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRoleAsync(int entityID)
         {
             return await (from b in _context.ParamRole00s
                           join c in _context.ParamRoleEntityLevel00s on b.ValueId equals c.ValueId
@@ -4570,11 +4400,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                               ValueId = b.ValueId,
                               ParameterId = b.ParameterId,
                               ParamDescription = d.ParamDescription
-                          }).ToListAsync();
+                          }).AsNoTracking().ToListAsync();
 
 
         }
-        public async Task<List<EmployeeHraDto>> HraDetails(int employeeId)
+        public async Task<List<EmployeeHraDto>> HraDetailsAsync(int employeeId)
         {
             var hraHistory = await (from a in _context.HraHistories
                                     join b in _context.EmployeeDetails on a.EmployeeId equals b.EmpId
@@ -4585,10 +4415,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                         Name = b.Name,
                                         IsHRA = a.IsHra ?? false,
                                         HRAStatus = (a.IsHra ?? false) ? "Enabled" : "Disabled",
-                                        FromDate = a.FromDate.HasValue ? a.FromDate.Value.ToString("dd/MM/yyyy") : "",
-                                        ToDate = a.ToDate.HasValue ? a.ToDate.Value.ToString("dd/MM/yyyy") : "",
+                                        FromDate = a.FromDate.HasValue ? a.FromDate.Value.ToString(_employeeSettings.DateFormat) : "",
+                                        ToDate = a.ToDate.HasValue ? a.ToDate.Value.ToString(_employeeSettings.DateFormat) : "",
                                         Remarks = a.Remarks ?? ""
-                                    }).ToListAsync();
+                                    }).AsNoTracking().ToListAsync();
 
             var isHRA = await _context.HrEmpMasters
                 .Where(e => e.EmpId == employeeId)
@@ -4643,7 +4473,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                    };
         }
 
-        public async Task<List<AuditInformationDto>> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
+        public async Task<List<AuditInformationDto>> AuditInformationAsync(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
         {
             infoDesc = string.IsNullOrEmpty(infoDesc) ? "0" : infoDesc;
             infotype = string.IsNullOrEmpty(infotype) ? "0" : infotype;
@@ -4654,28 +4484,28 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                 var dateFrom = joinDate?.ToString("yyyy-MM-dd");
             }
-            var empDob = await GetAuditInformation(employeeIDs, "EMPDOB", "Date Of Birth").ToListAsync();
-            var joiningDate = await GetAuditInformation(employeeIDs, "JOINDATE", "Joining Date").ToListAsync();
-            var reviewDate = await GetAuditInformation(employeeIDs, "REVIEWDATE", "Review Date").ToListAsync();
-            var GratuityDate = await GetAuditInformation(employeeIDs, "GRATUITYDATE", "Gratuity Start Date").ToListAsync();
-            var EntryDate = await GetAuditInformation(employeeIDs, "FIRSTENTRYDATE", "First Entry Date").ToListAsync();
-            var EmpCode = await GetAuditInformation(employeeIDs, "EMPCODE", "Employee Code").ToListAsync();
-            var Country = await GetCountryAuditInformation(employeeIDs, "EMPCOUNTRY", "Country").ToListAsync();
-            var FirstName = await GetAuditInformation(employeeIDs, "FIRSTNAME", "First Name").ToListAsync();
-            var MiddleName = await GetAuditInformation(employeeIDs, "MIDDLENAME", "Middle Name").ToListAsync();
-            var LastName = await GetAuditInformation(employeeIDs, "LASTNAME", "Last Name").ToListAsync();
-            var GuardiansName = await GetAuditInformation(employeeIDs, "GUARDIANSNAME", "Guardians Name").ToListAsync();
-            var Gender = await GetAuditInformation(employeeIDs, "GENDER", "Gender").ToListAsync();
-            var maritalStatus = await GetAuditInformation(employeeIDs, "MARITAL", "Marital Status").ToListAsync();
-            var NationalId = await GetAuditInformation(employeeIDs, "NATIONALID", "National ID").ToListAsync();
-            var Passport = await GetAuditInformation(employeeIDs, "PASSPORTID", "Passport ID").ToListAsync();
-            var CompanyEmail = await GetAuditInformation(employeeIDs, "COMPANYMAIL", "Company Email").ToListAsync();
-            var PersonalEmail = await GetAuditInformation(employeeIDs, "PERSONALMAIL", "Personal Email").ToListAsync();
-            var Mobile = await GetAuditInformation(employeeIDs, "PERSONALMOBILE", "Personal Mobile").ToListAsync();
-            var HomeNo = await GetAuditInformation(employeeIDs, "HOMECOUNTRYPHONENO", "Home Country Phone Number").ToListAsync();
-            var Nationality = await GetCountryAuditInformation(employeeIDs, "NATIONALITY", "Nationality").ToListAsync();
-            var CountryName = await GetCountryAuditInformation(employeeIDs, "COUNTRYOFBIRTH", "Country of Birth").ToListAsync();
-            var BloodGroup = await GetAuditInformation(employeeIDs, "BLOODGROUP", "Blood Group").ToListAsync();
+            var empDob = await GetAuditInformation(employeeIDs, "EMPDOB", "Date Of Birth").AsNoTracking().ToListAsync();
+            var joiningDate = await GetAuditInformation(employeeIDs, "JOINDATE", "Joining Date").AsNoTracking().ToListAsync();
+            var reviewDate = await GetAuditInformation(employeeIDs, "REVIEWDATE", "Review Date").AsNoTracking().ToListAsync();
+            var GratuityDate = await GetAuditInformation(employeeIDs, "GRATUITYDATE", "Gratuity Start Date").AsNoTracking().ToListAsync();
+            var EntryDate = await GetAuditInformation(employeeIDs, "FIRSTENTRYDATE", "First Entry Date").AsNoTracking().ToListAsync();
+            var EmpCode = await GetAuditInformation(employeeIDs, "EMPCODE", "Employee Code").AsNoTracking().ToListAsync();
+            var Country = await GetCountryAuditInformation(employeeIDs, "EMPCOUNTRY", "Country").AsNoTracking().ToListAsync();
+            var FirstName = await GetAuditInformation(employeeIDs, "FIRSTNAME", "First Name").AsNoTracking().ToListAsync();
+            var MiddleName = await GetAuditInformation(employeeIDs, "MIDDLENAME", "Middle Name").AsNoTracking().ToListAsync();
+            var LastName = await GetAuditInformation(employeeIDs, "LASTNAME", "Last Name").AsNoTracking().ToListAsync();
+            var GuardiansName = await GetAuditInformation(employeeIDs, "GUARDIANSNAME", "Guardians Name").AsNoTracking().ToListAsync();
+            var Gender = await GetAuditInformation(employeeIDs, "GENDER", "Gender").AsNoTracking().ToListAsync();
+            var maritalStatus = await GetAuditInformation(employeeIDs, "MARITAL", "Marital Status").AsNoTracking().ToListAsync();
+            var NationalId = await GetAuditInformation(employeeIDs, "NATIONALID", "National ID").AsNoTracking().ToListAsync();
+            var Passport = await GetAuditInformation(employeeIDs, "PASSPORTID", "Passport ID").AsNoTracking().ToListAsync();
+            var CompanyEmail = await GetAuditInformation(employeeIDs, "COMPANYMAIL", "Company Email").AsNoTracking().ToListAsync();
+            var PersonalEmail = await GetAuditInformation(employeeIDs, "PERSONALMAIL", "Personal Email").AsNoTracking().ToListAsync();
+            var Mobile = await GetAuditInformation(employeeIDs, "PERSONALMOBILE", "Personal Mobile").AsNoTracking().ToListAsync();
+            var HomeNo = await GetAuditInformation(employeeIDs, "HOMECOUNTRYPHONENO", "Home Country Phone Number").AsNoTracking().ToListAsync();
+            var Nationality = await GetCountryAuditInformation(employeeIDs, "NATIONALITY", "Nationality").AsNoTracking().ToListAsync();
+            var CountryName = await GetCountryAuditInformation(employeeIDs, "COUNTRYOFBIRTH", "Country of Birth").AsNoTracking().ToListAsync();
+            var BloodGroup = await GetAuditInformation(employeeIDs, "BLOODGROUP", "Blood Group").AsNoTracking().ToListAsync();
 
 
             var Religion = await (
@@ -4693,24 +4523,24 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                  OldValue = a.OldValue == null ? "" : c.ReligionName,
                  UpdatedBy = a.UpdatedBy,
                  UpdatedDate = a.UpdatedDate
-             }).ToListAsync();
+             }).AsNoTracking().ToListAsync();
 
-            var Height = await GetAuditInformation(employeeIDs, "HEIGHT", "Height").ToListAsync();
-            var Weight = await GetAuditInformation(employeeIDs, "WEIGHT", "Weight").ToListAsync();
+            var Height = await GetAuditInformation(employeeIDs, "HEIGHT", "Height").AsNoTracking().ToListAsync();
+            var Weight = await GetAuditInformation(employeeIDs, "WEIGHT", "Weight").AsNoTracking().ToListAsync();
 
 
-            var Identification = await GetAuditInformation(employeeIDs, "IDENTIFICATION", "Identification Mark").ToListAsync();
-            var NoticePeriod = await GetAuditInformation(employeeIDs, "NOTICEPERIOD", "Notice Period").ToListAsync();
-            var AppNeeded = await GetAuditInformation(employeeIDs, "APPNEEDED", "Is Mobile App Needed").ToListAsync();
-            var Accomodation = await GetAuditInformation(employeeIDs, "COMPANYACCOMODATION", "Staying in Company Accomodation").ToListAsync();
-            var Expatriate = await GetAuditInformation(employeeIDs, "EXPATRIATE", "Is Expatriate").ToListAsync();
-            var CasualHoliday = await GetAuditInformation(employeeIDs, "CASUALHOLYDAY", "Enable Casual Holiday Leave").ToListAsync();
-            var Conveyance = await GetAuditInformation(employeeIDs, "COMPANYCONVEYANCE", "Company Conveyance").ToListAsync();
-            var Vehicle = await GetAuditInformation(employeeIDs, "COMPANYVEHICLE", "Company Vehicle").ToListAsync();
-            var ProbationNoticePeriod = await GetAuditInformation(employeeIDs, "PROBATIONNOTICEPERIOD", "Probation Notice Period").ToListAsync();
-            var IsProbation = await GetAuditInformation(employeeIDs, "ISPROBATION", "Is Probation").ToListAsync();
-            var ProbationStartDate = await GetAuditInformation(employeeIDs, "PROBATIONENDDATE", "Probation Start Date").ToListAsync();
-            var MealAllowanceDeduction = await GetAuditInformation(employeeIDs, "MEALALLOWANCEDEDUCTION", "Meal Allowance Deduction").ToListAsync();
+            var Identification = await GetAuditInformation(employeeIDs, "IDENTIFICATION", "Identification Mark").AsNoTracking().ToListAsync();
+            var NoticePeriod = await GetAuditInformation(employeeIDs, "NOTICEPERIOD", "Notice Period").AsNoTracking().ToListAsync();
+            var AppNeeded = await GetAuditInformation(employeeIDs, "APPNEEDED", "Is Mobile App Needed").AsNoTracking().ToListAsync();
+            var Accomodation = await GetAuditInformation(employeeIDs, "COMPANYACCOMODATION", "Staying in Company Accomodation").AsNoTracking().ToListAsync();
+            var Expatriate = await GetAuditInformation(employeeIDs, "EXPATRIATE", "Is Expatriate").AsNoTracking().ToListAsync();
+            var CasualHoliday = await GetAuditInformation(employeeIDs, "CASUALHOLYDAY", "Enable Casual Holiday Leave").AsNoTracking().ToListAsync();
+            var Conveyance = await GetAuditInformation(employeeIDs, "COMPANYCONVEYANCE", "Company Conveyance").AsNoTracking().ToListAsync();
+            var Vehicle = await GetAuditInformation(employeeIDs, "COMPANYVEHICLE", "Company Vehicle").AsNoTracking().ToListAsync();
+            var ProbationNoticePeriod = await GetAuditInformation(employeeIDs, "PROBATIONNOTICEPERIOD", "Probation Notice Period").AsNoTracking().ToListAsync();
+            var IsProbation = await GetAuditInformation(employeeIDs, "ISPROBATION", "Is Probation").AsNoTracking().ToListAsync();
+            var ProbationStartDate = await GetAuditInformation(employeeIDs, "PROBATIONENDDATE", "Probation Start Date").AsNoTracking().ToListAsync();
+            var MealAllowanceDeduction = await GetAuditInformation(employeeIDs, "MEALALLOWANCEDEDUCTION", "Meal Allowance Deduction").AsNoTracking().ToListAsync();
 
 
             var EmployeeReporting = await (
@@ -4728,7 +4558,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                      OldValue = c.Name,
                      UpdatedBy = a.UpdatedBy,
                      UpdatedDate = a.UpdatedDate
-                 }).ToListAsync();
+                 }).AsNoTracking().ToListAsync();
 
 
 
@@ -4748,7 +4578,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                       OldValue = a.EffectiveTo != null ? a.TotalEarnings.ToString() : "",
                                       UpdatedBy = f.EntryBy,
                                       UpdatedDate = a.EffectiveFrom
-                                  }).ToListAsync();
+                                  }).AsNoTracking().ToListAsync();
             var EmployeeShift = await (from a in _context.ShiftMasterAccesses
                                        join b in _context.EmployeeDetails on a.EmployeeId equals b.EmpId
                                        join c in _context.HrShift00s on a.ShiftId equals c.ShiftId
@@ -4764,7 +4594,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                            OldValue = a.ValidDateTo != null ? c.ShiftName : "",
                                            UpdatedBy = a.CreatedBy,
                                            UpdatedDate = a.ValidDatefrom
-                                       }).ToListAsync();
+                                       }).AsNoTracking().ToListAsync();
 
 
 
@@ -4815,8 +4645,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     OldValue = a.OldValue,
                     NewValue = a.NewValue,
                     UpdatedBy = d.Name,
-                    EffectiveFrom = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString("dd/MM/yyyy") : "NA",
-                    EffectiveTime = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString("HH:mm:ss") : "NA"
+                    EffectiveFrom = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                    EffectiveTime = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString("HH:mm:ss") : _employeeSettings.NotAvailable
                 }
             ).ToList();
 
@@ -4825,7 +4655,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         }
 
-        public async Task<List<object>> EmployeeType(int employeeid)
+        public async Task<List<object>> EmployeeTypeAsync(int employeeid)
         {
             var result = await (from emp in _context.HrEmpPersonals
                                 join a in _context.HrEmpMasters on emp.EmpId equals a.EmpId
@@ -4836,17 +4666,17 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     EmployeeCode = a.EmpCode,
                                     Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
                                     EmployeeType = emp.EmployeeType
-                                }).ToListAsync();
+                                }).AsNoTracking().ToListAsync();
 
             return result.Cast<object>().ToList();
         }
 
-        public async Task<List<object>> GeoSpacingTypeAndCriteria(string type)
+        public async Task<List<object>> GeoSpacingTypeAndCriteriaAsync(string type)
         {
-            var result = await _context.HrmValueTypes.Where(v => v.Type == type).Select(v => new { v.Value, v.Description }).ToListAsync();
+            var result = await _context.HrmValueTypes.Where(v => v.Type == type).Select(v => new { v.Value, v.Description }).AsNoTracking().ToListAsync();
             return result.Cast<object>().ToList();
         }
-        public async Task<List<GeoSpacingDto>> GetGeoSpacing(int employeeid)
+        public async Task<List<GeoSpacingDto>> GetGeoSpacingAsync(int employeeid)
         {
 
 
@@ -4913,29 +4743,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                        LiveTracking = b.LiveTracking,
                                                        LocationId = (int?)c.LocationId ?? -1
                                                    }).ToList());
-                //var query2 = await( from f in ctnew
-                //             join b in _context.Geotagging01s on Convert.ToInt32(f.Item) equals b.LinkId
-                //             join c in _context.Geotagging01As on b.GeoEntityId equals c.GeoEntityId
-                //             join d in _context.HrmValueTypes on new { Value = b.Geotype, Type = "GeoSpacingType" } equals new { d.Value, d.Type }
-                //             join e in _context.HrmValueTypes on new { Value = c.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { e.Value, e.Type }
-                //             select new GeoSpacingDto
-                //             {
-                //                 GeoEmpId = b.GeoEntityId,
-                //                 GeoEmpAid = c.GeoEntityAid,
-                //                 EmpId = Convert.ToInt32(employeeid),
-                //                 LevelId = b.LevelId,
-                //                 Geotype = b.Geotype,
-                //                 GeotypeCode = d.Code,
-                //                 GeotypeDescription = d.Description,
-                //                 GeoCriteria = c.GeoCriteria,
-                //                 GeoCriteriaCode = e.Code,
-                //                 GeoCriteriaDescription = e.Description,
-                //                 Latitude = c.Latitude ?? "",
-                //                 Longitude = c.Longitude ?? "",
-                //                 Radius = c.Radius ?? "",
-                //                 LiveTracking = b.LiveTracking,
-                //                 LocationId = (int?)c.LocationId ?? -1
-                //             }).ToList();
+
 
                 if (query2.Any())
                 {
@@ -4970,252 +4778,142 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
 
-        //       public async Task<object> GetGeoSpacing(string employeeid)
-        //       {
 
-        //           int empID = 269;
-
-        //           var query1 = from a in _context.Geotagging02s
-        //                        join b in _context.Geotagging02As on a.GeoEmpId equals b.GeoEmpId
-        //                        join c in _context.HrmValueTypes on new { Value = a.Geotype, Type = "GeoSpacingType" } equals new { c.Value, c.Type }
-        //                        join d in _context.HrmValueTypes on new { Value = b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { d.Value, d.Type }
-        //                        where a.EmpId == empID
-        //                        select new
-        //                        {
-        //                            a.GeoEmpId,
-        //                            b.GeoEmpAid,
-        //                            a.EmpId,
-        //                            a.LevelId,
-        //                            a.Geotype,
-        //                            GeotypeCode = c.Code,
-        //                            GeotypeDescription = c.Description,
-        //                            b.GeoCriteria,
-        //                            GeoCriteriaCode = d.Code,
-        //                            GeoCriteriaDescription = d.Description,
-        //                            Latitude = b.Latitude ?? "",
-        //                            Longitude = b.Longitude ?? "",
-        //                            Radius = b.Radius ?? "",
-        //                            a.LiveTracking,
-        //                            LocationId = (int?)b.LocationId ?? -1,
-        //                            GeoCoordinates = b.Coordinates
-        //                        };
-
-        //           if (query1.Any())
-        //           {
-        //               var result = query1.ToList();
-        //           }
-        //           else
-        //           {
-        //               var ctnew = SplitStrings_XML(_context.HrEmpMasters
-        //        .Where(h => h.EmpId == Convert.ToInt32(employeeid))
-        //        .Select(h => h.EmpEntity).FirstOrDefault(), ',')
-        //.Select((item, index) => new LinkItemDto
-        //{
-        //    Item = item,
-        //    LinkLevel = index + 2
-        //}).Where(c => !string.IsNullOrEmpty(c.Item));
-
-
-
-        //               var query2 = from f in ctnew
-        //                            join b in _context.Geotagging01s on Convert.ToInt32(f.Item) equals b.LinkId
-        //                            join c in _context.Geotagging01As on b.GeoEntityId equals c.GeoEntityId
-        //                            join d in _context.HrmValueTypes on new { Value = b.Geotype, Type = "GeoSpacingType" } equals new { d.Value, d.Type }
-        //                            join e in _context.HrmValueTypes on new { Value = c.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { e.Value, e.Type }
-        //                            select new
-        //                            {
-        //                                b.GeoEntityId,
-        //                                c.GeoEntityAid,
-        //                                Emp_Id = Convert.ToInt32(employeeid), // Assuming empID is the same as employeeid
-        //                                b.LinkId,
-        //                                b.LevelId,
-        //                                b.Geotype,
-        //                                GeotypeCode = d.Code,
-        //                                GeotypeDescription = d.Description,
-        //                                c.GeoCriteria,
-        //                                GeoCriteriaCode = e.Code,
-        //                                GeoCriteriaDescription = e.Description,
-        //                                Latitude = c.Latitude ?? "",
-        //                                Longitude = c.Longitude ?? "",
-        //                                Radius = c.Radius ?? "",
-        //                                b.LiveTracking,
-        //                                LocationId = (int?)c.LocationId ?? -1
-        //                            };
-        public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflow (int firstEntityId, int secondEntityId)
-            {
+        public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflowAsync(int firstEntityId, int secondEntityId)
+        {
             // Step 1: Fetch data first, then apply SplitStrings_XML in memory
             var entityAccessRights = await _context.EntityAccessRights02s
-                .Where (s => s.RoleId == firstEntityId)
-                .ToListAsync ( ); // Fetch first
+                .Where(s => s.RoleId == firstEntityId)
+                .ToListAsync(); // Fetch first
 
             var applicableFinal = entityAccessRights
-                .SelectMany (s => SplitStrings_XML (s.LinkId)
-                    .Select (item => new { Item = item, s.LinkLevel }))
-                .ToList ( ); // Apply in-memory processing
+                .SelectMany(s => SplitStrings_XML(s.LinkId, default)
+                    .Select(item => new { Item = item, s.LinkLevel }))
+                .ToList(); // Apply in-memory processing
 
-        //               if (query2.Any())
-        //               {
-        //                   var result = query2.ToList();
-        //               }
-        //               else
-        //               {
-        //                   var query3 = await (from a in _context.Geotagging00s
-        //                                       join b in _context.Geotagging00As on a.GeoCompId equals b.GeoCompId
-        //                                       join c in _context.HrmValueTypes on new { Value = a.Geotype, Type = "GeoSpacingType" } equals new { c.Value, c.Type }
-        //                                       join d in _context.HrmValueTypes on new { Value = b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { d.Value, d.Type }
-        //                                       select new
-        //                                       {
-        //                                           a.GeoCompId,
-        //                                           a.LevelId,
-        //                                           a.Geotype,
-        //                                           GeotypeCode = c.Code,
-        //                                           GeotypeDescription = c.Description,
-        //                                           b.GeoCriteria,
-        //                                           GeoCriteriaCode = d.Code,
-        //                                           GeoCriteriaDescription = d.Description,
-        //                                           Latitude = b.Latitude ?? "",
-        //                                           Longitude = b.Longitude ?? "",
-        //                                           Radius = b.Radius ?? "",
-        //                                           a.LiveTracking,
-        //                                           LocationId = (int?)b.LocationId ?? -1
-        //                                       }).ToListAsync();
+            //               if (query2.Any())
+            //               {
+            //                   var result = query2.ToList();
+            //               }
+            //               else
+            //               {
+            //                   var query3 = await (from a in _context.Geotagging00s
+            //                                       join b in _context.Geotagging00As on a.GeoCompId equals b.GeoCompId
+            //                                       join c in _context.HrmValueTypes on new { Value = a.Geotype, Type = "GeoSpacingType" } equals new { c.Value, c.Type }
+            //                                       join d in _context.HrmValueTypes on new { Value = b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { d.Value, d.Type }
+            //                                       select new
+            //                                       {
+            //                                           a.GeoCompId,
+            //                                           a.LevelId,
+            //                                           a.Geotype,
+            //                                           GeotypeCode = c.Code,
+            //                                           GeotypeDescription = c.Description,
+            //                                           b.GeoCriteria,
+            //                                           GeoCriteriaCode = d.Code,
+            //                                           GeoCriteriaDescription = d.Description,
+            //                                           Latitude = b.Latitude ?? "",
+            //                                           Longitude = b.Longitude ?? "",
+            //                                           Radius = b.Radius ?? "",
+            //                                           a.LiveTracking,
+            //                                           LocationId = (int?)b.LocationId ?? -1
+            //                                       }).ToListAsync();
             // Step 2: Recursive CTE equivalent for employee hierarchy
-            var cteOrg = new HashSet<int> ( ); // Optimized lookup
-            var queue = new Queue<int> ( );
+            var cteOrg = new HashSet<int>(); // Optimized lookup
+            var queue = new Queue<int>();
 
             var initialEmp = await _context.HrEmpReportings
-                .Where (e => e.EmpId == secondEntityId)
-                .Select (e => e.ReprotToWhome == e.EmpId ? (int?)null : e.ReprotToWhome)
-                .FirstOrDefaultAsync ( );
+                .Where(e => e.EmpId == secondEntityId)
+                .Select(e => e.ReprotToWhome == e.EmpId ? (int?)null : e.ReprotToWhome)
+                .FirstOrDefaultAsync();
 
             if (initialEmp.HasValue)
-                {
-                queue.Enqueue (initialEmp.Value);
-                cteOrg.Add (initialEmp.Value);
-                }
+            {
+                queue.Enqueue(initialEmp.Value);
+                cteOrg.Add(initialEmp.Value);
+            }
 
             while (queue.Count > 0)
-                {
-                var current = queue.Dequeue ( );
+            {
+                var current = queue.Dequeue();
                 var subordinates = await _context.HrEmpReportings
-                    .Where (e => e.ReprotToWhome == current && e.ReprotToWhome != e.EmpId)
-                    .Select (e => e.EmpId)
-                    .ToListAsync ( );
+                    .Where(e => e.ReprotToWhome == current && e.ReprotToWhome != e.EmpId)
+                    .Select(e => e.EmpId)
+                    .ToListAsync();
 
                 foreach (var sub in subordinates)
+                {
+                    if (!cteOrg.Contains(sub))
                     {
-                    if (!cteOrg.Contains (sub))
-                        {
-                        queue.Enqueue (sub);
-                        cteOrg.Add (sub);
-                        }
+                        queue.Enqueue(sub);
+                        cteOrg.Add(sub);
                     }
                 }
+            }
 
-            
+
 
             var hasRoleAccess = _context.EntityAccessRights02s
-     .Any (s => s.RoleId == firstEntityId && s.LinkLevel == 15);
+     .Any(s => s.RoleId == firstEntityId && s.LinkLevel == 15);
 
             var applicableHierarchyLevels = _context.EmployeeDetails
-                .Join (_context.HighLevelViewTables,
+                .Join(_context.HighLevelViewTables,
                     d1 => d1.LastEntity,
                     a => a.LastEntityId,
                     (d1, a) => new { d1, a })
-                .Join (applicableFinal,
+                .Join(applicableFinal,
                     _ => 1,
                     _ => 1,
                     (x, b) => new { x.d1, x.a, b })
-                .Where (joined =>
-                    (joined.b.LinkLevel == 1 && joined.a.LevelOneId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 2 && joined.a.LevelTwoId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 3 && joined.a.LevelThreeId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 4 && joined.a.LevelFourId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 5 && joined.a.LevelFiveId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 6 && joined.a.LevelSixId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 7 && joined.a.LevelSevenId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 8 && joined.a.LevelEightId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 9 && joined.a.LevelNineId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 10 && joined.a.LevelTenId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 11 && joined.a.LevelElevenId == int.Parse (joined.b.Item)) ||
-                    (joined.b.LinkLevel == 12 && joined.a.LevelTwelveId == int.Parse (joined.b.Item))
+                .Where(joined =>
+                    (joined.b.LinkLevel == 1 && joined.a.LevelOneId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 2 && joined.a.LevelTwoId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 3 && joined.a.LevelThreeId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 4 && joined.a.LevelFourId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 5 && joined.a.LevelFiveId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 6 && joined.a.LevelSixId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 7 && joined.a.LevelSevenId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 8 && joined.a.LevelEightId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 9 && joined.a.LevelNineId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 10 && joined.a.LevelTenId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 11 && joined.a.LevelElevenId == int.Parse(joined.b.Item)) ||
+                    (joined.b.LinkLevel == 12 && joined.a.LevelTwelveId == int.Parse(joined.b.Item))
                 )
-                .Select (joined => joined.d1.EmpId);
+                .Select(joined => joined.d1.EmpId);
 
             var reportsToSecondEntity = _context.HrEmpReportings
-                .Where (hr => hr.ReprotToWhome == secondEntityId)
-                .Select (hr => hr.EmpId);
+                .Where(hr => hr.ReprotToWhome == secondEntityId)
+                .Select(hr => hr.EmpId);
 
             // Check if EntityAccessRights02s has the role and hierarchy enabled
             var hasHierarchyAccess = _context.EntityAccessRights02s
-                .Any (s => s.RoleId == firstEntityId && s.Hierarchy == 1);
+                .Any(s => s.RoleId == firstEntityId && s.Hierarchy == 1);
 
             // Get all Employee IDs that exist in the hierarchical structure
-            var hierarchicalEmpIds = hasHierarchyAccess ? cteOrg.ToList ( ) : new List<int> ( );
+            var hierarchicalEmpIds = hasHierarchyAccess ? cteOrg.ToList() : new List<int>();
 
             // Main Query
             var query = from d in _context.EmployeeDetails
                         join e in _context.BranchDetails on d.BranchId equals e.LinkId
                         where
                             (hasRoleAccess ||
-                            applicableHierarchyLevels.Contains (d.EmpId) ||
-                            reportsToSecondEntity.Contains (d.EmpId) ||
-                            hierarchicalEmpIds.Contains (d.EmpId)) // Corrected usage
+                            applicableHierarchyLevels.Contains(d.EmpId) ||
+                            reportsToSecondEntity.Contains(d.EmpId) ||
+                            hierarchicalEmpIds.Contains(d.EmpId)) // Corrected usage
                             && (d.SeperationStatus == 0 || d.SeperationStatus == -1)
                             && !d.IsDelete
                             && d.IsSave == 0
                         select new FillEmployeesBasedOnwWorkflowDto
-                            {
+                        {
                             Emp_Id = d.EmpId,
                             Employee = d.Name + " || " + d.EmpCode + " || " + e.Branch
-                            };
+                        };
 
 
 
-            return await query.ToListAsync ( );
-            }
-
-        public Task<List<FillCountryDto>> FillCountry ( )
-            {
-            var countryDto = new FillCountryDto
-                {
-                Country_Name = string.Join ("", _context.AdmCountryMasters
-                    .Select (c => "<option value='" + c.CountryId + "'>" + c.CountryName + "</option>")
-                    .ToList ( )),
-
-                Nationality = string.Join ("", _context.AdmCountryMasters
-                    .Select (c => "<option value='" + c.CountryId + "'>" + c.Nationality + "</option>")
-                    .ToList ( ))
-                };
-
-           
-            return Task.FromResult (new List<FillCountryDto> { countryDto });
-            }
-
-        public Task<List<object>> GetBloodGroup ( )
-            {
-           
-            var bloodGroups = _context.HrmValueTypes
-                .Where (v => v.Type == "BloodGroup") 
-                .Select (v => $"<option value='{v.Code}'>{v.Description}</option>") 
-                .ToList ( );
-
-            // Return the list of options as a Task
-            return Task.FromResult (bloodGroups.Cast<object> ( ).ToList ( ));
-            }
-
-        public Task<List<object>> FillReligion ( )
-            {
-          
-            var religions = _context.AdmReligionMasters
-        .Select (r => $"<option value='{r.ReligionId}'>{r.ReligionName}</option>") 
-        .ToList ( );
-
-            // Return the list of options as a Task
-            return Task.FromResult (religions.Cast<object> ( ).ToList ( ));
-            }
-
+            return await query.ToListAsync();
         }
+
     }
+}
 
 
