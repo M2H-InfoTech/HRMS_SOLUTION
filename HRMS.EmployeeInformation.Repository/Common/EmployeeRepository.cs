@@ -3257,7 +3257,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
 
-        public async Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdown_Professional()
+        public async Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdownProfessionalAsync()
         {
             var result = await (
                  from a in _context.CurrencyMasters
@@ -3979,7 +3979,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
 
-        public async Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlowAsync(int entityID, int linkId)
+        public async Task<List<Fill_ModulesWorkFlowDto>> FillModulesWorkFlowAsync(int entityID, int linkId)
         {
             var excludedTransactionIds = _context.ParamWorkFlow02s
                 .Where(pwf02 => entityID == 13 && pwf02.LinkEmpId == linkId && pwf02.LinkLevel == entityID)
@@ -4009,7 +4009,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
 
-        public async Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMasterAsync(int emp_Id, int roleId)
+        public async Task<List<Fill_WorkFlowMasterDto>> FillWorkFlowMasterAsync(int emp_Id, int roleId)
         {
             var transid = await _context.TransactionMasters
                 .Where(t => t.TransactionType == "W_Flow")

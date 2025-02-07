@@ -36,7 +36,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetActiveStatus(int employeeId, string parameterCode, string type)
         {
-            var activeStatus = await _employeeInformation.EmployeeStatus(employeeId, parameterCode, type);
+            var activeStatus = await _employeeInformation.EmployeeStatusAsync(employeeId, parameterCode, type);
             return new JsonResult(activeStatus);
         }
         [HttpGet]
@@ -57,13 +57,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> Communication(int employeeId)
         {
-            var Communicationdata = await _employeeInformation.Communication(employeeId);
+            var Communicationdata = await _employeeInformation.CommunicationAsync(employeeId);
             return new JsonResult(Communicationdata);
         }
         [HttpGet]
         public async Task<IActionResult> CommunicationExtra(int employeeId)
         {
-            var CommunicationExtra = await _employeeInformation.CommunicationExtra(employeeId);
+            var CommunicationExtra = await _employeeInformation.CommunicationExtraAsync(employeeId);
             return new JsonResult(CommunicationExtra);
         }
 
@@ -71,35 +71,35 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
         public async Task<IActionResult> CommunicationEmergency(int employeeId)
         {
-            var CommunicationEmergency = await _employeeInformation.CommunicationEmergency(employeeId);
+            var CommunicationEmergency = await _employeeInformation.CommunicationEmergencyAsync(employeeId);
             return new JsonResult(CommunicationEmergency);
         }
 
         [HttpGet]
         public async Task<IActionResult> HobbiesData(int employeeId)
         {
-            var VisaDetailsReport = await _employeeInformation.HobbiesData(employeeId);
+            var VisaDetailsReport = await _employeeInformation.HobbiesDataAsync(employeeId);
             return new JsonResult(VisaDetailsReport);
         }
 
         [HttpGet]
         public async Task<IActionResult> RewardAndRecognition(int employeeId)
         {
-            var RewardAndRecognitionData = await _employeeInformation.RewardAndRecognition(employeeId);
+            var RewardAndRecognitionData = await _employeeInformation.RewardAndRecognitionAsync(employeeId);
             return new JsonResult(RewardAndRecognitionData);
         }
 
         [HttpGet]
         public async Task<IActionResult> Qualification(int employeeId)
         {
-            var Qualification = await _employeeInformation.Qualification(employeeId);
+            var Qualification = await _employeeInformation.QualificationAsync(employeeId);
             return new JsonResult(Qualification);
         }
 
         [HttpGet]
         public async Task<IActionResult> SkillSet(int employeeId)
         {
-            var SkillSetData = await _employeeInformation.SkillSets(employeeId);
+            var SkillSetData = await _employeeInformation.SkillSetsAsync(employeeId);
             return new JsonResult(SkillSetData);
         }
 
@@ -107,7 +107,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> Documents(int employeeId)
         {
             List<string> excludedDocTypes = new List<string> { "Statutory", "BANK DETAILS", "VISA" };
-            var DocumentsData = await _employeeInformation.Documents(employeeId, excludedDocTypes);
+            var DocumentsData = await _employeeInformation.DocumentsAsync(employeeId, excludedDocTypes);
             return new JsonResult(DocumentsData);
         }
         [HttpGet]
@@ -115,26 +115,26 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> BankDetails(int employeeId)
         {
             List<string> excludedDocTypes = new List<string> { "Passport", "VISA", "Normal", "Statutory" };
-            var DocumentsData = await _employeeInformation.Documents(employeeId, excludedDocTypes);
+            var DocumentsData = await _employeeInformation.DocumentsAsync(employeeId, excludedDocTypes);
             return new JsonResult(DocumentsData);
         }
         [HttpGet]
         public async Task<IActionResult> Dependent(int employeeId)
         {
-            var DependentData = await _employeeInformation.Dependent(employeeId);
+            var DependentData = await _employeeInformation.DependentAsync(employeeId);
             return new JsonResult(DependentData);
         }
         [HttpGet]
         public async Task<IActionResult> Certification(int employeeId)
         {
-            var CertificationData = await _employeeInformation.Certification(employeeId);
+            var CertificationData = await _employeeInformation.CertificationAsync(employeeId);
             return new JsonResult(CertificationData);
 
         }
         [HttpGet]
         public async Task<IActionResult> DisciplinaryActions(int employeeId)
         {
-            var DisciplinaryActionsData = await _employeeInformation.DisciplinaryActions(employeeId);
+            var DisciplinaryActionsData = await _employeeInformation.DisciplinaryActionsAsync(employeeId);
             return new JsonResult(DisciplinaryActionsData);
 
         }
@@ -142,7 +142,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> Letter(int employeeId)
         {
-            var LetterData = await _employeeInformation.Letter(employeeId);
+            var LetterData = await _employeeInformation.LetterAsync(employeeId);
             return new JsonResult(LetterData);
 
         }
@@ -150,7 +150,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> Reference(int employeeId)
         {
-            var ReferenceData = await _employeeInformation.Reference(employeeId);
+            var ReferenceData = await _employeeInformation.ReferenceAsync(employeeId);
             return new JsonResult(ReferenceData);
 
         }
@@ -158,7 +158,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> Professional(int employeeId)
         {
-            var ProfessionalData = await _employeeInformation.Professional(employeeId);
+            var ProfessionalData = await _employeeInformation.ProfessionalAsync(employeeId);
             return new JsonResult(ProfessionalData);
 
         }
@@ -166,7 +166,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> Asset()
         {
-            var AssetData = await _employeeInformation.Asset();
+            var AssetData = await _employeeInformation.AssetAsync();
             return new JsonResult(AssetData);
 
         }
@@ -174,14 +174,14 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> AssetDetails(int employeeId)
         {
-            var AssetDetailslData = await _employeeInformation.AssetDetails(employeeId);
+            var AssetDetailslData = await _employeeInformation.AssetDetailsAsync(employeeId);
             return new JsonResult(AssetDetailslData);
 
         }
         [HttpGet]
         public async Task<IActionResult> CurrencyDropdown_Professional()
         {
-            var CurrencyDropdown_Professional = await _employeeInformation.CurrencyDropdown_Professional();
+            var CurrencyDropdown_Professional = await _employeeInformation.CurrencyDropdownProfessionalAsync();
             return new JsonResult(CurrencyDropdown_Professional);
 
         }
@@ -222,70 +222,70 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPersonalDetailsById(int employeeId)
         {
-            var personalDetails = await _employeeInformation.GetPersonalDetailsById(employeeId);
+            var personalDetails = await _employeeInformation.GetPersonalDetailsByIdAsync(employeeId);
             return new JsonResult(personalDetails);
         }
 
         [HttpGet]
         public async Task<IActionResult> Training(int employeeId)
         {
-            var Training = await _employeeInformation.Training(employeeId);
+            var Training = await _employeeInformation.TrainingAsync(employeeId);
             return new JsonResult(Training);
         }
         [HttpGet]
         public async Task<IActionResult> CareerHistory(int employeeId)
         {
-            var CareerDetails = await _employeeInformation.CareerHistory(employeeId);
+            var CareerDetails = await _employeeInformation.CareerHistoryAsync(employeeId);
             return new JsonResult(CareerDetails);
         }
         [HttpGet]
         public async Task<IActionResult> BiometricDetails(int employeeId)
         {
-            var BioDetails = await _employeeInformation.BiometricDetails(employeeId);
+            var BioDetails = await _employeeInformation.BiometricDetailsAsync(employeeId);
             return new JsonResult(BioDetails);
         }
         [HttpGet]
         public async Task<IActionResult> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
         {
-            var BioDetails = await _employeeInformation.AuditInformation(employeeIDs, empId, roleId, infotype, infoDesc, datefrom, dateto);
+            var BioDetails = await _employeeInformation.AuditInformationAsync(employeeIDs, empId, roleId, infotype, infoDesc, datefrom, dateto);
             return new JsonResult(BioDetails);
         }
 
         [HttpGet]
         public async Task<IActionResult> AccessDetails(int employeeId)
         {
-            var AccessDetails = await _employeeInformation.AccessDetails(employeeId);
+            var AccessDetails = await _employeeInformation.AccessDetailsAsync(employeeId);
             return new JsonResult(AccessDetails);
         }
         [HttpGet]
         public async Task<IActionResult> Fill_ModulesWorkFlow(int entityID, int linkId)
         {
-            var fill_ModulesWorkFlow = await _employeeInformation.Fill_ModulesWorkFlow(entityID, linkId);
+            var fill_ModulesWorkFlow = await _employeeInformation.FillModulesWorkFlowAsync(entityID, linkId);
             return new JsonResult(fill_ModulesWorkFlow);
         }
         [HttpGet]
         public async Task<IActionResult> Fill_WorkFlowMaster(int emp_Id, int roleId)
         {
-            var fill_WorkFlowMaster = await _employeeInformation.Fill_WorkFlowMaster(emp_Id, roleId);
+            var fill_WorkFlowMaster = await _employeeInformation.FillWorkFlowMasterAsync(emp_Id, roleId);
             return new JsonResult(fill_WorkFlowMaster);
         }
         [HttpGet]
         public async Task<IActionResult> BindWorkFlowMasterEmp(int linkId, int linkLevel)
         {
-            var bindWorkFlowMasterEmp = await _employeeInformation.BindWorkFlowMasterEmp(linkId, linkLevel);
+            var bindWorkFlowMasterEmp = await _employeeInformation.BindWorkFlowMasterEmpAsync(linkId, linkLevel);
             return new JsonResult(bindWorkFlowMasterEmp);
         }
 
         [HttpGet]
         public async Task<IActionResult> TransferAndPromotion(int employeeId)
         {
-            var TransferAndPromotion = await _employeeInformation.TransferAndPromotion(employeeId);
+            var TransferAndPromotion = await _employeeInformation.TransferAndPromotionAsync(employeeId);
             return new JsonResult(TransferAndPromotion);
         }
         [HttpGet]
         public async Task<IActionResult> SalarySeries(int employeeId, string status)
         {
-            var SalarySeries = await _employeeInformation.SalarySeries(employeeId, status);
+            var SalarySeries = await _employeeInformation.SalarySeriesAsync(employeeId, status);
             return new JsonResult(SalarySeries);
         }
 
@@ -300,38 +300,38 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmpReportingReport(int employeeId)
         {
-            var getEmpReportingReport = await _employeeInformation.GetEmpReportingReport(employeeId);
+            var getEmpReportingReport = await _employeeInformation.GetEmpReportingReportAsync(employeeId);
             return new JsonResult(getEmpReportingReport);
         }
         [HttpGet]
         public async Task<IActionResult> GetEmpWorkFlowRoleDetails(int linkId, int linkLevel)
         {
-            var getEmpWorkFlowRoleDetails = await _employeeInformation.GetEmpWorkFlowRoleDetails(linkId, linkLevel);
+            var getEmpWorkFlowRoleDetails = await _employeeInformation.GetEmpWorkFlowRoleDetailsAsync(linkId, linkLevel);
             return new JsonResult(getEmpWorkFlowRoleDetails);
         }
 
         [HttpGet]
         public async Task<IActionResult> FillEmpWorkFlowRole(int entityID)
         {
-            var fillEmpWorkFlowRole = await _employeeInformation.FillEmpWorkFlowRole(entityID);
+            var fillEmpWorkFlowRole = await _employeeInformation.FillEmpWorkFlowRoleAsync(entityID);
             return new JsonResult(fillEmpWorkFlowRole);
         }
         [HttpGet]
         public async Task<IActionResult> EmployeeType(int employeeId)
         {
-            var employeeType = await _employeeInformation.EmployeeType(employeeId);
+            var employeeType = await _employeeInformation.EmployeeTypeAsync(employeeId);
             return new JsonResult(employeeType);
         }
         [HttpGet]
         public async Task<IActionResult> GeoSpacingTypeAndCriteria(string type)
         {
-            var GeoSpacingType = await _employeeInformation.GeoSpacingTypeAndCriteria(type);
+            var GeoSpacingType = await _employeeInformation.GeoSpacingTypeAndCriteriaAsync(type);
             return new JsonResult(GeoSpacingType);
         }
         [HttpGet]
         public async Task<IActionResult> GetGeoSpacing(int employeeid)
         {
-            var GetGeoSpacing = await _employeeInformation.GetGeoSpacing(employeeid);
+            var GetGeoSpacing = await _employeeInformation.GetGeoSpacingAsync(employeeid);
             return new JsonResult(GetGeoSpacing);
         }
         //  [HttpGet]
@@ -343,13 +343,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> HraDetails(int employeeId)
         {
-            var HraDetails = await _employeeInformation.HraDetails(employeeId);
+            var HraDetails = await _employeeInformation.HraDetailsAsync(employeeId);
             return new JsonResult(HraDetails);
         }
         [HttpGet]
         public async Task<IActionResult> FillEmployeesBasedOnwWorkflow(int firstEntityId, int secondEntityId)
         {
-            var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflow(firstEntityId, secondEntityId);
+            var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflowAsync(firstEntityId, secondEntityId);
             return new JsonResult(fillEmployeesBasedOnwWorkflow);
         }
         //[HttpGet]

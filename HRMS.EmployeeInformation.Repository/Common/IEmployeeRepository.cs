@@ -40,7 +40,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<ProfessionalDto>> ProfessionalAsync(int employeeId);
         Task<List<AssetDto>> AsseAsynct();
         Task<List<AssetDetailsDto>> AssetDetailsAsync(int employeeId);
-        Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdown_Professional();
+        Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdownProfessionalAsync();
         Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto);
         Task<PersonalDetailsHistoryDto> InsertOrUpdatePersonalData(PersonalDetailsHistoryDto persnldtlsApprlDto);
 
@@ -52,8 +52,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         //Task<List<object>> AccessDetails(int employeeid);
         Task<object> AccessDetailsAsync(int employeeid);
         Task<List<TransferAndPromotionDto>> TransferAndPromotionAsync(int employeeId);
-        Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlowAsync(int entityID, int linkId);
-        Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMasterAsync(int emp_Id, int roleId);
+        Task<List<Fill_ModulesWorkFlowDto>> FillModulesWorkFlowAsync(int entityID, int linkId);
+        Task<List<Fill_WorkFlowMasterDto>> FillWorkFlowMasterAsync(int emp_Id, int roleId);
         Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmpAsync(int linkId, int linkLevel);
         Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeid, string status);
         //Task<List<GetRejoinReportDto>> GetRejoinReport(int employeeId);

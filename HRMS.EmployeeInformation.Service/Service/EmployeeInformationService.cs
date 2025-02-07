@@ -15,22 +15,22 @@ namespace HRMS.EmployeeInformation.Service.Service
             _employeeRepository = employeeRepository;
         }
 
-        public async Task<CommunicationResultDto> Communication(int employeeId)
+        public async Task<CommunicationResultDto> CommunicationAsync(int employeeId)
         {
             return await _employeeRepository.CommunicationAsync(employeeId);
         }
 
-        public async Task<List<CommunicationEmergencyDto>> CommunicationEmergency(int employeeId)
+        public async Task<List<CommunicationEmergencyDto>> CommunicationEmergencyAsync(int employeeId)
         {
             return await _employeeRepository.CommunicationEmergencyAsync(employeeId);
         }
 
-        public async Task<List<CommunicationExtraDto>> CommunicationExtra(int employeeId)
+        public async Task<List<CommunicationExtraDto>> CommunicationExtraAsync(int employeeId)
         {
             return await _employeeRepository.CommunicationExtraAsync(employeeId);
         }
 
-        public async Task<EmployeeStatusResultDto> EmployeeStatus(int employeeId, string parameterCode, string type)
+        public async Task<EmployeeStatusResultDto> EmployeeStatusAsync(int employeeId, string parameterCode, string type)
         {
             return await _employeeRepository.EmployeeStatus(employeeId, parameterCode, type);
         }
@@ -45,26 +45,26 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.LanguageSkillAsync(employeeId);
         }
 
-        public async Task<List<string>> HobbiesData(int employeeId)
+        public async Task<List<string>> HobbiesDataAsync(int employeeId)
         {
             return await _employeeRepository.HobbiesDataAsync(employeeId);
         }
 
-        public async Task<List<RewardAndRecognitionDto>> RewardAndRecognition(int employeeId)
+        public async Task<List<RewardAndRecognitionDto>> RewardAndRecognitionAsync(int employeeId)
         {
             return await _employeeRepository.RewardAndRecognitionsAsync(employeeId);
         }
 
-        public async Task<List<QualificationDto>> Qualification(int employeeId)
+        public async Task<List<QualificationDto>> QualificationAsync(int employeeId)
         {
             return await _employeeRepository.QualificationAsync(employeeId);
         }
 
-        public async Task<List<SkillSetDto>> SkillSets(int employeeId)
+        public async Task<List<SkillSetDto>> SkillSetsAsync(int employeeId)
         {
             return await _employeeRepository.SkillSetsAsync(employeeId);
         }
-        public async Task<List<AllDocumentsDto>> Documents(int employeeId, List<string> excludedDocTypes)
+        public async Task<List<AllDocumentsDto>> DocumentsAsync(int employeeId, List<string> excludedDocTypes)
         {
             return await _employeeRepository.DocumentsAsync(employeeId, excludedDocTypes);
         }
@@ -72,44 +72,44 @@ namespace HRMS.EmployeeInformation.Service.Service
         //{
         //    return await _employeeRepository.BankDetails(employeeId);
         //}
-        public async Task<List<DependentDto>> Dependent(int employeeId)
+        public async Task<List<DependentDto>> DependentAsync(int employeeId)
         {
             return await _employeeRepository.DependentAsync(employeeId);
         }
 
-        public async Task<List<CertificationDto>> Certification(int employeeId)
+        public async Task<List<CertificationDto>> CertificationAsync(int employeeId)
         {
             return await _employeeRepository.CertificationAsync(employeeId);
         }
-        public async Task<List<DisciplinaryActionsDto>> DisciplinaryActions(int employeeId)
+        public async Task<List<DisciplinaryActionsDto>> DisciplinaryActionsAsync(int employeeId)
         {
             return await _employeeRepository.DisciplinaryActionsAsync(employeeId);
         }
 
-        public async Task<List<LetterDto>> Letter(int employeeId)
+        public async Task<List<LetterDto>> LetterAsync(int employeeId)
         {
             return await _employeeRepository.LetterAsync(employeeId);
         }
-        public async Task<List<ReferenceDto>> Reference(int employeeId)
+        public async Task<List<ReferenceDto>> ReferenceAsync(int employeeId)
         {
             return await _employeeRepository.ReferenceAsync(employeeId);
         }
-        public async Task<List<ProfessionalDto>> Professional(int employeeId)
+        public async Task<List<ProfessionalDto>> ProfessionalAsync(int employeeId)
         {
             return await _employeeRepository.ProfessionalAsync(employeeId);
         }
-        public async Task<List<AssetDto>> Asset()
+        public async Task<List<AssetDto>> AssetAsync()
         {
             return await _employeeRepository.AsseAsynct();
         }
-        public async Task<List<AssetDetailsDto>> AssetDetails(int employeeId)
+        public async Task<List<AssetDetailsDto>> AssetDetailsAsync(int employeeId)
         {
             return await _employeeRepository.AssetDetailsAsync(employeeId);
         }
 
-        public async Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdown_Professional()
+        public async Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdownProfessionalAsync()
         {
-            return await _employeeRepository.CurrencyDropdown_Professional();
+            return await _employeeRepository.CurrencyDropdownProfessionalAsync();
         }
         public async Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
         {
@@ -124,40 +124,36 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.GetProfessionalByIdAsync(updateType, detailID, empID);
         }
 
-        public async Task<List<PersonalDetailsDto>> GetPersonalDetailsById(int employeeid)
+        public async Task<List<PersonalDetailsDto>> GetPersonalDetailsByIdAsync(int employeeid)
         {
             return await _employeeRepository.GetPersonalDetailsByIdAsync(employeeid);
         }
-        public async Task<List<TrainingDto>> Training(int employeeid)
+        public async Task<List<TrainingDto>> TrainingAsync(int employeeid)
         {
             return await _employeeRepository.TrainingAsync(employeeid);
         }
 
-        public async Task<List<CareerHistoryDto>> CareerHistory(int employeeid)
+        public async Task<List<CareerHistoryDto>> CareerHistoryAsync(int employeeid)
         {
             return await _employeeRepository.CareerHistoryAsync(employeeid);
         }
-        public async Task<List<object>> BiometricDetails(int employeeid)
+        public async Task<List<object>> BiometricDetailsAsync(int employeeid)
         {
             return await _employeeRepository.BiometricDetailsAsync(employeeid);
         }
-        public async Task<object> AccessDetails(int employeeid)
+        public async Task<object> AccessDetailsAsync(int employeeid)
         {
             return await _employeeRepository.AccessDetailsAsync(employeeid);
         }
-        //public async Task<List<object>> AccessDetails(int employeeid)
-        //{
-        //    return await _employeeRepository.AccessDetails(employeeid);
-        //}
-        public async Task<List<Fill_ModulesWorkFlowDto>> Fill_ModulesWorkFlow(int entityID, int linkId)
+        public async Task<List<Fill_ModulesWorkFlowDto>> FillModulesWorkFlowAsync(int entityID, int linkId)
         {
-            return await _employeeRepository.Fill_ModulesWorkFlowAsync(entityID, linkId);
+            return await _employeeRepository.FillModulesWorkFlowAsync(entityID, linkId);
         }
-        public async Task<List<Fill_WorkFlowMasterDto>> Fill_WorkFlowMaster(int emp_Id, int roleId)
+        public async Task<List<Fill_WorkFlowMasterDto>> FillWorkFlowMasterAsync(int emp_Id, int roleId)
         {
-            return await _employeeRepository.Fill_WorkFlowMasterAsync(emp_Id, roleId);
+            return await _employeeRepository.FillWorkFlowMasterAsync(emp_Id, roleId);
         }
-        public async Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmp(int linkId, int linkLevel)
+        public async Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmpAsync(int linkId, int linkLevel)
         {
             return await _employeeRepository.BindWorkFlowMasterEmpAsync(linkId, linkLevel);
         }
@@ -165,55 +161,55 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetRejoinReportAsync(employeeId);
         }
-        public async Task<List<GetEmpReportingReportDto>> GetEmpReportingReport(int employeeId)
+        public async Task<List<GetEmpReportingReportDto>> GetEmpReportingReportAsync(int employeeId)
         {
             return await _employeeRepository.GetEmpReportingReportAsync(employeeId);
         }
 
 
-        public async Task<List<TransferAndPromotionDto>> TransferAndPromotion(int employeeid)
+        public async Task<List<TransferAndPromotionDto>> TransferAndPromotionAsync(int employeeid)
         {
             return await _employeeRepository.TransferAndPromotionAsync(employeeid);
         }
-        public async Task<List<SalarySeriesDto>> SalarySeries(int employeeid, string status)
+        public async Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeid, string status)
         {
             return await _employeeRepository.SalarySeriesAsync(employeeid, status);
         }
-        public async Task<List<AuditInformationDto>> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
+        public async Task<List<AuditInformationDto>> AuditInformationAsync(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
         {
             return await _employeeRepository.AuditInformationAsync(employeeIDs, empId, roleId, infotype, infoDesc, datefrom, dateto);
         }
 
 
-        public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetails(int linkId, int linkLevel)
+        public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetailsAsync(int linkId, int linkLevel)
         {
             return await _employeeRepository.GetEmpWorkFlowRoleDetailsAsync(linkId, linkLevel);
         }
 
-        public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRole(int entityID)
+        public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRoleAsync(int entityID)
         {
             return await _employeeRepository.FillEmpWorkFlowRoleAsync(entityID);
         }
-        public async Task<List<EmployeeHraDto>> HraDetails(int employeeId)
+        public async Task<List<EmployeeHraDto>> HraDetailsAsync(int employeeId)
         {
             return await _employeeRepository.HraDetailsAsync(employeeId);
         }
 
-        public async Task<List<object>> EmployeeType(int employeeid)
+        public async Task<List<object>> EmployeeTypeAsync(int employeeid)
         {
             return await _employeeRepository.EmployeeTypeAsync(employeeid);
         }
 
-        public async Task<List<object>> GeoSpacingTypeAndCriteria(string type)
+        public async Task<List<object>> GeoSpacingTypeAndCriteriaAsync(string type)
         {
             return await _employeeRepository.GeoSpacingTypeAndCriteriaAsync(type);
         }
 
-        public async Task<List<GeoSpacingDto>> GetGeoSpacing(int employeeid)
+        public async Task<List<GeoSpacingDto>> GetGeoSpacingAsync(int employeeid)
         {
             return await _employeeRepository.GetGeoSpacingAsync(employeeid);
         }
-        public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflow(int firstEntityId, int secondEntityId)
+        public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflowAsync(int firstEntityId, int secondEntityId)
         {
             return await _employeeRepository.FillEmployeesBasedOnwWorkflowAsync(firstEntityId, secondEntityId);
         }
