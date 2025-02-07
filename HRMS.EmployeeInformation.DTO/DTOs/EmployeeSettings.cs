@@ -1,4 +1,4 @@
-﻿ 
+﻿
 
 namespace MPLOYEE_INFORMATION.DTO.DTOs
 {
@@ -39,7 +39,10 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? DateFormat { get; set; }
         public string? EmployeeStatus { get; set; }
 
+        public int? LinkLevel { get; set; }
+        public string? NotAvailable { get; set; }
 
+        public string? Hobbies { get; set; }
     }
 
 }

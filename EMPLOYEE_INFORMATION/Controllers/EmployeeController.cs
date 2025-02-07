@@ -50,7 +50,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> LanguageSkill(int employeeId)
         {
-            var languagedata = await _employeeInformation.LanguageSkill(employeeId);
+            var languagedata = await _employeeInformation.LanguageSkillAsync(employeeId);
             return new JsonResult(languagedata);
         }
 
@@ -294,7 +294,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetRejoinReport(int employeeId)
         {
-            var getRejoinReport = await _employeeInformation.GetRejoinReport(employeeId);
+            var getRejoinReport = await _employeeInformation.GetRejoinReportAsync(employeeId);
             return new JsonResult(getRejoinReport);
         }
         [HttpGet]
@@ -331,7 +331,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetGeoSpacing(int employeeid)
         {
-            var GetGeoSpacing= await _employeeInformation.GetGeoSpacing(employeeid);
+            var GetGeoSpacing = await _employeeInformation.GetGeoSpacing(employeeid);
             return new JsonResult(GetGeoSpacing);
         }
         //  [HttpGet]
@@ -341,38 +341,38 @@ namespace EMPLOYEE_INFORMATION.Controllers
         //    return new JsonResult (fillEmployeesBasedOnwWorkflow);
         //    }
         [HttpGet]
-        public async Task<IActionResult> HraDetails (int employeeId)
-            {
-            var HraDetails = await _employeeInformation.HraDetails (employeeId);
-            return new JsonResult (HraDetails);
-            }
-        [HttpGet]
-        public async Task<IActionResult> FillEmployeesBasedOnwWorkflow (int firstEntityId,int secondEntityId)
-            {
-            var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflow (firstEntityId, secondEntityId);
-            return new JsonResult (fillEmployeesBasedOnwWorkflow);
-            }
-        [HttpGet]
-        public async Task<IActionResult> FillCountry ( )
-            {
-            var fillCountry = await _employeeInformation.FillCountry ( ); 
-            return new JsonResult (fillCountry);
-
-            }
-        [HttpGet]
-        public async Task<IActionResult> GetBloodGroup ( )
-            {
-            var getBloodGroup = await _employeeInformation.GetBloodGroup ( );
-            return new JsonResult (getBloodGroup);
-
-            }
-        [HttpGet]
-        public async Task<IActionResult> FillReligion ( )
-            {
-            var fillReligion = await _employeeInformation.FillReligion ( );
-            return new JsonResult (fillReligion);
-
-            }
-
+        public async Task<IActionResult> HraDetails(int employeeId)
+        {
+            var HraDetails = await _employeeInformation.HraDetails(employeeId);
+            return new JsonResult(HraDetails);
         }
+        [HttpGet]
+        public async Task<IActionResult> FillEmployeesBasedOnwWorkflow(int firstEntityId, int secondEntityId)
+        {
+            var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflow(firstEntityId, secondEntityId);
+            return new JsonResult(fillEmployeesBasedOnwWorkflow);
+        }
+        //[HttpGet]
+        //public async Task<IActionResult> FillCountry()
+        //{
+        //    var fillCountry = await _employeeInformation.FillCountryAsync();
+        //    return new JsonResult(fillCountry);
+
+        //}
+        //[HttpGet]
+        //public async Task<IActionResult> GetBloodGroup()
+        //{
+        //    var getBloodGroup = await _employeeInformation.GetBloodGroup();
+        //    return new JsonResult(getBloodGroup);
+
+        //}
+        //[HttpGet]
+        //public async Task<IActionResult> FillReligion()
+        //{
+        //    var fillReligion = await _employeeInformation.FillReligion();
+        //    return new JsonResult(fillReligion);
+
+        //}
+
+    }
 }
