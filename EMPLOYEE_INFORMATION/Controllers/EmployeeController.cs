@@ -352,27 +352,34 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflowAsync(firstEntityId, secondEntityId);
             return new JsonResult(fillEmployeesBasedOnwWorkflow);
         }
-        //[HttpGet]
-        //public async Task<IActionResult> FillCountry()
-        //{
-        //    var fillCountry = await _employeeInformation.FillCountryAsync();
-        //    return new JsonResult(fillCountry);
+        [HttpGet]
+        public async Task<IActionResult> GetCountry ( )
+            {
+            var fillCountry = await _employeeInformation.GetCountry ( );
+            return new JsonResult (fillCountry);
 
-        //}
-        //[HttpGet]
-        //public async Task<IActionResult> GetBloodGroup()
-        //{
-        //    var getBloodGroup = await _employeeInformation.GetBloodGroup();
-        //    return new JsonResult(getBloodGroup);
+            }
+        [HttpGet]
+        public async Task<IActionResult> GetNationalities ( )
+            {
+            var fillNatinalities = await _employeeInformation.GetNationalities ( );
+            return new JsonResult (fillNatinalities);
 
-        //}
-        //[HttpGet]
-        //public async Task<IActionResult> FillReligion()
-        //{
-        //    var fillReligion = await _employeeInformation.FillReligion();
-        //    return new JsonResult(fillReligion);
+            }
+        [HttpGet]
+        public async Task<IActionResult> GetBloodGroup ( )
+            {
+            var getBloodGroup = await _employeeInformation.GetBloodGroup ( );
+            return new JsonResult (getBloodGroup);
 
-        //}
+            }
+        [HttpGet]
+        public async Task<IActionResult> FillReligion ( )
+            {
+            var fillReligion = await _employeeInformation.FillReligion ( );
+            return new JsonResult (fillReligion);
 
-    }
+            }
+
+        }
 }

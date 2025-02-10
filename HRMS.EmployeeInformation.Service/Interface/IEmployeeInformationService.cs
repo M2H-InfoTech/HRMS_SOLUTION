@@ -69,6 +69,10 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> GeoSpacingTypeAndCriteriaAsync(string type);
         Task<List<EmployeeHraDto>> HraDetailsAsync(int employeeId);
         Task<List<GeoSpacingDto>> GetGeoSpacingAsync(int employeeid);
-    }
+        Task<List<object>> GetCountry ( );
+        Task<List<object>> GetNationalities ( );
+        Task<List<object>> GetBloodGroup ( );
+        Task<List<object>> FillReligion ( );
+        }
 
 }

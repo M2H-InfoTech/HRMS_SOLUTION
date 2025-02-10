@@ -71,7 +71,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<List<GeoSpacingDto>> GetGeoSpacingAsync(int employeeid);
         Task<List<EmployeeHraDto>> HraDetailsAsync(int employeeId);
+        Task<List<object>> GetCountry ( );
+        Task<List<object>> GetNationalities ( );
+        Task<List<object>> GetBloodGroup ( );
+        Task<List<object>> FillReligion ( );
 
-
-    }
+        }
 }
