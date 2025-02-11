@@ -7,7 +7,7 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public int Emp_LangId { get; set; }
 
         public string? Name { get; set; }
-        public byte? LanguageId { get; set; }
+        public string? LanguageId { get; set; }
         public string? Code { get; set; }
         public string? Description { get; set; }
 
