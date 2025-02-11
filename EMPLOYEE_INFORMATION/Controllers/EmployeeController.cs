@@ -381,5 +381,19 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
             }
 
+        [HttpPost]
+
+        public async Task<IActionResult> InsertOrUpdateLanguageSkills([FromBody] LanguageSkillsSaveDto langSkills)
+        {
+            var languageSkills = await _employeeInformation.InsertOrUpdateLanguageSkills(langSkills);
+
+            if (languageSkills == null || !languageSkills.Any()) // Checking for null or empty list
+            {
+                return NotFound();
+            }
+
+            return Ok(languageSkills);
         }
+
+    }
 }

@@ -230,6 +230,11 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.FillReligion ( );
             }
 
-
+        public async Task<List<LanguageSkillsSaveDto>> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills)
+        {
+            return await _employeeRepository.InsertOrUpdateLanguageSkills(langSkills);
         }
+
+
+    }
     }

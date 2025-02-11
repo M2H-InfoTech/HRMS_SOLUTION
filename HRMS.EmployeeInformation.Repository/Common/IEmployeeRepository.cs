@@ -76,5 +76,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<object>> GetBloodGroup ( );
         Task<List<object>> FillReligion ( );
 
-        }
+        Task<List<LanguageSkillsSaveDto>> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills);
+
+    }
 }

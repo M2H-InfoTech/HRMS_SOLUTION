@@ -5,6 +5,7 @@ using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.EnumFolder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -4947,7 +4948,48 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return religions.Cast<object> ( ).ToList ( ); // Ensure it returns List<object>
             }
+
+        public async Task<List<LanguageSkillsSaveDto>> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills)
+        {
+
+
+            foreach (var skill in langSkills.Lilanguage)
+            {
+                var existingSkill = await _context.EmployeeLanguageSkills
+    .FirstOrDefaultAsync(e => e.EmpId == langSkills.EmpID
+                            && e.LanguageId == skill.LanguageId
+                            && e.Status != "D");
+
+                if (existingSkill == null)
+                {
+                    _context.EmployeeLanguageSkills.Add(new EmployeeLanguageSkill
+                    {
+                        EmpId = langSkills.EmpID,
+                        LanguageId = skill.LanguageId,
+                        Read = skill.Read,
+                        Write = skill.Write,
+                        Speak = skill.Speak,
+                        Comprehend = skill.Comprehend,
+                        MotherTongue = skill.MotherTongue,
+                        Status = "A"
+                    });
+                }
+                else
+                {
+                    existingSkill.Read = skill.Read;
+                    existingSkill.Write = skill.Write;
+                    existingSkill.Speak = skill.Speak;
+                    existingSkill.Comprehend = skill.Comprehend;
+                    existingSkill.MotherTongue = skill.MotherTongue;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return _mapper.Map<List<LanguageSkillsSaveDto>>(new List<LanguageSkillsSaveDto> { langSkills });
+
         }
+
+    }
     }
 
 
