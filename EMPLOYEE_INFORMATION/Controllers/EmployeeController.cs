@@ -413,6 +413,69 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
             return Ok(languageSkills);
         }
+        [HttpGet]
+        public async Task<IActionResult> FillLanguageTypes()
+        {
+            var fillLanguageTypes = await _employeeInformation.FillLanguageTypes();
+            return new JsonResult(fillLanguageTypes);
+
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillConsultant()
+        {
+            var fillConsultant = await _employeeInformation.FillConsultant();
+            return new JsonResult(fillConsultant);
+
+        }
+
+        [HttpPost]
+
+        public async Task<IActionResult> InsertOrUpdateReference([FromBody] ReferenceSaveDto Reference)
+        {
+            var References = await _employeeInformation.InsertOrUpdateReference(Reference);
+
+            if (References == null || !References.Any()) // Checking for null or empty list
+            {
+                return NotFound();
+            }
+
+            return Ok(References);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> FillRewardType()
+        {
+            var fillRewardType = await _employeeInformation.FillRewardType();
+            return new JsonResult(fillRewardType);
+
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> InsertOrUpdateEmpRewards([FromBody] EmpRewardsSaveDto EmpRewards)
+        {
+            var EmpReward = await _employeeInformation.InsertOrUpdateEmpRewards(EmpRewards);
+
+            if (EmpReward == null || !EmpReward.Any()) // Checking for null or empty list
+            {
+                return NotFound();
+            }
+
+            return Ok(EmpReward);
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillBankDetails(int empID)
+        {
+            var bankDetails = await _employeeInformation.FillBankDetails(empID);
+            return new JsonResult(bankDetails);
+
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> BankTypeEdit()
+        {
+            var BankType = await _employeeInformation.BankTypeEdit();
+            return new JsonResult(BankType);
+        }
 
     }
 }

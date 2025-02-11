@@ -73,7 +73,14 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> GetNationalities ( );
         Task<List<object>> GetBloodGroup ( );
         Task<List<object>> FillReligion ( );
-        Task<List<LanguageSkillsSaveDto>> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills);
+        Task<string> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills);
+        Task<List<object>> FillLanguageTypes();
+        Task<List<object>> FillConsultant();
+        Task<string> InsertOrUpdateReference(ReferenceSaveDto Reference);
+        Task<List<object>> FillRewardType();
+        Task<string> InsertOrUpdateEmpRewards(EmpRewardsSaveDto EmpRewards);
+        Task<List<object>> FillBankDetails(int empID);
+        Task<List<object>> BankTypeEdit();
 
         Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId);
         Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
