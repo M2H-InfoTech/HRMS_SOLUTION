@@ -85,6 +85,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId);
         Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
 
+
     }
 
 }
