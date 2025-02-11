@@ -1,5 +1,4 @@
-﻿using System.Net;
-using AutoMapper;
+﻿using AutoMapper;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.DTO.DTOs;
 using EMPLOYEE_INFORMATION.Models;
@@ -10,12 +9,11 @@ using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.EnumFolder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.VisualBasic.FileIO;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
-    {
+{
     public class EmployeeRepository : IEmployeeRepository
     {
         private readonly EmployeeDBContext _context;
@@ -2477,63 +2475,60 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
         public async Task<CommunicationResultDto> CommunicationAsync(int employeeId)
         {
-            var communicationTask = (from a in _context.HrEmpAddresses
-                                     join b in _context.AdmCountryMasters
-                                         on a.Country equals b.CountryId into admGroup
-                                     from b in admGroup.DefaultIfEmpty()
-                                     where a.EmpId == employeeId
-                                     select new CommunicationTableDto
-                                     {
-                                         Inst_Id = a.InstId,
-                                         Add_Id = a.AddId,
-                                         Emp_Id = a.EmpId,
-                                         Add1 = a.Add1,
-                                         Add2 = a.Add2,
-                                         PBNo = a.Pbno,
-                                         Country_ID = b.CountryId,
-                                         Country_Name = b.CountryName,
-                                         Phone = a.Phone,
-                                         Mobile = a.Mobile,
-                                         OfficePhone = a.OfficePhone,
-                                         Extension = a.Extension,
-                                         EMail = a.OfficialEmail,
-                                         PersonalEMail = a.PersonalEmail,
-                                         Status = _employeeSettings.EmployeeStatus// "A"
-                                     }).AsNoTracking().ToListAsync();
+            var communicationTask = await (from a in _context.HrEmpAddresses
+                                           join b in _context.AdmCountryMasters
+                                               on a.Country equals b.CountryId into admGroup
+                                           from b in admGroup.DefaultIfEmpty()
+                                           where a.EmpId == employeeId
+                                           select new CommunicationTableDto
+                                           {
+                                               Inst_Id = a.InstId,
+                                               Add_Id = a.AddId,
+                                               Emp_Id = a.EmpId,
+                                               Add1 = a.Add1,
+                                               Add2 = a.Add2,
+                                               PBNo = a.Pbno,
+                                               Country_ID = b.CountryId,
+                                               Country_Name = b.CountryName,
+                                               Phone = a.Phone,
+                                               Mobile = a.Mobile,
+                                               OfficePhone = a.OfficePhone,
+                                               Extension = a.Extension,
+                                               EMail = a.OfficialEmail,
+                                               PersonalEMail = a.PersonalEmail,
+                                               Status = _employeeSettings.EmployeeStatus
+                                           }).AsNoTracking().ToListAsync();
 
-            var communicationApprTask = (from a in _context.HrEmpAddressApprls
-                                         join b in _context.AdmCountryMasters
-                                             on a.Country equals b.CountryId into admGroup
-                                         from b in admGroup.DefaultIfEmpty()
-                                         join c in _context.CommunicationRequestWorkFlowstatuses
-                                             on a.AddId equals c.RequestId
-                                         where a.EmpId == employeeId
-                                         select new CommunicationTableDto
-                                         {
-                                             Inst_Id = a.InstId,
-                                             Add_Id = a.AddId,
-                                             Emp_Id = a.EmpId,
-                                             Add1 = a.Add1,
-                                             Add2 = a.Add2,
-                                             PBNo = a.Pbno,
-                                             Country_ID = b.CountryId,
-                                             Country_Name = b.CountryName,
-                                             Phone = a.Phone,
-                                             Mobile = a.Mobile,
-                                             OfficePhone = a.OfficePhone,
-                                             Extension = a.Extension,
-                                             EMail = a.Email,
-                                             PersonalEMail = a.PersonalEmail,
-                                             Status = a.Status
-                                         }).AsNoTracking().ToListAsync();
-
-            // Execute both queries in parallel
-            var results = await Task.WhenAll(communicationTask, communicationApprTask);
+            var communicationApprTask = await (from a in _context.HrEmpAddressApprls
+                                               join b in _context.AdmCountryMasters
+                                                   on a.Country equals b.CountryId into admGroup
+                                               from b in admGroup.DefaultIfEmpty()
+                                               join c in _context.CommunicationRequestWorkFlowstatuses
+                                                   on a.AddId equals c.RequestId
+                                               where a.EmpId == employeeId
+                                               select new CommunicationTableDto
+                                               {
+                                                   Inst_Id = a.InstId,
+                                                   Add_Id = a.AddId,
+                                                   Emp_Id = a.EmpId,
+                                                   Add1 = a.Add1,
+                                                   Add2 = a.Add2,
+                                                   PBNo = a.Pbno,
+                                                   Country_ID = b.CountryId,
+                                                   Country_Name = b.CountryName,
+                                                   Phone = a.Phone,
+                                                   Mobile = a.Mobile,
+                                                   OfficePhone = a.OfficePhone,
+                                                   Extension = a.Extension,
+                                                   EMail = a.Email,
+                                                   PersonalEMail = a.PersonalEmail,
+                                                   Status = a.Status
+                                               }).AsNoTracking().ToListAsync();
 
             return new CommunicationResultDto
             {
-                CommunicationTable = results[0],
-                CommunicationTable1 = results[1]
+                CommunicationTable = communicationTask,
+                CommunicationTable1 = communicationApprTask
             };
         }
 
@@ -5432,24 +5427,24 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         //    return new HrEmpMasterDto();
         //}
-    
-    
+
+
         public async Task<List<object>> BankTypeEdit()
         {
             return await (
                 from b in _context.HrmsDocument00s
                 join c in _context.HrmsDocument00s on b.DocId equals c.DocId into bcJoin
-                from c in bcJoin.DefaultIfEmpty() 
+                from c in bcJoin.DefaultIfEmpty()
                 join d in _context.HrmsDocTypeMasters on (long)c.DocType equals d.DocTypeId into cdJoin
-                from d in cdJoin.DefaultIfEmpty() 
+                from d in cdJoin.DefaultIfEmpty()
                 where b.Active == true && d.DocType == "BANK DETAILS"
-                select new 
+                select new
                 {
                     b.DocId,
                     b.DocName
                 }
             ).AsNoTracking()
-            .Select(x => (object)x) 
+            .Select(x => (object)x)
             .ToListAsync();
         }
 

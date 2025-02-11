@@ -69,10 +69,10 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> GeoSpacingTypeAndCriteriaAsync(string type);
         Task<List<EmployeeHraDto>> HraDetailsAsync(int employeeId);
         Task<List<GeoSpacingDto>> GetGeoSpacingAsync(int employeeid);
-        Task<List<object>> GetCountry ( );
-        Task<List<object>> GetNationalities ( );
-        Task<List<object>> GetBloodGroup ( );
-        Task<List<object>> FillReligion ( );
+        Task<List<object>> GetCountry();
+        Task<List<object>> GetNationalities();
+        Task<List<object>> GetBloodGroup();
+        Task<List<object>> FillReligion();
         Task<string> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills);
         Task<List<object>> FillLanguageTypes();
         Task<List<object>> FillConsultant();
@@ -84,6 +84,8 @@ namespace HRMS.EmployeeInformation.Service.Interface
 
         Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId);
         Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
+
+
     }
 
 }
