@@ -2460,7 +2460,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                               {
                               Emp_LangId = emp.EmpLangId,
                               Name = empdet.Name,
-                              LanguageId = byte.Parse (emp.LanguageId),
+                              LanguageId = emp.LanguageId,
                               Code = hrm.Code,
                               Description = hrm.Description,
                               Read = (byte)(emp.Read == true ? 1 : 0),
