@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.Entity;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
 using MPLOYEE_INFORMATION.DTO.DTOs;
@@ -16,7 +17,7 @@ namespace EMPLOYEE_INFORMATION.Services.Mapping
             CreateMap<EmployeeLanguageSkill,LanguageSkillResultDto>().ReverseMap();
             CreateMap<HrEmpProfdtlsApprl, HrEmpProfdtlsApprlDto>().ReverseMap();
             CreateMap<HrEmpProfdtlsApprl, HrEmpProfdtl>().ReverseMap();
-             
+            CreateMap<HrEmpreference, ReferenceSaveDto>().ReverseMap();
         }
     }
 }

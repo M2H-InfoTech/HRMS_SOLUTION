@@ -3413,7 +3413,7 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.InstId).HasColumnName("Inst_Id");
             entity.Property(e => e.TransactionDate).HasColumnType("datetime");
         });
-
+       
         OnModelCreatingPartial(modelBuilder);
     }
 

@@ -230,11 +230,39 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.FillReligion();
         }
 
-        public async Task<List<LanguageSkillsSaveDto>> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills)
+        public async Task<string> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills)
         {
             return await _employeeRepository.InsertOrUpdateLanguageSkills(langSkills);
         }
+        public async Task<List<object>> FillLanguageTypes()
+        {
+            return await _employeeRepository.FillLanguageTypes();
+        }
+        public async Task<List<object>> FillConsultant()
+        {
+            return await _employeeRepository.FillConsultant();
+        }
 
+        public async Task<string> InsertOrUpdateReference(ReferenceSaveDto Reference)
+        {
+            return await _employeeRepository.InsertOrUpdateReference(Reference);
+        }
+        public async Task<List<object>> FillRewardType()
+        {
+            return await _employeeRepository.FillRewardType();
+        }
+        public async Task<string> InsertOrUpdateEmpRewards(EmpRewardsSaveDto EmpRewards)
+        {
+            return await _employeeRepository.InsertOrUpdateEmpRewards(EmpRewards);
+        }
+        public async Task<List<object>> FillBankDetails(int empID)
+        {
+            return await _employeeRepository.FillBankDetails(empID);
+        }
+        public async Task<List<object>> BankTypeEdit()
+        {
+            return await _employeeRepository.BankTypeEdit();
+        }
 
         public async Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId)
         {
