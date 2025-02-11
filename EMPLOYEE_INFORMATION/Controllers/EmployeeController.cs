@@ -353,36 +353,55 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(fillEmployeesBasedOnwWorkflow);
         }
         [HttpGet]
-        public async Task<IActionResult> GetCountry ( )
-            {
-            var fillCountry = await _employeeInformation.GetCountry ( );
-            return new JsonResult (fillCountry);
+        public async Task<IActionResult> GetCountry()
+        {
+            var fillCountry = await _employeeInformation.GetCountry();
+            return new JsonResult(fillCountry);
 
-            }
+        }
         [HttpGet]
-        public async Task<IActionResult> GetNationalities ( )
-            {
-            var fillNatinalities = await _employeeInformation.GetNationalities ( );
-            return new JsonResult (fillNatinalities);
+        public async Task<IActionResult> GetNationalities()
+        {
+            var fillNatinalities = await _employeeInformation.GetNationalities();
+            return new JsonResult(fillNatinalities);
 
-            }
+        }
         [HttpGet]
-        public async Task<IActionResult> GetBloodGroup ( )
-            {
-            var getBloodGroup = await _employeeInformation.GetBloodGroup ( );
-            return new JsonResult (getBloodGroup);
+        public async Task<IActionResult> GetBloodGroup()
+        {
+            var getBloodGroup = await _employeeInformation.GetBloodGroup();
+            return new JsonResult(getBloodGroup);
 
-            }
+        }
         [HttpGet]
-        public async Task<IActionResult> FillReligion ( )
-            {
-            var fillReligion = await _employeeInformation.FillReligion ( );
-            return new JsonResult (fillReligion);
+        public async Task<IActionResult> FillReligion()
+        {
+            var fillReligion = await _employeeInformation.FillReligion();
+            return new JsonResult(fillReligion);
 
-            }
+        }
 
         [HttpPost]
+        [HttpGet]
+        public async Task<IActionResult> GetHrEmpDetailsAsync(int employeeId, int roleId)
+        {
+            var employeeDetails = await _employeeInformation.GetHrEmpDetailsAsync(employeeId, roleId);
+            return new JsonResult(employeeDetails);
+        }
+        [HttpPost]
+        public async Task<IActionResult> SaveOrUpdateEmployeeDetails([FromBody] EmployeeParametersDto employeeDetailsDto)
+        {
 
+            var employeeDetails = await _employeeInformation.SaveOrUpdateEmployeeDetails(employeeDetailsDto);
+            return new JsonResult(employeeDetails);
+        }
+
+        //[HttpGet]
+        //public async Task<IActionResult> FillCountry()
+        //{
+        //    var fillCountry = await _employeeInformation.FillCountryAsync();
+        //    return new JsonResult(fillCountry);
+        [HttpPost]
         public async Task<IActionResult> InsertOrUpdateLanguageSkills([FromBody] LanguageSkillsSaveDto langSkills)
         {
             var languageSkills = await _employeeInformation.InsertOrUpdateLanguageSkills(langSkills);

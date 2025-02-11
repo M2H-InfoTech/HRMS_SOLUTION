@@ -4988,7 +4988,261 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return _mapper.Map<List<LanguageSkillsSaveDto>>(new List<LanguageSkillsSaveDto> { langSkills });
 
         }
+        public async Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId)
+        {
 
+
+
+
+            var employeeDetails = await (from a in _context.HrEmpMasters
+                                         join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into ab
+                                         from b in ab.DefaultIfEmpty()
+                                         join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into ac
+                                         from c in ac.DefaultIfEmpty()
+                                         join r in _context.HrEmpReportings on a.EmpId equals r.EmpId into ar
+                                         from r in ar.DefaultIfEmpty()
+                                         join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into af
+                                         from f in af.DefaultIfEmpty()
+                                         join g in _context.HrEmployeeUserRelations on a.EmpId equals g.EmpId into ag
+                                         from g in ag.DefaultIfEmpty()
+                                         join h in _context.AdmUserRoleMasters on g.UserId equals h.UserId into gh
+                                         from h in gh.DefaultIfEmpty()
+                                         join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status into aj
+                                         from j in aj.DefaultIfEmpty()
+                                         join i in _context.AdmUserMasters on h.UserId equals i.UserId into hi
+                                         from i in hi.DefaultIfEmpty()
+                                         where a.EmpId == employeeId
+                                         select new HrEmpMasterDto
+                                         {
+                                             EmpId = a.EmpId,
+                                             EmpCode = a.EmpCode,
+                                             FirstName = a.FirstName,
+                                             MiddleName = a.MiddleName,
+                                             LastName = a.LastName,
+                                             JoinDt = FormatDate(a.JoinDt, _employeeSettings.DateFormat),//.ToString("dd/MM/yyyy"),
+                                             EntryBy = a.EntryBy,
+                                             EntryDt = FormatDate(a.EntryDt, _employeeSettings.DateFormat),//.ToString("dd/MM/yyyy"),
+                                             EmpStatus = a.EmpStatus,
+                                             CurrentStatus = j.Status,
+                                             StatusDesc = j.StatusDesc,
+                                             //ReviewDt = a.ReviewDt.HasValue ? a.ReviewDt.Value.ToString("dd/MM/yyyy") : null,
+                                             //WeddingDate = c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : null,
+                                             //ProbationDt = a.ProbationDt.HasValue ? a.ProbationDt.Value.ToString("dd/MM/yyyy") : null,
+                                             ReviewDt = FormatDate(a.ReviewDt, _employeeSettings.DateFormat),//.Value.ToString("dd/MM/yyyy") : null,
+                                             WeddingDate = FormatDate(c.WeddingDate, _employeeSettings.DateFormat),//.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : null,
+                                             ProbationDt = FormatDate(a.ProbationDt, _employeeSettings.DateFormat),
+                                             IsProbation = a.IsProbation,
+                                             NationalIdNo = a.NationalIdNo,
+                                             DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),// .HasValue ? a.DateOfBirth.Value.ToString("dd/MM/yyyy") : null,
+                                             NoticePeriod = a.NoticePeriod,
+                                             PassportNo = a.PassportNo,
+                                             BranchId = a.BranchId,
+                                             DepId = a.DepId,
+                                             DesigId = a.DesigId,
+                                             GuardiansName = a.GuardiansName,
+                                             Religion = c.Religion,
+                                             BloodGrp = c.BloodGrp,
+                                             Nationality = c.Nationality,
+                                             Country = c.Country,
+                                             IdentMark = c.IdentMark,
+                                             CountryOfBirth = a.CountryOfBirth,
+                                             Height = c.Height,
+                                             Weight = c.Weight,
+                                             GratuityStrtDate = a.GratuityStrtDate.HasValue ? a.GratuityStrtDate.Value.ToString("dd/MM/yyyy") : null,
+                                             FirstEntryDate = a.FirstEntryDate.HasValue ? a.FirstEntryDate.Value.ToString("dd/MM/yyyy") : null,
+                                             OfficialEmail = b.OfficialEmail,
+                                             PersonalEmail = b.PersonalEmail,
+                                             Phone = b.Phone,
+                                             HomeCountryPhone = b.HomeCountryPhone,
+                                             Gender = c.Gender,
+                                             MaritalStatus = c.MaritalStatus,
+                                             ReprotToWhome = r.ReprotToWhome,
+                                             EffectDate = r.EffectDate.HasValue ? r.EffectDate.Value.ToString("dd/MM/yyyy") : null,
+                                             RoleId = h.RoleId,
+                                             NeedApp = i.NeedApp,
+                                             Ishra = a.Ishra,
+                                             CompanyConveyance = a.CompanyConveyance,
+                                             CompanyVehicle = a.CompanyVehicle,
+                                             LevelOneId = f.LevelOneId,
+                                             LevelTwoId = f.LevelTwoId,
+                                             LevelThreeId = f.LevelThreeId,
+                                             LevelFourId = f.LevelFourId,
+                                             LevelFiveId = f.LevelFiveId,
+                                             LevelSixId = f.LevelSixId,
+                                             LevelSevenId = f.LevelSevenId,
+                                             LevelEightId = f.LevelEightId,
+                                             LevelNineId = f.LevelNineId,
+                                             LevelTenId = f.LevelTenId,
+                                             LevelElevenId = f.LevelElevenId,
+                                             ReportingEmp = _context.EmployeeDetails.Where(e => e.EmpId == r.ReprotToWhome).Select(e => e.Name).FirstOrDefault(),
+                                             IsExpat = a.IsExpat ?? 0,
+                                             PublicHoliday = a.PublicHoliday,
+                                             MealAllowanceDeduct = a.MealAllowanceDeduct,
+                                             EmpFileNumber = a.EmpFileNumber ?? "",
+                                             PayrollMode = a.PayrollMode ?? 0,
+                                             DailyRateTypeId = a.DailyRateTypeId ?? 0,
+                                             CanteenRequest = a.CanteenRequest ?? 0
+                                         }).FirstAsync();
+
+
+
+            var defaultCompParameter = GetDefaultCompanyParameter(employeeId, "EMPLINKADD", "EMP1").Result;
+
+
+
+
+            string code = "EnableEntityLinkInEmployeeCreation";
+
+            var accessId = (from a in _context.TabAccessRights
+                            join b in _context.TabMasters on a.TabId equals Convert.ToInt32(b.TabId)
+                            where a.RoleId == roleId && b.Code == code
+                            select (int?)a.AccessId)
+                            .FirstOrDefault() ?? 0;
+
+
+            return new EmployeeDetailsDto
+            {
+                HrEmpmasterDto = employeeDetails,
+                DetailId = defaultCompParameter,
+                AccessId = accessId
+            };
+        }
+        public async Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto)
+        {
+            return new HrEmpMasterDto();
+        }
+        //public async Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto)
+        //{
+        //    bool existsEmployee = await _context.HrEmpMasters.Where(emp => emp.EmpCode.Trim() == employeeDetailsDto.EmpCode.Trim()
+        //         && (emp.IsDelete) == false
+        //         && emp.EmpId != employeeDetailsDto.EmpID).AnyAsync();//---Correct
+        //    if (existsEmployee)
+        //    {
+        //        return new HrEmpMasterDto();
+        //    }
+        //    bool isDifferentLastEntity = await _context.HrEmpMasters.Where(e => e.EmpId == employeeDetailsDto.EmpID).Select(e => e.LastEntity).FirstOrDefaultAsync() != employeeDetailsDto.LastEntity;
+        //    if (isDifferentLastEntity)
+        //    {
+
+        //    }
+        //    bool checkTransferHistory = await (from a in _context.TransferDetails00s
+        //                                       join b in _context.TransferDetails on a.TransferBatchId equals b.TransferBatchId
+        //                                       where new[] { "A", "P" }.Contains(b.ApprovalStatus)
+        //                                       && a.EmpId == employeeDetailsDto.EmpID
+        //                                       select a).AnyAsync();//---Correct
+        //    if (checkTransferHistory)
+        //    {
+
+
+
+
+
+        //        //var tempTransferHistory = rankedTransfers
+        //        //    .Where(rt => rt.RankOrder > 1)
+        //        //    .Select(rt => new
+        //        //    {
+        //        //        rt.EmpId,
+        //        //        rt.ToDate,
+        //        //        rt.LastEntity,
+        //        //        rt.OldLastEntity
+        //        //    }).ToList();
+
+        //        //int LastEntity = 0;
+        //        //// Check if the record exists
+        //        //bool existsTransferHistory = tempTransferHistory.Any(th => th.EmpId == employeeDetailsDto.EmpID && th.LastEntity == employeeDetailsDto.LastEntity);
+
+        //        //if (existsTransferHistory)
+        //        //{
+        //        //    //errorID = 0;
+        //        //    //errorMessage = "ExistTransfer";
+        //        //    //return;
+        //        //}
+        //    }
+        //    if (1 > 0)
+        //    {
+        //        //// Get SortOrder
+        //        var sortOrder = _context.LicensedCompanyDetails.Select(x => x.EntityLimit).FirstOrDefault();
+
+        //        // // Get mapping values
+        //        var mappings = _context.Categorymasters
+        //            .Join(_context.HrmValueTypes,
+        //                  cat => cat.CatTrxTypeId,
+        //                  val => val.Value,
+        //                  (cat, val) => new { cat, val })
+        //            .Where(x => x.val.Type == "CatTrxType" &&
+        //                        new[] { "BRANCH", "DEPT", "BAND", "GRADE", "DESIG", "COMPANY" }
+        //                        .Contains(x.val.Code))
+        //            .GroupBy(x => x.val.Code)
+        //            .Select(g => new
+        //            {
+        //                Code = g.Key,
+        //                SortOrder = g.Max(x => x.cat.SortOrder)
+        //            })
+        //            .ToList();
+
+        //        // // Extract values
+        //        int branchMapId = mappings.FirstOrDefault(m => m.Code == "BRANCH")?.SortOrder ?? 0;
+        //        int depMapId = mappings.FirstOrDefault(m => m.Code == "DEPT")?.SortOrder ?? 0;
+        //        int bandMapId = mappings.FirstOrDefault(m => m.Code == "BAND")?.SortOrder ?? 0;
+        //        int designationMapId = mappings.FirstOrDefault(m => m.Code == "DESIG")?.SortOrder ?? 0;
+        //        int countryMapId = mappings.FirstOrDefault(m => m.Code == "COMPANY")?.SortOrder ?? 0;
+        //        int gradeId = mappings.FirstOrDefault(m => m.Code == "GRADE")?.SortOrder ?? 0;
+
+
+
+        //        // Check if SortOrder is 11 before proceeding
+        //        if (sortOrder == 11)
+        //        {
+
+
+        //            var entityLevel = _context.HighLevelViewTables
+        //                .Where(e => e.LastEntityId == employeeDetailsDto.LastEntity)
+        //                .Select(e => new
+        //                {
+        //                    e.LastEntityId,
+        //                    e.LevelOneId,
+        //                    e.LevelTwoId,
+        //                    e.LevelThreeId,
+        //                    e.LevelFourId,
+        //                    e.LevelFiveId,
+        //                    e.LevelSixId,
+        //                    e.LevelSevenId,
+        //                    e.LevelEightId,
+        //                    e.LevelNineId,
+        //                    e.LevelTenId,
+        //                    e.LevelElevenId
+        //                })
+        //                .FirstOrDefault();
+
+        //            if (entityLevel != null)
+        //            {
+        //                int GetLevelId(int mapId)
+        //                {
+        //                    var propertyName = $"Level{mapId}Id";
+        //                    var property = entityLevel.GetType().GetProperty(propertyName);
+        //                    return property != null ? (int)property.GetValue(entityLevel) : 0;
+        //                }
+
+        //                int branchId = GetLevelId(branchMapId);
+        //                int deptId = GetLevelId(depMapId);
+        //                int bandId = GetLevelId(bandMapId);
+        //                int gradeLevelId = GetLevelId(gradeId);
+        //                int desigId = GetLevelId(designationMapId);
+
+        //                if (employeeDetailsDto.FrstEntryDate == null)
+        //                {
+        //                    employeeDetailsDto.FrstEntryDate = employeeDetailsDto.JoiningDate;
+        //                }
+        //                var oldEntity = await _context.HrEmpMasters.Where(e => e.EmpId == employeeDetailsDto.EmpID).Select(e => e.LastEntity).FirstOrDefaultAsync();
+        //            }
+
+
+        //        }
+
+        //    }
+
+        //    return new HrEmpMasterDto();
+        //}
     }
     }
 
