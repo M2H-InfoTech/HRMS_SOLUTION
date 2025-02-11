@@ -76,6 +76,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<object>> GetBloodGroup ( );
         Task<List<object>> FillReligion ( );
 
+        Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId);
+        Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
         Task<List<LanguageSkillsSaveDto>> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills);
 
     }

@@ -213,22 +213,22 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.FillEmployeesBasedOnwWorkflowAsync(firstEntityId, secondEntityId);
         }
-        public async Task<List<object>> GetCountry ( )
-            {
-            return await _employeeRepository.GetCountry ( );
-            }
-        public async Task<List<object>> GetNationalities ( )
-            {
-            return await _employeeRepository.GetNationalities ( );
-            }
-        public async Task<List<object>> GetBloodGroup ( )
-            {
-            return await _employeeRepository.GetBloodGroup ( );
-            }
-        public async Task<List<object>> FillReligion ( )
-            {
-            return await _employeeRepository.FillReligion ( );
-            }
+        public async Task<List<object>> GetCountry()
+        {
+            return await _employeeRepository.GetCountry();
+        }
+        public async Task<List<object>> GetNationalities()
+        {
+            return await _employeeRepository.GetNationalities();
+        }
+        public async Task<List<object>> GetBloodGroup()
+        {
+            return await _employeeRepository.GetBloodGroup();
+        }
+        public async Task<List<object>> FillReligion()
+        {
+            return await _employeeRepository.FillReligion();
+        }
 
         public async Task<List<LanguageSkillsSaveDto>> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills)
         {
@@ -236,5 +236,14 @@ namespace HRMS.EmployeeInformation.Service.Service
         }
 
 
+        public async Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId)
+        {
+            return await _employeeRepository.GetHrEmpDetailsAsync(employeeId, roleId);
+        }
+        public async Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto)
+        {
+            return await _employeeRepository.SaveOrUpdateEmployeeDetails(employeeDetailsDto);
+        }
+
     }
-    }
+}
