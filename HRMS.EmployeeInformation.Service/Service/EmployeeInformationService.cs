@@ -55,7 +55,7 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.RewardAndRecognitionsAsync(employeeId);
         }
 
-        public async Task<List<QualificationDto>> QualificationAsync(int employeeId)
+        public async Task<List<QualificationDto>> QualificationAsync (int employeeId)
         {
             return await _employeeRepository.QualificationAsync(employeeId);
         }
@@ -264,14 +264,21 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.BankTypeEdit();
         }
 
-        public async Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId)
+        public async Task<EmployeeDetailsDto> GetHrEmpDetailsAsync (int employeeId, int roleId)
+            {
+            return await _employeeRepository.GetHrEmpDetailsAsync (employeeId, roleId);
+            }
+        public async Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails (EmployeeParametersDto employeeDetailsDto)
+            {
+            return await _employeeRepository.SaveOrUpdateEmployeeDetails (employeeDetailsDto);
+            }
+        public async Task<List<object>> CertificationsDropdown (string description)
         {
-            return await _employeeRepository.GetHrEmpDetailsAsync(employeeId, roleId);
+            return await _employeeRepository.CertificationsDropdown (description);
         }
-        public async Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto)
+        public async Task<string> InsertOrUpdateCertificates (CertificationSaveDto certificates)
         {
-            return await _employeeRepository.SaveOrUpdateEmployeeDetails(employeeDetailsDto);
+            return await _employeeRepository.InsertOrUpdateCertificates (certificates);
         }
-
     }
 }

@@ -84,8 +84,9 @@ namespace HRMS.EmployeeInformation.Service.Interface
 
         Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId);
         Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
+        Task<List<object>> CertificationsDropdown (string description);
+        Task<string> InsertOrUpdateCertificates (CertificationSaveDto certificates);
 
+        }
 
     }
-
-}

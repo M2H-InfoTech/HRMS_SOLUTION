@@ -477,5 +477,24 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(BankType);
         }
 
-    }
+        [HttpGet]
+        public async Task<IActionResult> CertificationsDropdown (string description)
+        {
+            var certificationDropdown = await _employeeInformation.CertificationsDropdown (description);
+            return new JsonResult (certificationDropdown);
+        }
+        [HttpPost]
+        public async Task<IActionResult> InsertOrUpdateCertificates ([FromBody] CertificationSaveDto certificates)
+            {
+            var empCertificate = await _employeeInformation.InsertOrUpdateCertificates (certificates);
+
+            if (empCertificate == null || !empCertificate.Any ( )) 
+                {
+                return NotFound ( );
+                }
+
+            return Ok (empCertificate);
+            }
+
+        }
 }
