@@ -280,5 +280,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.InsertOrUpdateCertificates (certificates);
         }
+
+        public async Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType)
+        {
+            return await _employeeRepository.UpdateEmployeeType(EmployeeType);
+        }
     }
 }
