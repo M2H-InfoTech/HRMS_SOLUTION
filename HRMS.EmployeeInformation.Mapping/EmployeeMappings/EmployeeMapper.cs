@@ -18,6 +18,7 @@ namespace EMPLOYEE_INFORMATION.Services.Mapping
             CreateMap<HrEmpProfdtlsApprl, HrEmpProfdtlsApprlDto>().ReverseMap();
             CreateMap<HrEmpProfdtlsApprl, HrEmpProfdtl>().ReverseMap();
             CreateMap<HrEmpreference, ReferenceSaveDto>().ReverseMap();
+            CreateMap<EmployeeCertification, CertificationSaveDto> ( ).ReverseMap ( );
+            }
         }
-    }
 }

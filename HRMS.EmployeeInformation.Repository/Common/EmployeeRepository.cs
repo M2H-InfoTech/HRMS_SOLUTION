@@ -13,7 +13,7 @@ using MPLOYEE_INFORMATION.DTO.DTOs;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
-{
+    {
     public class EmployeeRepository : IEmployeeRepository
     {
         private readonly EmployeeDBContext _context;
@@ -5447,7 +5447,55 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             .Select(x => (object)x)
             .ToListAsync();
         }
+        public async Task<List<object>> CertificationsDropdown (string description)
+        {
+            return await (from a in _context.GeneralCategories
+                                join b in _context.ReasonMasters on a.Id equals b.Value
+                                where a.Description == description
+                          select new { b.ReasonId, b.Description })
+                               .AsNoTracking ( )
+                               .Select (x => (object)x)
+                               .ToListAsync ( );
 
+        }
+
+        public async Task<string> InsertOrUpdateCertificates (CertificationSaveDto certificates)
+            {
+            var existingCertification = await _context.EmployeeCertifications
+                .FirstOrDefaultAsync (e => e.EmpId == certificates.EmpId && e.CertificationId == certificates.CertificationID);
+
+            var certification = _mapper.Map<EmployeeCertification> (certificates);
+            string result;
+
+            using var transaction = await _context.Database.BeginTransactionAsync ( );
+
+                if (existingCertification != null)
+                    {
+                    existingCertification.CertificationName = certificates.CertificationName;
+                    existingCertification.CertificationField = certificates.CertificationField;
+                    existingCertification.YearofCompletion = certificates.YearOfCompletion;
+                    existingCertification.IssuingAuthority = certificates.IssuingAuthority;
+                    existingCertification.UpdatedBy = certificates.EntryBy;
+                    existingCertification.UpdatedDate = DateTime.UtcNow;
+
+                    _context.EmployeeCertifications.Update (existingCertification);
+                    result = "2";
+                    }
+                else
+                    {
+                    certification.EntryDate = DateTime.UtcNow;
+                    certification.Status = "A";
+                    _context.EmployeeCertifications.Add (certification);
+                    result = "1";
+                    }
+
+                await _context.SaveChangesAsync ( );
+                await transaction.CommitAsync ( );
+           
+            return result;
+            }
+
+
+        }
     }
-}
 
