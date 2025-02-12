@@ -476,6 +476,18 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var BankType = await _employeeInformation.BankTypeEdit();
             return new JsonResult(BankType);
         }
+        [HttpPost]
+        public async Task<IActionResult> UpdateEmployeeType([FromBody] EmployeeTypeDto EmployeeType)
+        {
+            var employeeTypes = await _employeeInformation.UpdateEmployeeType(EmployeeType);
+
+            if (employeeTypes == null || !employeeTypes.Any()) // Checking for null or empty list
+            {
+                return NotFound();
+            }
+
+            return Ok(employeeTypes);
+        }
 
         [HttpGet]
         public async Task<IActionResult> CertificationsDropdown (string description)

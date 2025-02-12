@@ -5496,6 +5496,24 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             }
 
 
+        public async Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType)
+        {
+            string ErrorID = "0"; 
+                     var employee = await _context.HrEmpPersonals
+                .FirstOrDefaultAsync(e => e.EmpId == EmployeeType.EmpID);
+
+            if (employee != null)
+            {            
+                employee.EmployeeType = EmployeeType.EmployeeType;
+               await _context.SaveChangesAsync();
+
+                ErrorID = "1"; 
+            }
+
+            return ErrorID;
         }
+
     }
+
+}
 
