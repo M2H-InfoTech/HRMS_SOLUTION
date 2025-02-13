@@ -508,5 +508,21 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok (empCertificate);
             }
 
+        [HttpPost]
+        public async Task<IActionResult> InsertOrUpdateSkill([FromBody] SaveSkillSetDto skillset)
+        {
+            var empskilll = await _employeeInformation.InsertOrUpdateSkill(skillset);
+
+            if (empskilll == null || !empskilll.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(empskilll);
         }
+
+
+    }
+
+
 }

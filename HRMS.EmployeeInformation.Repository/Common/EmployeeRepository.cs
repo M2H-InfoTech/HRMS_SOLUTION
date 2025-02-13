@@ -5513,7 +5513,100 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return ErrorID;
         }
 
+        public async Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            bool isWorkflowNeeded = await IsWorkflowNeeded();
+
+            var hrSaveSkill = _mapper.Map<HrEmpTechnicalApprl>(skillset);
+
+            if (isWorkflowNeeded)
+            {
+                string? codeId = await GenerateRequestId(skillset.Emp_Id);
+                if (!string.IsNullOrEmpty(codeId))
+                {
+                    hrSaveSkill.RequestId = await GetLastSequence(codeId);
+                    await _context.HrEmpTechnicalApprls.AddAsync(hrSaveSkill);
+                    await UpdateCodeGeneration(codeId);
+    }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return "Successfully Saved";
+}
+
+
+            var hrEmpTechnicalApprl = new HrEmpTechnicalApprl
+            {
+                InstId = skillset.InstId,
+                EmpId = skillset.Emp_Id,
+                Course = skillset.Course,
+                CourseDtls = skillset.Course_Dtls,
+                Year = skillset.Year,
+                DurFrm = skillset.DurationFrom,
+                DurTo = skillset.DurationTo,
+                MarkPer = skillset.Mark_Per,
+                Status = "A",
+                FlowStatus = "E",
+                EntryBy = skillset.Entry_By,
+                EntryDt = skillset.EntryDt,
+                InstName = skillset.Inst_Name,
+                RequestId = null,
+                DateFrom = DateTime.UtcNow,
+                LangSkills = skillset.langSkills
+            };
+            await _context.HrEmpTechnicalApprls.AddAsync(hrEmpTechnicalApprl);
+
+            var hrEmpTechnical = await _context.HrEmpTechnicals
+                .FirstOrDefaultAsync(x => x.TechId == skillset.DetailID && x.EmpId == skillset.Emp_Id);
+
+            if (hrEmpTechnical != null)
+            {
+                hrEmpTechnical.InstId = skillset.InstId;
+                hrEmpTechnical.Course = skillset.Course;
+                hrEmpTechnical.CourseDtls = skillset.Course_Dtls;
+                hrEmpTechnical.Year = skillset.Year;
+                hrEmpTechnical.DurFrm = skillset.DurationFrom;
+                hrEmpTechnical.DurTo = skillset.DurationTo;
+                hrEmpTechnical.MarkPer = skillset.Mark_Per;
+                hrEmpTechnical.EntryBy = skillset.Entry_By;
+                hrEmpTechnical.EntryDt = skillset.EntryDt;
+                hrEmpTechnical.InstName = skillset.Inst_Name;
+                hrEmpTechnical.LangSkills = skillset.langSkills;
+
+                _context.HrEmpTechnicals.Update(hrEmpTechnical);
+            }
+            else
+            {
+
+                hrEmpTechnical = new HrEmpTechnical
+                {
+                    InstId = skillset.InstId,
+                    EmpId = skillset.Emp_Id,
+                    Course = skillset.Course,
+                    CourseDtls = skillset.Course_Dtls,
+                    Year = skillset.Year,
+                    DurFrm = skillset.DurationFrom,
+                    DurTo = skillset.DurationTo,
+                    MarkPer = skillset.Mark_Per,
+                    EntryBy = skillset.Entry_By,
+                    EntryDt = skillset.EntryDt,
+                    InstName = skillset.Inst_Name,
+                    LangSkills = skillset.langSkills
+                };
+
+                await _context.HrEmpTechnicals.AddAsync(hrEmpTechnical);
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return "Successfully Saved";
+        }
+
+
     }
 
 }
-

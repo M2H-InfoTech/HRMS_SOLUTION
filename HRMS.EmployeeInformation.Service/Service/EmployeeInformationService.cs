@@ -285,5 +285,9 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.UpdateEmployeeType(EmployeeType);
         }
+        public async Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset)
+        {
+            return await _employeeRepository.InsertOrUpdateSkill(skillset);
+        }
     }
 }
