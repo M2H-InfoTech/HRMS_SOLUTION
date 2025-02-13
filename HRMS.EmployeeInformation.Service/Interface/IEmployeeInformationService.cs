@@ -87,6 +87,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> CertificationsDropdown (string description);
         Task<string> InsertOrUpdateCertificates (CertificationSaveDto certificates);   
         Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType);
+        Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset);
     }
 
     }
