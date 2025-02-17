@@ -8,6 +8,7 @@ using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.EnumFolder;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
@@ -5630,6 +5631,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 )
                 .Select(a => (object)new
                 {
+                    EmpId = a.EmpId,
                     Name = a.EmpCode + "   | | " +
                            (a.MiddleName == null && a.LastName == null ? a.FirstName :
                             a.MiddleName == null ? a.FirstName + " " + a.LastName :
@@ -5638,7 +5640,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 })
                 .ToListAsync();
 
-            return query;
+            return query.Cast<object>().ToList();
         }
 
 
@@ -5946,6 +5948,103 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 }
             }
         }
+
+
+
+        //public async Task<string> InsertOrUpdateCommunication(SaveCommunicationSDto communications)
+        //{
+        //    using var transaction = await _context.Database.BeginTransactionAsync();
+
+        //    bool isWorkflowNeeded = await IsWorkflowNeeded();
+
+        //    var hrSavecommunication = _mapper.Map<HrEmpAddress01Apprl>(communications);
+
+        //    if (isWorkflowNeeded)
+        //    {
+        //        string? codeId = await GenerateRequestId(communications.EmpID);
+        //        if (!string.IsNullOrEmpty(codeId))
+        //        {
+        //            hrSavecommunication.RequestId = await GetLastSequence(codeId);
+        //            await _context.HrEmpAddress01Apprls.AddAsync(hrSavecommunication);
+        //            await UpdateCodeGeneration(codeId);
+        //        }
+
+        //        await _context.SaveChangesAsync();
+        //        await transaction.CommitAsync();
+
+        //        return "Successfully Saved";
+        //    }
+
+
+        //    var hrEmpcommunication = new HrEmpAddress01Apprl
+        //    {
+
+              
+        //        EmpId = communications.EmpID,
+
+        //        PermanentAddr = communications.address1,
+        //        PinNo1 = communications.PostboxNo2,
+        //        Addr1Country = communications.countryID,
+        //        PinNo2 = communications.PostboxNo2,
+        //        Addr2Country = communications.countryID2,
+        //        PhoneNo = communications.ContactNo,
+        //        Status = "A",
+        //        FlowStatus = "E",
+        //        AlterPhoneNo = communications.OfficeNo,
+        //        MobileNo = communications.mobileNo,
+               
+        //        RequestId = null,
+        //        DateFrom = DateTime.UtcNow
+               
+        //    };
+        //    await _context.HrEmpAddress01Apprls.AddAsync(hrEmpcommunication);
+
+        //    var hrEmpaddress = await _context.HrEmpAddress01s
+        //        .FirstOrDefaultAsync(x => x.AddrId == communications.DetailID && x.EmpId == communications.EmpID);
+
+        //    if (hrEmpaddress != null)
+        //    {
+        //        hrEmpTechnical.InstId = skillset.InstId;
+        //        hrEmpTechnical.Course = skillset.Course;
+        //        hrEmpTechnical.CourseDtls = skillset.Course_Dtls;
+        //        hrEmpTechnical.Year = skillset.Year;
+        //        hrEmpTechnical.DurFrm = skillset.DurationFrom;
+        //        hrEmpTechnical.DurTo = skillset.DurationTo;
+        //        hrEmpTechnical.MarkPer = skillset.Mark_Per;
+        //        hrEmpTechnical.EntryBy = skillset.Entry_By;
+        //        hrEmpTechnical.EntryDt = skillset.EntryDt;
+        //        hrEmpTechnical.InstName = skillset.Inst_Name;
+        //        hrEmpTechnical.LangSkills = skillset.langSkills;
+
+        //        _context.HrEmpTechnicals.Update(hrEmpTechnical);
+        //    }
+        //    else
+        //    {
+
+        //        hrEmpTechnical = new HrEmpTechnical
+        //        {
+        //            InstId = skillset.InstId,
+        //            EmpId = skillset.Emp_Id,
+        //            Course = skillset.Course,
+        //            CourseDtls = skillset.Course_Dtls,
+        //            Year = skillset.Year,
+        //            DurFrm = skillset.DurationFrom,
+        //            DurTo = skillset.DurationTo,
+        //            MarkPer = skillset.Mark_Per,
+        //            EntryBy = skillset.Entry_By,
+        //            EntryDt = skillset.EntryDt,
+        //            InstName = skillset.Inst_Name,
+        //            LangSkills = skillset.langSkills
+        //        };
+
+        //        await _context.HrEmpTechnicals.AddAsync(hrEmpTechnical);
+        //    }
+
+        //    await _context.SaveChangesAsync();
+        //    await transaction.CommitAsync();
+
+        //    return "Successfully Saved";
+        //}
 
 
     }
