@@ -219,6 +219,8 @@ public partial class EmployeeDBContext : DbContext
 
     public virtual DbSet<LicensedCompanyDetail> LicensedCompanyDetails { get; set; }
     public virtual DbSet<Categorymaster> Categorymasters { get; set; }
+    public virtual DbSet<CategoryGroup> CategoryGroups { get; set; }
+    public virtual DbSet<AssetcategoryCode> AssetcategoryCodes { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
         => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NOV-2-9-2024;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -3413,7 +3415,39 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.InstId).HasColumnName("Inst_Id");
             entity.Property(e => e.TransactionDate).HasColumnType("datetime");
         });
-       
+        modelBuilder.Entity<CategoryGroup>(entity =>
+        {
+            entity.HasKey(e => e.CatId);
+
+            entity.ToTable("CategoryGroup");
+
+            entity.Property(e => e.GroupId).HasColumnName("GroupID");
+        });
+        modelBuilder.Entity<AssetcategoryCode>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Assetcat__3213E83F204A50B5");
+
+            entity.ToTable("AssetcategoryCode");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.AssetModel).IsUnicode(false);
+            entity.Property(e => e.Assetclass).IsUnicode(false);
+            entity.Property(e => e.Code)
+                .IsUnicode(false)
+                .HasColumnName("code");
+            entity.Property(e => e.Createdby)
+                .HasColumnType("datetime")
+                .HasColumnName("createdby");
+            entity.Property(e => e.Description)
+                .IsUnicode(false)
+                .HasColumnName("description");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("status");
+            entity.Property(e => e.Value).HasColumnName("value");
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 

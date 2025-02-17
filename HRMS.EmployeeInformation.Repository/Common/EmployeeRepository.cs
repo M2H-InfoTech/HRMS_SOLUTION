@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Linq;
+using AutoMapper;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.DTO.DTOs;
 using EMPLOYEE_INFORMATION.Models;
@@ -13,7 +14,7 @@ using MPLOYEE_INFORMATION.DTO.DTOs;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
-    {
+{
     public class EmployeeRepository : IEmployeeRepository
     {
         private readonly EmployeeDBContext _context;
@@ -5447,67 +5448,67 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             .Select(x => (object)x)
             .ToListAsync();
         }
-        public async Task<List<object>> CertificationsDropdown (string description)
+        public async Task<List<object>> CertificationsDropdown(string description)
         {
             return await (from a in _context.GeneralCategories
-                                join b in _context.ReasonMasters on a.Id equals b.Value
-                                where a.Description == description
+                          join b in _context.ReasonMasters on a.Id equals b.Value
+                          where a.Description == description
                           select new { b.ReasonId, b.Description })
-                               .AsNoTracking ( )
-                               .Select (x => (object)x)
-                               .ToListAsync ( );
+                               .AsNoTracking()
+                               .Select(x => (object)x)
+                               .ToListAsync();
 
         }
 
-        public async Task<string> InsertOrUpdateCertificates (CertificationSaveDto certificates)
-            {
+        public async Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates)
+        {
             var existingCertification = await _context.EmployeeCertifications
-                .FirstOrDefaultAsync (e => e.EmpId == certificates.EmpId && e.CertificationId == certificates.CertificationID);
+                .FirstOrDefaultAsync(e => e.EmpId == certificates.EmpId && e.CertificationId == certificates.CertificationID);
 
-            var certification = _mapper.Map<EmployeeCertification> (certificates);
+            var certification = _mapper.Map<EmployeeCertification>(certificates);
             string result;
 
-            using var transaction = await _context.Database.BeginTransactionAsync ( );
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-                if (existingCertification != null)
-                    {
-                    existingCertification.CertificationName = certificates.CertificationName;
-                    existingCertification.CertificationField = certificates.CertificationField;
-                    existingCertification.YearofCompletion = certificates.YearOfCompletion;
-                    existingCertification.IssuingAuthority = certificates.IssuingAuthority;
-                    existingCertification.UpdatedBy = certificates.EntryBy;
-                    existingCertification.UpdatedDate = DateTime.UtcNow;
+            if (existingCertification != null)
+            {
+                existingCertification.CertificationName = certificates.CertificationName;
+                existingCertification.CertificationField = certificates.CertificationField;
+                existingCertification.YearofCompletion = certificates.YearOfCompletion;
+                existingCertification.IssuingAuthority = certificates.IssuingAuthority;
+                existingCertification.UpdatedBy = certificates.EntryBy;
+                existingCertification.UpdatedDate = DateTime.UtcNow;
 
-                    _context.EmployeeCertifications.Update (existingCertification);
-                    result = "2";
-                    }
-                else
-                    {
-                    certification.EntryDate = DateTime.UtcNow;
-                    certification.Status = "A";
-                    _context.EmployeeCertifications.Add (certification);
-                    result = "1";
-                    }
-
-                await _context.SaveChangesAsync ( );
-                await transaction.CommitAsync ( );
-           
-            return result;
+                _context.EmployeeCertifications.Update(existingCertification);
+                result = "2";
             }
+            else
+            {
+                certification.EntryDate = DateTime.UtcNow;
+                certification.Status = "A";
+                _context.EmployeeCertifications.Add(certification);
+                result = "1";
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return result;
+        }
 
 
         public async Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType)
         {
-            string ErrorID = "0"; 
-                     var employee = await _context.HrEmpPersonals
-                .FirstOrDefaultAsync(e => e.EmpId == EmployeeType.EmpID);
+            string ErrorID = "0";
+            var employee = await _context.HrEmpPersonals
+       .FirstOrDefaultAsync(e => e.EmpId == EmployeeType.EmpID);
 
             if (employee != null)
-            {            
+            {
                 employee.EmployeeType = EmployeeType.EmployeeType;
-               await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
 
-                ErrorID = "1"; 
+                ErrorID = "1";
             }
 
             return ErrorID;
@@ -5529,13 +5530,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     hrSaveSkill.RequestId = await GetLastSequence(codeId);
                     await _context.HrEmpTechnicalApprls.AddAsync(hrSaveSkill);
                     await UpdateCodeGeneration(codeId);
-    }
+                }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return "Successfully Saved";
-}
+            }
 
 
             var hrEmpTechnicalApprl = new HrEmpTechnicalApprl
@@ -5607,6 +5608,106 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
 
+        public async Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus)
+        {
+            int activeStatusInt = int.TryParse(activeStatus, out int tempStatus) ? tempStatus : 0;
+            int probationStatusInt = int.TryParse(probationStatus, out int tempProb) ? tempProb : 0;
+
+            var employeeStatusList = employeeStatus.Split(',')
+                .Select(s => int.TryParse(s, out int val) ? val : (int?)null)
+                .Where(val => val.HasValue)
+                .Select(val => val.Value)
+                .ToList();
+
+            var query = await _context.HrEmpMasters
+                .Where(a =>
+                    (a.CurrentStatus == activeStatusInt || activeStatusInt == 0) &&
+                    (employeeStatusList.Contains(a.EmpStatus.Value) || new List<int> { 1, 2, 3, 7 }.Contains(a.EmpStatus.Value)) &&
+                    (probationStatusInt == 1 ||
+                     (probationStatusInt == 2 && a.IsProbation == true) ||
+                     (probationStatusInt == 3 && a.IsProbation == false)) &&
+                    a.IsDelete == false
+                )
+                .Select(a => (object)new
+                {
+                    Name = a.EmpCode + "   | | " +
+                           (a.MiddleName == null && a.LastName == null ? a.FirstName :
+                            a.MiddleName == null ? a.FirstName + " " + a.LastName :
+                            a.LastName == null ? a.FirstName + " " + a.MiddleName :
+                            a.FirstName + " " + a.MiddleName + " " + a.LastName)
+                })
+                .ToListAsync();
+
+            return query;
+        }
+
+
+
+        public async Task<List<object>> AssetGroupDropdownEdit()
+        {
+            var groupId = await _context.CategoryGroups
+                .Where(g => g.DescriptionGrp == "Assets")
+                .OrderBy(g => g.GroupId) // Ensures a deterministic "TOP 1"
+                .Select(g => g.GroupId)
+                .FirstOrDefaultAsync();
+
+            if (groupId == null)
+                return new List<object>();
+
+            var result = await _context.GeneralCategories
+                .Where(a => a.GroupId == groupId && a.GeneralIsActive == 1)
+                .OrderBy(a => a.Description)
+                .Select(a => new
+                {
+                    Reason_Id = a.Id,
+                    a.Description,
+                    EmplinkID = a.EmplinkId ?? 0
+                })
+                .ToListAsync();
+
+            return result.Cast<object>().ToList();
+        }
+        public async Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID)
+        {
+            var reasons = await _context.ReasonMasters
+                .Where(a => a.Value == varAssestTypeID && a.Status != "D")
+                .OrderBy(a => a.Description)
+                .Select(a => new
+                {
+                    a.ReasonId,        
+                    a.Description,
+                    a.Value,
+                    a.Status
+                })
+                .ToListAsync();
+
+            return reasons.Cast<object>().ToList();
+        }
+
+        public async Task<List<object>> GetAssetDetailsEdit(string CommonName)
+        {
+            var assetCategories = await _context.AssetcategoryCodes
+                .Where(a => a.Code == CommonName
+                    && a.Status != "D"
+                    && a.Status != "A")
+                .OrderBy(a => a.Description)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Code,
+                    a.Description,
+                    a.Value,                  
+                    a.Status,
+                    a.Assetclass,
+                    a.AssetModel
+                })
+                .ToListAsync();
+
+            return assetCategories.Cast<object>().ToList();
+        }
+
     }
 
 }
+
+    

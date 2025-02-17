@@ -1,8 +1,10 @@
 ﻿
 
+using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Repository.Common;
+using Microsoft.AspNetCore.Mvc;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Service.Interface
@@ -84,10 +86,16 @@ namespace HRMS.EmployeeInformation.Service.Interface
 
         Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId);
         Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
-        Task<List<object>> CertificationsDropdown (string description);
-        Task<string> InsertOrUpdateCertificates (CertificationSaveDto certificates);   
+        Task<List<object>> CertificationsDropdown(string description);
+        Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates);
         Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType);
         Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset);
-    }
+        Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus);
+        Task<List<object>> AssetGroupDropdownEdit();
+        Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID);
+
+        Task<List<object>> GetAssetDetailsEdit(string CommonName);
+
 
     }
+}
