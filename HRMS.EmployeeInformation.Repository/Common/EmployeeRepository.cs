@@ -5674,7 +5674,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 .OrderBy(a => a.Description)
                 .Select(a => new
                 {
-                    a.ReasonId,        
+                    a.ReasonId,
                     a.Description,
                     a.Value,
                     a.Status
@@ -5696,7 +5696,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     a.Id,
                     a.Code,
                     a.Description,
-                    a.Value,                  
+                    a.Value,
                     a.Status,
                     a.Assetclass,
                     a.AssetModel
@@ -5732,12 +5732,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                     if (previousAssignment != null)
                     {
-                       
+
                         assetCategory.Status = "P";
                     }
                 }
 
-              
+
                 var assetToUpdate = await _context.EmployeesAssetsAssigns
                     .FirstOrDefaultAsync(a => a.AssignId == assetEdits.varAssestID);
                 if (assetToUpdate != null)
@@ -5786,9 +5786,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 _context.AssetRequestHistories.Add(assetRequestHistory);
                 await _context.SaveChangesAsync();
 
-                await transaction.CommitAsync(); 
+                await transaction.CommitAsync();
 
-                return "1"; 
+                return "1";
             }
         }
         public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
@@ -5799,7 +5799,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             {
                 // Query for the case where varSelectedTypeID is 0
                 var assetDetails = await (from e in _context.EmployeesAssetsAssigns
-                                          join r in _context.ReasonMasters on e.Asset equals r.ReasonId.ToString() 
+                                          join r in _context.ReasonMasters on e.Asset equals r.ReasonId.ToString()
                                           where e.AssignId == varAssestID
                                           select new
                                           {
@@ -5811,18 +5811,18 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                               e.AssetModel,
                                               e.Monitor,
                                               r.Description,
-                                              InWarranty = e.InWarranty, 
-                                              OutOfWarranty = e.OutOfWarranty, 
-                                              ReceivedDate = e.ReceivedDate, 
+                                              InWarranty = e.InWarranty,
+                                              OutOfWarranty = e.OutOfWarranty,
+                                              ReceivedDate = e.ReceivedDate,
                                               e.Status,
-                                              ExpiryDate = e.ExpiryDate, 
-                                              ReturnDate = e.ReturnDate, 
+                                              ExpiryDate = e.ExpiryDate,
+                                              ReturnDate = e.ReturnDate,
                                               e.Remarks
                                           }).FirstOrDefaultAsync();
 
                 if (assetDetails != null)
                 {
-                    result.Add(assetDetails); 
+                    result.Add(assetDetails);
                 }
             }
             else
@@ -5849,11 +5849,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                         e.Monitor,
                                                         AssetDescription = r.Description,
                                                         InWarranty = e.InWarranty,
-                                                        OutOfWarranty = e.OutOfWarranty, 
-                                                        ReceivedDate = e.ReceivedDate, 
+                                                        OutOfWarranty = e.OutOfWarranty,
+                                                        ReceivedDate = e.ReceivedDate,
                                                         e.Status,
-                                                        ExpiryDate = e.ExpiryDate, 
-                                                        ReturnDate = e.ReturnDate, 
+                                                        ExpiryDate = e.ExpiryDate,
+                                                        ReturnDate = e.ReturnDate,
                                                         e.Remarks,
                                                         EmplinkID = b.EmplinkId ?? 0,
                                                         FieldDescription = g.FieldDescription,
@@ -5875,14 +5875,79 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 }
             }
 
-            return result; 
+            return result;
         }
 
+        public async Task<string> AssetDelete(int varEmpID, int varAssestID)
+        {
+          
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+               
+                var assetReasonIdString = await _context.EmployeesAssetsAssigns
+                                                         .Where(ea => ea.AssignId == varAssestID)
+                                                         .Select(ea => ea.Asset)
+                                                         .FirstOrDefaultAsync();
 
+             
+                if (int.TryParse(assetReasonIdString, out int assetReasonId) && assetReasonId != 0)
+                {
+                  
+                    var assetCategory = await _context.AssetcategoryCodes
+                                                       .Where(ac => ac.Code == assetReasonId.ToString())
+                                                       .FirstOrDefaultAsync();
+
+                    if (assetCategory != null)
+                    {
+                        assetCategory.Status = "P";
+                        _context.AssetcategoryCodes.Update(assetCategory);
+                    }
+
+                    
+                    var assetAssignment = await _context.EmployeesAssetsAssigns
+                                                         .Where(ea => ea.AssignId == varAssestID)
+                                                         .FirstOrDefaultAsync();
+
+                    if (assetAssignment != null)
+                    {
+                        _context.EmployeesAssetsAssigns.Remove(assetAssignment);
+
+                        if (varEmpID == 1)
+                        {
+                            var reasonMasterFieldValues = await _context.ReasonMasterFieldValues
+                                                                        .Where(rmf => rmf.ReasonId == assetReasonId)
+                                                                        .ToListAsync();
+
+                            _context.ReasonMasterFieldValues.RemoveRange(reasonMasterFieldValues);
+
+                            var reasonMaster = await _context.ReasonMasters
+                                                              .Where(rm => rm.ReasonId == assetReasonId)
+                                                              .ToListAsync();
+
+                            _context.ReasonMasters.RemoveRange(reasonMaster);
+                        }
+
+                        // Save changes and commit transaction
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        return "1"; // Return success
+                    }
+                    else
+                    {
+                        // If the asset assignment was not found, return failure message
+                        return "Asset assignment not found";
+                    }
+                }
+                else
+                {
+                    // If assetReasonId could not be parsed or is 0, return failure message
+                    return "Invalid asset or asset not found";
+                }
+            }
+        }
 
 
     }
 
 }
-
-    

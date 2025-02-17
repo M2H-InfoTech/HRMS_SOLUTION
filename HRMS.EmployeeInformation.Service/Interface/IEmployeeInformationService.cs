@@ -98,6 +98,8 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<string> AssetEdit(AssetEditDto assetEdits);
 
         Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID);
+        Task<string> AssetDelete(int varEmpID, int varAssestID);
+       
     }
        
 }
