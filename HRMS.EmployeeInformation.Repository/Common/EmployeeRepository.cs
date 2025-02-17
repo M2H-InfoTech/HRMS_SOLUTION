@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Linq;
+using AutoMapper;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.DTO.DTOs;
 using EMPLOYEE_INFORMATION.Models;
@@ -13,7 +14,7 @@ using MPLOYEE_INFORMATION.DTO.DTOs;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
-    {
+{
     public class EmployeeRepository : IEmployeeRepository
     {
         private readonly EmployeeDBContext _context;
@@ -5447,67 +5448,67 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             .Select(x => (object)x)
             .ToListAsync();
         }
-        public async Task<List<object>> CertificationsDropdown (string description)
+        public async Task<List<object>> CertificationsDropdown(string description)
         {
             return await (from a in _context.GeneralCategories
-                                join b in _context.ReasonMasters on a.Id equals b.Value
-                                where a.Description == description
+                          join b in _context.ReasonMasters on a.Id equals b.Value
+                          where a.Description == description
                           select new { b.ReasonId, b.Description })
-                               .AsNoTracking ( )
-                               .Select (x => (object)x)
-                               .ToListAsync ( );
+                               .AsNoTracking()
+                               .Select(x => (object)x)
+                               .ToListAsync();
 
         }
 
-        public async Task<string> InsertOrUpdateCertificates (CertificationSaveDto certificates)
-            {
+        public async Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates)
+        {
             var existingCertification = await _context.EmployeeCertifications
-                .FirstOrDefaultAsync (e => e.EmpId == certificates.EmpId && e.CertificationId == certificates.CertificationID);
+                .FirstOrDefaultAsync(e => e.EmpId == certificates.EmpId && e.CertificationId == certificates.CertificationID);
 
-            var certification = _mapper.Map<EmployeeCertification> (certificates);
+            var certification = _mapper.Map<EmployeeCertification>(certificates);
             string result;
 
-            using var transaction = await _context.Database.BeginTransactionAsync ( );
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-                if (existingCertification != null)
-                    {
-                    existingCertification.CertificationName = certificates.CertificationName;
-                    existingCertification.CertificationField = certificates.CertificationField;
-                    existingCertification.YearofCompletion = certificates.YearOfCompletion;
-                    existingCertification.IssuingAuthority = certificates.IssuingAuthority;
-                    existingCertification.UpdatedBy = certificates.EntryBy;
-                    existingCertification.UpdatedDate = DateTime.UtcNow;
+            if (existingCertification != null)
+            {
+                existingCertification.CertificationName = certificates.CertificationName;
+                existingCertification.CertificationField = certificates.CertificationField;
+                existingCertification.YearofCompletion = certificates.YearOfCompletion;
+                existingCertification.IssuingAuthority = certificates.IssuingAuthority;
+                existingCertification.UpdatedBy = certificates.EntryBy;
+                existingCertification.UpdatedDate = DateTime.UtcNow;
 
-                    _context.EmployeeCertifications.Update (existingCertification);
-                    result = "2";
-                    }
-                else
-                    {
-                    certification.EntryDate = DateTime.UtcNow;
-                    certification.Status = "A";
-                    _context.EmployeeCertifications.Add (certification);
-                    result = "1";
-                    }
-
-                await _context.SaveChangesAsync ( );
-                await transaction.CommitAsync ( );
-           
-            return result;
+                _context.EmployeeCertifications.Update(existingCertification);
+                result = "2";
             }
+            else
+            {
+                certification.EntryDate = DateTime.UtcNow;
+                certification.Status = "A";
+                _context.EmployeeCertifications.Add(certification);
+                result = "1";
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return result;
+        }
 
 
         public async Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType)
         {
-            string ErrorID = "0"; 
-                     var employee = await _context.HrEmpPersonals
-                .FirstOrDefaultAsync(e => e.EmpId == EmployeeType.EmpID);
+            string ErrorID = "0";
+            var employee = await _context.HrEmpPersonals
+       .FirstOrDefaultAsync(e => e.EmpId == EmployeeType.EmpID);
 
             if (employee != null)
-            {            
+            {
                 employee.EmployeeType = EmployeeType.EmployeeType;
-               await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
 
-                ErrorID = "1"; 
+                ErrorID = "1";
             }
 
             return ErrorID;
@@ -5529,13 +5530,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     hrSaveSkill.RequestId = await GetLastSequence(codeId);
                     await _context.HrEmpTechnicalApprls.AddAsync(hrSaveSkill);
                     await UpdateCodeGeneration(codeId);
-    }
+                }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return "Successfully Saved";
-}
+            }
 
 
             var hrEmpTechnicalApprl = new HrEmpTechnicalApprl
@@ -5607,6 +5608,281 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
 
+        public async Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus)
+        {
+            int activeStatusInt = int.TryParse(activeStatus, out int tempStatus) ? tempStatus : 0;
+            int probationStatusInt = int.TryParse(probationStatus, out int tempProb) ? tempProb : 0;
+
+            var employeeStatusList = employeeStatus.Split(',')
+                .Select(s => int.TryParse(s, out int val) ? val : (int?)null)
+                .Where(val => val.HasValue)
+                .Select(val => val.Value)
+                .ToList();
+
+            var query = await _context.HrEmpMasters
+                .Where(a =>
+                    (a.CurrentStatus == activeStatusInt || activeStatusInt == 0) &&
+                    (employeeStatusList.Contains(a.EmpStatus.Value) || new List<int> { 1, 2, 3, 7 }.Contains(a.EmpStatus.Value)) &&
+                    (probationStatusInt == 1 ||
+                     (probationStatusInt == 2 && a.IsProbation == true) ||
+                     (probationStatusInt == 3 && a.IsProbation == false)) &&
+                    a.IsDelete == false
+                )
+                .Select(a => (object)new
+                {
+                    Name = a.EmpCode + "   | | " +
+                           (a.MiddleName == null && a.LastName == null ? a.FirstName :
+                            a.MiddleName == null ? a.FirstName + " " + a.LastName :
+                            a.LastName == null ? a.FirstName + " " + a.MiddleName :
+                            a.FirstName + " " + a.MiddleName + " " + a.LastName)
+                })
+                .ToListAsync();
+
+            return query;
+        }
+
+
+
+        public async Task<List<object>> AssetGroupDropdownEdit()
+        {
+            var groupId = await _context.CategoryGroups
+                .Where(g => g.DescriptionGrp == "Assets")
+                .OrderBy(g => g.GroupId) // Ensures a deterministic "TOP 1"
+                .Select(g => g.GroupId)
+                .FirstOrDefaultAsync();
+
+            if (groupId == null)
+                return new List<object>();
+
+            var result = await _context.GeneralCategories
+                .Where(a => a.GroupId == groupId && a.GeneralIsActive == 1)
+                .OrderBy(a => a.Description)
+                .Select(a => new
+                {
+                    Reason_Id = a.Id,
+                    a.Description,
+                    EmplinkID = a.EmplinkId ?? 0
+                })
+                .ToListAsync();
+
+            return result.Cast<object>().ToList();
+        }
+        public async Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID)
+        {
+            var reasons = await _context.ReasonMasters
+                .Where(a => a.Value == varAssestTypeID && a.Status != "D")
+                .OrderBy(a => a.Description)
+                .Select(a => new
+                {
+                    a.ReasonId,        
+                    a.Description,
+                    a.Value,
+                    a.Status
+                })
+                .ToListAsync();
+
+            return reasons.Cast<object>().ToList();
+        }
+
+        public async Task<List<object>> GetAssetDetailsEdit(string CommonName)
+        {
+            var assetCategories = await _context.AssetcategoryCodes
+                .Where(a => a.Code == CommonName
+                    && a.Status != "D"
+                    && a.Status != "A")
+                .OrderBy(a => a.Description)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Code,
+                    a.Description,
+                    a.Value,                  
+                    a.Status,
+                    a.Assetclass,
+                    a.AssetModel
+                })
+                .ToListAsync();
+
+            return assetCategories.Cast<object>().ToList();
+        }
+
+
+        public async Task<string> AssetEdit(AssetEditDto assetEdits)
+        {
+            using (var transaction = await _context.Database.BeginTransactionAsync()) // Start Transaction
+            {
+                // Check if the asset is already assigned and not returned
+                var existingAssignment = await _context.EmployeesAssetsAssigns
+                    .FirstOrDefaultAsync(ea => ea.AssetNo == assetEdits.AssetNo &&
+                                               ea.AssignId != assetEdits.varAssestID &&
+                                               (ea.ReturnDate == null || ea.ReturnDate >= assetEdits.ReceiveDate));
+
+                if (existingAssignment != null)
+                {
+                    return "2"; // Asset is already assigned and not available
+                }
+
+                // Update asset category status to 'P' for previous assignment
+                var assetCategory = await _context.AssetcategoryCodes
+                    .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo);
+                if (assetCategory != null)
+                {
+                    var previousAssignment = await _context.EmployeesAssetsAssigns
+                        .FirstOrDefaultAsync(ea => ea.AssignId == assetEdits.varAssestID);
+
+                    if (previousAssignment != null)
+                    {
+                       
+                        assetCategory.Status = "P";
+                    }
+                }
+
+              
+                var assetToUpdate = await _context.EmployeesAssetsAssigns
+                    .FirstOrDefaultAsync(a => a.AssignId == assetEdits.varAssestID);
+                if (assetToUpdate != null)
+                {
+                    assetToUpdate.AssetGroup = assetEdits.AssetGroup;
+                    assetToUpdate.Asset = assetEdits.varAssestName;
+                    assetToUpdate.AssetNo = assetEdits.AssetNo;
+                    assetToUpdate.AssetModel = assetEdits.AssetModel;
+                    assetToUpdate.Monitor = assetEdits.Monitor;
+                    assetToUpdate.InWarranty = assetEdits.InWarranty;
+                    assetToUpdate.OutOfWarranty = assetEdits.OutOfWarranty;
+                    assetToUpdate.Status = assetEdits.varAssignAsetStatus;
+                    assetToUpdate.ReceivedDate = assetEdits.ReceiveDate;
+                    assetToUpdate.ExpiryDate = assetEdits.ExpiryDate;
+                    assetToUpdate.ReturnDate = assetEdits.ReturnDate;
+                    assetToUpdate.Remarks = assetEdits.Remarks;
+                    await _context.SaveChangesAsync();
+                }
+
+                // Update AssetcategoryCode status to 'A' for the current asset
+                var updatedCategory = await _context.AssetcategoryCodes
+                    .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo);
+                if (updatedCategory != null)
+                {
+                    updatedCategory.Status = "A";
+                    await _context.SaveChangesAsync();
+                }
+
+                var returnedCategory = await _context.AssetcategoryCodes
+                    .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo && assetEdits.ReturnDate != null);
+                if (returnedCategory != null)
+                {
+                    returnedCategory.Status = "P";
+                    await _context.SaveChangesAsync();
+                }
+
+                var assetRequestHistory = new AssetRequestHistory
+                {
+                    RequestId = assetEdits.varAssestID,
+                    AssetEntryBy = assetEdits.EntryBy,
+                    EntryDate = DateTime.UtcNow,
+                    StatusType = 2,
+                    AssetEmpId = assetEdits.varEmpID
+                };
+
+                _context.AssetRequestHistories.Add(assetRequestHistory);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync(); 
+
+                return "1"; 
+            }
+        }
+        public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
+        {
+            List<object> result = new List<object>();
+
+            if (varSelectedTypeID == 0)
+            {
+                // Query for the case where varSelectedTypeID is 0
+                var assetDetails = await (from e in _context.EmployeesAssetsAssigns
+                                          join r in _context.ReasonMasters on e.Asset equals r.ReasonId.ToString() 
+                                          where e.AssignId == varAssestID
+                                          select new
+                                          {
+                                              e.AssignId,
+                                              e.EmpId,
+                                              e.AssetGroup,
+                                              e.Asset,
+                                              e.AssetNo,
+                                              e.AssetModel,
+                                              e.Monitor,
+                                              r.Description,
+                                              InWarranty = e.InWarranty, 
+                                              OutOfWarranty = e.OutOfWarranty, 
+                                              ReceivedDate = e.ReceivedDate, 
+                                              e.Status,
+                                              ExpiryDate = e.ExpiryDate, 
+                                              ReturnDate = e.ReturnDate, 
+                                              e.Remarks
+                                          }).FirstOrDefaultAsync();
+
+                if (assetDetails != null)
+                {
+                    result.Add(assetDetails); 
+                }
+            }
+            else
+            {
+                var assetDetailsWithFields = await (from e in _context.EmployeesAssetsAssigns
+                                                    join r in _context.ReasonMasters on e.Asset equals r.ReasonId.ToString()
+                                                    join b in _context.GeneralCategories on e.AssetGroup equals b.Id.ToString() into categoryJoin
+                                                    from b in categoryJoin.DefaultIfEmpty()
+                                                    join d in _context.ReasonMasterFieldValues on r.ReasonId equals d.ReasonId into fieldValueJoin
+                                                    from d in fieldValueJoin.DefaultIfEmpty()
+                                                    join g in _context.GeneralCategoryFields on d.CategoryFieldId equals g.CategoryFieldId into fieldJoin
+                                                    from g in fieldJoin.DefaultIfEmpty()
+                                                    join f in _context.HrmsDatatypes on g.DataTypeId equals f.DataTypeId into dataTypeJoin
+                                                    from f in dataTypeJoin.DefaultIfEmpty()
+                                                    where e.AssignId == varAssestID
+                                                    select new
+                                                    {
+                                                        e.AssignId,
+                                                        e.EmpId,
+                                                        e.AssetGroup,
+                                                        e.Asset,
+                                                        e.AssetNo,
+                                                        e.AssetModel,
+                                                        e.Monitor,
+                                                        AssetDescription = r.Description,
+                                                        InWarranty = e.InWarranty,
+                                                        OutOfWarranty = e.OutOfWarranty, 
+                                                        ReceivedDate = e.ReceivedDate, 
+                                                        e.Status,
+                                                        ExpiryDate = e.ExpiryDate, 
+                                                        ReturnDate = e.ReturnDate, 
+                                                        e.Remarks,
+                                                        EmplinkID = b.EmplinkId ?? 0,
+                                                        FieldDescription = g.FieldDescription,
+                                                        FieldValues = d.FieldValues,
+                                                        DataType = f.DataType,
+                                                        DataTypeID = f.DataTypeId,
+                                                        f.IsDate,
+                                                        f.IsGeneralCategory,
+                                                        f.IsDropdown,
+                                                        ReasonFieldID = d.ReasonFieldId,
+                                                        // CategoryFieldID = e.ca,
+                                                        ReasonDescription = r.Description,
+                                                        r.ReasonId
+                                                    }).FirstOrDefaultAsync();
+
+                if (assetDetailsWithFields != null)
+                {
+                    result.Add(assetDetailsWithFields);
+                }
+            }
+
+            return result; 
+        }
+
+
+
+
     }
 
 }
+
+    

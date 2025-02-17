@@ -521,7 +521,49 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(empskilll);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus)
+        {
+            var fillEmp = await _employeeInformation.FillEmployeeDropdown(activeStatus, employeeStatus, probationStatus);
+            return new JsonResult(fillEmp);
+        }
+        [HttpGet]
+        public async Task<IActionResult> AssetGroupDropdownEdit()
+        {
+            var assetgroup = await _employeeInformation.AssetGroupDropdownEdit();
+            return new JsonResult(assetgroup);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAssetDropdownEdit( int varAssestTypeID)
+        {
+            var assetdetails = await _employeeInformation.GetAssetDropdownEdit(varAssestTypeID);
+            return new JsonResult(assetdetails);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAssetDetailsEdit(string CommonName)
+        {
+            var assetdetailsno = await _employeeInformation.GetAssetDetailsEdit( CommonName);
+            return new JsonResult(assetdetailsno);
+        }
 
+        [HttpPost]
+        public async Task<IActionResult> AssetEdit([FromBody] AssetEditDto assetEdits)
+        {
+            var assetedit = await _employeeInformation.AssetEdit(assetEdits);
+
+            if (assetedit == null || !assetedit.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(assetedit);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
+        {
+            var getassetedit = await _employeeInformation.GetAssetEditDatas(varSelectedTypeID, varAssestID);
+            return new JsonResult(getassetedit);
+        }
     }
 
 

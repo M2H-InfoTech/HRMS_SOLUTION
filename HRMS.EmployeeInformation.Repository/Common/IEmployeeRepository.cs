@@ -1,4 +1,5 @@
-﻿using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using EMPLOYEE_INFORMATION.Models.EnumFolder;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
@@ -89,6 +90,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> InsertOrUpdateCertificates (CertificationSaveDto certificates);
         Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType);
         Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset);
+        Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus);
+        Task<List<object>> AssetGroupDropdownEdit();
+        Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID);
+        Task<List<object>> GetAssetDetailsEdit(string CommonName);
+        Task<string> AssetEdit(AssetEditDto assetEdits);
+        Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID);
+        
+       
 
     }
-    }
+}

@@ -2,6 +2,7 @@
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Repository.Common;
 using HRMS.EmployeeInformation.Service.Interface;
+using Microsoft.AspNetCore.Mvc;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Service.Service
@@ -289,5 +290,34 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.InsertOrUpdateSkill(skillset);
         }
+        public async Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus)
+        {
+            return await _employeeRepository.FillEmployeeDropdown(activeStatus, employeeStatus,  probationStatus);
+        }
+        public async Task<List<object>> AssetGroupDropdownEdit()
+        {
+            return await _employeeRepository.AssetGroupDropdownEdit();
+        }
+
+        public async Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID)
+        {
+            return await _employeeRepository.GetAssetDropdownEdit( varAssestTypeID);
+        }
+
+        
+
+        public async Task<List<object>> GetAssetDetailsEdit( string CommonName)
+        {
+            return await _employeeRepository.GetAssetDetailsEdit(CommonName);
+        }
+        public async Task<string> AssetEdit(AssetEditDto assetEdits)
+        {
+            return await _employeeRepository.AssetEdit(assetEdits);
+        }
+        public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
+        {
+            return await _employeeRepository.GetAssetEditDatas(  varSelectedTypeID,  varAssestID);
+        }
+       
     }
 }
