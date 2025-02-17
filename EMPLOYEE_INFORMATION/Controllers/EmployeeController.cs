@@ -564,6 +564,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var getassetedit = await _employeeInformation.GetAssetEditDatas(varSelectedTypeID, varAssestID);
             return new JsonResult(getassetedit);
         }
+
+        [HttpDelete]
+        public async Task<IActionResult> AssetDelete(int varEmpID, int varAssestID)
+        {
+            var getassetdelete = await _employeeInformation.AssetDelete(varEmpID, varAssestID);
+            return new JsonResult(getassetdelete);
+        }
     }
 
 

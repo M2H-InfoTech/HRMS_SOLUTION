@@ -318,6 +318,13 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetAssetEditDatas(  varSelectedTypeID,  varAssestID);
         }
+
+
+        public async Task<string> AssetDelete(int varEmpID, int varAssestID)
+        {
+            return await _employeeRepository.AssetDelete( varEmpID,  varAssestID);
+        }
+
        
     }
 }
