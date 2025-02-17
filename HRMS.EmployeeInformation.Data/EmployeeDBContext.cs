@@ -221,6 +221,8 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<Categorymaster> Categorymasters { get; set; }
     public virtual DbSet<CategoryGroup> CategoryGroups { get; set; }
     public virtual DbSet<AssetcategoryCode> AssetcategoryCodes { get; set; }
+
+    public virtual DbSet<AssetRequestHistory> AssetRequestHistories { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
         => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NOV-2-9-2024;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -3446,6 +3448,15 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("status");
             entity.Property(e => e.Value).HasColumnName("value");
+        });
+
+        modelBuilder.Entity<AssetRequestHistory>(entity =>
+        {
+            entity.HasKey(e => e.AsstHisId);
+
+            entity.ToTable("AssetRequestHistory");
+
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
         });
 
         OnModelCreatingPartial(modelBuilder);

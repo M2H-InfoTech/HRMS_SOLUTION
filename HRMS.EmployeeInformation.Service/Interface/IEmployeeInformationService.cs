@@ -95,7 +95,9 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID);
 
         Task<List<object>> GetAssetDetailsEdit(string CommonName);
+        Task<string> AssetEdit(AssetEditDto assetEdits);
 
-
+        Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID);
     }
+       
 }

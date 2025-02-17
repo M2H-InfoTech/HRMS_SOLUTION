@@ -310,8 +310,14 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetAssetDetailsEdit(CommonName);
         }
-
-
-
+        public async Task<string> AssetEdit(AssetEditDto assetEdits)
+        {
+            return await _employeeRepository.AssetEdit(assetEdits);
+        }
+        public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
+        {
+            return await _employeeRepository.GetAssetEditDatas(  varSelectedTypeID,  varAssestID);
+        }
+       
     }
 }

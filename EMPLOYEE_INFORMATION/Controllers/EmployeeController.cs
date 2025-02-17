@@ -546,7 +546,24 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(assetdetailsno);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> AssetEdit([FromBody] AssetEditDto assetEdits)
+        {
+            var assetedit = await _employeeInformation.AssetEdit(assetEdits);
 
+            if (assetedit == null || !assetedit.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(assetedit);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
+        {
+            var getassetedit = await _employeeInformation.GetAssetEditDatas(varSelectedTypeID, varAssestID);
+            return new JsonResult(getassetedit);
+        }
     }
 
 
