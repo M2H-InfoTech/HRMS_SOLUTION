@@ -5632,7 +5632,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 .Select(a => (object)new
                 {
                     EmpId = a.EmpId,
-                    Name = a.EmpCode + "   | | " +
+                    empcode = a.EmpCode,
+                    Name =
                            (a.MiddleName == null && a.LastName == null ? a.FirstName :
                             a.MiddleName == null ? a.FirstName + " " + a.LastName :
                             a.LastName == null ? a.FirstName + " " + a.MiddleName :
