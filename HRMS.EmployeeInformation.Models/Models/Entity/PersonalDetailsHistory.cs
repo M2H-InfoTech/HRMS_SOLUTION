@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.EmployeeInformation.Models;
 
 public partial class PersonalDetailsHistory
 {
+    [Key]
     public int? EmployeeId { get; set; }
 
     public string? GuardiansName { get; set; }

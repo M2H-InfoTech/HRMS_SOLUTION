@@ -2,6 +2,7 @@
 {
     public class PersonalDetailsDto
     {
+        public int? EmpId { get; set; }
         public string? DateOfBirth { get; set; }
         public string? Wedding_Date { get; set; }
         public int? NationalityID { get; set; }

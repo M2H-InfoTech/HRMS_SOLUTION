@@ -2,7 +2,7 @@
 {
     public class CommunicationExtraDto
     {
-        public List<AddressDto> Addresses { get; set; }
+        public List<AddressDto>? Addresses { get; set; }
     }
 
 }

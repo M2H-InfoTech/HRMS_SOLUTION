@@ -2,7 +2,7 @@
 {
     public class LinkItemDto
     {
-        public string Item { get; set; }
+        public string? Item { get; set; }
         public int? LinkLevel { get; set; }
     }
 }
