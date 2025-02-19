@@ -3,17 +3,23 @@ using EMPLOYEE_INFORMATION.Models.Entity;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace EMPLOYEE_INFORMATION.Data;
 
 public partial class EmployeeDBContext : DbContext
 {
+    protected readonly IConfiguration _configuration;
     public EmployeeDBContext()
     {
     }
 
     public EmployeeDBContext(DbContextOptions<EmployeeDBContext> options) : base(options)
     {
+    }
+    public EmployeeDBContext(IConfiguration configuration)
+    {
+        _configuration = configuration;
     }
 
     public virtual DbSet<CompanyParameter> CompanyParameters { get; set; }
@@ -235,9 +241,13 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<AssetcategoryCode> AssetcategoryCodes { get; set; }
 
     public virtual DbSet<AssetRequestHistory> AssetRequestHistories { get; set; }
+    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+
+    //    => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NOV-2-9-2024;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
-        => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NOV-2-9-2024;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
+        => optionsBuilder.UseSqlServer(_configuration.GetConnectionString("Default"));
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
