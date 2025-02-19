@@ -1,5 +1,4 @@
-﻿using EMPLOYEE_INFORMATION.Models.EnumFolder;
-using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using Microsoft.AspNetCore.Http;
 using MPLOYEE_INFORMATION.DTO.DTOs;
@@ -44,7 +43,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<AssetDetailsDto>> AssetDetailsAsync(int employeeId);
         Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdownProfessionalAsync();
         Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto);
-        Task<PersonalDetailsHistoryDto> InsertOrUpdatePersonalData(PersonalDetailsHistoryDto persnldtlsApprlDto);
 
         Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID);
         Task<List<PersonalDetailsDto>> GetPersonalDetailsByIdAsync(int employeeid);
@@ -73,10 +71,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<List<GeoSpacingDto>> GetGeoSpacingAsync(int employeeid);
         Task<List<EmployeeHraDto>> HraDetailsAsync(int employeeId);
-        Task<List<object>> GetCountry ( );
-        Task<List<object>> GetNationalities ( );
-        Task<List<object>> GetBloodGroup ( );
-        Task<List<object>> FillReligion ( );
+        Task<List<object>> GetCountry();
+        Task<List<object>> GetNationalities();
+        Task<List<object>> GetBloodGroup();
+        Task<List<object>> FillReligion();
         Task<string> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills);
         Task<List<object>> FillLanguageTypes();
         Task<List<object>> FillConsultant();
@@ -86,16 +84,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<object>> FillBankDetails(int empID);
         Task<List<object>> BankTypeEdit();
         Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId);
-        Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
-        Task<List<object>> CertificationsDropdown (string description);
-        Task<string> InsertOrUpdateCertificates (CertificationSaveDto certificates);
+        //Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto, int lastEntity);
+        Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
+        Task<PersonalDetailsHistoryDto> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto);
+        //Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
+        Task<List<object>> CertificationsDropdown(string description);
+        Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates);
         Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType);
         Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset);
-        Task<string> UploadEmployeeDocuments (List<IFormFile> files, QualificationAttachmentDto skillset);
-        Task<string> InsertQualification (QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds);
-        Task<object> FillCountry ( );
-        
-    
+        Task<string> UploadEmployeeDocuments(List<IFormFile> files, QualificationAttachmentDto skillset);
+        Task<string> InsertQualification(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds);
+        Task<object> FillCountry();
+
+
         Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus);
         Task<List<object>> AssetGroupDropdownEdit();
         Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID);

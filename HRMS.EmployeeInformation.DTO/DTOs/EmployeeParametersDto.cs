@@ -45,10 +45,10 @@
         public bool IsProbation { get; set; } = false;
         public DateTime? ProbationDate { get; set; } = null;
         public DateTime? EffectDate { get; set; } = null;
-        public long ContactNo { get; set; } = 0;
-        public long HomeCountryPhone { get; set; } = 0;
-        public int ReligionID { get; set; } = 0;
-        public int NationalityID { get; set; } = 0;
+        public string? ContactNo { get; set; }
+        public string? HomeCountryPhone { get; set; }
+        public int ReligionID { get; set; }
+        public int NationalityID { get; set; }
         public string BloodGroup { get; set; } = string.Empty;
         public string Height { get; set; } = string.Empty;
         public string Weight { get; set; } = string.Empty;
@@ -76,5 +76,6 @@
         public int DailyRateID { get; set; } = 0;
         public int CanteenRequest { get; set; } = 0;
         public DateTime? WeddingDate { get; set; } = null;
+        public DateTime? FirstEntryDate { get; set; }
     }
 }

@@ -219,6 +219,18 @@ public partial class EmployeeDBContext : DbContext
 
     public virtual DbSet<LicensedCompanyDetail> LicensedCompanyDetails { get; set; }
     public virtual DbSet<Categorymaster> Categorymasters { get; set; }
+
+    public virtual DbSet<TransferTransition00> TransferTransition00s { get; set; }
+    public virtual DbSet<CompanyConveyanceHistory> CompanyConveyanceHistories { get; set; }
+
+    public virtual DbSet<CompanyVehicleHistory> CompanyVehicleHistories { get; set; }
+    public virtual DbSet<SurveyRelation> SurveyRelations { get; set; }
+
+    public virtual DbSet<ProbationRating00> ProbationRating00s { get; set; }
+
+    public virtual DbSet<ProbationRating02> ProbationRating02s { get; set; }
+
+    public virtual DbSet<ProbationWorkFlowstatus> ProbationWorkFlowstatuses { get; set; }
     public virtual DbSet<CategoryGroup> CategoryGroups { get; set; }
     public virtual DbSet<AssetcategoryCode> AssetcategoryCodes { get; set; }
 
@@ -2373,8 +2385,8 @@ public partial class EmployeeDBContext : DbContext
 
         modelBuilder.Entity<PersonalDetailsHistory>(entity =>
         {
+            entity.HasKey(e => e.EmployeeId);
             entity
-                .HasNoKey()
                 .ToTable("PersonalDetailsHistory");
 
             entity.Property(e => e.BloodGroup)
@@ -3289,9 +3301,8 @@ public partial class EmployeeDBContext : DbContext
 
         modelBuilder.Entity<AdmUserRoleMaster>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("ADM_UserRoleMaster");
+            entity.HasKey(e => e.InstId);
+            entity.ToTable("ADM_UserRoleMaster");
 
             entity.HasIndex(e => new { e.UserId, e.Acess }, "ix_user_access");
 
@@ -3417,6 +3428,143 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.InstId).HasColumnName("Inst_Id");
             entity.Property(e => e.TransactionDate).HasColumnType("datetime");
         });
+        modelBuilder.Entity<TransferTransition00>(entity =>
+        {
+            entity.HasKey(e => e.TransferTransId).HasName("PK__Transfer__83C76B485DE21C00");
+
+            entity.ToTable("TransferTransition00");
+
+            entity.Property(e => e.TransferTransId).HasColumnName("TransferTransID");
+            entity.Property(e => e.ActionId).HasColumnName("ActionID");
+            entity.Property(e => e.BatchApprovalStatus)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.CurrentEmpId).HasColumnName("CurrentEmpID");
+            entity.Property(e => e.EmpApprovalStatus)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.FromDate).HasColumnType("datetime");
+            entity.Property(e => e.NewEntityDescription)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.NewEntityId).HasColumnName("NewEntityID");
+            entity.Property(e => e.OldEntityDescription)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.OldEntityId).HasColumnName("OldEntityID");
+            entity.Property(e => e.PreviousEmpId).HasColumnName("PreviousEmpID");
+            entity.Property(e => e.RevokedDate).HasColumnType("datetime");
+            entity.Property(e => e.ToDate).HasColumnType("datetime");
+            entity.Property(e => e.TransferBatchId).HasColumnName("TransferBatchID");
+            entity.Property(e => e.TransferId).HasColumnName("TransferID");
+        });
+        modelBuilder.Entity<CompanyConveyanceHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__CompanyC__3214EC07F769034C");
+
+            entity.ToTable("CompanyConveyance_History");
+
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FromDate).HasColumnType("datetime");
+            entity.Property(e => e.Initial).HasDefaultValue(0);
+            entity.Property(e => e.ToDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<CompanyVehicleHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__CompanyV__3214EC07484FBAF2");
+
+            entity.ToTable("CompanyVehicle_History");
+
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FromDate).HasColumnType("datetime");
+            entity.Property(e => e.Initial).HasDefaultValue(0);
+            entity.Property(e => e.ToDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<SurveyRelation>(entity =>
+        {
+            entity.HasKey(e => e.ProbId).HasName("PK__SurveyRe__078036D7D0267F0A");
+
+            entity.ToTable("SurveyRelation");
+
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.ReviewDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<ProbationRating00>(entity =>
+        {
+            entity.HasKey(e => e.ProbRateId).HasName("PK__Probatio__1A758B52EF4673E7");
+
+            entity.ToTable("ProbationRating00");
+
+            entity.Property(e => e.ApprovalStatus)
+                .HasMaxLength(5)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FinalApprovalDate).HasColumnType("datetime");
+            entity.Property(e => e.FinalReviewStatus)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.FlowStatus)
+                .HasMaxLength(5)
+                .IsUnicode(false);
+            entity.Property(e => e.ManualApproveDate).HasColumnType("datetime");
+            entity.Property(e => e.ManualApprover).HasDefaultValue(0);
+            entity.Property(e => e.NextReviewDate).HasColumnType("datetime");
+            entity.Property(e => e.Remark).IsUnicode(false);
+            entity.Property(e => e.RequestCode).HasMaxLength(500);
+            entity.Property(e => e.RequesterEmpId)
+                .HasMaxLength(5)
+                .IsUnicode(false);
+            entity.Property(e => e.TrainingRequiredIds).IsUnicode(false);
+            entity.Property(e => e.UpdateDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<ProbationRating02>(entity =>
+        {
+            entity.HasKey(e => e.ProbRateId2).HasName("PK__Probatio__1BDCEE345975D2B3");
+
+            entity.ToTable("ProbationRating02");
+
+            entity.Property(e => e.NextRemarkDate).HasColumnType("datetime");
+            entity.Property(e => e.RemarkStatus)
+                .HasMaxLength(5)
+                .IsUnicode(false);
+            entity.Property(e => e.RemarkerId).HasColumnName("RemarkerID");
+            entity.Property(e => e.RuleOrder).HasDefaultValue(0);
+        });
+        modelBuilder.Entity<ProbationWorkFlowstatus>(entity =>
+        {
+            entity.HasKey(e => e.FlowId).HasName("PK__Probatio__1184B35CC2DF2EBD");
+
+            entity.ToTable("ProbationWorkFlowstatus");
+
+            entity.Property(e => e.FlowId).HasColumnName("FlowID");
+            entity.Property(e => e.ApprovalStatus)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.Deligate)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryBy).HasColumnName("Entry_By");
+            entity.Property(e => e.EntryDt)
+                .HasColumnType("datetime")
+                .HasColumnName("Entry_Dt");
+            entity.Property(e => e.EntryFrom)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedBy).HasColumnName("Updated_By");
+            entity.Property(e => e.UpdatedDt)
+                .HasColumnType("datetime")
+                .HasColumnName("Updated_Dt");
+            entity.Property(e => e.UpdatedFrom)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+        });
+
         modelBuilder.Entity<CategoryGroup>(entity =>
         {
             entity.HasKey(e => e.CatId);

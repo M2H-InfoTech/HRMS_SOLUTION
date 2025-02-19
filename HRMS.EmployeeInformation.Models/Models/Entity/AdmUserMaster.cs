@@ -16,7 +16,7 @@ public partial class AdmUserMaster
 
     public string? ContactNo { get; set; }
 
-    public DateTime EntryDate { get; set; }
+    public DateTime? EntryDate { get; set; }
 
     public string Active { get; set; } = null!;
 

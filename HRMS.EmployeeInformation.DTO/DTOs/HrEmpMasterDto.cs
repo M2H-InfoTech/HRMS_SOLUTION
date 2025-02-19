@@ -22,16 +22,8 @@
 
         public string? JoinDt { get; set; }
 
-
-
         public int? EmpStatus { get; set; }
-
-
-
         public string? ReviewDt { get; set; }
-
-
-
         public string? ProbationDt { get; set; }
 
         public bool? IsProbation { get; set; }
