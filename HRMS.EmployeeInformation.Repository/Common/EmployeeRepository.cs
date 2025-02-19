@@ -366,8 +366,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
         private async Task<PaginatedResult<EmployeeResultDto>> HandleFormatZeroOrOne(EmployeeInformationParameters employeeInformationParameters, bool linkLevelExists, string? ageFormat, int? currentStatusDesc, bool existsEmployee)
         {
-            //if (linkLevelExists)
-            if (!linkLevelExists)
+            if (linkLevelExists)
             {
                 return await InfoFormatOneOrZeroLinkLevelExist(
                     employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
@@ -1110,11 +1109,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         select new
                         {
                             emp.EmpId,
-                            repDet.EmpCode,
-                            repDet.Name,
-                            highView.LevelOneDescription,
-                            highView.LevelTwoDescription,
-                            highView.LevelThreeDescription
+                            EmpCode = repDet?.EmpCode ?? string.Empty,  // Handle null by assigning empty string
+                            Name = repDet?.Name ?? string.Empty,        // Handle null safely
+                            LevelOneDescription = highView?.LevelOneDescription ?? string.Empty,
+                            LevelTwoDescription = highView?.LevelTwoDescription ?? string.Empty,
+                            LevelThreeDescription = highView?.LevelThreeDescription ?? string.Empty
                         };
 
 
