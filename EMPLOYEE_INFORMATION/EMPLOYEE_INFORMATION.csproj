@@ -31,4 +31,8 @@
     <ProjectReference Include="..\HRMS.EmployeeInformation.Service\HRMS.EmployeeInformation.Service.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Resoucres\" />
+  </ItemGroup>
+
 </Project>
