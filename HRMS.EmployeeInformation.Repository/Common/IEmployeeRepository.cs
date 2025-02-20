@@ -42,7 +42,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<AssetDto>> AsseAsynct();
         Task<List<AssetDetailsDto>> AssetDetailsAsync(int employeeId);
         Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdownProfessionalAsync();
-        Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto);
+
+        Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto);
+        //Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto);
 
         Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID);
         Task<List<PersonalDetailsDto>> GetPersonalDetailsByIdAsync(int employeeid);

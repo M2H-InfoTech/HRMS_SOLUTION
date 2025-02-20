@@ -43,6 +43,8 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? NotAvailable { get; set; }
 
         public string? Hobbies { get; set; }
+        public string? DataInsertSuccessStatus { get; set; }
+        public string? DataInsertFailedStatus { get; set; }
     }
 
 }

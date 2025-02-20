@@ -112,7 +112,11 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.CurrencyDropdownProfessionalAsync();
         }
-        public async Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
+        //public async Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
+        //{
+        //    return await _employeeRepository.InsertOrUpdateProfessionalData(profdtlsApprlDto);
+        //}
+        public async Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
         {
             return await _employeeRepository.InsertOrUpdateProfessionalData(profdtlsApprlDto);
         }

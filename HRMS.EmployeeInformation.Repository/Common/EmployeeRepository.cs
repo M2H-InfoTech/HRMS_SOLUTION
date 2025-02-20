@@ -3409,7 +3409,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return codeId?.ToString();
         }
 
-        public async Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
+
+        public async Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
         {
             var existingEntity = await _context.HrEmpProfdtlsApprls
                 .FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId &&
@@ -3417,7 +3418,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                           e.LeavingDt.HasValue && e.LeavingDt.Value.Date == profdtlsApprlDto.LeavingDt);
             if (existingEntity != null)
             {
-                return _mapper.Map<HrEmpProfdtlsApprlDto>(profdtlsApprlDto);
+                return _employeeSettings.DataInsertFailedStatus;
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -3442,9 +3443,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
                 }
 
-                await _context.SaveChangesAsync();
+                int result = await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                return _mapper.Map<HrEmpProfdtlsApprlDto>(profdtlsApprlDto);
+                string? strMessage = result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
+                return strMessage;
             }
             catch
             {
@@ -3452,6 +3454,50 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 throw;
             }
         }
+
+        //public async Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
+        //{
+        //    var existingEntity = await _context.HrEmpProfdtlsApprls
+        //        .FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId &&
+        //                                  e.JoinDt.HasValue && e.JoinDt.Value.Date == profdtlsApprlDto.JoinDt &&
+        //                                  e.LeavingDt.HasValue && e.LeavingDt.Value.Date == profdtlsApprlDto.LeavingDt);
+        //    if (existingEntity != null)
+        //    {
+        //        return _mapper.Map<HrEmpProfdtlsApprlDto>(profdtlsApprlDto);
+        //    }
+
+        //    using var transaction = await _context.Database.BeginTransactionAsync();
+        //    try
+        //    {
+        //        bool isWorkflowNeeded = await IsWorkflowNeeded();
+        //        var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
+
+        //        if (isWorkflowNeeded)
+        //        {
+        //            string? codeId = await GenerateRequestId(profdtlsApprlDto.EmpId);
+        //            if (codeId != null)
+        //            {
+        //                hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
+        //                await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
+        //                await UpdateCodeGeneration(codeId);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
+        //            await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
+        //        }
+
+        //        await _context.SaveChangesAsync();
+        //        await transaction.CommitAsync();
+        //        return _mapper.Map<HrEmpProfdtlsApprlDto>(profdtlsApprlDto);
+        //    }
+        //    catch
+        //    {
+        //        await transaction.RollbackAsync();
+        //        throw;
+        //    }
+        //}
 
         private async Task<bool> IsWorkflowNeeded()
         {
