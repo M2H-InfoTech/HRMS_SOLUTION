@@ -14,11 +14,17 @@ namespace EMPLOYEE_INFORMATION.Controllers
     public class EmployeeController : Controller
     {
         private readonly IEmployeeInformationService _employeeInformation;
+
+
+
         private readonly TokenService _tokenService;
         public EmployeeController(IEmployeeInformationService employeeInformation, TokenService tokenService)
         {
             _employeeInformation = employeeInformation;
             _tokenService = tokenService;
+
+
+
 
         }
         [HttpGet]
