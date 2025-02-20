@@ -47,24 +47,25 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
 
         public string? LevelElevenDescription { get; set; }
 
-        public string? Age { get;set; }
-        public int? DailyRateTypeId { get;  set; }
-        public int? PayrollMode { get;  set; }
-        public string? SalaryType { get;  set; }
-        public string? ReportingEmployeeCode { get;  set; }
-        public string? ReportingEmployeeName { get;  set; }
-        public string? ImageUrl { get;  set; }
-        public double PayScale { get;  set; }
-        public string? EmpStatusDesc { get;  set; }
-        public string? Description { get;  set; }
-        public string? ResignationType { get;  set; }
-        public string? ReligionName { get;  set; }
-        public string? BloodGroup { get;  set; }
+        public string? Age { get; set; }
+        public int? DailyRateTypeId { get; set; }
+        public int? PayrollMode { get; set; }
+        public string? SalaryType { get; set; }
+        public string? ReportingEmployeeCode { get; set; }
+        public string? ReportingEmployeeName { get; set; }
+        public string? ImageUrl { get; set; }
+        public double PayScale { get; set; }
+        public string? EmpStatusDesc { get; set; }
+        public string? Description { get; set; }
+        public string? ResignationType { get; set; }
+        public string? ReligionName { get; set; }
+        public string? BloodGroup { get; set; }
         public string? WorkingStatus { get; set; }
-        public double? GrossPay { get;  set; }
-        public DateTime? WeddingDate { get;  set; }
-        public string? StatusDesc { get;  set; }
-        public string? ResignationReason { get;  set; }
+        public double? GrossPay { get; set; }
+        public DateTime? WeddingDate { get; set; }
+        public string? StatusDesc { get; set; }
+        public string? ResignationReason { get; set; }
         public ProbationStatus Probation { get; set; }
+        public string? LevelTwelveDescription { get; set; }
     }
 }
