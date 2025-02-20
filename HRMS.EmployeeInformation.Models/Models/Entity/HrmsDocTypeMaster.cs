@@ -10,4 +10,5 @@ public partial class HrmsDocTypeMaster
     public string? DocType { get; set; }
 
     public string? Code { get; set; }
-}
+    public bool IsAllowMultiple { get; set; }
+    }

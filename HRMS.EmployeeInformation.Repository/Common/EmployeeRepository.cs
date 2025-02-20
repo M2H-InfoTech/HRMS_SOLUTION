@@ -14,6 +14,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using EMPLOYEE_INFORMATION.Models.Entity;
+using Azure.Core;
+using System.Reflection.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -7435,9 +7441,318 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 {
                     // If assetReasonId could not be parsed or is 0, return failure message
                     return "Invalid asset or asset not found";
+                    }
                 }
             }
-        }
+
+        //public Task<string> GetBankType (int employeeId)
+        //    {
+        //    throw new NotImplementedException ( );
+        //    }
+
+        public async Task<object> GetBankType (int employeeId)
+            {
+            var result = await (from a in _context.HrmsDocument00s
+                                join b in _context.HrmsDocTypeMasters on a.DocType equals (int?)b.DocTypeId
+                                join c in _context.EmpDocumentAccesses on (int?)a.DocId equals c.DocId
+                                where c.EmpId == employeeId && a.Active == true &&
+                                      (!_context.HrmsEmpdocuments00s.Any (d => d.DocId == a.DocId && d.Status!= "R") ||
+                                       (b.DocType == "BANK DETAILS") ||
+                                       (_context.HrmsDocument00s.Join (_context.HrmsDocTypeMasters,
+                                             doc => doc.DocType ?? 0,
+                                             dt => dt.DocTypeId,
+                                             (doc, dt) => new { doc.DocId, doc.IsAllowMultiple, dt.Code })
+                                         .Any (x => x.IsAllowMultiple == 1 && x.Code == "BNK" && x.DocId == a.DocId)))
+                                select new
+                                    {
+                                    DocId = a.DocId,
+                                    DocName = a.DocName
+                                    }).ToListAsync ( );
+
+            return result; // Returning as object (List of anonymous objects)
+            }
+
+        public async Task<object> GetGeneralSubCategoryList (string remarks)
+            {
+           var result = await(from a in _context.ReasonMasters
+                              join b in _context.GeneralCategories on a.Type equals b.Description
+                              where (b.Description == remarks) && a.Status == "A"
+                              select new
+                                  {
+                                  ReasonId = a.ReasonId,
+                                  Description = a.Description
+                                  }).ToListAsync ( );
+            return result;
+
+            }
+
+        public async Task<string> SetEmpDocumentDetails (SetEmpDocumentDetailsDto SetEmpDocumentDetails)
+            {
+            var workFlowNeed = (from a in _context.CompanyParameters
+                                join b in _context.HrmValueTypes on a.Value equals b.Value
+                                where b.Type == "EmployeeReporting"
+                                      && a.ParameterCode == "ENDOCAPPRL"
+                                      && a.Type == "COM"
+                                select b.Code).FirstOrDefault ( );
+
+            var transactionID = (from a in _context.TransactionMasters
+                                 where a.TransactionType == "Document"
+                                 select a.TransactionId).FirstOrDefault ( );
+            var codeID = GetSequence (SetEmpDocumentDetails.EmpID ?? 0, transactionID, "", 0);
+
+            if (codeID == null)
+                {
+
+                var ErrorId = 0;
+                var ErrorMessage = "NoSequence";
+
+                }
+
+            var RequestSequence = (from a in _context.AdmCodegenerationmasters
+                                   where codeID == codeID
+                                   select a.LastSequence).FirstOrDefault ( );
+            var maxCurrentCodeValue = _context.AdmCodegenerationmasters
+                .Where (a => a.CodeId == Convert.ToInt32 (codeID))
+                .Max (a => (int?)a.CurrentCodeValue) ?? 0;
+
+            var updatedValue = maxCurrentCodeValue + 1;
+
+            var recordToUpdate = _context.AdmCodegenerationmasters
+                .FirstOrDefault (a => a.CodeId == Convert.ToInt32 (codeID));
+
+            if (recordToUpdate != null)
+                {
+                recordToUpdate.CurrentCodeValue = updatedValue;
+                _context.SaveChanges ( );
+                }
+
+            var record = _context.AdmCodegenerationmasters
+                .FirstOrDefault (a => a.CodeId == Convert.ToInt32 (codeID));
+
+            if (record != null)
+                {
+
+                int length = (record.NumberFormat.Length) - (record.CurrentCodeValue?.ToString ( ).Length ?? 0);
+
+                string seq = record.NumberFormat.Substring (0, Math.Max (0, length));
+
+                string finalvalue = record.Code.ToString ( ) + seq + (record.CurrentCodeValue?.ToString ( ) ?? "0");
+                record.LastSequence = finalvalue;
+                _context.SaveChanges ( );
+
+                }
+            //if(SetEmpDocumentDetails.WorkFlowNeed == "Yes")
+            //    {
+
+            //    var newDocument = new HrmsEmpdocuments00
+            //        {
+            //        DocId = SetEmpDocumentDetails.DocumentID,
+            //        EmpId = (SetEmpDocumentDetails.ProxyID > 0) ? (SetEmpDocumentDetails.ProxyID == SetEmpDocumentDetails.EmpID ? SetEmpDocumentDetails.EmpID : SetEmpDocumentDetails.ProxyID) : SetEmpDocumentDetails.EmpID,
+            //        RequestId = RequestSequence,
+            //        TransactionType = "Document",
+            //        Status = SetEmpDocumentDetails.WorkFlowNeed == "Yes" ? "p" : "A",
+            //        FlowStatus = SetEmpDocumentDetails.WorkFlowNeed == "Yes" ? SetEmpDocumentDetails.FlowStatus : "E",
+            //        ProxyId = (SetEmpDocumentDetails.ProxyID > 0) ? (SetEmpDocumentDetails.ProxyID == SetEmpDocumentDetails.EmpID ? 0 : SetEmpDocumentDetails.EmpID) : SetEmpDocumentDetails.ProxyID,
+            //        EntryBy = SetEmpDocumentDetails.EntryBy,
+            //        EntryDate = DateTime.UtcNow,
+            //        FinalApprovalDate = SetEmpDocumentDetails.WorkFlowNeed == "No" ? DateTime.UtcNow : (DateTime?)null
+            //        };
+            //    _context.HrmsEmpdocuments00s.Add (newDocument);
+            //    _context.SaveChanges ( );
+
+            //    int newDetailId = newDocument.DetailId;
+
+
+            //    }
+            //else
+            //    {
+
+            //    }
+
+            if (workFlowNeed == "Yes")
+                {
+                HrmsEmpdocuments00 newDocument;
+
+                if (SetEmpDocumentDetails.ProxyID > 0)
+                    {
+                    if (SetEmpDocumentDetails.ProxyID == SetEmpDocumentDetails.EmpID)
+                        {
+                        newDocument = new HrmsEmpdocuments00
+                            {
+                            DocId = SetEmpDocumentDetails.DocumentID,
+                            EmpId = SetEmpDocumentDetails.EmpID,
+                            RequestId = RequestSequence,
+                            TransactionType = "Document",
+                            Status = "p",
+                            FlowStatus = SetEmpDocumentDetails.FlowStatus,
+                            ProxyId = 0,
+                            EntryBy = SetEmpDocumentDetails.EntryBy,
+                            EntryDate = DateTime.UtcNow
+                            };
+                        }
+                    else
+                        {
+                        newDocument = new HrmsEmpdocuments00
+                            {
+                            DocId = SetEmpDocumentDetails.DocumentID,
+                            EmpId = SetEmpDocumentDetails.ProxyID,
+                            RequestId = RequestSequence,
+                            TransactionType = "Document",
+                            Status = "p",
+                            FlowStatus = SetEmpDocumentDetails.FlowStatus,
+                            ProxyId = SetEmpDocumentDetails.EmpID,
+                            EntryBy = SetEmpDocumentDetails.EntryBy,
+                            EntryDate = DateTime.UtcNow
+                            };
+                        }
+                    }
+                else
+                    {
+                    newDocument = new HrmsEmpdocuments00
+                        {
+                        DocId = SetEmpDocumentDetails.DocumentID,
+                        EmpId = SetEmpDocumentDetails.EmpID,
+                        RequestId = RequestSequence,
+                        TransactionType = "Document",
+                        Status = "p",
+                        FlowStatus = SetEmpDocumentDetails.FlowStatus,
+                        ProxyId = SetEmpDocumentDetails.ProxyID,
+                        EntryBy = SetEmpDocumentDetails.EntryBy,
+                        EntryDate = DateTime.UtcNow
+                        };
+                    }
+
+                
+                _context.HrmsEmpdocuments00s.Add (newDocument);
+                _context.SaveChanges ( ); 
+
+
+                int newDetailID = newDocument.DetailId;
+
+
+                //_context.Database.ExecuteSqlRaw ("exec WorkFlowActivityFlow @p0, @p1, @p2, @p3",
+                //    parameters: new object[] { EmpID, "Document", newDetailID, EntryBy });
+                }
+            else if (workFlowNeed == "No")
+                {
+                HrmsEmpdocuments00 newDocument;
+
+                if (SetEmpDocumentDetails.ProxyID > 0)
+                    {
+                    if (SetEmpDocumentDetails.ProxyID == SetEmpDocumentDetails.EmpID)
+                        {
+                        newDocument = new HrmsEmpdocuments00
+                            {
+                            DocId = SetEmpDocumentDetails.DocumentID,
+                            EmpId = SetEmpDocumentDetails.EmpID,
+                            RequestId = RequestSequence,
+                            TransactionType = "Document",
+                            Status = "A",
+                            FlowStatus = "E",
+                            ProxyId = 0,
+                            EntryBy = SetEmpDocumentDetails.EntryBy,
+                            EntryDate = DateTime.UtcNow,
+                            FinalApprovalDate = DateTime.UtcNow
+                            };
+                        }
+                    else
+                        {
+                        newDocument = new HrmsEmpdocuments00
+                            {
+                            DocId = SetEmpDocumentDetails.DocumentID,
+                            EmpId = SetEmpDocumentDetails.ProxyID,
+                            RequestId = RequestSequence,
+                            TransactionType = "Document",
+                            Status = "A",
+                            FlowStatus = "E",
+                            ProxyId = SetEmpDocumentDetails.EmpID,
+                            EntryBy = SetEmpDocumentDetails.EntryBy,
+                            EntryDate = DateTime.UtcNow,
+                            FinalApprovalDate = DateTime.UtcNow
+                            };
+                        }
+                    }
+                else
+                    {
+                    newDocument = new HrmsEmpdocuments00
+                        {
+                        DocId = SetEmpDocumentDetails.DocumentID,
+                        EmpId = SetEmpDocumentDetails.EmpID,
+                        RequestId = RequestSequence,
+                        TransactionType = "Document",
+                        Status = "A",
+                        FlowStatus = "E",
+                        ProxyId = SetEmpDocumentDetails.ProxyID,
+                        EntryBy = SetEmpDocumentDetails.EntryBy,
+                        EntryDate = DateTime.UtcNow,
+                        FinalApprovalDate = DateTime.UtcNow
+                        };
+                    }
+
+
+                _context.HrmsEmpdocuments00s.Add (newDocument);
+                _context.SaveChanges ( );
+
+
+                int newDetailID = newDocument.DetailId;
+
+
+                var approvedDocument = new HrmsEmpdocumentsApproved00
+                    {
+                    DetailId = newDetailID,
+                    DocId = newDocument.DocId,
+                    EmpId = newDocument.EmpId,
+                    RequestId = newDocument.RequestId,
+                    TransactionType = "Document",
+                    Status = "A",
+                    ProxyId = newDocument.ProxyId,
+                    FlowStatus = "E",
+                    DateFrom = DateTime.UtcNow,
+                    EntryBy = newDocument.EntryBy,
+                    EntryDate = newDocument.EntryDate,
+                    FinalApprovalDate = newDocument.FinalApprovalDate
+                    };
+
+                _context.HrmsEmpdocumentsApproved00s.Add (approvedDocument);
+                _context.SaveChanges ( );
+                }
+            var sequenceid = 0;
+           
+            var codeGenMaster = _context.AdmCodegenerationmasters
+                .FirstOrDefault (c => c.CodeId == sequenceid);
+
+            if (codeGenMaster != null)
+                {
+               
+                int maxCurrentCodeValue1 = _context.AdmCodegenerationmasters
+                    .Where (c => c.CodeId == sequenceid)
+                    .Max (c => (int?)c.CurrentCodeValue) ?? 0;
+
+                codeGenMaster.CurrentCodeValue = maxCurrentCodeValue1 + 1;
+               
+                int numberFormatLength = codeGenMaster.NumberFormat.Length;
+                int currentCodeValueLength = codeGenMaster.CurrentCodeValue.ToString ( ).Length;
+                int lengthDiff = numberFormatLength - currentCodeValueLength;
+               
+                string seq = codeGenMaster.NumberFormat.Substring (0, Math.Max (0, lengthDiff));
+               
+                string finalSequence = $"{codeGenMaster.Code}{seq}{codeGenMaster.CurrentCodeValue}";
+                
+                codeGenMaster.LastSequence = finalSequence;
+                
+                _context.SaveChanges ( );
+                }
+
+          
+            string errorID = _context.HrmsEmpdocuments00s
+                .OrderByDescending (d => d.DetailId)
+                .Select (d => d.DetailId.ToString ( )) 
+                .FirstOrDefault ( ) ?? "0"; 
+
+            return errorID;
+
+
+            }
 
         public async Task<PersonalDetailsHistoryDto> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto)
         {

@@ -105,6 +105,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID);
 
         Task<string> AssetDelete(int varEmpID, int varAssestID);
+        Task<object> GetBankType (int employeeId);
+        Task<object> GetGeneralSubCategoryList (string remarks);
+        Task<string> SetEmpDocumentDetails (SetEmpDocumentDetailsDto SetEmpDocumentDetails);
 
-    }
+        }
 }
