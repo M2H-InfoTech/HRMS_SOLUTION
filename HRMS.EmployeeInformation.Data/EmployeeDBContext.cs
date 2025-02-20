@@ -237,6 +237,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<AssetcategoryCode> AssetcategoryCodes { get; set; }
 
     public virtual DbSet<AssetRequestHistory> AssetRequestHistories { get; set; }
+    public virtual DbSet<TravelType> TravelTypes { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
         => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NEXT-6-6-2023;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -3610,8 +3611,19 @@ public partial class EmployeeDBContext : DbContext
 
             entity.Property(e => e.EntryDate).HasColumnType("datetime");
         });
+        modelBuilder.Entity<TravelType> (entity =>
+        {
+            entity.ToTable ("TRAVEL_TYPE");
 
-        OnModelCreatingPartial(modelBuilder);
+            entity.Property (e => e.TravelTypeId).HasColumnName ("TravelType_Id");
+            entity.Property (e => e.TravelType1)
+                .HasMaxLength (50)
+                .IsUnicode (false)
+                .HasColumnName ("TravelType");
+            entity.Property (e => e.Value).HasColumnName ("value");
+        });
+
+        OnModelCreatingPartial (modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

@@ -586,10 +586,33 @@ namespace EMPLOYEE_INFORMATION.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> AssetDelete(int varEmpID, int varAssestID)
-        {
-            var getassetdelete = await _employeeInformation.AssetDelete(varEmpID, varAssestID);
-            return new JsonResult(getassetdelete);
+        public async Task<IActionResult> AssetDelete (int varEmpID, int varAssestID)
+            {
+            var getassetdelete = await _employeeInformation.AssetDelete (varEmpID, varAssestID);
+            return new JsonResult (getassetdelete);
+            }
+        [HttpGet]
+        public async Task<IActionResult> GetBankType (int employeeId)
+            {
+            var getBankType = await _employeeInformation.GetBankType (employeeId);
+            return new JsonResult (getBankType);
+            }
+        [HttpGet]
+        public async Task<IActionResult> GetGeneralSubCategoryList (string remarks)
+            {
+            var getGeneralSubCategoryList = await _employeeInformation.GetGeneralSubCategoryList (remarks);
+            return new JsonResult (getGeneralSubCategoryList);
+            }
+        [HttpPost]
+        public async Task<IActionResult> SetEmpDocumentDetails ([FromBody] SetEmpDocumentDetailsDto SetEmpDocumentDetails)   // For Document and Bank Insertion
+            {
+            var setEmpDocumentDetails = await _employeeInformation.SetEmpDocumentDetails (SetEmpDocumentDetails);
+
+
+            return Ok (setEmpDocumentDetails);
+            }
+
         }
     }
-}
+      
+   

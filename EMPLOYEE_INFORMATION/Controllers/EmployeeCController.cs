@@ -17,5 +17,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             return View();
         }
-    }
+
+        [HttpGet]
+        public async Task<IActionResult> FillTravelType ()
+            {
+            var fillTravelType = await _employeeInformationC.FillTravelType ();
+            return new JsonResult (fillTravelType);
+            }
+        }
 }

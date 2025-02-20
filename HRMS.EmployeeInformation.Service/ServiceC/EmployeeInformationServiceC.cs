@@ -1,5 +1,7 @@
-﻿using HRMS.EmployeeInformation.Repository.Common.RepositoryC;
+﻿using HRMS.EmployeeInformation.DTO.DTOs;
+using HRMS.EmployeeInformation.Repository.Common.RepositoryC;
 using HRMS.EmployeeInformation.Service.InterfaceC;
+using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Service.ServiceC
 {
@@ -10,5 +12,9 @@ namespace HRMS.EmployeeInformation.Service.ServiceC
         {
             _repositoryC = repositoryC;
         }
-    }
+        public async Task<FillTravelTypeDto> FillTravelType ()
+            {
+            return await _repositoryC.FillTravelType ();
+            }
+        }
 }
