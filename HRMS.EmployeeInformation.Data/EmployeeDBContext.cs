@@ -236,7 +236,12 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<CategoryGroup> CategoryGroups { get; set; }
     public virtual DbSet<AssetcategoryCode> AssetcategoryCodes { get; set; }
 
-    public virtual DbSet<AssetRequestHistory> AssetRequestHistories { get; set; }  
+    public virtual DbSet<AssetRequestHistory> AssetRequestHistories { get; set; }
+    public virtual DbSet<HrmsEmpdocumentsHistory00> HrmsEmpdocumentsHistory00s { get; set; }
+    public virtual DbSet<HrmsEmpdocumentsHistory01> HrmsEmpdocumentsHistory01s { get; set; }
+
+    public virtual DbSet<HrmsEmpdocumentsHistory02> HrmsEmpdocumentsHistory02s { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
         => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NEXT-6-6-2023;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -3610,7 +3615,68 @@ public partial class EmployeeDBContext : DbContext
 
             entity.Property(e => e.EntryDate).HasColumnType("datetime");
         });
-      
+        modelBuilder.Entity<HrmsEmpdocumentsHistory00>(entity =>
+        {
+            entity.HasKey(e => e.DocHistId).HasName("PK__HRMS_EMP__6297437FD3210C68");
+
+            entity.ToTable("HRMS_EMPDocumentsHistory00");
+
+            entity.Property(e => e.DocHistId).HasColumnName("DocHistID");
+            entity.Property(e => e.DateFrom).HasColumnType("datetime");
+            entity.Property(e => e.DetailId).HasColumnName("DetailID");
+            entity.Property(e => e.DocApprovedId).HasColumnName("DocApprovedID");
+            entity.Property(e => e.DocId).HasColumnName("DocID");
+            entity.Property(e => e.DocStatus)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.EmpId).HasColumnName("EmpID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.RequestId)
+                .IsUnicode(false)
+                .HasColumnName("RequestID");
+            entity.Property(e => e.Status)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<HrmsEmpdocumentsHistory01>(entity =>
+        {
+            entity.HasKey(e => e.DocFieldId).HasName("PK__HRMS_EMP__E2BF7E5075376BCC");
+
+            entity.ToTable("HRMS_EMPDocumentsHistory01");
+
+            entity.Property(e => e.DocFieldId).HasColumnName("DocFieldID");
+            entity.Property(e => e.DetailId).HasColumnName("DetailID");
+            entity.Property(e => e.DocHisId).HasColumnName("DocHisID");
+            entity.Property(e => e.DocValues)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.OldDocValues)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<HrmsEmpdocumentsHistory02>(entity =>
+        {
+            entity.HasKey(e => e.DocAttachId).HasName("PK__HRMS_EMP__DBC91E97F7A7F818");
+
+            entity.ToTable("HRMS_EMPDocumentsHistory02");
+
+            entity.Property(e => e.DocAttachId).HasColumnName("DocAttachID");
+            entity.Property(e => e.DetailId).HasColumnName("DetailID");
+            entity.Property(e => e.DocHisId).HasColumnName("DocHisID");
+            entity.Property(e => e.FileName)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.FileType)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.OldFileName)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.Status)
+                .HasMaxLength(5)
+                .IsUnicode(false);
+        });
 
         OnModelCreatingPartial (modelBuilder);
     }
