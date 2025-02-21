@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HRMS.EmployeeInformation.Models.Models.Entity
+namespace HRMS.EmployeeInformation.Models.Models.Entity;
 public partial class HrmsEmpdocumentsHistory01
 {
     public int DocFieldId { get; set; }
