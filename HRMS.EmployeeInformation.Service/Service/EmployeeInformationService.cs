@@ -213,53 +213,53 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.FillEmployeesBasedOnwWorkflowAsync(firstEntityId, secondEntityId);
         }
-        public async Task<List<object>> GetCountry()
+        public async Task<List<object>> GetCountryAsync()
         {
             return await _employeeRepository.GetCountry();
         }
-        public async Task<List<object>> GetNationalities()
+        public async Task<List<object>> GetNationalitiesAsync()
         {
             return await _employeeRepository.GetNationalities();
         }
-        public async Task<List<object>> GetBloodGroup()
+        public async Task<List<object>> GetBloodGroupAsync()
         {
             return await _employeeRepository.GetBloodGroup();
         }
-        public async Task<List<object>> FillReligion()
+        public async Task<List<object>> FillReligionAsync()
         {
             return await _employeeRepository.FillReligion();
         }
 
-        public async Task<string> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills)
+        public async Task<string> InsertOrUpdateLanguageSkillsAsync(LanguageSkillsSaveDto langSkills)
         {
             return await _employeeRepository.InsertOrUpdateLanguageSkills(langSkills);
         }
-        public async Task<List<object>> FillLanguageTypes()
+        public async Task<List<object>> FillLanguageTypesAsync()
         {
             return await _employeeRepository.FillLanguageTypes();
         }
-        public async Task<List<object>> FillConsultant()
+        public async Task<List<object>> FillConsultantAsync()
         {
             return await _employeeRepository.FillConsultant();
         }
 
-        public async Task<string> InsertOrUpdateReference(ReferenceSaveDto Reference)
+        public async Task<string> InsertOrUpdateReferenceAsync(ReferenceSaveDto Reference)
         {
             return await _employeeRepository.InsertOrUpdateReference(Reference);
         }
-        public async Task<List<object>> FillRewardType()
+        public async Task<List<object>> FillRewardTypeAsync()
         {
             return await _employeeRepository.FillRewardType();
         }
-        public async Task<string> InsertOrUpdateEmpRewards(EmpRewardsSaveDto EmpRewards)
+        public async Task<string> InsertOrUpdateEmpRewardsAsync(EmpRewardsSaveDto EmpRewards)
         {
             return await _employeeRepository.InsertOrUpdateEmpRewards(EmpRewards);
         }
-        public async Task<List<object>> FillBankDetails(int empID)
+        public async Task<List<object>> FillBankDetailsAsync(int empID)
         {
             return await _employeeRepository.FillBankDetails(empID);
         }
-        public async Task<List<object>> BankTypeEdit()
+        public async Task<List<object>> BankTypeEditAsync()
         {
             return await _employeeRepository.BankTypeEdit();
         }
@@ -268,54 +268,54 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetHrEmpDetailsAsync(employeeId, roleId);
         }
-        public async Task<List<object>> CertificationsDropdown(string description)
+        public async Task<List<object>> CertificationsDropdownAsync(string description)
         {
             return await _employeeRepository.CertificationsDropdown(description);
         }
-        public async Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates)
+        public async Task<string> InsertOrUpdateCertificatesAsync(CertificationSaveDto certificates)
         {
             return await _employeeRepository.InsertOrUpdateCertificates(certificates);
         }
 
-        public async Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType)
+        public async Task<string> UpdateEmployeeTypeAsync(EmployeeTypeDto EmployeeType)
         {
             return await _employeeRepository.UpdateEmployeeType(EmployeeType);
         }
-        public async Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset)
+        public async Task<string> InsertOrUpdateSkillAsync(SaveSkillSetDto skillset)
         {
             return await _employeeRepository.InsertOrUpdateSkill(skillset);
         }
-        public async Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus)
+        public async Task<List<object>> FillEmployeeDropdownAsync(string activeStatus, string employeeStatus, string probationStatus)
         {
             return await _employeeRepository.FillEmployeeDropdown(activeStatus, employeeStatus, probationStatus);
         }
-        public async Task<List<object>> AssetGroupDropdownEdit()
+        public async Task<List<object>> AssetGroupDropdownEditAsync()
         {
             return await _employeeRepository.AssetGroupDropdownEdit();
         }
 
-        public async Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID)
+        public async Task<List<object>> GetAssetDropdownEditAsync(int varAssestTypeID)
         {
             return await _employeeRepository.GetAssetDropdownEdit(varAssestTypeID);
         }
 
 
 
-        public async Task<List<object>> GetAssetDetailsEdit(string CommonName)
+        public async Task<List<object>> GetAssetDetailsEditAsync(string CommonName)
         {
             return await _employeeRepository.GetAssetDetailsEdit(CommonName);
         }
-        public async Task<string> AssetEdit(AssetEditDto assetEdits)
+        public async Task<string> AssetEditAsync(AssetEditDto assetEdits)
         {
             return await _employeeRepository.AssetEdit(assetEdits);
         }
-        public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
+        public async Task<List<object>> GetAssetEditDatasAsync(int varSelectedTypeID, int varAssestID)
         {
             return await _employeeRepository.GetAssetEditDatas(varSelectedTypeID, varAssestID);
         }
 
 
-        public async Task<string> AssetDelete(int varEmpID, int varAssestID)
+        public async Task<string> AssetDeleteAsync(int varEmpID, int varAssestID)
         {
             return await _employeeRepository.AssetDelete(varEmpID, varAssestID);
         }
@@ -323,56 +323,56 @@ namespace HRMS.EmployeeInformation.Service.Service
         //{
         //    return await _employeeRepository.UpdateEmployeeDetails(employeeDetailsDto, lastEntity);
         //}
-        public async Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto)
+        public async Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetailsAsync(EmployeeDetailsUpdateDto employeeDetailsDto)
         {
             return await _employeeRepository.UpdateEmployeeDetails(employeeDetailsDto);
         }
-        public async Task<PersonalDetailsHistoryDto> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto)
+        public async Task<PersonalDetailsHistoryDto> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto)
         {
             return await _employeeRepository.UpdatePersonalDetails(personalDetailsDto);
         }
-        public async Task<string> UploadEmployeeDocuments(List<IFormFile> files, QualificationAttachmentDto skillset)
+        public async Task<string> UploadEmployeeDocumentsAsync(List<IFormFile> files, QualificationAttachmentDto skillset)
         {
             return await _employeeRepository.UploadEmployeeDocuments(files, skillset);
         }
 
-        public async Task<string> InsertQualification(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
+        public async Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
         {
             return await _employeeRepository.InsertQualification(Qualification, FirstEntityID, EmpEntityIds);
         }
-        public async Task<object> FillCountry()
+        public async Task<object> FillCountryAsync()
         {
             return await _employeeRepository.FillCountry();
         }
-        public async Task<object> GetBankType(int employeeId)
+        public async Task<object> GetBankTypeAsync(int employeeId)
         {
             return await _employeeRepository.GetBankType(employeeId);
         }
-        public async Task<object> GetGeneralSubCategoryList(string remarks)
+        public async Task<object> GetGeneralSubCategoryListAsync(string remarks)
         {
             return await _employeeRepository.GetGeneralSubCategoryList(remarks);
         }
-        public async Task<string> SetEmpDocumentDetails(SetEmpDocumentDetailsDto SetEmpDocumentDetails)
+        public async Task<string> SetEmpDocumentDetailsAsync(SetEmpDocumentDetailsDto SetEmpDocumentDetails)
         {
             return await _employeeRepository.SetEmpDocumentDetails(SetEmpDocumentDetails);
         }
-        public async Task<List<FillDocumentTypeDto>> FillDocumentType(int EmpID)
+        public async Task<List<FillDocumentTypeDto>> FillDocumentTypeAsync(int EmpID)
         {
             return await _employeeRepository.FillDocumentType(EmpID);
         }
-        public async Task<List<DocumentFieldDto>> DocumentField(int DocumentID)
+        public async Task<List<DocumentFieldDto>> DocumentFieldAsync(int DocumentID)
         {
             return await _employeeRepository.DocumentField(DocumentID);
         }
-        public async Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryList(string Remarks)
+        public async Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryListAsync(string Remarks)
         {
             return await _employeeRepository.DocumentGetGeneralSubCategoryList(Remarks);
         }
-        public async Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy)
+        public async Task<string> InsertDocumentsFieldDetailsAsync(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy)
         {
             return await _employeeRepository.InsertDocumentsFieldDetails(DocumentBankField, DocumentID, In_EntryBy);
         }
-        public async Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)
+        public async Task<string> SetEmpDocumentsAsync(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)
         {
             return await _employeeRepository.SetEmpDocuments(DocumentBankField, DetailID, Status, In_EntryBy);
         }
