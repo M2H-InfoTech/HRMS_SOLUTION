@@ -92,7 +92,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<object> FillCountry();
 
         //Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto, int lastEntity);
-        Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
+        Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto);
 
         Task<PersonalDetailsHistoryDto> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto);
 
@@ -106,10 +106,15 @@ namespace HRMS.EmployeeInformation.Service.Interface
 
         Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID);
         Task<string> AssetDelete(int varEmpID, int varAssestID);
-        Task<object> GetBankType (int employeeId);
-        Task<object> GetGeneralSubCategoryList (string remarks);
-        Task<string> SetEmpDocumentDetails (SetEmpDocumentDetailsDto SetEmpDocumentDetails);
+        Task<object> GetBankType(int employeeId);
+        Task<object> GetGeneralSubCategoryList(string remarks);
+        Task<string> SetEmpDocumentDetails(SetEmpDocumentDetailsDto SetEmpDocumentDetails);
+        Task<List<FillDocumentTypeDto>> FillDocumentType(int EmpID);
+        Task<List<DocumentFieldDto>> DocumentField(int DocumentID);
+        Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryList(string Remarks);
+        Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
+        Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
 
-        }
-       
+    }
+
 }

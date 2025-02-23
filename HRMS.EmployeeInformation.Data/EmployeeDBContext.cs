@@ -3,18 +3,20 @@ using EMPLOYEE_INFORMATION.Models.Entity;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace EMPLOYEE_INFORMATION.Data;
 
 public partial class EmployeeDBContext : DbContext
 {
-
+    private IConfiguration _configuration { get; }
     public EmployeeDBContext()
     {
     }
 
-    public EmployeeDBContext(DbContextOptions<EmployeeDBContext> options) : base(options)
+    public EmployeeDBContext(DbContextOptions<EmployeeDBContext> options, IConfiguration configuration) : base(options)
     {
+        _configuration = configuration;
     }
 
 
@@ -244,8 +246,8 @@ public partial class EmployeeDBContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
-        => optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=NEXT-6-6-2023;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
-
+         //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
+         => optionsBuilder.UseSqlServer(_configuration.GetConnectionString("Default"));
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -3678,7 +3680,7 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false);
         });
 
-        OnModelCreatingPartial (modelBuilder);
+        OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

@@ -374,9 +374,8 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(employeeDetails);
         }
         [HttpPost]
-        public async Task<IActionResult> UpdateEmployeeDetails([FromBody] EmployeeParametersDto employeeDetailsDto)
+        public async Task<IActionResult> UpdateEmployeeDetails([FromBody] EmployeeDetailsUpdateDto employeeDetailsDto)
         {
-
             var employeeDetails = await _employeeInformation.UpdateEmployeeDetails(employeeDetailsDto);
             return new JsonResult(employeeDetails);
         }
@@ -586,38 +585,74 @@ namespace EMPLOYEE_INFORMATION.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> AssetDelete (int varEmpID, int varAssestID)
-            {
-            var getassetdelete = await _employeeInformation.AssetDelete (varEmpID, varAssestID);
-            return new JsonResult (getassetdelete);
-            }
-        [HttpGet]
-        public async Task<IActionResult> GetBankType (int employeeId)
-            {
-            var getBankType = await _employeeInformation.GetBankType (employeeId);
-            return new JsonResult (getBankType);
-            }
-        [HttpGet]
-        public async Task<IActionResult> GetGeneralSubCategoryList (string remarks)
-            {
-            var getGeneralSubCategoryList = await _employeeInformation.GetGeneralSubCategoryList (remarks);
-            return new JsonResult (getGeneralSubCategoryList);
-            }
-        [HttpPost]
-        public async Task<IActionResult> SetEmpDocumentDetails ([FromBody] SetEmpDocumentDetailsDto SetEmpDocumentDetails)   // For Document and Bank Insertion
-            {
-            var setEmpDocumentDetails = await _employeeInformation.SetEmpDocumentDetails (SetEmpDocumentDetails);
-
-
-            return Ok (setEmpDocumentDetails);
-            }
-
-        }
-    }
         public async Task<IActionResult> AssetDelete(int varEmpID, int varAssestID)
         {
             var getassetdelete = await _employeeInformation.AssetDelete(varEmpID, varAssestID);
             return new JsonResult(getassetdelete);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetBankType(int employeeId)
+        {
+            var getBankType = await _employeeInformation.GetBankType(employeeId);
+            return new JsonResult(getBankType);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetGeneralSubCategoryList(string remarks)
+        {
+            var getGeneralSubCategoryList = await _employeeInformation.GetGeneralSubCategoryList(remarks);
+            return new JsonResult(getGeneralSubCategoryList);
+        }
+        [HttpPost]
+        public async Task<IActionResult> SetEmpDocumentDetails([FromBody] SetEmpDocumentDetailsDto SetEmpDocumentDetails)   // For Document and Bank Insertion
+        {
+            var setEmpDocumentDetails = await _employeeInformation.SetEmpDocumentDetails(SetEmpDocumentDetails);
+            return Ok(setEmpDocumentDetails);
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillDocumentType(int EmpID)    //dropdown in document add button
+        {
+            var FillDocumentType = await _employeeInformation.FillDocumentType(EmpID);
+            return new JsonResult(FillDocumentType);
+        }
+        [HttpGet]
+        public async Task<IActionResult> DocumentField(int DocumentID)   //textbox field name inside document add button
+        {
+            var DocumentField = await _employeeInformation.DocumentField(DocumentID);
+            return new JsonResult(DocumentField);
+        }
+        [HttpGet]
+        public async Task<IActionResult> DocumentGetGeneralSubCategoryList(string Remarks)   // "bank name" drop down inside document add button
+        {
+            var DocumentGetGeneralSubCategoryList = await _employeeInformation.DocumentGetGeneralSubCategoryList(Remarks);
+            return new JsonResult(DocumentGetGeneralSubCategoryList);
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> InsertDocumentsFieldDetails([FromBody] List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy)   //InsertOrUpdate document & bank
+        {
+            var FieldDetails = await _employeeInformation.InsertDocumentsFieldDetails(DocumentBankField, DocumentID, In_EntryBy);
+
+            if (FieldDetails == null || !FieldDetails.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(FieldDetails);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SetEmpDocuments([FromBody] TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)   //InsertOrUpdate document & bank upload file
+        {
+            var SetEmpDocuments = await _employeeInformation.SetEmpDocuments(DocumentBankField, DetailID, Status, In_EntryBy);
+
+            if (SetEmpDocuments == null || !SetEmpDocuments.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(SetEmpDocuments);
+        }
+
     }
 }

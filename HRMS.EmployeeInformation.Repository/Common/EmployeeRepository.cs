@@ -14,12 +14,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Hosting;
-using EMPLOYEE_INFORMATION.Models.Entity;
-using Azure.Core;
-using System.Reflection.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -3861,7 +3855,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                          {
                                              DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
 
-                                             Wedding_Date = Convert.ToInt32(enableWeddingDate) == 1 ? (c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString(_employeeSettings.DateFormat) : "") : "",
+                                             Wedding_Date = c.WeddingDate,
                                              EMail = b.PersonalEmail ?? "",
                                              CountryID = c.Country,
                                              NationalityID = c.Nationality,
@@ -3879,7 +3873,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                              Guardians_Name = a.GuardiansName ?? "",
                                              Country = d.CountryName ?? "",
                                              Nationality = e.CountryName ?? "",
-                                             CountryOfBirth = f.CountryName ?? "",
+                                             CountryOfBirth = f.CountryId,
                                              bloodgroupnew = string.IsNullOrEmpty(c.BloodGrp) ? "" :
                                                              c.BloodGrp == "HH" ? "HH Group" : c.BloodGrp + "ve"
                                          }).AsNoTracking().ToListAsync();
@@ -5349,10 +5343,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             };
         }
 
-
-
-
-        public async Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto)
+        public async Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto)
         {
 
             int entityChange = 0;
@@ -5361,7 +5352,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             bool existsEmployee = await _context.HrEmpMasters
                 .AnyAsync(emp => emp.EmpCode.Trim() == employeeDetailsDto.EmpCode.Trim()
                                  && emp.IsDelete == false
-                                 && emp.EmpId != employeeDetailsDto.EmpID);
+                                 && emp.EmpId != employeeDetailsDto.EmpId);
 
             if (existsEmployee)
             {
@@ -5370,23 +5361,23 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             // Fetch the last entity directly instead of selecting first and then comparing
             int? lastEntityChange = await _context.HrEmpMasters
-                .Where(e => e.EmpId == employeeDetailsDto.EmpID)
+                .Where(e => e.EmpId == employeeDetailsDto.EmpId)
                 .Select(e => e.LastEntity)
                 .FirstOrDefaultAsync();
 
             if (lastEntityChange != employeeDetailsDto.LastEntity)
             {
-                entityChange = 1;
+                entityChange = (int)ProbationStatus.PROBATION;
             }
 
             // Check if the employee has pending transfer history
             bool checkTransferHistory = await _context.TransferDetails00s
-                                        .Join(_context.TransferDetails,
-                                              a => a.TransferBatchId,
-                                              b => b.TransferBatchId,
-                                              (a, b) => new { a, b })
-                                        .AnyAsync(joined => new[] { "A", "P" }.Contains(joined.b.ApprovalStatus)
-                                                            && joined.a.EmpId == employeeDetailsDto.EmpID);
+                                       .Join(_context.TransferDetails,
+                                             a => a.TransferBatchId,
+                                             b => b.TransferBatchId,
+                                             (a, b) => new { a, b })
+                                       .AnyAsync(joined => new[] { ApprovalStatus.Approved.ToString(), ApprovalStatus.Pending.ToString() }.Contains(joined.b.ApprovalStatus)
+                                                           && joined.a.EmpId == employeeDetailsDto.EmpId);
 
             if (checkTransferHistory)
             {
@@ -5396,10 +5387,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                           b => b.TransferBatchId,
                           (a, b) => new { a, b })
                     .Where(joined => new[] { "A", "P" }.Contains(joined.b.ApprovalStatus)
-                                     && joined.a.EmpId == employeeDetailsDto.EmpID)
+                                     && joined.a.EmpId == employeeDetailsDto.EmpId)
                     .OrderByDescending(joined => joined.a.ToDate)
                     .Skip(1) // Exclude the most recent record
-                    .AnyAsync(joined => joined.a.EmpId == employeeDetailsDto.EmpID
+                    .AnyAsync(joined => joined.a.EmpId == employeeDetailsDto.EmpId
                                         && joined.a.LastEntity == employeeDetailsDto.LastEntity);
 
                 if (existsTransfer)
@@ -5415,35 +5406,38 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             //// Get SortOrder
             var sortOrder = _context.LicensedCompanyDetails.Select(x => x.EntityLimit).FirstOrDefault();
 
-            // // Get mapping values
             var mappings = await _context.Categorymasters
-                .Join(_context.HrmValueTypes,
-                      cat => cat.CatTrxTypeId,
-                      val => val.Value,
-                      (cat, val) => new { cat, val })
-                .Where(x => x.val.Type == "CatTrxType" &&
-                            new[] { "BRANCH", "DEPT", "BAND", "GRADE", "DESIG", "COMPANY" }
-                            .Contains(x.val.Code))
-                .GroupBy(x => x.val.Code)
-                .Select(g => new
-                {
-                    Code = g.Key,
-                    SortOrder = g.Max(x => x.cat.SortOrder)
-                })
-                .ToListAsync();
+          .Join(_context.HrmValueTypes,
+                cat => cat.CatTrxTypeId,
+                val => val.Value,
+                (cat, val) => new { cat, val })
+          .Where(x => x.val.Type == typeof(CatTrxType).FullName &&
+                      new[] { CatTrxType.BranchType.ToString(), CatTrxType.DepartmentType.ToString(), CatTrxType.BandType.ToString(), CatTrxType.GradeType.ToString(), CatTrxType.DesigType.ToString(), CatTrxType.CompanyType.ToString() }
+                      .Contains(x.val.Code))
+          .GroupBy(x => x.val.Code)
+          .Select(g => new
+          {
+              Code = g.Key,
+              SortOrder = g.Max(x => x.cat.SortOrder)
+          })
+          .ToListAsync();
+
+
+
+
 
             // // Extract values
-            int branchMapId = mappings.FirstOrDefault(m => m.Code == "BRANCH")?.SortOrder ?? 0;
-            int depMapId = mappings.FirstOrDefault(m => m.Code == "DEPT")?.SortOrder ?? 0;
-            int bandMapId = mappings.FirstOrDefault(m => m.Code == "BAND")?.SortOrder ?? 0;
-            int designationMapId = mappings.FirstOrDefault(m => m.Code == "DESIG")?.SortOrder ?? 0;
-            int countryMapId = mappings.FirstOrDefault(m => m.Code == "COMPANY")?.SortOrder ?? 0;
-            int gradeId = mappings.FirstOrDefault(m => m.Code == "GRADE")?.SortOrder ?? 0;
+            int branchMapId = mappings.FirstOrDefault(m => m.Code == CatTrxType.BranchType.ToString())?.SortOrder ?? 0;
+            int depMapId = mappings.FirstOrDefault(m => m.Code == CatTrxType.DepartmentType.ToString())?.SortOrder ?? 0;
+            int bandMapId = mappings.FirstOrDefault(m => m.Code == CatTrxType.BandType.ToString())?.SortOrder ?? 0;
+            int designationMapId = mappings.FirstOrDefault(m => m.Code == CatTrxType.DesigType.ToString())?.SortOrder ?? 0;
+            int countryMapId = mappings.FirstOrDefault(m => m.Code == CatTrxType.CompanyType.ToString())?.SortOrder ?? 0;
+            int gradeId = mappings.FirstOrDefault(m => m.Code == CatTrxType.GradeType.ToString())?.SortOrder ?? 0;
 
 
 
             // Check if SortOrder is 11 before proceeding
-            if (sortOrder == 11)
+            if (sortOrder == 8)
             {
 
 
@@ -5475,36 +5469,45 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         return property != null ? (int)property.GetValue(entityLevel) : 0;
                     }
 
-                    int branchId = GetLevelId(branchMapId);
-                    int deptId = GetLevelId(depMapId);
-                    int bandId = GetLevelId(bandMapId);
-                    int gradeLevelId = GetLevelId(gradeId);
-                    int desigId = GetLevelId(designationMapId);
+                    //int branchId = GetLevelId(branchMapId);
+                    //int deptId = GetLevelId(depMapId);
+                    //int bandId = GetLevelId(bandMapId);
+                    //int gradeLevelId = GetLevelId(gradeId);
+                    //int desigId = GetLevelId(designationMapId);
+                    employeeDetailsDto.BranchId = GetLevelId(branchMapId);
+                    employeeDetailsDto.DepId = GetLevelId(depMapId);
+                    employeeDetailsDto.BandId = GetLevelId(bandMapId);
+                    employeeDetailsDto.GradeId = GetLevelId(gradeId);
+                    employeeDetailsDto.DesigId = GetLevelId(designationMapId);
 
                     if (employeeDetailsDto.FirstEntryDate == null)
                     {
-                        employeeDetailsDto.FirstEntryDate = employeeDetailsDto.JoiningDate;
+                        employeeDetailsDto.FirstEntryDate = employeeDetailsDto.JoinDt;
                     }
-                    var OldLastEntity = await _context.HrEmpMasters.Where(e => e.EmpId == employeeDetailsDto.EmpID).Select(e => e.LastEntity).FirstOrDefaultAsync();
+                    var OldLastEntity = await _context.HrEmpMasters.Where(e => e.EmpId == employeeDetailsDto.EmpId).Select(e => e.LastEntity).FirstOrDefaultAsync();
 
                     //var employee = _mapper.Map<HrEmpMaster>(employeeDetailsDto);
 
                     //_context.HrEmpMasters.Update(employee);
 
-                    var employee = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == employeeDetailsDto.EmpID);
+                    var employee = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == employeeDetailsDto.EmpId);
 
                     if (employee != null)
                     {
-                        _mapper.Map(employeeDetailsDto, employee); // Maps DTO properties to the existing entity
+                        employee.EmpCode = employeeDetailsDto.EmpCode;
 
+                        _mapper.Map(employeeDetailsDto, employee);
                         _context.HrEmpMasters.Update(employee);
-                        _context.SaveChanges();
+                        //await _context.SaveChangesAsync();
                     }
+
+
+
 
 
                     var empData = (from a in _context.HrEmpMasters
                                    join b in _context.HighLevelViewTables on a.LastEntity equals b.LastEntityId
-                                   where a.EmpId == employeeDetailsDto.EmpID
+                                   where a.EmpId == employeeDetailsDto.EmpId
                                    select new { EmpMaster = a, HighLevel = b })
                              .FirstOrDefault();
 
@@ -5524,8 +5527,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                     }
 
-                    var cteOldEntity = GetEmployeeLevels(employeeDetailsDto.EmpID, OldLastEntity).Result;
-                    var cteNewEntity = GetEmployeeLevels(employeeDetailsDto.EmpID, employeeDetailsDto.LastEntity).Result;
+                    var cteOldEntity = GetEmployeeLevels(employeeDetailsDto.EmpId, OldLastEntity).Result;
+                    var cteNewEntity = GetEmployeeLevels(employeeDetailsDto.EmpId, employeeDetailsDto.LastEntity).Result;
 
                     var levelNumbers = Enumerable.Range(1, 12); // Equivalent to CROSS JOIN VALUES(1-12)
 
@@ -5625,32 +5628,59 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
 
+                    //var cteLatestTransferTransition = _context.TransferTransition00s
+                    //    .Where(t => t.EmployeeId == employeeDetailsDto.EmpId
+                    //               && !new[] { "R", "D" }.Contains(t.BatchApprovalStatus)
+                    //               && (t.EmpApprovalStatus ?? "A") != "R")
+                    //    .AsEnumerable() // Switch to client-side evaluation
+                    //    .GroupBy(t => new { t.EmployeeId, t.EntityOrder }) // Group by EmployeeID and EntityOrder
+                    //    .SelectMany(g => g
+                    //        .OrderByDescending(t => t.ToDate) // Order by ToDate descending
+                    //        .ThenByDescending(t => t.EntityOrder) // If ToDate is the same, order by EntityOrder
+                    //        .Select((t, index) => new { t, Rank = index + 1 }) // Assign rank
+                    //        .Where(x => x.Rank == 1)) // Only select rank 1
+                    //    .Select(t => new
+                    //    {
+                    //        t.t.TransferTransId,
+                    //        t.t.EntityOrder,
+                    //        t.t.ActionId,
+                    //        t.t.EmployeeId,
+                    //        t.t.OldEntityId,
+                    //        t.t.OldEntityDescription,
+                    //        t.t.NewEntityId,
+                    //        t.t.NewEntityDescription,
+                    //        t.t.ToDate,
+                    //        t.t.BatchApprovalStatus,
+                    //        t.t.EmpApprovalStatus
+                    //    })
+                    //    .ToList();
+
                     var cteLatestTransferTransition = _context.TransferTransition00s
-                        .Where(t => t.EmployeeId == employeeDetailsDto.EmpID
-                                   && !new[] { "R", "D" }.Contains(t.BatchApprovalStatus)
-                                   && (t.EmpApprovalStatus ?? "A") != "R")
-                        .AsEnumerable() // Switch to client-side evaluation
-                        .GroupBy(t => new { t.EmployeeId, t.EntityOrder }) // Group by EmployeeID and EntityOrder
-                        .SelectMany(g => g
-                            .OrderByDescending(t => t.ToDate) // Order by ToDate descending
-                            .ThenByDescending(t => t.EntityOrder) // If ToDate is the same, order by EntityOrder
-                            .Select((t, index) => new { t, Rank = index + 1 }) // Assign rank
-                            .Where(x => x.Rank == 1)) // Only select rank 1
-                        .Select(t => new
-                        {
-                            t.t.TransferTransId,
-                            t.t.EntityOrder,
-                            t.t.ActionId,
-                            t.t.EmployeeId,
-                            t.t.OldEntityId,
-                            t.t.OldEntityDescription,
-                            t.t.NewEntityId,
-                            t.t.NewEntityDescription,
-                            t.t.ToDate,
-                            t.t.BatchApprovalStatus,
-                            t.t.EmpApprovalStatus
-                        })
-                        .ToList();
+                             .Where(t => t.EmployeeId == employeeDetailsDto.EmpId
+                                        && !new[] { ApprovalStatus.Rejceted.ToString(), ApprovalStatus.Deleted.ToString() }.Contains(t.BatchApprovalStatus)
+                                        && (t.EmpApprovalStatus ?? ApprovalStatus.Approved.ToString()) != ApprovalStatus.Rejceted.ToString())
+                             .AsEnumerable() // Switch to client-side evaluation
+                             .GroupBy(t => new { t.EmployeeId, t.EntityOrder }) // Group by EmployeeID and EntityOrder
+                             .SelectMany(g => g
+                                 .OrderByDescending(t => t.ToDate) // Order by ToDate descending
+                                 .ThenByDescending(t => t.EntityOrder) // If ToDate is the same, order by EntityOrder
+                                 .Select((t, index) => new { t, Rank = index + 1 }) // Assign rank
+                                 .Where(x => x.Rank == 1)) // Only select rank 1
+                             .Select(t => new
+                             {
+                                 t.t.TransferTransId,
+                                 t.t.EntityOrder,
+                                 t.t.ActionId,
+                                 t.t.EmployeeId,
+                                 t.t.OldEntityId,
+                                 t.t.OldEntityDescription,
+                                 t.t.NewEntityId,
+                                 t.t.NewEntityDescription,
+                                 t.t.ToDate,
+                                 t.t.BatchApprovalStatus,
+                                 t.t.EmpApprovalStatus
+                             })
+                             .ToList();
 
 
 
@@ -5674,115 +5704,103 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         {
                             item.a.NewEntityId = item.c.NewEID;
                             item.a.NewEntityDescription = item.c.DescriptionNew;
-                            _context.TransferTransition00s.Update(item.a);
+                            //_context.TransferTransition00s.Update(item.a);
+                            //   await _context.SaveChangesAsync();
 
                         }
 
-
-
                     }
-                    var existingRecord = _context.HrEmpAddresses.FirstOrDefault(e => e.EmpId == employeeDetailsDto.EmpID);
-                    if (existingRecord != null)
+                    var existingRecord = await _context.HrEmpAddresses.FirstOrDefaultAsync(e => e.EmpId == employeeDetailsDto.EmpId);
+                    if (existingRecord is not null)
                     {
                         // Update existing record
                         existingRecord.InstId = employeeDetailsDto.InstId;
                         existingRecord.OfficialEmail = employeeDetailsDto.EmailId;
-                        existingRecord.PersonalEmail = employeeDetailsDto.PersonalEMail;
-                        existingRecord.Phone = employeeDetailsDto.ContactNo;
+                        existingRecord.PersonalEmail = employeeDetailsDto.PersonalEmail;
+                        existingRecord.Phone = employeeDetailsDto.Phone;
                         existingRecord.HomeCountryPhone = employeeDetailsDto.HomeCountryPhone;
-                        existingRecord.EntryBy = employeeDetailsDto.EntryBy;
-                        existingRecord.EntryDt = DateTime.UtcNow;
-
-                        _context.HrEmpAddresses.Update(existingRecord);
+                        existingRecord.UpdatedBy = employeeDetailsDto.EntryBy;
+                        existingRecord.UpdatedDate = DateTime.UtcNow;
                     }
                     else
                     {
                         // Insert new record
-                        var newRecord = new HrEmpAddress
+                        await _context.HrEmpAddresses.AddAsync(new HrEmpAddress
                         {
+                            EmpId = employeeDetailsDto.EmpId, // Ensure EmpId is set
                             InstId = employeeDetailsDto.InstId,
                             OfficialEmail = employeeDetailsDto.EmailId,
-                            PersonalEmail = employeeDetailsDto.PersonalEMail,
-                            Phone = employeeDetailsDto.ContactNo,
+                            PersonalEmail = employeeDetailsDto.PersonalEmail,
+                            Phone = employeeDetailsDto.Phone,
                             HomeCountryPhone = employeeDetailsDto.HomeCountryPhone,
                             EntryBy = employeeDetailsDto.EntryBy,
-                            EntryDt = DateTime.UtcNow,
-                        };
-                        await _context.HrEmpAddresses.AddAsync(existingRecord);
-
-
+                            EntryDt = DateTime.UtcNow
+                        });
                     }
-                    var employeePersonal = await _context.HrEmpPersonals.FirstOrDefaultAsync(e => e.EmpId == employeeDetailsDto.EmpID);
 
-                    if (employeePersonal != null)
+                    var employeePersonal = await _context.HrEmpPersonals.FirstOrDefaultAsync(e => e.EmpId == employeeDetailsDto.EmpId);
+
+                    if (employeePersonal is not null)
                     {
                         employeePersonal.InstId = employeeDetailsDto.InstId;
                         employeePersonal.Dob = employeeDetailsDto.DateOfBirth;
                         employeePersonal.Gender = employeeDetailsDto.Gender;
-                        employeePersonal.MaritalStatus = employeeDetailsDto.MaritalStatus;
-                        employeePersonal.Religion = employeeDetailsDto.ReligionID;
-                        employeePersonal.BloodGrp = employeeDetailsDto.BloodGroup;
-                        employeePersonal.Nationality = employeeDetailsDto.NationalityID;
-                        employeePersonal.Country = employeeDetailsDto.CountryID;
-                        employeePersonal.IdentMark = employeeDetailsDto.IdentificationMark;
+                        employeePersonal.MaritalStatus = employeeDetailsDto.PersonalDetailsDto.Marital_Status;
+                        employeePersonal.Religion = employeeDetailsDto.PersonalDetailsDto.ReligionID;
+                        employeePersonal.BloodGrp = employeeDetailsDto.PersonalDetailsDto.Blood_Grp;
+                        employeePersonal.Nationality = employeeDetailsDto.PersonalDetailsDto.NationalityID;
+                        employeePersonal.Country = employeeDetailsDto.PersonalDetailsDto.CountryID;
+                        employeePersonal.IdentMark = employeeDetailsDto.PersonalDetailsDto.Ident_Mark;
                         employeePersonal.EntryBy = employeeDetailsDto.EntryBy;
                         employeePersonal.EntryDt = DateTime.UtcNow;
-                        employeePersonal.Height = employeeDetailsDto.Height;
-                        employeePersonal.Weight = employeeDetailsDto.Weight;
-                        employeePersonal.WeddingDate = employeeDetailsDto.WeddingDate; // Ensures only the date part is stored
-                        employeePersonal.CountryOfBirth = employeeDetailsDto.Country2ID;
-
-                        _context.HrEmpPersonals.Update(employeePersonal);
-
-
+                        employeePersonal.Height = employeeDetailsDto.PersonalDetailsDto.Height;
+                        employeePersonal.Weight = employeeDetailsDto.PersonalDetailsDto.Weight;
+                        employeePersonal.WeddingDate = employeeDetailsDto.PersonalDetailsDto.Wedding_Date; // Ensures only the date part is stored
+                        employeePersonal.CountryOfBirth = employeeDetailsDto.PersonalDetailsDto.CountryOfBirth;
 
                     }
-                    var employeeReporting = await _context.HrEmpReportings.FirstOrDefaultAsync(e => e.EmpId == employeeDetailsDto.EmpID);
+
+                    var employeeReporting = await _context.HrEmpReportings.FirstOrDefaultAsync(e => e.EmpId == employeeDetailsDto.EmpId);
                     if (employeeReporting != null)
                     {
                         employeeReporting.InstId = employeeDetailsDto.InstId;
-                        employeeReporting.ReprotToWhome = employeeDetailsDto.ReportingTo;
-                        employeeReporting.EffectDate = employeeDetailsDto.EffectDate;
-                        employeeReporting.Active = "Y";
+                        //employeeReporting.ReprotToWhome = employeeDetailsDto.;
+                        //employeeReporting.EffectDate = employeeDetailsDto.EffectDate;
+                        employeeReporting.Active = _employeeSettings.ActiveStatus;
                         employeeReporting.EntryBy = employeeDetailsDto.EntryBy;
                         employeeReporting.EntryDate = DateTime.UtcNow;
-                        _context.HrEmpReportings.Update(employeeReporting);
+                        //await _context.SaveChangesAsync();
                     }
 
-                    var usersToUpdate = from user in _context.AdmUserMasters
-                                        join relation in _context.HrEmployeeUserRelations on user.UserId equals relation.UserId
-                                        join emp in _context.HrEmpMasters on relation.EmpId equals emp.EmpId
-                                        where relation.EmpId == employeeDetailsDto.EmpID
-                                        select user;
+                    var userMastersToUpdate = from user in _context.AdmUserMasters
+                                              join relation in _context.HrEmployeeUserRelations on user.UserId equals relation.UserId
+                                              join emp in _context.HrEmpMasters on relation.EmpId equals emp.EmpId
+                                              where relation.EmpId == employeeDetailsDto.EmpId
+                                              select user;
 
-                    foreach (var user in usersToUpdate)
+                    foreach (var user in userMastersToUpdate)
                     {
                         user.EntryDate = DateTime.UtcNow;// employeeDetailsDto.EntryDate;
                         user.Email = employeeDetailsDto.EmailId;
-                        user.NeedApp = employeeDetailsDto.IsMobileApp;
-                        _context.AdmUserMasters.Update(user);
+                        user.NeedApp = true;// employeeDetailsDto.PersonalDetailsDto;
+                        //await _context.SaveChangesAsync();
                     }
 
 
 
-                    var recordsToUpdate = from urm in _context.AdmUserRoleMasters
-                                          join eur in _context.HrEmployeeUserRelations on urm.UserId equals eur.UserId
-                                          join em in _context.HrEmpMasters on eur.EmpId equals em.EmpId
-                                          where eur.EmpId == employeeDetailsDto.EmpID
-                                          select new { urm, em };
+                    var roleMasterToUpdate = from urm in _context.AdmUserRoleMasters
+                                             join eur in _context.HrEmployeeUserRelations on urm.UserId equals eur.UserId
+                                             join em in _context.HrEmpMasters on eur.EmpId equals em.EmpId
+                                             where eur.EmpId == employeeDetailsDto.EmpId
+                                             select new { urm, em };
 
-                    foreach (var record in recordsToUpdate)
+                    foreach (var record in roleMasterToUpdate)
                     {
-                        record.urm.InstId = record.em.InstId;
+                        record.urm.InstId = employeeDetailsDto.InstId;
                         record.urm.RoleId = employeeDetailsDto.UserRole;
-                        record.urm.Acess = 1;
-                        _context.AdmUserRoleMasters.Update(record.urm);
-                        /*
-                         System.InvalidOperationException: 'Unable to track an instance of type 'AdmUserRoleMaster' because it does not have a primary key. Only entity types with a primary key may be tracked.'
+                        //record.urm.Acess = 1;
+                        record.urm.Acess = (int)ProbationStatus.PROBATION;
 
-                         
-                         
-                         */
                     }
                     #region Lulu Client Customized Code
 
@@ -5833,7 +5851,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     //                    .FirstOrDefault();
 
                     var latestRecord = _context.CompanyConveyanceHistories
-                        .Where(c => c.EmployeeId == employeeDetailsDto.EmpID)
+                        .Where(c => c.EmployeeId == employeeDetailsDto.EmpId)
                         .OrderByDescending(c => c.EntryDate)
                         .FirstOrDefault();
 
@@ -5853,7 +5871,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         {
                             // Fetch ToDate from HR_EMP_MASTER if no previous history exists
                             companyConveyanceToDate = _context.HrEmpMasters
-                                .Where(e => e.EmpId == employeeDetailsDto.EmpID)
+                                .Where(e => e.EmpId == employeeDetailsDto.EmpId)
                                 .Select(e => companyConveyanceToDate) // Equivalent to GETUTCDATE()
                                 .FirstOrDefault();
                         }
@@ -5861,21 +5879,21 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         // Insert new entry in CompanyConveyance_History
                         var newEntry = new CompanyConveyanceHistory
                         {
-                            EmployeeId = employeeDetailsDto.EmpID,
+                            EmployeeId = employeeDetailsDto.EmpId,
                             CompanyConveyance = _context.HrEmpMasters
-                                .Where(e => e.EmpId == employeeDetailsDto.EmpID)
+                                .Where(e => e.EmpId == employeeDetailsDto.EmpId)
                                 .Select(e => e.CompanyConveyance)
                                 .FirstOrDefault(),
                             FromDate = companyConveyanceToDate,
                             ToDate = null,
                             EntryBy = employeeDetailsDto.EntryBy,
-                            EntryDate = employeeDetailsDto.EntryDate
+                            EntryDate = DateTime.UtcNow
                         };
 
                         await _context.CompanyConveyanceHistories.AddAsync(newEntry);
 
                         var latestHistory = _context.CompanyVehicleHistories
-                                             .Where(h => h.EmployeeId == employeeDetailsDto.EmpID)
+                                             .Where(h => h.EmployeeId == employeeDetailsDto.EmpId)
                                              .OrderByDescending(h => h.EntryDate)
                                              .FirstOrDefault();
 
@@ -5885,15 +5903,16 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         {
                             // Update the existing record's ToDate
                             latestHistory.ToDate = DateTime.UtcNow;
-                            _context.CompanyVehicleHistories.Update(latestHistory);// context.SaveChanges();
+                            //_context.CompanyVehicleHistories.Update(latestHistory);//
+                            // _context.SaveChanges();
                         }
 
                         // Insert new record
                         var newHistory = new CompanyVehicleHistory
                         {
-                            EmployeeId = employeeDetailsDto.EmpID,
+                            EmployeeId = employeeDetailsDto.EmpId,
                             CompanyVehicle = _context.HrEmpMasters
-                                .Where(e => e.EmpId == employeeDetailsDto.EmpID)
+                                .Where(e => e.EmpId == employeeDetailsDto.EmpId)
                                 .Select(e => e.CompanyVehicle)
                                 .FirstOrDefault(),
                             FromDate = companyVehicleToDate,
@@ -5904,10 +5923,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                         await _context.CompanyVehicleHistories.AddAsync(newHistory);
 
-                        var payRollschemeID = GetEmployeeSchemeID(employeeDetailsDto.EmpID, "ASSPAYROLLPERIOD", "PRL").Result;
+                        //var payRollschemeID = GetEmployeeSchemeID(employeeDetailsDto.EmpId, "ASSPAYROLLPERIOD", "PRL").Result;
+                        var payRollschemeID = GetEmployeeSchemeID(employeeDetailsDto.EmpId, _employeeSettings.PayrollPeriodScheme, _employeeSettings.PayrollPeriodType).Result;
                         if (payRollschemeID > 0 && lastEntityChange == 1)
                         {
-                            var payrollPeriod = _context.EmployeeLatestPayrollPeriods.Where(a => a.EmployeeId == employeeDetailsDto.EmpID)
+                            var payrollPeriod = _context.EmployeeLatestPayrollPeriods.Where(a => a.EmployeeId == employeeDetailsDto.EmpId)
                                                 .Join(_context.HrEmpMasters, a => a.EmployeeId, b => b.EmpId, (a, b) => new { a, b }).FirstOrDefault();
 
                             if (payrollPeriod != null)
@@ -5920,14 +5940,16 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     payrollPeriod.a.EntryDate = DateTime.UtcNow;  // Equivalent to GETUTCDATE()
                                 }
 
-                                _context.EmployeeLatestPayrollPeriods.Update(payrollPeriod.a);
+                                //_context.EmployeeLatestPayrollPeriods.Update(payrollPeriod.a);
+                                // _context.SaveChangesAsync();
 
                             }
                         }
-                        var payRollBatchId = GetEmployeeSchemeID(employeeDetailsDto.EmpID, "ASSPAYCODE", "PRL").Result;
+                        //var payRollBatchId = GetEmployeeSchemeID(employeeDetailsDto.EmpId, "ASSPAYCODE", "PRL").Result;
+                        var payRollBatchId = GetEmployeeSchemeID(employeeDetailsDto.EmpId, _employeeSettings.PayrollBatchScheme, _employeeSettings.PayrollPeriodType).Result;
                         if (payRollBatchId > 0 && lastEntityChange == 1)
                         {
-                            var payRollBatch = _context.EmployeeLatestPayrollBatches.Where(a => a.EmployeeId == employeeDetailsDto.EmpID)
+                            var payRollBatch = _context.EmployeeLatestPayrollBatches.Where(a => a.EmployeeId == employeeDetailsDto.EmpId)
                                                 .Join(_context.HrEmpMasters, a => a.EmployeeId, b => b.EmpId, (a, b) => new { a, b }).FirstOrDefault();
 
                             if (payRollBatch != null)
@@ -5939,38 +5961,39 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     payRollBatch.a.EntryBy = employeeDetailsDto.EntryBy;  // Assuming 'entryBy' is passed as a parameter
                                     payRollBatch.a.EntryDate = DateTime.UtcNow;  // Equivalent to GETUTCDATE()
                                 }
-                                _context.EmployeeLatestPayrollBatches.Update(payRollBatch.a);
+                                //_context.EmployeeLatestPayrollBatches.Update(payRollBatch.a);
+                                // _context.SaveChangesAsync();
 
                             }
                         }
                         bool existsTransferId = await (from a in _context.TransferDetails00s
                                                        join b in _context.TransferDetails on a.TransferBatchId equals b.TransferBatchId
-                                                       where new[] { "A" }.Contains(b.ApprovalStatus)
-                                                       && a.EmpId == employeeDetailsDto.EmpID
+                                                       where new[] { ApprovalStatus.Approved.ToString() }.Contains(b.ApprovalStatus)
+                                                       && a.EmpId == employeeDetailsDto.EmpId
                                                        select a).AnyAsync();
                         if (existsTransferId && lastEntityChange == 1)
                         {
                             var transferID = (from a in _context.TransferDetails00s
                                               join b in _context.TransferDetails
                                                   on a.TransferBatchId equals b.TransferBatchId
-                                              where b.ApprovalStatus == "A" && a.EmpId == employeeDetailsDto.EmpID
+                                              where b.ApprovalStatus == ApprovalStatus.Approved.ToString() && a.EmpId == employeeDetailsDto.EmpId
                                               group new { a, b } by a.EmpId into grouped
                                               select new
                                               {
                                                   EmpID = grouped.Key,
                                                   TransferID = grouped.OrderByDescending(g => g.a.ToDate)
                                                                       .FirstOrDefault().a.TransferId
-                                              }).Where(t => t.EmpID == employeeDetailsDto.EmpID).Select(t => t.TransferID).FirstOrDefault();
+                                              }).Where(t => t.EmpID == employeeDetailsDto.EmpId).Select(t => t.TransferID).FirstOrDefault();
                             if (transferID > 0)
                             {
                                 var transferDetails = await _context.TransferDetails00s.FirstOrDefaultAsync(t => t.TransferId == transferID);
                                 if (transferDetails != null)
                                 {
-                                    transferDetails.BranchId = employeeDetailsDto.BranchID;
-                                    transferDetails.DepartmentId = employeeDetailsDto.DeptID;
-                                    transferDetails.BandId = employeeDetailsDto.BandID;
-                                    transferDetails.GradeId = employeeDetailsDto.GradeID;
-                                    transferDetails.DesignationId = employeeDetailsDto.DesigID;
+                                    //transferDetails.BranchId = employeeDetailsDto.BranchID;
+                                    //transferDetails.DepartmentId = employeeDetailsDto.DeptID;
+                                    //transferDetails.BandId = employeeDetailsDto.BandID;
+                                    //transferDetails.GradeId = employeeDetailsDto.GradeID;
+                                    //transferDetails.DesignationId = employeeDetailsDto.DesigID;
                                     transferDetails.LastEntity = employeeDetailsDto.LastEntity;
 
 
@@ -5986,7 +6009,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 var query = from emp in _context.HrEmpMasters
                                             join high in _context.HighLevelViewTables
                                                 on emp.LastEntity equals high.LastEntityId
-                                            where emp.EmpId == employeeDetailsDto.EmpID
+                                            where emp.EmpId == employeeDetailsDto.EmpId
                                             select new { emp, high };
 
                                 var employeeToUpdate = query.FirstOrDefault();
@@ -6015,17 +6038,31 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             }
 
                             var surveyExists = _context.SurveyRelations
-                                .Any(sr => sr.EmpId == employeeDetailsDto.EmpID && sr.ProbationReview == 1);
+                                .Any(sr => sr.EmpId == employeeDetailsDto.EmpId && sr.ProbationReview == (int)ProbationStatus.PROBATION);
 
                             if (surveyExists)
                             {
+                                //var probationRecord = (from pr in _context.ProbationRating00s
+                                //                       join pr2 in _context.ProbationRating02s
+                                //                       on pr.ProbRateId equals pr2.ProbRateId into prGroup
+                                //                       from pr2 in prGroup.DefaultIfEmpty()
+                                //                       where pr.ApprovalStatus == ApprovalStatus.Pending.ToString()
+                                //                             && pr.EmpId == employeeDetailsDto.EmpId
+                                //                             && (pr.CurrentRecord ?? 0) == 1
+                                //                             && pr2.NextRemarkDate != null
+                                //                       orderby pr.ProbRateId
+                                //                       select new
+                                //                       {
+                                //                           ProbRateID = pr.ProbRateId,
+                                //                           UpdatedProbDate = pr2.NextRemarkDate
+                                //                       }).FirstOrDefault();
                                 var probationRecord = (from pr in _context.ProbationRating00s
                                                        join pr2 in _context.ProbationRating02s
                                                        on pr.ProbRateId equals pr2.ProbRateId into prGroup
                                                        from pr2 in prGroup.DefaultIfEmpty()
-                                                       where pr.ApprovalStatus == "P"
-                                                             && pr.EmpId == employeeDetailsDto.EmpID
-                                                             && (pr.CurrentRecord ?? 0) == 1
+                                                       where pr.ApprovalStatus == ApprovalStatus.Pending.ToString()
+                                                             && pr.EmpId == employeeDetailsDto.EmpId
+                                                             && (pr.CurrentRecord ?? 0) == (int)ProbationStatus.PROBATION
                                                              && pr2.NextRemarkDate != null
                                                        orderby pr.ProbRateId
                                                        select new
@@ -6039,7 +6076,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     var probationEntry = await _context.ProbationRating00s.FindAsync(probationRecord.ProbRateID);
                                     if (probationEntry != null)
                                     {
-                                        probationEntry.ApprovalStatus = "A";
+                                        probationEntry.ApprovalStatus = ApprovalStatus.Approved.ToString();
                                         probationEntry.ManualApprover = employeeDetailsDto.EntryBy;
                                         probationEntry.ManualApproveDate = DateTime.UtcNow;
                                     }
@@ -6050,21 +6087,22 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                                     foreach (var status in workflowStatus)
                                     {
-                                        status.ApprovalStatus = "A";
+                                        status.ApprovalStatus = ApprovalStatus.Approved.ToString();
                                     }
 
                                     var surveyRelation = _context.SurveyRelations
-                                        .Where(sr => sr.EmpId == employeeDetailsDto.EmpID)
+                                        .Where(sr => sr.EmpId == employeeDetailsDto.EmpId)
                                         .ToList();
 
                                     foreach (var survey in surveyRelation)
                                     {
-                                        survey.ProbationReview = 1;
+                                        //survey.ProbationReview = 1;
+                                        survey.ProbationReview = (int)ProbationStatus.PROBATION;
                                     }
 
                                     if (probationRecord.UpdatedProbDate != null)
                                     {
-                                        var employeeToUpdate = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == employeeDetailsDto.EmpID);
+                                        var employeeToUpdate = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == employeeDetailsDto.EmpId);
                                         if (employee != null)
                                         {
                                             employee.ProbationDt = probationRecord.UpdatedProbDate;
@@ -6073,9 +6111,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 }
                                 else
                                 {
+                                    //var surveyRelationsToDelete = _context.SurveyRelations
+                                    //    .Where(sr => sr.EmpId == employeeDetailsDto.EmpId && sr.ProbationReview == 1)
+                                    //    .ToList();
                                     var surveyRelationsToDelete = _context.SurveyRelations
-                                        .Where(sr => sr.EmpId == employeeDetailsDto.EmpID && sr.ProbationReview == 1)
-                                        .ToList();
+                                     .Where(sr => sr.EmpId == employeeDetailsDto.EmpId && sr.ProbationReview == (int)ProbationStatus.PROBATION)
+                                     .ToList();
 
                                     _context.SurveyRelations.RemoveRange(surveyRelationsToDelete);
                                 }
@@ -6087,10 +6128,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         }
                     }
                 }
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
             }
-            return new EmployeeDetailsUpdateDto();
+            return _mapper.Map<EmployeeDetailsUpdateDto>(employeeDetailsDto);
 
         }
 
@@ -7487,106 +7528,106 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 {
                     // If assetReasonId could not be parsed or is 0, return failure message
                     return "Invalid asset or asset not found";
-                    }
                 }
             }
+        }
 
         //public Task<string> GetBankType (int employeeId)
         //    {
         //    throw new NotImplementedException ( );
         //    }
 
-        public async Task<object> GetBankType (int employeeId)
-            {
+        public async Task<object> GetBankType(int employeeId)
+        {
             var result = await (from a in _context.HrmsDocument00s
                                 join b in _context.HrmsDocTypeMasters on a.DocType equals (int?)b.DocTypeId
                                 join c in _context.EmpDocumentAccesses on (int?)a.DocId equals c.DocId
                                 where c.EmpId == employeeId && a.Active == true &&
-                                      (!_context.HrmsEmpdocuments00s.Any (d => d.DocId == a.DocId && d.Status!= "R") ||
+                                      (!_context.HrmsEmpdocuments00s.Any(d => d.DocId == a.DocId && d.Status != "R") ||
                                        (b.DocType == "BANK DETAILS") ||
-                                       (_context.HrmsDocument00s.Join (_context.HrmsDocTypeMasters,
+                                       (_context.HrmsDocument00s.Join(_context.HrmsDocTypeMasters,
                                              doc => doc.DocType ?? 0,
                                              dt => dt.DocTypeId,
                                              (doc, dt) => new { doc.DocId, doc.IsAllowMultiple, dt.Code })
-                                         .Any (x => x.IsAllowMultiple == 1 && x.Code == "BNK" && x.DocId == a.DocId)))
+                                         .Any(x => x.IsAllowMultiple == 1 && x.Code == "BNK" && x.DocId == a.DocId)))
                                 select new
-                                    {
+                                {
                                     DocId = a.DocId,
                                     DocName = a.DocName
-                                    }).ToListAsync ( );
+                                }).ToListAsync();
 
             return result; // Returning as object (List of anonymous objects)
-            }
+        }
 
-        public async Task<object> GetGeneralSubCategoryList (string remarks)
-            {
-           var result = await(from a in _context.ReasonMasters
-                              join b in _context.GeneralCategories on a.Type equals b.Description
-                              where (b.Description == remarks) && a.Status == "A"
-                              select new
-                                  {
-                                  ReasonId = a.ReasonId,
-                                  Description = a.Description
-                                  }).ToListAsync ( );
+        public async Task<object> GetGeneralSubCategoryList(string remarks)
+        {
+            var result = await (from a in _context.ReasonMasters
+                                join b in _context.GeneralCategories on a.Type equals b.Description
+                                where (b.Description == remarks) && a.Status == "A"
+                                select new
+                                {
+                                    ReasonId = a.ReasonId,
+                                    Description = a.Description
+                                }).ToListAsync();
             return result;
 
-            }
+        }
 
-        public async Task<string> SetEmpDocumentDetails (SetEmpDocumentDetailsDto SetEmpDocumentDetails)
-            {
+        public async Task<string> SetEmpDocumentDetails(SetEmpDocumentDetailsDto SetEmpDocumentDetails)
+        {
             var workFlowNeed = (from a in _context.CompanyParameters
                                 join b in _context.HrmValueTypes on a.Value equals b.Value
                                 where b.Type == "EmployeeReporting"
                                       && a.ParameterCode == "ENDOCAPPRL"
                                       && a.Type == "COM"
-                                select b.Code).FirstOrDefault ( );
+                                select b.Code).FirstOrDefault();
 
             var transactionID = (from a in _context.TransactionMasters
                                  where a.TransactionType == "Document"
-                                 select a.TransactionId).FirstOrDefault ( );
-            var codeID = GetSequence (SetEmpDocumentDetails.EmpID ?? 0, transactionID, "", 0);
+                                 select a.TransactionId).FirstOrDefault();
+            var codeID = GetSequence(SetEmpDocumentDetails.EmpID ?? 0, transactionID, "", 0);
 
             if (codeID == null)
-                {
+            {
 
                 var ErrorId = 0;
                 var ErrorMessage = "NoSequence";
 
-                }
+            }
 
             var RequestSequence = (from a in _context.AdmCodegenerationmasters
                                    where codeID == codeID
-                                   select a.LastSequence).FirstOrDefault ( );
+                                   select a.LastSequence).FirstOrDefault();
             var maxCurrentCodeValue = _context.AdmCodegenerationmasters
-                .Where (a => a.CodeId == Convert.ToInt32 (codeID))
-                .Max (a => (int?)a.CurrentCodeValue) ?? 0;
+                .Where(a => a.CodeId == Convert.ToInt32(codeID))
+                .Max(a => (int?)a.CurrentCodeValue) ?? 0;
 
             var updatedValue = maxCurrentCodeValue + 1;
 
             var recordToUpdate = _context.AdmCodegenerationmasters
-                .FirstOrDefault (a => a.CodeId == Convert.ToInt32 (codeID));
+                .FirstOrDefault(a => a.CodeId == Convert.ToInt32(codeID));
 
             if (recordToUpdate != null)
-                {
+            {
                 recordToUpdate.CurrentCodeValue = updatedValue;
-                _context.SaveChanges ( );
-                }
+                _context.SaveChanges();
+            }
 
             var record = _context.AdmCodegenerationmasters
-                .FirstOrDefault (a => a.CodeId == Convert.ToInt32 (codeID));
+                .FirstOrDefault(a => a.CodeId == Convert.ToInt32(codeID));
 
             if (record != null)
-                {
+            {
 
-                int length = (record.NumberFormat.Length) - (record.CurrentCodeValue?.ToString ( ).Length ?? 0);
+                int length = (record.NumberFormat.Length) - (record.CurrentCodeValue?.ToString().Length ?? 0);
 
-                string seq = record.NumberFormat.Substring (0, Math.Max (0, length));
+                string seq = record.NumberFormat.Substring(0, Math.Max(0, length));
 
-                string finalvalue = record.Code.ToString ( ) + seq + (record.CurrentCodeValue?.ToString ( ) ?? "0");
+                string finalvalue = record.Code.ToString() + seq + (record.CurrentCodeValue?.ToString() ?? "0");
                 record.LastSequence = finalvalue;
-                _context.SaveChanges ( );
+                _context.SaveChanges();
 
-                }
+            }
             //if(SetEmpDocumentDetails.WorkFlowNeed == "Yes")
             //    {
 
@@ -7616,15 +7657,15 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             //    }
 
             if (workFlowNeed == "Yes")
-                {
+            {
                 HrmsEmpdocuments00 newDocument;
 
                 if (SetEmpDocumentDetails.ProxyID > 0)
-                    {
+                {
                     if (SetEmpDocumentDetails.ProxyID == SetEmpDocumentDetails.EmpID)
-                        {
+                    {
                         newDocument = new HrmsEmpdocuments00
-                            {
+                        {
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.EmpID,
                             RequestId = RequestSequence,
@@ -7634,12 +7675,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             ProxyId = 0,
                             EntryBy = SetEmpDocumentDetails.EntryBy,
                             EntryDate = DateTime.UtcNow
-                            };
-                        }
+                        };
+                    }
                     else
-                        {
+                    {
                         newDocument = new HrmsEmpdocuments00
-                            {
+                        {
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.ProxyID,
                             RequestId = RequestSequence,
@@ -7649,13 +7690,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             ProxyId = SetEmpDocumentDetails.EmpID,
                             EntryBy = SetEmpDocumentDetails.EntryBy,
                             EntryDate = DateTime.UtcNow
-                            };
-                        }
+                        };
                     }
+                }
                 else
-                    {
+                {
                     newDocument = new HrmsEmpdocuments00
-                        {
+                    {
                         DocId = SetEmpDocumentDetails.DocumentID,
                         EmpId = SetEmpDocumentDetails.EmpID,
                         RequestId = RequestSequence,
@@ -7665,12 +7706,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         ProxyId = SetEmpDocumentDetails.ProxyID,
                         EntryBy = SetEmpDocumentDetails.EntryBy,
                         EntryDate = DateTime.UtcNow
-                        };
-                    }
+                    };
+                }
 
-                
-                _context.HrmsEmpdocuments00s.Add (newDocument);
-                _context.SaveChanges ( ); 
+
+                _context.HrmsEmpdocuments00s.Add(newDocument);
+                _context.SaveChanges();
 
 
                 int newDetailID = newDocument.DetailId;
@@ -7678,17 +7719,17 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                 //_context.Database.ExecuteSqlRaw ("exec WorkFlowActivityFlow @p0, @p1, @p2, @p3",
                 //    parameters: new object[] { EmpID, "Document", newDetailID, EntryBy });
-                }
+            }
             else if (workFlowNeed == "No")
-                {
+            {
                 HrmsEmpdocuments00 newDocument;
 
                 if (SetEmpDocumentDetails.ProxyID > 0)
-                    {
+                {
                     if (SetEmpDocumentDetails.ProxyID == SetEmpDocumentDetails.EmpID)
-                        {
+                    {
                         newDocument = new HrmsEmpdocuments00
-                            {
+                        {
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.EmpID,
                             RequestId = RequestSequence,
@@ -7699,12 +7740,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             EntryBy = SetEmpDocumentDetails.EntryBy,
                             EntryDate = DateTime.UtcNow,
                             FinalApprovalDate = DateTime.UtcNow
-                            };
-                        }
+                        };
+                    }
                     else
-                        {
+                    {
                         newDocument = new HrmsEmpdocuments00
-                            {
+                        {
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.ProxyID,
                             RequestId = RequestSequence,
@@ -7715,13 +7756,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             EntryBy = SetEmpDocumentDetails.EntryBy,
                             EntryDate = DateTime.UtcNow,
                             FinalApprovalDate = DateTime.UtcNow
-                            };
-                        }
+                        };
                     }
+                }
                 else
-                    {
+                {
                     newDocument = new HrmsEmpdocuments00
-                        {
+                    {
                         DocId = SetEmpDocumentDetails.DocumentID,
                         EmpId = SetEmpDocumentDetails.EmpID,
                         RequestId = RequestSequence,
@@ -7732,19 +7773,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         EntryBy = SetEmpDocumentDetails.EntryBy,
                         EntryDate = DateTime.UtcNow,
                         FinalApprovalDate = DateTime.UtcNow
-                        };
-                    }
+                    };
+                }
 
 
-                _context.HrmsEmpdocuments00s.Add (newDocument);
-                _context.SaveChanges ( );
+                _context.HrmsEmpdocuments00s.Add(newDocument);
+                _context.SaveChanges();
 
 
                 int newDetailID = newDocument.DetailId;
 
 
                 var approvedDocument = new HrmsEmpdocumentsApproved00
-                    {
+                {
                     DetailId = newDetailID,
                     DocId = newDocument.DocId,
                     EmpId = newDocument.EmpId,
@@ -7757,48 +7798,48 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     EntryBy = newDocument.EntryBy,
                     EntryDate = newDocument.EntryDate,
                     FinalApprovalDate = newDocument.FinalApprovalDate
-                    };
+                };
 
-                _context.HrmsEmpdocumentsApproved00s.Add (approvedDocument);
-                _context.SaveChanges ( );
-                }
+                _context.HrmsEmpdocumentsApproved00s.Add(approvedDocument);
+                _context.SaveChanges();
+            }
             var sequenceid = 0;
-           
+
             var codeGenMaster = _context.AdmCodegenerationmasters
-                .FirstOrDefault (c => c.CodeId == sequenceid);
+                .FirstOrDefault(c => c.CodeId == sequenceid);
 
             if (codeGenMaster != null)
-                {
-               
+            {
+
                 int maxCurrentCodeValue1 = _context.AdmCodegenerationmasters
-                    .Where (c => c.CodeId == sequenceid)
-                    .Max (c => (int?)c.CurrentCodeValue) ?? 0;
+                    .Where(c => c.CodeId == sequenceid)
+                    .Max(c => (int?)c.CurrentCodeValue) ?? 0;
 
                 codeGenMaster.CurrentCodeValue = maxCurrentCodeValue1 + 1;
-               
-                int numberFormatLength = codeGenMaster.NumberFormat.Length;
-                int currentCodeValueLength = codeGenMaster.CurrentCodeValue.ToString ( ).Length;
-                int lengthDiff = numberFormatLength - currentCodeValueLength;
-               
-                string seq = codeGenMaster.NumberFormat.Substring (0, Math.Max (0, lengthDiff));
-               
-                string finalSequence = $"{codeGenMaster.Code}{seq}{codeGenMaster.CurrentCodeValue}";
-                
-                codeGenMaster.LastSequence = finalSequence;
-                
-                _context.SaveChanges ( );
-                }
 
-          
+                int numberFormatLength = codeGenMaster.NumberFormat.Length;
+                int currentCodeValueLength = codeGenMaster.CurrentCodeValue.ToString().Length;
+                int lengthDiff = numberFormatLength - currentCodeValueLength;
+
+                string seq = codeGenMaster.NumberFormat.Substring(0, Math.Max(0, lengthDiff));
+
+                string finalSequence = $"{codeGenMaster.Code}{seq}{codeGenMaster.CurrentCodeValue}";
+
+                codeGenMaster.LastSequence = finalSequence;
+
+                _context.SaveChanges();
+            }
+
+
             string errorID = _context.HrmsEmpdocuments00s
-                .OrderByDescending (d => d.DetailId)
-                .Select (d => d.DetailId.ToString ( )) 
-                .FirstOrDefault ( ) ?? "0"; 
+                .OrderByDescending(d => d.DetailId)
+                .Select(d => d.DetailId.ToString())
+                .FirstOrDefault() ?? "0";
 
             return errorID;
 
 
-            }
+        }
 
         public async Task<PersonalDetailsHistoryDto> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto)
         {
@@ -7906,6 +7947,463 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 throw;
             }
             //return new PersonalDetailsHistoryDto();
+        }
+        public async Task<List<FillDocumentTypeDto>> FillDocumentType(int EmpID)
+        {
+            return await (from a in _context.HrmsDocument00s
+                          join b in _context.HrmsDocTypeMasters on a.DocType equals Convert.ToInt32(b.DocTypeId)
+                          join c in _context.EmpDocumentAccesses on Convert.ToInt32(a.DocId) equals c.DocId
+                          where c.EmpId == EmpID
+                                && !_context.HrmsEmpdocuments00s.Any(d => d.DocId == a.DocId && d.EmpId == EmpID && d.Status != "R")
+                                && a.Active == true
+                                && b.DocType != "Statutory"
+                                && b.DocType != "BANK DETAILS"
+                                || (_context.HrmsDocument00s
+                                    .Join(_context.HrmsDocTypeMasters, x => (long)x.DocType, y => y.DocTypeId, (x, y) => new { x.DocId, x.IsAllowMultiple, y.DocType, y.Code })
+                                    .Any(d => d.DocId == a.DocId && d.IsAllowMultiple == 1 && d.DocType != "Statutory" && d.Code != "BNK"))
+                          select new FillDocumentTypeDto
+                          {
+                              DocID = a.DocId,
+                              DocName = a.DocName
+
+                          }).AsNoTracking().ToListAsync();
+
+
+        }
+        public async Task<List<DocumentFieldDto>> DocumentField(int DocumentID)
+        {
+            return await (from a in _context.HrmsDocumentField00s
+                          join b in _context.HrmsDatatypes on a.DataTypeId equals b.DataTypeId into datatypeGroup
+                          from b in datatypeGroup.DefaultIfEmpty()
+                          join c in _context.HrmsDocument00s on (long)a.DocId equals c.DocId
+                          where a.DocId == DocumentID
+
+                          select new DocumentFieldDto
+                          {
+                              DocFieldID = a.DocFieldId,
+                              DocDescription = a.DocDescription,
+                              DataTypeId = a.DataTypeId,
+                              DocID = a.DocId,
+                              CreatedBy = a.CreatedBy,
+                              ModifiedBy = a.ModifiedBy,
+                              ModifiedDate = a.ModifiedDate,
+                              IsMandatory = a.IsMandatory,
+                              TypeId = b.TypeId,
+                              DataType = b.DataType,
+                              IsDate = b.IsDate,
+                              IsGeneralCategory = b.IsGeneralCategory,
+                              IsDropdown = b.IsDropdown,
+                              DocName = c.DocName,
+                              DocType = c.DocType,
+                              Active = c.Active,
+                              IsExpiry = c.IsExpiry,
+                              NotificationCountDays = c.NotificationCountDays,
+                              FolderName = c.FolderName,
+                              IsAllowMultiple = c.IsAllowMultiple,
+                              IsESI = c.IsEsi,
+                              IsPF = c.IsPf,
+                              ShowInRecruitment = c.ShowInRecruitment
+                          }).AsNoTracking().ToListAsync();
+
+        }
+        public async Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryList(string Remarks)
+        {
+            return await (from a in _context.ReasonMasters
+                          join b in _context.GeneralCategories on a.Type equals b.Description
+                          where b.Description == Remarks && a.Status == "A"
+
+
+                          select new DocumentGetGeneralSubCategoryListDto
+                          {
+                              Reason_Id = a.ReasonId,
+                              Description = a.Description
+                          }).AsNoTracking().ToListAsync();
+
+        }
+
+        public async Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var workFlowNeedValue = await (from a in _context.CompanyParameters
+                                               join b in _context.HrmValueTypes on a.Value equals b.Value
+                                               where b.Type == "EmployeeReporting" && a.ParameterCode == "ENDOCAPPRL" && a.Type == "COM"
+                                               select b.Code).FirstOrDefaultAsync();
+
+                var tmpDocFileUpList = DocumentBankField;
+
+                bool recordsExist = (from a in _context.HrmsEmpdocuments01s.ToList()
+                                     join b in tmpDocFileUpList
+                                     on a.DetailId equals b.DetailID
+                                     select a).Any();
+
+                if (recordsExist)
+                {
+                    var tmpDocFileUpListConverted = tmpDocFileUpList
+                        .Select(b => new
+                        {
+                            DetailID = b.DetailID ?? 0,
+                            DocFieldID = int.TryParse(b.DocFieldID, out int parsedId) ? parsedId : 0,
+                            DocFieldText = b.DocFieldText
+                        })
+                        .ToList();
+
+                    var updateRecords = from a in _context.HrmsEmpdocuments01s
+                                        join b in tmpDocFileUpListConverted
+                                        on new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
+                                        equals new { DetailId = b.DetailID, DocFields = b.DocFieldID }
+                                        select new { a, b };
+
+                    foreach (var record in updateRecords)
+                    {
+                        record.a.DocValues = record.b.DocFieldText;
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    var insertRecords = from b in tmpDocFileUpListConverted
+                                        join a in _context.HrmsEmpdocuments01s
+                                            on new { DetailID = b.DetailID, DocFields = b.DocFieldID }
+                                            equals new { DetailID = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 } into joined
+                                        from a in joined.DefaultIfEmpty()
+                                        where a == null
+                                        select new HrmsEmpdocuments01
+                                        {
+                                            DetailId = b.DetailID,
+                                            DocFields = b.DocFieldID,
+                                            DocValues = b.DocFieldText
+                                        };
+
+                    await _context.HrmsEmpdocuments01s.AddRangeAsync(insertRecords);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    var insertRecords = tmpDocFileUpList
+                        .Select(b => new HrmsEmpdocuments01
+                        {
+                            DetailId = b.DetailID,
+                            DocFields = int.TryParse(b.DocFieldID, out int parsedId) ? parsedId : 0,
+                            DocValues = b.DocFieldText
+                        })
+                        .ToList();
+
+
+                    await _context.HrmsEmpdocuments01s.AddRangeAsync(insertRecords);
+                    await _context.SaveChangesAsync();
+                }
+
+                var detailIds = tmpDocFileUpList.Select(b => b.DetailID).ToList();
+
+                bool recordsExistApproved = _context.HrmsEmpdocumentsApproved01s
+                    .Any(a => detailIds.Contains(a.DetailId));
+
+                if (recordsExistApproved)
+                {
+
+                    var documentHistory = _context.HrmsEmpdocumentsApproved00s
+                        .Where(a => a.DetailId == DocumentID)
+                        .Select(a => new HrmsEmpdocumentsHistory00
+                        {
+                            DetailId = a.DetailId,
+                            DocApprovedId = a.DocApprovedId,
+                            DocId = a.DocId,
+                            EmpId = a.EmpId,
+                            Status = "U",
+                            RequestId = a.RequestId,
+                            DateFrom = DateTime.UtcNow,
+                            EntryBy = In_EntryBy,
+                            EntryDate = DateTime.UtcNow
+                        }).ToList();
+
+                    await _context.HrmsEmpdocumentsHistory00s.AddRangeAsync(documentHistory);
+                    await _context.SaveChangesAsync();
+
+                    int docHisId = documentHistory.FirstOrDefault()?.DocApprovedId ?? 0;
+                    var tmpDocFileUpListConverted = tmpDocFileUpList
+                        .Select(b => new
+                        {
+                            DetailID = b.DetailID,
+                            DocFieldID = string.IsNullOrEmpty(b.DocFieldID) ? (int?)null : int.Parse(b.DocFieldID),
+                            DocFieldText = b.DocFieldText
+                        })
+                        .ToList();
+
+
+                    var historyRecords = (from a in _context.HrmsEmpdocumentsApproved01s
+                                          join b in tmpDocFileUpListConverted
+                                          on new { a.DetailId, a.DocFields }
+                                          equals new { DetailId = b.DetailID, DocFields = b.DocFieldID }
+                                          where a.DocValues != b.DocFieldText
+                                          select new HrmsEmpdocumentsHistory01
+                                          {
+                                              DocHisId = docHisId,
+                                              DetailId = b.DetailID,
+                                              DocFields = b.DocFieldID,
+                                              DocValues = b.DocFieldText,
+                                              OldDocValues = a.DocValues
+                                          }).ToList();
+
+
+                    await _context.HrmsEmpdocumentsHistory01s.AddRangeAsync(historyRecords);
+                    await _context.SaveChangesAsync();
+
+                    var missingHistoryRecords = (from b in tmpDocFileUpList
+                                                 join a in _context.HrmsEmpdocumentsApproved01s
+                                                 on new { DetailId = b.DetailID ?? 0, DocFields = int.TryParse(b.DocFieldID, out int parsedId) ? parsedId : 0 }
+                                                 equals new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
+                                                 into joined
+                                                 from a in joined.DefaultIfEmpty()
+                                                 where a == null
+                                                 select new HrmsEmpdocumentsHistory01
+                                                 {
+                                                     DocHisId = docHisId,
+                                                     DetailId = b.DetailID,
+                                                     DocFields = int.TryParse(b.DocFieldID, out int parsedId) ? parsedId : 0,
+                                                     DocValues = b.DocFieldText,
+                                                     OldDocValues = null
+                                                 }).ToList();
+
+                    await _context.HrmsEmpdocumentsHistory01s.AddRangeAsync(missingHistoryRecords);
+                    await _context.SaveChangesAsync();
+
+                    var tmpDocFileUpListConverted01 = tmpDocFileUpList
+                        .Select(b => new
+                        {
+                            DetailID = b.DetailID ?? 0,
+                            DocFieldID = string.IsNullOrEmpty(b.DocFieldID) ? 0 : int.Parse(b.DocFieldID),
+                            DocFieldText = b.DocFieldText
+                        })
+                        .ToList();
+                    var updateRecords = from a in _context.HrmsEmpdocumentsApproved01s
+                                        join b in tmpDocFileUpListConverted01
+                                        on new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
+                                        equals new { DetailId = b.DetailID, DocFields = b.DocFieldID }
+                                        select new { a, b };
+
+
+                    foreach (var record in updateRecords)
+                    {
+                        record.a.DocValues = record.b.DocFieldText;
+                    }
+                    await _context.SaveChangesAsync();
+
+                    var newRecords = (from b in tmpDocFileUpList
+                                      join a in _context.HrmsEmpdocumentsApproved01s
+                                      on new { DetailId = b.DetailID ?? 0, DocFields = int.TryParse(b.DocFieldID, out int parsedId) ? parsedId : 0 }
+                                      equals new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
+                                      into joined
+                                      from a in joined.DefaultIfEmpty()
+                                      where a == null
+                                      select new HrmsEmpdocumentsApproved01
+                                      {
+                                          DetailId = b.DetailID,
+                                          DocFields = int.TryParse(b.DocFieldID, out int parsedId) ? parsedId : 0,
+                                          DocValues = b.DocFieldText
+                                      }).ToList();
+
+                    await _context.HrmsEmpdocumentsApproved01s.AddRangeAsync(newRecords);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    if (workFlowNeedValue == "No")
+                    {
+
+                        var documentHistory = _context.HrmsEmpdocumentsApproved00s
+                            .Where(a => a.DetailId == DocumentID)
+                            .Select(a => new HrmsEmpdocumentsHistory00
+                            {
+                                DetailId = a.DetailId,
+                                DocApprovedId = a.DocApprovedId,
+                                DocId = a.DocId,
+                                EmpId = a.EmpId,
+                                Status = "I",
+                                RequestId = a.RequestId,
+                                DateFrom = DateTime.UtcNow,
+                                EntryBy = In_EntryBy,
+                                EntryDate = DateTime.UtcNow
+                            }).ToList();
+
+                        await _context.HrmsEmpdocumentsHistory00s.AddRangeAsync(documentHistory);
+                        await _context.SaveChangesAsync();
+
+                        int docHisId = documentHistory.FirstOrDefault()?.DocApprovedId ?? 0;
+
+
+                        var historyInsert = tmpDocFileUpList.Select(b => new HrmsEmpdocumentsHistory01
+                        {
+                            DetailId = b.DetailID,
+                            DocFields = int.TryParse(b.DocFieldID, out int parsedId) ? parsedId : 0,
+                            DocValues = b.DocFieldText,
+                            OldDocValues = null
+                        }).ToList();
+
+                        await _context.HrmsEmpdocumentsHistory01s.AddRangeAsync(historyInsert);
+                        await _context.SaveChangesAsync();
+
+                        var newEntries = tmpDocFileUpList.Select(b => new HrmsEmpdocumentsApproved01
+                        {
+                            DetailId = b.DetailID,
+                            DocFields = int.TryParse(b.DocFieldID, out int parsedId) ? parsedId : 0,
+                            DocValues = b.DocFieldText
+                        }).ToList();
+
+                        await _context.HrmsEmpdocumentsApproved01s.AddRangeAsync(newEntries);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                await transaction.CommitAsync();
+                return "Successfully Saved";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return $"Error: {ex.Message}";
+            }
+        }
+
+        public async Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var workFlowNeedValue = await (from a in _context.CompanyParameters
+                                               join b in _context.HrmValueTypes on a.Value equals b.Value
+                                               where b.Type == "EmployeeReporting" && a.ParameterCode == "ENDOCAPPRL" && a.Type == "COM"
+                                               select b.Code).FirstOrDefaultAsync();
+
+
+                if ((Status == "Approved" || Status == "A") || workFlowNeedValue == "No")
+                {
+                    int? docHisId = 0;
+
+                    bool documentExists = await _context.HrmsEmpdocumentsApproved02s
+                        .AnyAsync(d => d.DetailId == DetailID);
+
+                    if (documentExists)
+                    {
+                        docHisId = await _context.HrmsEmpdocumentsHistory00s
+                            .Where(h => h.DetailId == DetailID)
+                            .OrderByDescending(h => h.DocHistId)
+                            .Select(h => (int?)h.DocHistId)
+                            .FirstOrDefaultAsync();
+
+                        var historyEntry = await (from a in _context.HrmsEmpdocuments02s
+                                                  where a.DetailId == DetailID
+                                                  select new HrmsEmpdocumentsHistory02
+                                                  {
+                                                      DocHisId = docHisId ?? 0,
+                                                      DetailId = a.DetailId,
+                                                      FileName = DocumentBankField.FileName,
+                                                      FileType = DocumentBankField.FileType,
+                                                      FileData = DocumentBankField.FileData,
+                                                      OldFileName = a.FileName
+                                                  }).ToListAsync();
+
+                        await _context.HrmsEmpdocumentsHistory02s.AddRangeAsync(historyEntry);
+                    }
+                    else
+                    {
+                        docHisId = await _context.HrmsEmpdocumentsHistory00s
+                            .Where(h => h.DetailId == DetailID)
+                            .OrderByDescending(h => h.DocHistId)
+                            .Select(h => (int?)h.DocHistId)
+                            .FirstOrDefaultAsync();
+
+                        var historyEntry = new HrmsEmpdocumentsHistory02
+                        {
+                            DocHisId = docHisId ?? 0,
+                            DetailId = DocumentBankField.DetailID,
+                            FileName = DocumentBankField.FileName,
+                            FileType = DocumentBankField.FileType,
+                            FileData = DocumentBankField.FileData,
+                            OldFileName = null
+                        };
+
+                        await _context.HrmsEmpdocumentsHistory02s.AddAsync(historyEntry);
+
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+
+                if (Status == "Pending" || Status == "P")
+                {
+                    var existingDocs = _context.HrmsEmpdocuments02s.Where(d => d.DetailId == DetailID);
+                    _context.HrmsEmpdocuments02s.RemoveRange(existingDocs);
+
+                    var newDocument = new HrmsEmpdocuments02
+                    {
+                        DetailId = DocumentBankField.DetailID,
+                        FileName = DocumentBankField.FileName,
+                        FileType = DocumentBankField.FileType,
+                        FileData = DocumentBankField.FileData
+                    };
+
+                    await _context.HrmsEmpdocuments02s.AddAsync(newDocument);
+
+                    if (workFlowNeedValue == "No")
+                    {
+                        var existingApprovedDocs = _context.HrmsEmpdocumentsApproved02s.Where(d => d.DetailId == DetailID);
+                        _context.HrmsEmpdocumentsApproved02s.RemoveRange(existingApprovedDocs);
+                        await _context.SaveChangesAsync();
+
+                        var newApprovedDocument = new HrmsEmpdocumentsApproved02
+                        {
+                            DetailId = DocumentBankField.DetailID,
+                            FileName = DocumentBankField.FileName,
+                            FileType = DocumentBankField.FileType,
+                            FileData = DocumentBankField.FileData
+                        };
+
+                        await _context.HrmsEmpdocumentsApproved02s.AddAsync(newApprovedDocument);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                else if (Status == "Approved" || Status == "A")
+                {
+                    var existingDocs01 = _context.HrmsEmpdocuments02s.Where(d => d.DetailId == DetailID);
+                    _context.HrmsEmpdocuments02s.RemoveRange(existingDocs01);
+
+                    var newDocument = new HrmsEmpdocuments02
+                    {
+                        DetailId = DocumentBankField.DetailID,
+                        FileName = DocumentBankField.FileName,
+                        FileType = DocumentBankField.FileType,
+                        FileData = DocumentBankField.FileData
+                    };
+
+                    await _context.HrmsEmpdocuments02s.AddAsync(newDocument);
+
+                    var existingApprovedDocs = _context.HrmsEmpdocumentsApproved02s.Where(d => d.DetailId == DetailID);
+                    _context.HrmsEmpdocumentsApproved02s.RemoveRange(existingApprovedDocs);
+
+
+                    var newApprovedDocument = new HrmsEmpdocumentsApproved02
+                    {
+                        DetailId = DocumentBankField.DetailID,
+                        FileName = DocumentBankField.FileName,
+                        FileType = DocumentBankField.FileType,
+                        FileData = DocumentBankField.FileData
+                    };
+
+                    await _context.HrmsEmpdocumentsApproved02s.AddAsync(newApprovedDocument);
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+
+                return "Successfully Saved";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return $"Error: {ex.Message}";
+            }
         }
 
     }

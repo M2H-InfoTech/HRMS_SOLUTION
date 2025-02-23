@@ -137,5 +137,8 @@
         public DateTime? WeddingDate { get; set; } = DateTime.Now;
         public string? Phone { get; set; }
         public string? HomeCountryPhone { get; set; }
+
+        public PersonalDetailsDto? PersonalDetailsDto { get; set; }
+        public int UserRole { get; set; }
     }
 }

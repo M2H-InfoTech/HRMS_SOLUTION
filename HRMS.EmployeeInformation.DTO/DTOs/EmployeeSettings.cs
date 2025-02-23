@@ -45,6 +45,9 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? Hobbies { get; set; }
         public string? DataInsertSuccessStatus { get; set; }
         public string? DataInsertFailedStatus { get; set; }
+        public string? PayrollPeriodScheme { get; set; }
+        public string? PayrollPeriodType { get; set; }
+        public string? PayrollBatchScheme { get; set; }
     }
 
 }
