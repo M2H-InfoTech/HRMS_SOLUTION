@@ -323,7 +323,7 @@ namespace HRMS.EmployeeInformation.Service.Service
         //{
         //    return await _employeeRepository.UpdateEmployeeDetails(employeeDetailsDto, lastEntity);
         //}
-        public async Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto)
+        public async Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto)
         {
             return await _employeeRepository.UpdateEmployeeDetails(employeeDetailsDto);
         }
@@ -336,25 +336,45 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.UploadEmployeeDocuments(files, skillset);
         }
 
-        public async Task<string> InsertQualification (QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
-            {
-            return await _employeeRepository.InsertQualification (Qualification, FirstEntityID, EmpEntityIds);
-            }
-        public async Task<object> FillCountry ( )
-            {
-            return await _employeeRepository.FillCountry ( );
-            }
-        public async Task<object> GetBankType (int employeeId)
-            {
-            return await _employeeRepository.GetBankType (employeeId);
-            }
-        public async Task<object> GetGeneralSubCategoryList (string remarks)
-            {
-            return await _employeeRepository.GetGeneralSubCategoryList (remarks);
-            }
-        public async Task<string> SetEmpDocumentDetails (SetEmpDocumentDetailsDto SetEmpDocumentDetails)
-            {
-            return await _employeeRepository.SetEmpDocumentDetails (SetEmpDocumentDetails);
-            }
+        public async Task<string> InsertQualification(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
+        {
+            return await _employeeRepository.InsertQualification(Qualification, FirstEntityID, EmpEntityIds);
+        }
+        public async Task<object> FillCountry()
+        {
+            return await _employeeRepository.FillCountry();
+        }
+        public async Task<object> GetBankType(int employeeId)
+        {
+            return await _employeeRepository.GetBankType(employeeId);
+        }
+        public async Task<object> GetGeneralSubCategoryList(string remarks)
+        {
+            return await _employeeRepository.GetGeneralSubCategoryList(remarks);
+        }
+        public async Task<string> SetEmpDocumentDetails(SetEmpDocumentDetailsDto SetEmpDocumentDetails)
+        {
+            return await _employeeRepository.SetEmpDocumentDetails(SetEmpDocumentDetails);
+        }
+        public async Task<List<FillDocumentTypeDto>> FillDocumentType(int EmpID)
+        {
+            return await _employeeRepository.FillDocumentType(EmpID);
+        }
+        public async Task<List<DocumentFieldDto>> DocumentField(int DocumentID)
+        {
+            return await _employeeRepository.DocumentField(DocumentID);
+        }
+        public async Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryList(string Remarks)
+        {
+            return await _employeeRepository.DocumentGetGeneralSubCategoryList(Remarks);
+        }
+        public async Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy)
+        {
+            return await _employeeRepository.InsertDocumentsFieldDetails(DocumentBankField, DocumentID, In_EntryBy);
+        }
+        public async Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)
+        {
+            return await _employeeRepository.SetEmpDocuments(DocumentBankField, DetailID, Status, In_EntryBy);
         }
     }
+}

@@ -4,7 +4,7 @@
     {
         public int? EmpId { get; set; }
         public string? DateOfBirth { get; set; }
-        public string? Wedding_Date { get; set; }
+        public DateTime? Wedding_Date { get; set; }
         public int? NationalityID { get; set; }
         public int? CountryID { get; set; }
         public string? Blood_Grp { get; set; }
@@ -23,7 +23,7 @@
         public string? Guardians_Name { get; set; }
         public string? Country { get; set; }
         public string? Nationality { get; set; }
-        public string? CountryOfBirth { get; set; }
+        public int? CountryOfBirth { get; set; }
         public string? bloodgroupnew { get; set; }
 
     }

@@ -2,80 +2,139 @@
 {
     public class EmployeeParametersDto
     {
-        public string Mode { get; set; } = string.Empty;
-        public int InstId { get; set; } = 0;
+        public int InstId { get; set; }
 
-        public string EmpCode { get; set; } = string.Empty;
-        public int TransactionID { get; set; } = 0;
-        public string TransactionType { get; set; } = string.Empty;
-        public int EmpID { get; set; } = 0;
-        public string EmpIDs { get; set; } = string.Empty;
-        public int DeptID { get; set; } = 0;
-        public int DesigID { get; set; } = 0;
-        public int BandID { get; set; } = 0;
-        public int GradeID { get; set; } = 0;
-        public int BranchID { get; set; } = 0;
-        public int CompanyID { get; set; } = 0;
-        public int Country2ID { get; set; } = 0;
-        public int CountryID { get; set; } = 0;
-        public int LastEntity { get; set; } = 0;
-        public int JobType { get; set; } = 0;
-        public string Status { get; set; } = "0";
-        public string SystemStatus { get; set; } = "0";
-        public int ReportingTo { get; set; } = 0;
-        public string TypeID { get; set; } = string.Empty;
-        public string EmployeeCode { get; set; } = string.Empty;
-        public string FirstName { get; set; } = string.Empty;
-        public string MiddeleName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string GuardiansName { get; set; } = string.Empty;
-        public string Gender { get; set; } = string.Empty;
-        public string MaritalStatus { get; set; } = string.Empty;
-        public DateTime? DateOfBirth { get; set; } = null;
-        public string NationalID { get; set; } = string.Empty;
-        public string PassportNo { get; set; } = string.Empty;
-        public string EmailId { get; set; } = string.Empty;
-        public bool IsMobileApp { get; set; } = false;
-        public bool IsHRA { get; set; } = false;
-        public bool MealAllowanceDeduct { get; set; } = false;
-        public string PersonalEMail { get; set; } = string.Empty;
-        public DateTime? JoiningDate { get; set; } = null;
-        public DateTime? ReviewDate { get; set; } = null;
-        public int NoticePeriod { get; set; } = 0;
-        public bool IsProbation { get; set; } = false;
-        public DateTime? ProbationDate { get; set; } = null;
-        public DateTime? EffectDate { get; set; } = null;
-        public string? ContactNo { get; set; }
-        public string? HomeCountryPhone { get; set; }
-        public int ReligionID { get; set; }
-        public int NationalityID { get; set; }
-        public string BloodGroup { get; set; } = string.Empty;
-        public string Height { get; set; } = string.Empty;
-        public string Weight { get; set; } = string.Empty;
-        public string EmpEntityIds { get; set; } = string.Empty;
-        public int FirstEntityID { get; set; } = 0;
-        public string IsAutoCode { get; set; } = string.Empty;
-        public int IsExpat { get; set; } = 0;
-        public bool MarkAttn { get; set; } = false;
-        public string SeqNumber { get; set; } = string.Empty;
-        public int UserID { get; set; } = 0;
-        public string UserIds { get; set; } = string.Empty;
-        public int UserRole { get; set; } = 0;
-        public int EntryBy { get; set; } = 0;
-        public DateTime? EntryDate { get; set; } = null;
-        public string IdentificationMark { get; set; } = string.Empty;
-        public string DeviceID { get; set; } = string.Empty;
-        public DateTime? GraStrtDate { get; set; } = null;
-        public DateTime? FrstEntryDate { get; set; } = null;
-        public bool CompanyConveyance { get; set; } = false;
-        public bool CompanyVehicle { get; set; } = false;
-        public int NewEmpID { get; set; } = 0;
-        public int DetailID { get; set; } = 0;
-        public string EmpFileNumber { get; set; } = string.Empty;
-        public int PayrollMethod { get; set; } = 0;
-        public int DailyRateID { get; set; } = 0;
-        public int CanteenRequest { get; set; } = 0;
-        public DateTime? WeddingDate { get; set; } = null;
+        public int EmpID { get; set; }
+
+        public string? EmpCode { get; set; }
+
+        public string FirstName { get; set; } = null!;
+
+        public string? MiddleName { get; set; }
+
+        public string? LastName { get; set; }
+
+        public DateTime? DateOfBirth { get; set; }
+
+        public string? Gender { get; set; }
+
+        public string? GuardiansName { get; set; }
+
+        public DateTime? JoinDt { get; set; }
+
+        public string? NaturePost { get; set; }
+
+        public int? EmpStatus { get; set; }
+
+        public DateTime? StatusChangeDate { get; set; }
+
+        public DateTime? ReviewDt { get; set; }
+
+        public DateTime? BonusDt { get; set; }
+
+        public DateTime? ProbationDt { get; set; }
+
+        public bool? IsProbation { get; set; }
+
+        public string? NationalIdNo { get; set; }
+
+        public string? PassportNo { get; set; }
+
+        public int? NoticePeriod { get; set; }
+
+        public int? BranchId { get; set; }
+
+        public int? DepId { get; set; }
+
+        public int? BandId { get; set; }
+
+        public int? GradeId { get; set; }
+
+        public int? DesigId { get; set; }
+
+        public int EntryBy { get; set; }
+
+        public DateTime EntryDt { get; set; }
+
+        public string? RejoinRemarks { get; set; }
+
+        public int? CompanyId { get; set; }
+
+        public int? LastEntity { get; set; }
+
+        public int? CurrentStatus { get; set; }
+
+        public string? EmpFirstEntity { get; set; }
+
+        public string? EmpEntity { get; set; }
+
+        public DateTime? RelievingDate { get; set; }
+
+        public int? IsVerified { get; set; }
+
+        public int? SeperationStatus { get; set; }
+
+        public int? IsExperienced { get; set; }
+
+        public int? ProbationNoticePeriod { get; set; }
+
+        public bool? Ishra { get; set; }
+
+        public int? CountryOfBirth { get; set; }
+
+        public DateTime? GratuityStrtDate { get; set; }
+
         public DateTime? FirstEntryDate { get; set; }
+
+        public bool? IsMarkAttn { get; set; }
+
+        public bool? PublicHoliday { get; set; }
+
+        public int? IsExpat { get; set; }
+
+        public string? UserType { get; set; }
+
+        public bool? CompanyConveyance { get; set; }
+
+        public bool? CompanyVehicle { get; set; }
+
+        public DateTime? InitialDate { get; set; }
+
+        public DateTime? ModifiedDate { get; set; }
+
+        public bool? MealAllowanceDeduct { get; set; }
+
+        public bool? InitialPaymentPending { get; set; }
+
+        public bool? IsDelete { get; set; }
+
+        public int? DeletedBy { get; set; }
+
+        public DateTime? DeletedDate { get; set; }
+
+        public int? IsSave { get; set; }
+
+        public int? UpdatedBy { get; set; }
+
+        public DateTime? UpdatedDate { get; set; }
+
+        public int? DisableGratuity { get; set; }
+
+        public int? GrtExperianceFrmFirstentryDate { get; set; }
+
+        public int? GrtstartFrmFirstentryDate { get; set; }
+
+        public string? EmpFileNumber { get; set; }
+
+        public int? DailyRateTypeId { get; set; }
+
+        public int? PayrollMode { get; set; }
+
+        public int? CanteenRequest { get; set; }
+
+        public DateTime? WeddingDate { get; set; }
+
+        public HrEmpAddressDto? hrEmpAddressDto { get; set; }
+        public PersonalDetailsDto? employeeResultDto { get; set; }
     }
 }
