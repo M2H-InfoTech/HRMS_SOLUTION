@@ -67,53 +67,53 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> GeoSpacingTypeAndCriteriaAsync(string type);
         Task<List<EmployeeHraDto>> HraDetailsAsync(int employeeId);
         Task<List<GeoSpacingDto>> GetGeoSpacingAsync(int employeeid);
-        Task<List<object>> GetCountry();
-        Task<List<object>> GetNationalities();
-        Task<List<object>> GetBloodGroup();
-        Task<List<object>> FillReligion();
-        Task<string> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills);
-        Task<List<object>> FillLanguageTypes();
-        Task<List<object>> FillConsultant();
-        Task<string> InsertOrUpdateReference(ReferenceSaveDto Reference);
-        Task<List<object>> FillRewardType();
-        Task<string> InsertOrUpdateEmpRewards(EmpRewardsSaveDto EmpRewards);
-        Task<List<object>> FillBankDetails(int empID);
-        Task<List<object>> BankTypeEdit();
+        Task<List<object>> GetCountryAsync();
+        Task<List<object>> GetNationalitiesAsync();
+        Task<List<object>> GetBloodGroupAsync();
+        Task<List<object>> FillReligionAsync();
+        Task<string> InsertOrUpdateLanguageSkillsAsync(LanguageSkillsSaveDto langSkills);
+        Task<List<object>> FillLanguageTypesAsync();
+        Task<List<object>> FillConsultantAsync();
+        Task<string> InsertOrUpdateReferenceAsync(ReferenceSaveDto Reference);
+        Task<List<object>> FillRewardTypeAsync();
+        Task<string> InsertOrUpdateEmpRewardsAsync(EmpRewardsSaveDto EmpRewards);
+        Task<List<object>> FillBankDetailsAsync(int empID);
+        Task<List<object>> BankTypeEditAsync();
 
         Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId);
         //sk<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
-        Task<List<object>> CertificationsDropdown(string description);
-        Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates);
-        Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType);
-        Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset);
-        Task<string> UploadEmployeeDocuments(List<IFormFile> files, QualificationAttachmentDto skillset);
+        Task<List<object>> CertificationsDropdownAsync(string description);
+        Task<string> InsertOrUpdateCertificatesAsync(CertificationSaveDto certificates);
+        Task<string> UpdateEmployeeTypeAsync(EmployeeTypeDto EmployeeType);
+        Task<string> InsertOrUpdateSkillAsync(SaveSkillSetDto skillset);
+        Task<string> UploadEmployeeDocumentsAsync(List<IFormFile> files, QualificationAttachmentDto skillset);
 
-        Task<string> InsertQualification(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds);
-        Task<object> FillCountry();
+        Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds);
+        Task<object> FillCountryAsync();
 
         //Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto, int lastEntity);
-        Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto);
+        Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetailsAsync(EmployeeDetailsUpdateDto employeeDetailsDto);
 
-        Task<PersonalDetailsHistoryDto> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto);
+        Task<PersonalDetailsHistoryDto> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto);
 
 
-        Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus);
-        Task<List<object>> AssetGroupDropdownEdit();
-        Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID);
+        Task<List<object>> FillEmployeeDropdownAsync(string activeStatus, string employeeStatus, string probationStatus);
+        Task<List<object>> AssetGroupDropdownEditAsync();
+        Task<List<object>> GetAssetDropdownEditAsync(int varAssestTypeID);
 
-        Task<List<object>> GetAssetDetailsEdit(string CommonName);
-        Task<string> AssetEdit(AssetEditDto assetEdits);
+        Task<List<object>> GetAssetDetailsEditAsync(string CommonName);
+        Task<string> AssetEditAsync(AssetEditDto assetEdits);
 
-        Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID);
-        Task<string> AssetDelete(int varEmpID, int varAssestID);
-        Task<object> GetBankType(int employeeId);
-        Task<object> GetGeneralSubCategoryList(string remarks);
-        Task<string> SetEmpDocumentDetails(SetEmpDocumentDetailsDto SetEmpDocumentDetails);
-        Task<List<FillDocumentTypeDto>> FillDocumentType(int EmpID);
-        Task<List<DocumentFieldDto>> DocumentField(int DocumentID);
-        Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryList(string Remarks);
-        Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
-        Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
+        Task<List<object>> GetAssetEditDatasAsync(int varSelectedTypeID, int varAssestID);
+        Task<string> AssetDeleteAsync(int varEmpID, int varAssestID);
+        Task<object> GetBankTypeAsync(int employeeId);
+        Task<object> GetGeneralSubCategoryListAsync(string remarks);
+        Task<string> SetEmpDocumentDetailsAsync(SetEmpDocumentDetailsDto SetEmpDocumentDetails);
+        Task<List<FillDocumentTypeDto>> FillDocumentTypeAsync(int EmpID);
+        Task<List<DocumentFieldDto>> DocumentFieldAsync(int DocumentID);
+        Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryListAsync(string Remarks);
+        Task<string> InsertDocumentsFieldDetailsAsync(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
+        Task<string> SetEmpDocumentsAsync(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
 
     }
 

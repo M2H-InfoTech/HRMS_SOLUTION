@@ -342,28 +342,28 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCountry()
         {
-            var fillCountry = await _employeeInformation.GetCountry();
+            var fillCountry = await _employeeInformation.GetCountryAsync();
             return new JsonResult(fillCountry);
 
         }
         [HttpGet]
         public async Task<IActionResult> GetNationalities()
         {
-            var fillNatinalities = await _employeeInformation.GetNationalities();
+            var fillNatinalities = await _employeeInformation.GetNationalitiesAsync();
             return new JsonResult(fillNatinalities);
 
         }
         [HttpGet]
         public async Task<IActionResult> GetBloodGroup()
         {
-            var getBloodGroup = await _employeeInformation.GetBloodGroup();
+            var getBloodGroup = await _employeeInformation.GetBloodGroupAsync();
             return new JsonResult(getBloodGroup);
 
         }
         [HttpGet]
         public async Task<IActionResult> FillReligion()
         {
-            var fillReligion = await _employeeInformation.FillReligion();
+            var fillReligion = await _employeeInformation.FillReligionAsync();
             return new JsonResult(fillReligion);
 
         }
@@ -376,13 +376,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdateEmployeeDetails([FromBody] EmployeeDetailsUpdateDto employeeDetailsDto)
         {
-            var employeeDetails = await _employeeInformation.UpdateEmployeeDetails(employeeDetailsDto);
+            var employeeDetails = await _employeeInformation.UpdateEmployeeDetailsAsync(employeeDetailsDto);
             return new JsonResult(employeeDetails);
         }
         [HttpPost]
         public async Task<IActionResult> InsertOrUpdateLanguageSkills([FromBody] LanguageSkillsSaveDto langSkills)
         {
-            var languageSkills = await _employeeInformation.InsertOrUpdateLanguageSkills(langSkills);
+            var languageSkills = await _employeeInformation.InsertOrUpdateLanguageSkillsAsync(langSkills);
 
             if (languageSkills == null || !languageSkills.Any()) // Checking for null or empty list
             {
@@ -394,14 +394,14 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> FillLanguageTypes()
         {
-            var fillLanguageTypes = await _employeeInformation.FillLanguageTypes();
+            var fillLanguageTypes = await _employeeInformation.FillLanguageTypesAsync();
             return new JsonResult(fillLanguageTypes);
 
         }
         [HttpGet]
         public async Task<IActionResult> FillConsultant()
         {
-            var fillConsultant = await _employeeInformation.FillConsultant();
+            var fillConsultant = await _employeeInformation.FillConsultantAsync();
             return new JsonResult(fillConsultant);
 
         }
@@ -410,7 +410,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
         public async Task<IActionResult> InsertOrUpdateReference([FromBody] ReferenceSaveDto Reference)
         {
-            var References = await _employeeInformation.InsertOrUpdateReference(Reference);
+            var References = await _employeeInformation.InsertOrUpdateReferenceAsync(Reference);
 
             if (References == null || !References.Any()) // Checking for null or empty list
             {
@@ -423,7 +423,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> FillRewardType()
         {
-            var fillRewardType = await _employeeInformation.FillRewardType();
+            var fillRewardType = await _employeeInformation.FillRewardTypeAsync();
             return new JsonResult(fillRewardType);
 
         }
@@ -431,7 +431,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpPost]
         public async Task<IActionResult> InsertOrUpdateEmpRewards([FromBody] EmpRewardsSaveDto EmpRewards)
         {
-            var EmpReward = await _employeeInformation.InsertOrUpdateEmpRewards(EmpRewards);
+            var EmpReward = await _employeeInformation.InsertOrUpdateEmpRewardsAsync(EmpRewards);
 
             if (EmpReward == null || !EmpReward.Any()) // Checking for null or empty list
             {
@@ -443,7 +443,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> FillBankDetails(int empID)
         {
-            var bankDetails = await _employeeInformation.FillBankDetails(empID);
+            var bankDetails = await _employeeInformation.FillBankDetailsAsync(empID);
             return new JsonResult(bankDetails);
 
         }
@@ -451,13 +451,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> BankTypeEdit()
         {
-            var BankType = await _employeeInformation.BankTypeEdit();
+            var BankType = await _employeeInformation.BankTypeEditAsync();
             return new JsonResult(BankType);
         }
         [HttpPost]
         public async Task<IActionResult> UpdateEmployeeType([FromBody] EmployeeTypeDto EmployeeType)
         {
-            var employeeTypes = await _employeeInformation.UpdateEmployeeType(EmployeeType);
+            var employeeTypes = await _employeeInformation.UpdateEmployeeTypeAsync(EmployeeType);
 
             if (employeeTypes == null || !employeeTypes.Any()) // Checking for null or empty list
             {
@@ -470,13 +470,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> CertificationsDropdown(string description)
         {
-            var certificationDropdown = await _employeeInformation.CertificationsDropdown(description);
+            var certificationDropdown = await _employeeInformation.CertificationsDropdownAsync(description);
             return new JsonResult(certificationDropdown);
         }
         [HttpPost]
         public async Task<IActionResult> InsertOrUpdateCertificates([FromBody] CertificationSaveDto certificates)
         {
-            var empCertificate = await _employeeInformation.InsertOrUpdateCertificates(certificates);
+            var empCertificate = await _employeeInformation.InsertOrUpdateCertificatesAsync(certificates);
 
             if (empCertificate == null || !empCertificate.Any())
             {
@@ -489,7 +489,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpPost]
         public async Task<IActionResult> InsertOrUpdateSkill([FromBody] SaveSkillSetDto skillset)
         {
-            var empskilll = await _employeeInformation.InsertOrUpdateSkill(skillset);
+            var empskilll = await _employeeInformation.InsertOrUpdateSkillAsync(skillset);
 
             if (empskilll == null || !empskilll.Any())
             {
@@ -505,7 +505,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             if (files == null || files.Count == 0)
                 return BadRequest("No files uploaded.");
 
-            var result = await _employeeInformation.UploadEmployeeDocuments(files, skillset);
+            var result = await _employeeInformation.UploadEmployeeDocumentsAsync(files, skillset);
 
             if (string.IsNullOrEmpty(result))
                 return StatusCode(500, "Error while uploading files.");
@@ -516,7 +516,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpPost]
         public async Task<IActionResult> InsertQualification([FromBody] QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
         {
-            var empqualification = await _employeeInformation.InsertQualification(Qualification, FirstEntityID, EmpEntityIds);
+            var empqualification = await _employeeInformation.InsertQualificationAsync(Qualification, FirstEntityID, EmpEntityIds);
 
 
 
@@ -526,7 +526,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> FillCountry()
         {
-            var fillCountry = await _employeeInformation.FillCountry();
+            var fillCountry = await _employeeInformation.FillCountryAsync();
             return new JsonResult(fillCountry);
 
         }
@@ -536,32 +536,32 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus)
         {
-            var fillEmp = await _employeeInformation.FillEmployeeDropdown(activeStatus, employeeStatus, probationStatus);
+            var fillEmp = await _employeeInformation.FillEmployeeDropdownAsync(activeStatus, employeeStatus, probationStatus);
             return new JsonResult(fillEmp);
         }
         [HttpGet]
         public async Task<IActionResult> AssetGroupDropdownEdit()
         {
-            var assetgroup = await _employeeInformation.AssetGroupDropdownEdit();
+            var assetgroup = await _employeeInformation.AssetGroupDropdownEditAsync();
             return new JsonResult(assetgroup);
         }
         [HttpGet]
         public async Task<IActionResult> GetAssetDropdownEdit(int varAssestTypeID)
         {
-            var assetdetails = await _employeeInformation.GetAssetDropdownEdit(varAssestTypeID);
+            var assetdetails = await _employeeInformation.GetAssetDropdownEditAsync(varAssestTypeID);
             return new JsonResult(assetdetails);
         }
         [HttpGet]
         public async Task<IActionResult> GetAssetDetailsEdit(string CommonName)
         {
-            var assetdetailsno = await _employeeInformation.GetAssetDetailsEdit(CommonName);
+            var assetdetailsno = await _employeeInformation.GetAssetDetailsEditAsync(CommonName);
             return new JsonResult(assetdetailsno);
         }
 
         [HttpPost]
         public async Task<IActionResult> AssetEdit([FromBody] AssetEditDto assetEdits)
         {
-            var assetedit = await _employeeInformation.AssetEdit(assetEdits);
+            var assetedit = await _employeeInformation.AssetEditAsync(assetEdits);
 
             if (assetedit == null || !assetedit.Any())
             {
@@ -574,56 +574,56 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdatePersonalDetails([FromBody] PersonalDetailsUpdateDto personalDetailsDto)
         {
-            var personalDetails = await _employeeInformation.UpdatePersonalDetails(personalDetailsDto);
+            var personalDetails = await _employeeInformation.UpdatePersonalDetailsAsync(personalDetailsDto);
             return Ok(personalDetails);
         }
         [HttpGet]
         public async Task<IActionResult> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
         {
-            var getassetedit = await _employeeInformation.GetAssetEditDatas(varSelectedTypeID, varAssestID);
+            var getassetedit = await _employeeInformation.GetAssetEditDatasAsync(varSelectedTypeID, varAssestID);
             return new JsonResult(getassetedit);
         }
 
         [HttpDelete]
         public async Task<IActionResult> AssetDelete(int varEmpID, int varAssestID)
         {
-            var getassetdelete = await _employeeInformation.AssetDelete(varEmpID, varAssestID);
+            var getassetdelete = await _employeeInformation.AssetDeleteAsync(varEmpID, varAssestID);
             return new JsonResult(getassetdelete);
         }
         [HttpGet]
         public async Task<IActionResult> GetBankType(int employeeId)
         {
-            var getBankType = await _employeeInformation.GetBankType(employeeId);
+            var getBankType = await _employeeInformation.GetBankTypeAsync(employeeId);
             return new JsonResult(getBankType);
         }
         [HttpGet]
         public async Task<IActionResult> GetGeneralSubCategoryList(string remarks)
         {
-            var getGeneralSubCategoryList = await _employeeInformation.GetGeneralSubCategoryList(remarks);
+            var getGeneralSubCategoryList = await _employeeInformation.GetGeneralSubCategoryListAsync(remarks);
             return new JsonResult(getGeneralSubCategoryList);
         }
         [HttpPost]
         public async Task<IActionResult> SetEmpDocumentDetails([FromBody] SetEmpDocumentDetailsDto SetEmpDocumentDetails)   // For Document and Bank Insertion
         {
-            var setEmpDocumentDetails = await _employeeInformation.SetEmpDocumentDetails(SetEmpDocumentDetails);
+            var setEmpDocumentDetails = await _employeeInformation.SetEmpDocumentDetailsAsync(SetEmpDocumentDetails);
             return Ok(setEmpDocumentDetails);
         }
         [HttpGet]
         public async Task<IActionResult> FillDocumentType(int EmpID)    //dropdown in document add button
         {
-            var FillDocumentType = await _employeeInformation.FillDocumentType(EmpID);
+            var FillDocumentType = await _employeeInformation.FillDocumentTypeAsync(EmpID);
             return new JsonResult(FillDocumentType);
         }
         [HttpGet]
         public async Task<IActionResult> DocumentField(int DocumentID)   //textbox field name inside document add button
         {
-            var DocumentField = await _employeeInformation.DocumentField(DocumentID);
+            var DocumentField = await _employeeInformation.DocumentFieldAsync(DocumentID);
             return new JsonResult(DocumentField);
         }
         [HttpGet]
         public async Task<IActionResult> DocumentGetGeneralSubCategoryList(string Remarks)   // "bank name" drop down inside document add button
         {
-            var DocumentGetGeneralSubCategoryList = await _employeeInformation.DocumentGetGeneralSubCategoryList(Remarks);
+            var DocumentGetGeneralSubCategoryList = await _employeeInformation.DocumentGetGeneralSubCategoryListAsync(Remarks);
             return new JsonResult(DocumentGetGeneralSubCategoryList);
         }
 
@@ -631,7 +631,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpPost]
         public async Task<IActionResult> InsertDocumentsFieldDetails([FromBody] List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy)   //InsertOrUpdate document & bank
         {
-            var FieldDetails = await _employeeInformation.InsertDocumentsFieldDetails(DocumentBankField, DocumentID, In_EntryBy);
+            var FieldDetails = await _employeeInformation.InsertDocumentsFieldDetailsAsync(DocumentBankField, DocumentID, In_EntryBy);
 
             if (FieldDetails == null || !FieldDetails.Any())
             {
@@ -644,7 +644,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpPost]
         public async Task<IActionResult> SetEmpDocuments([FromBody] TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)   //InsertOrUpdate document & bank upload file
         {
-            var SetEmpDocuments = await _employeeInformation.SetEmpDocuments(DocumentBankField, DetailID, Status, In_EntryBy);
+            var SetEmpDocuments = await _employeeInformation.SetEmpDocumentsAsync(DocumentBankField, DetailID, Status, In_EntryBy);
 
             if (SetEmpDocuments == null || !SetEmpDocuments.Any())
             {
