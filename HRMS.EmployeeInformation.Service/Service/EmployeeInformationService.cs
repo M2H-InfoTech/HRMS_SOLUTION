@@ -327,7 +327,11 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.UpdateEmployeeDetails(employeeDetailsDto);
         }
-        public async Task<PersonalDetailsHistoryDto> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto)
+        //public async Task<PersonalDetailsHistoryDto> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto)
+        //{
+        //    return await _employeeRepository.UpdatePersonalDetails(personalDetailsDto);
+        //}
+        public async Task<string?> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto)
         {
             return await _employeeRepository.UpdatePersonalDetails(personalDetailsDto);
         }

@@ -88,7 +88,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId);
         //Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto, int lastEntity);
         Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto);
-        Task<PersonalDetailsHistoryDto> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto);
+        Task<string?> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto);
         //Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
         Task<List<object>> CertificationsDropdown(string description);
         Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates);
@@ -117,5 +117,5 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
         Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
 
-        }
+    }
 }

@@ -94,8 +94,8 @@ namespace HRMS.EmployeeInformation.Service.Interface
         //Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto, int lastEntity);
         Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetailsAsync(EmployeeDetailsUpdateDto employeeDetailsDto);
 
-        Task<PersonalDetailsHistoryDto> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto);
-
+        //Task<PersonalDetailsHistoryDto> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto);
+        Task<string?> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto);
 
         Task<List<object>> FillEmployeeDropdownAsync(string activeStatus, string employeeStatus, string probationStatus);
         Task<List<object>> AssetGroupDropdownEditAsync();
@@ -115,6 +115,6 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<string> InsertDocumentsFieldDetailsAsync(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
         Task<string> SetEmpDocumentsAsync(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
 
-        }
-       
+    }
+
 }

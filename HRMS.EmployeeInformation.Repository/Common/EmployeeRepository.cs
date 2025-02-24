@@ -14,12 +14,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Hosting;
-using EMPLOYEE_INFORMATION.Models.Entity;
-using Azure.Core;
-using System.Reflection.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -7535,17 +7529,17 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 {
                     // If assetReasonId could not be parsed or is 0, return failure message
                     return "Invalid asset or asset not found";
-                    }
                 }
             }
+        }
 
         //public Task<string> GetBankType (int employeeId)
         //    {
         //    throw new NotImplementedException ( );
         //    }
 
-        public async Task<object> GetBankType (int employeeId)
-            {
+        public async Task<object> GetBankType(int employeeId)
+        {
             var result = await (from a in _context.HrmsDocument00s
                                 join b in _context.HrmsDocTypeMasters on a.DocType equals (int?)b.DocTypeId
                                 join c in _context.EmpDocumentAccesses on (int?)a.DocId equals c.DocId
@@ -7558,13 +7552,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                              (doc, dt) => new { doc.DocId, doc.IsAllowMultiple, dt.Code })
                                          .Any(x => x.IsAllowMultiple == 1 && x.Code == _employeeSettings.BankDocCode && x.DocId == a.DocId)))
                                 select new
-                                    {
+                                {
                                     DocId = a.DocId,
                                     DocName = a.DocName
-                                    }).ToListAsync ( );
+                                }).ToListAsync();
 
             return result; // Returning as object (List of anonymous objects)
-            }
+        }
 
         public async Task<object> GetGeneralSubCategoryList(string remarks)
         {
@@ -7578,10 +7572,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 }).ToListAsync();
             return result;
 
-            }
+        }
 
-        public async Task<string> SetEmpDocumentDetails (SetEmpDocumentDetailsDto SetEmpDocumentDetails)
-            {
+        public async Task<string> SetEmpDocumentDetails(SetEmpDocumentDetailsDto SetEmpDocumentDetails)
+        {
             var workFlowNeed = (from a in _context.CompanyParameters
                                 join b in _context.HrmValueTypes on a.Value equals b.Value
                                 where b.Type == _employeeSettings.EmployeeReportingType
@@ -7595,46 +7589,46 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var codeID = GetSequence(SetEmpDocumentDetails.EmpID ?? 0, transactionID, "", 0);
 
             if (codeID == null)
-                {
+            {
 
                 var ErrorId = 0;
                 var ErrorMessage = _employeeSettings.ErrorMessage;
 
-                }
+            }
 
             var RequestSequence = (from a in _context.AdmCodegenerationmasters
                                    where codeID == codeID
-                                   select a.LastSequence).FirstOrDefault ( );
+                                   select a.LastSequence).FirstOrDefault();
             var maxCurrentCodeValue = _context.AdmCodegenerationmasters
-                .Where (a => a.CodeId == Convert.ToInt32 (codeID))
-                .Max (a => (int?)a.CurrentCodeValue) ?? 0;
+                .Where(a => a.CodeId == Convert.ToInt32(codeID))
+                .Max(a => (int?)a.CurrentCodeValue) ?? 0;
 
             var updatedValue = maxCurrentCodeValue + 1;
 
             var recordToUpdate = _context.AdmCodegenerationmasters
-                .FirstOrDefault (a => a.CodeId == Convert.ToInt32 (codeID));
+                .FirstOrDefault(a => a.CodeId == Convert.ToInt32(codeID));
 
             if (recordToUpdate != null)
-                {
+            {
                 recordToUpdate.CurrentCodeValue = updatedValue;
-                _context.SaveChanges ( );
-                }
+                _context.SaveChanges();
+            }
 
             var record = _context.AdmCodegenerationmasters
-                .FirstOrDefault (a => a.CodeId == Convert.ToInt32 (codeID));
+                .FirstOrDefault(a => a.CodeId == Convert.ToInt32(codeID));
 
             if (record != null)
-                {
+            {
 
-                int length = (record.NumberFormat.Length) - (record.CurrentCodeValue?.ToString ( ).Length ?? 0);
+                int length = (record.NumberFormat.Length) - (record.CurrentCodeValue?.ToString().Length ?? 0);
 
-                string seq = record.NumberFormat.Substring (0, Math.Max (0, length));
+                string seq = record.NumberFormat.Substring(0, Math.Max(0, length));
 
-                string finalvalue = record.Code.ToString ( ) + seq + (record.CurrentCodeValue?.ToString ( ) ?? "0");
+                string finalvalue = record.Code.ToString() + seq + (record.CurrentCodeValue?.ToString() ?? "0");
                 record.LastSequence = finalvalue;
-                _context.SaveChanges ( );
+                _context.SaveChanges();
 
-                }
+            }
             //if(SetEmpDocumentDetails.WorkFlowNeed == "Yes")
             //    {
 
@@ -7668,11 +7662,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 HrmsEmpdocuments00 newDocument;
 
                 if (SetEmpDocumentDetails.ProxyID > 0)
-                    {
+                {
                     if (SetEmpDocumentDetails.ProxyID == SetEmpDocumentDetails.EmpID)
-                        {
+                    {
                         newDocument = new HrmsEmpdocuments00
-                            {
+                        {
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.EmpID,
                             RequestId = RequestSequence,
@@ -7682,12 +7676,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             ProxyId = 0,
                             EntryBy = SetEmpDocumentDetails.EntryBy,
                             EntryDate = DateTime.UtcNow
-                            };
-                        }
+                        };
+                    }
                     else
-                        {
+                    {
                         newDocument = new HrmsEmpdocuments00
-                            {
+                        {
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.ProxyID,
                             RequestId = RequestSequence,
@@ -7697,13 +7691,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             ProxyId = SetEmpDocumentDetails.EmpID,
                             EntryBy = SetEmpDocumentDetails.EntryBy,
                             EntryDate = DateTime.UtcNow
-                            };
-                        }
+                        };
                     }
+                }
                 else
-                    {
+                {
                     newDocument = new HrmsEmpdocuments00
-                        {
+                    {
                         DocId = SetEmpDocumentDetails.DocumentID,
                         EmpId = SetEmpDocumentDetails.EmpID,
                         RequestId = RequestSequence,
@@ -7713,12 +7707,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         ProxyId = SetEmpDocumentDetails.ProxyID,
                         EntryBy = SetEmpDocumentDetails.EntryBy,
                         EntryDate = DateTime.UtcNow
-                        };
-                    }
+                    };
+                }
 
-                
-                _context.HrmsEmpdocuments00s.Add (newDocument);
-                _context.SaveChanges ( ); 
+
+                _context.HrmsEmpdocuments00s.Add(newDocument);
+                _context.SaveChanges();
 
 
                 int newDetailID = newDocument.DetailId;
@@ -7732,11 +7726,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 HrmsEmpdocuments00 newDocument;
 
                 if (SetEmpDocumentDetails.ProxyID > 0)
-                    {
+                {
                     if (SetEmpDocumentDetails.ProxyID == SetEmpDocumentDetails.EmpID)
-                        {
+                    {
                         newDocument = new HrmsEmpdocuments00
-                            {
+                        {
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.EmpID,
                             RequestId = RequestSequence,
@@ -7747,12 +7741,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             EntryBy = SetEmpDocumentDetails.EntryBy,
                             EntryDate = DateTime.UtcNow,
                             FinalApprovalDate = DateTime.UtcNow
-                            };
-                        }
+                        };
+                    }
                     else
-                        {
+                    {
                         newDocument = new HrmsEmpdocuments00
-                            {
+                        {
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.ProxyID,
                             RequestId = RequestSequence,
@@ -7763,13 +7757,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             EntryBy = SetEmpDocumentDetails.EntryBy,
                             EntryDate = DateTime.UtcNow,
                             FinalApprovalDate = DateTime.UtcNow
-                            };
-                        }
+                        };
                     }
+                }
                 else
-                    {
+                {
                     newDocument = new HrmsEmpdocuments00
-                        {
+                    {
                         DocId = SetEmpDocumentDetails.DocumentID,
                         EmpId = SetEmpDocumentDetails.EmpID,
                         RequestId = RequestSequence,
@@ -7780,19 +7774,19 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         EntryBy = SetEmpDocumentDetails.EntryBy,
                         EntryDate = DateTime.UtcNow,
                         FinalApprovalDate = DateTime.UtcNow
-                        };
-                    }
+                    };
+                }
 
 
-                _context.HrmsEmpdocuments00s.Add (newDocument);
-                _context.SaveChanges ( );
+                _context.HrmsEmpdocuments00s.Add(newDocument);
+                _context.SaveChanges();
 
 
                 int newDetailID = newDocument.DetailId;
 
 
                 var approvedDocument = new HrmsEmpdocumentsApproved00
-                    {
+                {
                     DetailId = newDetailID,
                     DocId = newDocument.DocId,
                     EmpId = newDocument.EmpId,
@@ -7805,48 +7799,48 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     EntryBy = newDocument.EntryBy,
                     EntryDate = newDocument.EntryDate,
                     FinalApprovalDate = newDocument.FinalApprovalDate
-                    };
+                };
 
-                _context.HrmsEmpdocumentsApproved00s.Add (approvedDocument);
-                _context.SaveChanges ( );
-                }
+                _context.HrmsEmpdocumentsApproved00s.Add(approvedDocument);
+                _context.SaveChanges();
+            }
             var sequenceid = 0;
-           
+
             var codeGenMaster = _context.AdmCodegenerationmasters
-                .FirstOrDefault (c => c.CodeId == sequenceid);
+                .FirstOrDefault(c => c.CodeId == sequenceid);
 
             if (codeGenMaster != null)
-                {
-               
+            {
+
                 int maxCurrentCodeValue1 = _context.AdmCodegenerationmasters
-                    .Where (c => c.CodeId == sequenceid)
-                    .Max (c => (int?)c.CurrentCodeValue) ?? 0;
+                    .Where(c => c.CodeId == sequenceid)
+                    .Max(c => (int?)c.CurrentCodeValue) ?? 0;
 
                 codeGenMaster.CurrentCodeValue = maxCurrentCodeValue1 + 1;
-               
-                int numberFormatLength = codeGenMaster.NumberFormat.Length;
-                int currentCodeValueLength = codeGenMaster.CurrentCodeValue.ToString ( ).Length;
-                int lengthDiff = numberFormatLength - currentCodeValueLength;
-               
-                string seq = codeGenMaster.NumberFormat.Substring (0, Math.Max (0, lengthDiff));
-               
-                string finalSequence = $"{codeGenMaster.Code}{seq}{codeGenMaster.CurrentCodeValue}";
-                
-                codeGenMaster.LastSequence = finalSequence;
-                
-                _context.SaveChanges ( );
-                }
 
-          
+                int numberFormatLength = codeGenMaster.NumberFormat.Length;
+                int currentCodeValueLength = codeGenMaster.CurrentCodeValue.ToString().Length;
+                int lengthDiff = numberFormatLength - currentCodeValueLength;
+
+                string seq = codeGenMaster.NumberFormat.Substring(0, Math.Max(0, lengthDiff));
+
+                string finalSequence = $"{codeGenMaster.Code}{seq}{codeGenMaster.CurrentCodeValue}";
+
+                codeGenMaster.LastSequence = finalSequence;
+
+                _context.SaveChanges();
+            }
+
+
             string errorID = _context.HrmsEmpdocuments00s
-                .OrderByDescending (d => d.DetailId)
-                .Select (d => d.DetailId.ToString ( )) 
-                .FirstOrDefault ( ) ?? "0"; 
+                .OrderByDescending(d => d.DetailId)
+                .Select(d => d.DetailId.ToString())
+                .FirstOrDefault() ?? "0";
 
             return errorID;
 
 
-            }
+        }
 
         //public Task<string> GetBankType (int employeeId)
         //    {
@@ -7855,10 +7849,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
 
-
-       
-
-        public async Task<PersonalDetailsHistoryDto> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto)
+        public async Task<string?> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -7950,9 +7941,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 // Save changes if any modifications were made
                 if (hasChanges)
                 {
-                    await _context.SaveChangesAsync();
+                    int result = await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
-                    return history;
+                    return result > 0 ? _employeeSettings.DataUpdateSuccessStatus : _employeeSettings.DataInsertFailedStatus;
                 }
 
                 await transaction.CommitAsync();
@@ -7965,6 +7956,115 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             }
             //return new PersonalDetailsHistoryDto();
         }
+
+
+        //public async Task<PersonalDetailsHistoryDto> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto)
+        //{
+        //    using var transaction = await _context.Database.BeginTransactionAsync();
+
+        //    try
+        //    {
+        //        var empMaster = await _context.HrEmpMasters.FindAsync(personalDetailsDto.EmpId);
+        //        var empAddress = await _context.HrEmpAddresses.FindAsync(personalDetailsDto.EmpId);
+        //        var empPersonalHistory = await _context.HrEmpPersonals.FindAsync(personalDetailsDto.EmpId);
+
+        //        bool hasChanges = false;
+        //        PersonalDetailsHistoryDto? history = null;
+        //        if (empMaster != null)
+        //        {
+        //            if (empMaster.EmpId == personalDetailsDto.EmpId && (empMaster.GuardiansName != personalDetailsDto.GuardiansName || empMaster.Gender != personalDetailsDto.Gender || empMaster.DateOfBirth != personalDetailsDto.DateOfBirth))
+        //            {
+        //                empMaster.GuardiansName = personalDetailsDto.GuardiansName;
+        //                empMaster.DateOfBirth = personalDetailsDto.DateOfBirth;
+        //                empMaster.Gender = personalDetailsDto.Gender;
+        //                empMaster.UpdatedBy = personalDetailsDto.EntryBy;
+        //                empMaster.UpdatedDate = DateTime.UtcNow;
+        //                hasChanges = true;
+        //            }
+        //        }
+
+        //        if (empAddress != null)
+        //        {
+        //            if (empAddress.EmpId == personalDetailsDto.EmpId && empAddress.PersonalEmail != personalDetailsDto.PersonalEMail)
+        //            {
+        //                empAddress.PersonalEmail = personalDetailsDto.PersonalEMail;
+        //                empAddress.UpdatedBy = personalDetailsDto.EntryBy;
+        //                empAddress.UpdatedDate = DateTime.UtcNow;
+        //                hasChanges = true;
+        //            }
+        //        }
+
+        //        if (empPersonalHistory != null)
+        //        {
+        //            if (empPersonalHistory.Dob != personalDetailsDto.DateOfBirth || empPersonalHistory.Nationality != personalDetailsDto.NationalityID || empPersonalHistory.Gender != personalDetailsDto.Gender ||
+        //                empPersonalHistory.Religion != personalDetailsDto.ReligionID || empPersonalHistory.Country != personalDetailsDto.CountryID || empPersonalHistory.MaritalStatus != personalDetailsDto.MaritalStatus ||
+        //                empPersonalHistory.IdentMark != personalDetailsDto.IdentificationMark || empPersonalHistory.BloodGrp != personalDetailsDto.BloodGrp ||
+        //                empPersonalHistory.Height != personalDetailsDto.Height || empPersonalHistory.Weight != personalDetailsDto.Weight || empPersonalHistory.WeddingDate != personalDetailsDto.WeddingDate ||
+        //                empPersonalHistory.CountryOfBirth != personalDetailsDto.country2ID)
+        //            {
+        //                empPersonalHistory.Dob = personalDetailsDto.DateOfBirth;
+        //                empPersonalHistory.Nationality = personalDetailsDto.NationalityID;
+        //                empPersonalHistory.Gender = personalDetailsDto.Gender;
+        //                empPersonalHistory.Religion = personalDetailsDto.ReligionID;
+        //                empPersonalHistory.Country = personalDetailsDto.CountryID;
+        //                empPersonalHistory.MaritalStatus = personalDetailsDto.MaritalStatus;
+        //                empPersonalHistory.IdentMark = personalDetailsDto.IdentificationMark;
+        //                empPersonalHistory.BloodGrp = personalDetailsDto.BloodGrp;
+        //                empPersonalHistory.Height = personalDetailsDto.Height;
+        //                empPersonalHistory.Weight = personalDetailsDto.Weight;
+        //                empPersonalHistory.WeddingDate = personalDetailsDto.WeddingDate;
+        //                empPersonalHistory.CountryOfBirth = personalDetailsDto.country2ID;
+        //                empPersonalHistory.UpdatedBy = personalDetailsDto.EntryBy;
+        //                empPersonalHistory.UpdatedDate = DateTime.UtcNow;
+        //                hasChanges = true;
+        //            }
+        //        }
+
+        //        //Insert into PersonalDetailsHistory only if data has changed
+        //        if (hasChanges)
+        //        {
+        //            history = new PersonalDetailsHistoryDto
+        //            {
+        //                EmployeeId = personalDetailsDto.EmpId,
+        //                GuardiansName = personalDetailsDto.GuardiansName,
+        //                DateOfBirth = personalDetailsDto.DateOfBirth,
+        //                PersonalMail = personalDetailsDto.PersonalEMail,
+        //                Country = personalDetailsDto.CountryID,
+        //                Nationality = personalDetailsDto.NationalityID,
+        //                CountryOfBirth = personalDetailsDto.country2ID,
+        //                BloodGroup = personalDetailsDto.BloodGrp,
+        //                Religion = personalDetailsDto.ReligionID,
+        //                IdentificationMark = personalDetailsDto.IdentificationMark,
+        //                Height = personalDetailsDto.Height,
+        //                Weight = personalDetailsDto.Weight,
+        //                WeddingDate = personalDetailsDto.WeddingDate,
+        //                MaritalStatus = personalDetailsDto.MaritalStatus,
+        //                Gender = personalDetailsDto.Gender,
+        //                EntryBy = personalDetailsDto.EntryBy,
+        //                EntryDate = DateTime.UtcNow
+        //            };
+        //            var addingData = _mapper.Map<PersonalDetailsHistory>(history);
+        //            await _context.PersonalDetailsHistories.AddAsync(addingData);
+        //        }
+
+        //        // Save changes if any modifications were made
+        //        if (hasChanges)
+        //        {
+        //            await _context.SaveChangesAsync();
+        //            await transaction.CommitAsync();
+        //            return history;
+        //        }
+
+        //        await transaction.CommitAsync();
+        //        return null; // No changes were made, return null
+        //    }
+        //    catch (Exception)
+        //    {
+        //        await transaction.RollbackAsync();
+        //        throw;
+        //    }
+        //    //return new PersonalDetailsHistoryDto();
+        //}
         public async Task<List<FillDocumentTypeDto>> FillDocumentType(int EmpID)
         {
             return await (from a in _context.HrmsDocument00s
