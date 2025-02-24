@@ -3434,6 +3434,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 else
                 {
                     await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
+                    await _context.SaveChangesAsync();
                     await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
                 }
 
@@ -3448,6 +3449,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 throw;
             }
         }
+
+
+
 
         //public async Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
         //{
