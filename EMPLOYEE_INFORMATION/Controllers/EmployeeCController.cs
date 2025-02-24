@@ -37,7 +37,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var getDependentDetails = await _employeeInformationC.GetDependentDetails (employeeId);
             return new JsonResult (getDependentDetails);
             }
-        [HttpGet]
+        [HttpPost]
         public async Task<IActionResult> SaveDependentEmp ([FromBody] SaveDependentEmpDto SaveDependentEmp)   // For Document and Bank Insertion
             {
             var saveDependentEmp = await _employeeInformationC.SaveDependentEmp (SaveDependentEmp);
