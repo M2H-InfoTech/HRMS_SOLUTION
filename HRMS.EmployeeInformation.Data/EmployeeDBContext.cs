@@ -238,12 +238,31 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<CategoryGroup> CategoryGroups { get; set; }
     public virtual DbSet<AssetcategoryCode> AssetcategoryCodes { get; set; }
 
-    public virtual DbSet<AssetRequestHistory> AssetRequestHistories { get; set; }
+    public virtual DbSet<AssetRequestHistory> AssetRequestHistories { get; set; }  
     public virtual DbSet<HrmsEmpdocumentsHistory00> HrmsEmpdocumentsHistory00s { get; set; }
     public virtual DbSet<HrmsEmpdocumentsHistory01> HrmsEmpdocumentsHistory01s { get; set; }
 
     public virtual DbSet<HrmsEmpdocumentsHistory02> HrmsEmpdocumentsHistory02s { get; set; }
 
+    public virtual DbSet<TravelType> TravelTypes { get; set; }
+
+    public virtual DbSet<TimeOffSet> TimeOffSets { get; set; }
+
+    public virtual DbSet<RoleDelegation00> RoleDelegation00s { get; set; }
+
+    public virtual DbSet<Roledelegationtransaction> Roledelegationtransactions { get; set; }
+
+    public virtual DbSet<Dependent01> Dependent01s { get; set; }
+
+    public virtual DbSet<DependentEducation> DependentEducations { get; set; }
+
+    public virtual DbSet<EducationMaster> EducationMasters { get; set; }
+
+    public virtual DbSet<EdCourseMaster> EdCourseMasters { get; set; }
+
+    public virtual DbSet<EdSpecializationMaster> EdSpecializationMasters { get; set; }
+
+    public virtual DbSet<UniversityMaster> UniversityMasters { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -3680,7 +3699,149 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false);
         });
 
-        OnModelCreatingPartial(modelBuilder);
+        modelBuilder.Entity<TravelType> (entity =>
+        {
+            entity.ToTable ("TRAVEL_TYPE");
+
+            entity.Property (e => e.TravelTypeId).HasColumnName ("TravelType_Id");
+            entity.Property (e => e.TravelType1)
+                .HasMaxLength (50)
+                .IsUnicode (false)
+                .HasColumnName ("TravelType");
+            entity.Property (e => e.Value).HasColumnName ("value");
+        });
+
+        modelBuilder.Entity<TimeOffSet> (entity =>
+        {
+            entity.HasKey (e => e.TimeOffSetId).HasName ("PK__TimeOffS__A4BBC91B5BCE9A6C");
+
+            entity.ToTable ("TimeOffSet");
+
+            entity.Property (e => e.AddSign)
+                .HasMaxLength (4)
+                .IsUnicode (false);
+            entity.Property (e => e.Description)
+                .HasMaxLength (10)
+                .IsUnicode (false)
+                .IsFixedLength ( );
+            entity.Property (e => e.Offset)
+                .HasMaxLength (20)
+                .IsUnicode (false);
+            entity.Property (e => e.OffsetValue)
+                .HasMaxLength (100)
+                .IsUnicode (false);
+        });
+
+        modelBuilder.Entity<RoleDelegation00> (entity =>
+        {
+            entity
+                .HasNoKey ( )
+                .ToTable ("RoleDelegation00");
+
+            entity.Property (e => e.Acceptstatus).HasColumnName ("acceptstatus");
+            entity.Property (e => e.ApprovalStatus)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+            entity.Property (e => e.CompanyId)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+            entity.Property (e => e.EntryDate)
+                .HasDefaultValueSql ("(getutcdate())")
+                .HasColumnType ("datetime");
+            entity.Property (e => e.FromDate).HasColumnType ("datetime");
+            entity.Property (e => e.Remarks).IsUnicode (false);
+            entity.Property (e => e.Revoke)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+            entity.Property (e => e.RevokeDate).HasColumnType ("datetime");
+            entity.Property (e => e.RoleDelegationId).ValueGeneratedOnAdd ( );
+            entity.Property (e => e.SequenceId)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+            entity.Property (e => e.Status)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+            entity.Property (e => e.ToDate).HasColumnType ("datetime");
+            entity.Property (e => e.Transactionids).IsUnicode (false);
+        });
+
+        modelBuilder.Entity<Roledelegationtransaction> (entity =>
+        {
+            entity
+                .HasNoKey ( )
+                .ToTable ("roledelegationtransaction");
+
+            entity.Property (e => e.TransactionId)
+                .HasMaxLength (1000)
+                .IsUnicode (false);
+            entity.Property (e => e.TransactionIdString).IsUnicode (false);
+        });
+
+        modelBuilder.Entity<Dependent01> (entity =>
+        {
+            entity.HasKey (e => e.DocId);
+
+            entity.ToTable ("Dependent01");
+
+            entity.Property (e => e.DocFileName)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+            entity.Property (e => e.DocFileType)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+        });
+
+        modelBuilder.Entity<DependentEducation> (entity =>
+        {
+            entity.HasKey (e => e.DepEduId);
+
+            entity.ToTable ("DependentEducation");
+
+            entity.Property (e => e.CourseType)
+                .HasMaxLength (5)
+                .IsUnicode (false);
+            entity.Property (e => e.EntryDate).HasColumnType ("datetime");
+            entity.Property (e => e.UpdatedDate).HasColumnType ("datetime");
+            entity.Property (e => e.Year)
+                .HasMaxLength (10)
+                .IsUnicode (false);
+        });
+
+        modelBuilder.Entity<EducationMaster> (entity =>
+        {
+            entity.HasKey (e => e.EducId);
+
+            entity.ToTable ("EducationMaster");
+
+            entity.Property (e => e.EntryDate).HasColumnType ("datetime");
+        });
+
+        modelBuilder.Entity<EdCourseMaster> (entity =>
+        {
+            entity.HasKey (e => e.CourseId);
+
+            entity.ToTable ("EdCourseMaster");
+
+            entity.Property (e => e.EntryDate).HasColumnType ("datetime");
+        });
+
+        modelBuilder.Entity<EdSpecializationMaster> (entity =>
+        {
+            entity.HasKey (e => e.EdSpecId);
+
+            entity.ToTable ("EdSpecializationMaster");
+        });
+
+        modelBuilder.Entity<UniversityMaster> (entity =>
+        {
+            entity.HasKey (e => e.UniId);
+
+            entity.ToTable ("UniversityMaster");
+
+            entity.Property (e => e.EntryDate).HasColumnType ("datetime");
+        });
+
+        OnModelCreatingPartial (modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
