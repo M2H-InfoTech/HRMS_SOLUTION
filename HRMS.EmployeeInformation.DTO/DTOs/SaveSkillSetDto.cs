@@ -19,6 +19,7 @@ namespace HRMS.EmployeeInformation.DTO.DTOs
         public DateTime EntryDt { get; set; }
         public string RequestId { get; set; }
         public string Mark_Per { get; set; }
+        public string Rating { get; set; }
         public string Status { get; set; }
         public string Inst_Name { get; set; }
         public string FlowStatus { get; set; }

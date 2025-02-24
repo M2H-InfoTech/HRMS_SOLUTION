@@ -6734,7 +6734,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 Year = skillset.Year,
                 DurFrm = skillset.DurationFrom,
                 DurTo = skillset.DurationTo,
-                MarkPer = skillset.Mark_Per,
+                MarkPer = skillset.Rating,
                 Status = "A",
                 FlowStatus = "E",
                 EntryBy = skillset.Entry_By,
@@ -6742,7 +6742,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 InstName = skillset.Inst_Name,
                 RequestId = null,
                 DateFrom = DateTime.UtcNow,
-                LangSkills = skillset.langSkills
+                LangSkills = skillset.Mark_Per
             };
             await _context.HrEmpTechnicalApprls.AddAsync(hrEmpTechnicalApprl);
 
@@ -6757,11 +6757,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 hrEmpTechnical.Year = skillset.Year;
                 hrEmpTechnical.DurFrm = skillset.DurationFrom;
                 hrEmpTechnical.DurTo = skillset.DurationTo;
-                hrEmpTechnical.MarkPer = skillset.Mark_Per;
+                hrEmpTechnical.MarkPer = skillset.Rating;
                 hrEmpTechnical.EntryBy = skillset.Entry_By;
                 hrEmpTechnical.EntryDt = skillset.EntryDt;
                 hrEmpTechnical.InstName = skillset.Inst_Name;
-                hrEmpTechnical.LangSkills = skillset.langSkills;
+                hrEmpTechnical.LangSkills = skillset.Mark_Per;
 
                 _context.HrEmpTechnicals.Update(hrEmpTechnical);
             }
@@ -6777,11 +6777,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     Year = skillset.Year,
                     DurFrm = skillset.DurationFrom,
                     DurTo = skillset.DurationTo,
-                    MarkPer = skillset.Mark_Per,
+                    MarkPer = skillset.Rating,
+                  
                     EntryBy = skillset.Entry_By,
                     EntryDt = skillset.EntryDt,
                     InstName = skillset.Inst_Name,
-                    LangSkills = skillset.langSkills
+                    LangSkills = skillset.Mark_Per
                 };
 
                 await _context.HrEmpTechnicals.AddAsync(hrEmpTechnical);
