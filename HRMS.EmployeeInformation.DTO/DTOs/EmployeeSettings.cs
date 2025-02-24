@@ -66,6 +66,8 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? No { get; set; }
         public string? Approved { get; set; }
         public string? StatusP { get; set; }
+
+        public string? DataUpdateSuccessStatus { get; set; }
     }
 
 }
