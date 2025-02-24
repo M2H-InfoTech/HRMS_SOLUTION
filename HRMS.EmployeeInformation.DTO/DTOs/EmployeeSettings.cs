@@ -48,6 +48,24 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? PayrollPeriodScheme { get; set; }
         public string? PayrollPeriodType { get; set; }
         public string? PayrollBatchScheme { get; set; }
+        public string? Documents01 { get; set; }
+        public string? Documents02 { get; set; }
+        public string? Documents03 { get; set; }
+        public string? Documents04 { get; set; }
+        public string? Documents05 { get; set; }
+        public string? Status01 { get; set; }
+        public string? Status02 { get; set; }
+        public string? Status03 { get; set; }
+        public string? Status04 { get; set; }
+        public string? Status05 { get; set; }
+        public string? BankDocCode { get; set; }
+        public string? ParameterCode02 { get; set; }
+        public string? TransactionType { get; set; }
+        public string? ErrorMessage { get; set; }
+        public string? Yes { get; set; }
+        public string? No { get; set; }
+        public string? Approved { get; set; }
+        public string? StatusP { get; set; }
     }
 
 }

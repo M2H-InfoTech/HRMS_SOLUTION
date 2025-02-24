@@ -4,6 +4,7 @@ using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Repository.Common;
 using HRMS.EmployeeInformation.Service.Interface;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace EMPLOYEE_INFORMATION.Controllers
@@ -14,14 +15,15 @@ namespace EMPLOYEE_INFORMATION.Controllers
     public class EmployeeController : Controller
     {
         private readonly IEmployeeInformationService _employeeInformation;
-
+        private readonly EmployeeSettings _employeeSettings;
 
 
         private readonly TokenService _tokenService;
-        public EmployeeController(IEmployeeInformationService employeeInformation, TokenService tokenService)
+        public EmployeeController(IEmployeeInformationService employeeInformation, TokenService tokenService, IOptions<EmployeeSettings> employeeSettings)
         {
             _employeeInformation = employeeInformation;
             _tokenService = tokenService;
+            _employeeSettings = employeeSettings.Value;
 
 
 
@@ -113,7 +115,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> Documents(int employeeId)
         {
-            List<string> excludedDocTypes = new List<string> { "Statutory", "BANK DETAILS", "VISA" };
+            List<string> excludedDocTypes = new List<string> { _employeeSettings.Documents01, _employeeSettings.Documents02, _employeeSettings.Documents03 };
             var DocumentsData = await _employeeInformation.DocumentsAsync(employeeId, excludedDocTypes);
             return new JsonResult(DocumentsData);
         }
@@ -121,7 +123,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
         public async Task<IActionResult> BankDetails(int employeeId)
         {
-            List<string> excludedDocTypes = new List<string> { "Passport", "VISA", "Normal", "Statutory" };
+            List<string> excludedDocTypes = new List<string> { _employeeSettings.Documents04, _employeeSettings.Documents03, _employeeSettings.Documents05, _employeeSettings.Documents01 };
             var DocumentsData = await _employeeInformation.DocumentsAsync(employeeId, excludedDocTypes);
             return new JsonResult(DocumentsData);
         }

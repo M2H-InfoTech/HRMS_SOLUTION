@@ -7549,13 +7549,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 join b in _context.HrmsDocTypeMasters on a.DocType equals (int?)b.DocTypeId
                                 join c in _context.EmpDocumentAccesses on (int?)a.DocId equals c.DocId
                                 where c.EmpId == employeeId && a.Active == true &&
-                                      (!_context.HrmsEmpdocuments00s.Any (d => d.DocId == a.DocId && d.Status!= "R") ||
-                                       (b.DocType == "BANK DETAILS") ||
-                                       (_context.HrmsDocument00s.Join (_context.HrmsDocTypeMasters,
+                                      (!_context.HrmsEmpdocuments00s.Any(d => d.DocId == a.DocId && d.Status != _employeeSettings.Status01) ||
+                                       (b.DocType == _employeeSettings.Documents02) ||
+                                       (_context.HrmsDocument00s.Join(_context.HrmsDocTypeMasters,
                                              doc => doc.DocType ?? 0,
                                              dt => dt.DocTypeId,
                                              (doc, dt) => new { doc.DocId, doc.IsAllowMultiple, dt.Code })
-                                         .Any (x => x.IsAllowMultiple == 1 && x.Code == "BNK" && x.DocId == a.DocId)))
+                                         .Any(x => x.IsAllowMultiple == 1 && x.Code == _employeeSettings.BankDocCode && x.DocId == a.DocId)))
                                 select new
                                     {
                                     DocId = a.DocId,
@@ -7565,16 +7565,16 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result; // Returning as object (List of anonymous objects)
             }
 
-        public async Task<object> GetGeneralSubCategoryList (string remarks)
-            {
-           var result = await(from a in _context.ReasonMasters
-                              join b in _context.GeneralCategories on a.Type equals b.Description
-                              where (b.Description == remarks) && a.Status == "A"
-                              select new
-                                  {
-                                  ReasonId = a.ReasonId,
-                                  Description = a.Description
-                                  }).ToListAsync ( );
+        public async Task<object> GetGeneralSubCategoryList(string remarks)
+        {
+            var result = await (from a in _context.ReasonMasters
+                                join b in _context.GeneralCategories on a.Type equals b.Description
+                                where (b.Description == remarks) && a.Status == _employeeSettings.EmployeeStatus
+                                select new
+                                {
+                                    ReasonId = a.ReasonId,
+                                    Description = a.Description
+                                }).ToListAsync();
             return result;
 
             }
@@ -7583,21 +7583,21 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             {
             var workFlowNeed = (from a in _context.CompanyParameters
                                 join b in _context.HrmValueTypes on a.Value equals b.Value
-                                where b.Type == "EmployeeReporting"
-                                      && a.ParameterCode == "ENDOCAPPRL"
-                                      && a.Type == "COM"
-                                select b.Code).FirstOrDefault ( );
+                                where b.Type == _employeeSettings.EmployeeReportingType
+                                      && a.ParameterCode == _employeeSettings.ParameterCode02
+                                      && a.Type == _employeeSettings.CompanyParameterType
+                                select b.Code).FirstOrDefault();
 
             var transactionID = (from a in _context.TransactionMasters
-                                 where a.TransactionType == "Document"
-                                 select a.TransactionId).FirstOrDefault ( );
-            var codeID = GetSequence (SetEmpDocumentDetails.EmpID ?? 0, transactionID, "", 0);
+                                 where a.TransactionType == _employeeSettings.TransactionType
+                                 select a.TransactionId).FirstOrDefault();
+            var codeID = GetSequence(SetEmpDocumentDetails.EmpID ?? 0, transactionID, "", 0);
 
             if (codeID == null)
                 {
 
                 var ErrorId = 0;
-                var ErrorMessage = "NoSequence";
+                var ErrorMessage = _employeeSettings.ErrorMessage;
 
                 }
 
@@ -7662,8 +7662,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             //    }
 
-            if (workFlowNeed == "Yes")
-                {
+            if (workFlowNeed == _employeeSettings.Yes)
+            {
                 HrmsEmpdocuments00 newDocument;
 
                 if (SetEmpDocumentDetails.ProxyID > 0)
@@ -7675,8 +7675,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.EmpID,
                             RequestId = RequestSequence,
-                            TransactionType = "Document",
-                            Status = "p",
+                            TransactionType = _employeeSettings.TransactionType,
+                            Status = _employeeSettings.Status02,
                             FlowStatus = SetEmpDocumentDetails.FlowStatus,
                             ProxyId = 0,
                             EntryBy = SetEmpDocumentDetails.EntryBy,
@@ -7690,8 +7690,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.ProxyID,
                             RequestId = RequestSequence,
-                            TransactionType = "Document",
-                            Status = "p",
+                            TransactionType = _employeeSettings.TransactionType,
+                            Status = _employeeSettings.Status02,
                             FlowStatus = SetEmpDocumentDetails.FlowStatus,
                             ProxyId = SetEmpDocumentDetails.EmpID,
                             EntryBy = SetEmpDocumentDetails.EntryBy,
@@ -7706,8 +7706,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         DocId = SetEmpDocumentDetails.DocumentID,
                         EmpId = SetEmpDocumentDetails.EmpID,
                         RequestId = RequestSequence,
-                        TransactionType = "Document",
-                        Status = "p",
+                        TransactionType = _employeeSettings.TransactionType,
+                        Status = _employeeSettings.Status02,
                         FlowStatus = SetEmpDocumentDetails.FlowStatus,
                         ProxyId = SetEmpDocumentDetails.ProxyID,
                         EntryBy = SetEmpDocumentDetails.EntryBy,
@@ -7725,9 +7725,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                 //_context.Database.ExecuteSqlRaw ("exec WorkFlowActivityFlow @p0, @p1, @p2, @p3",
                 //    parameters: new object[] { EmpID, "Document", newDetailID, EntryBy });
-                }
-            else if (workFlowNeed == "No")
-                {
+            }
+            else if (workFlowNeed == _employeeSettings.No)
+            {
                 HrmsEmpdocuments00 newDocument;
 
                 if (SetEmpDocumentDetails.ProxyID > 0)
@@ -7739,9 +7739,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.EmpID,
                             RequestId = RequestSequence,
-                            TransactionType = "Document",
-                            Status = "A",
-                            FlowStatus = "E",
+                            TransactionType = _employeeSettings.TransactionType,
+                            Status = _employeeSettings.EmployeeStatus,
+                            FlowStatus = _employeeSettings.Status03,
                             ProxyId = 0,
                             EntryBy = SetEmpDocumentDetails.EntryBy,
                             EntryDate = DateTime.UtcNow,
@@ -7755,9 +7755,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             DocId = SetEmpDocumentDetails.DocumentID,
                             EmpId = SetEmpDocumentDetails.ProxyID,
                             RequestId = RequestSequence,
-                            TransactionType = "Document",
-                            Status = "A",
-                            FlowStatus = "E",
+                            TransactionType = _employeeSettings.TransactionType,
+                            Status = _employeeSettings.EmployeeStatus,
+                            FlowStatus = _employeeSettings.Status03,
                             ProxyId = SetEmpDocumentDetails.EmpID,
                             EntryBy = SetEmpDocumentDetails.EntryBy,
                             EntryDate = DateTime.UtcNow,
@@ -7772,9 +7772,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         DocId = SetEmpDocumentDetails.DocumentID,
                         EmpId = SetEmpDocumentDetails.EmpID,
                         RequestId = RequestSequence,
-                        TransactionType = "Document",
-                        Status = "A",
-                        FlowStatus = "E",
+                        TransactionType = _employeeSettings.TransactionType,
+                        Status = _employeeSettings.EmployeeStatus,
+                        FlowStatus = _employeeSettings.Status03,
                         ProxyId = SetEmpDocumentDetails.ProxyID,
                         EntryBy = SetEmpDocumentDetails.EntryBy,
                         EntryDate = DateTime.UtcNow,
@@ -7796,10 +7796,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     DocId = newDocument.DocId,
                     EmpId = newDocument.EmpId,
                     RequestId = newDocument.RequestId,
-                    TransactionType = "Document",
-                    Status = "A",
+                    TransactionType = _employeeSettings.TransactionType,
+                    Status = _employeeSettings.EmployeeStatus,
                     ProxyId = newDocument.ProxyId,
-                    FlowStatus = "E",
+                    FlowStatus = _employeeSettings.Status03,
                     DateFrom = DateTime.UtcNow,
                     EntryBy = newDocument.EntryBy,
                     EntryDate = newDocument.EntryDate,
@@ -7970,13 +7970,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                           join b in _context.HrmsDocTypeMasters on a.DocType equals Convert.ToInt32(b.DocTypeId)
                           join c in _context.EmpDocumentAccesses on Convert.ToInt32(a.DocId) equals c.DocId
                           where c.EmpId == EmpID
-                                && !_context.HrmsEmpdocuments00s.Any(d => d.DocId == a.DocId && d.EmpId == EmpID && d.Status != "R")
+                                && !_context.HrmsEmpdocuments00s.Any(d => d.DocId == a.DocId && d.EmpId == EmpID && d.Status != _employeeSettings.Status01)
                                 && a.Active == true
-                                && b.DocType != "Statutory"
-                                && b.DocType != "BANK DETAILS"
+                                && b.DocType != _employeeSettings.Documents01
+                                && b.DocType != _employeeSettings.Documents02
                                 || (_context.HrmsDocument00s
                                     .Join(_context.HrmsDocTypeMasters, x => (long)x.DocType, y => y.DocTypeId, (x, y) => new { x.DocId, x.IsAllowMultiple, y.DocType, y.Code })
-                                    .Any(d => d.DocId == a.DocId && d.IsAllowMultiple == 1 && d.DocType != "Statutory" && d.Code != "BNK"))
+                                    .Any(d => d.DocId == a.DocId && d.IsAllowMultiple == 1 && d.DocType != _employeeSettings.Documents01 && d.Code != _employeeSettings.BankDocCode))
                           select new FillDocumentTypeDto
                           {
                               DocID = a.DocId,
@@ -8026,7 +8026,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         {
             return await (from a in _context.ReasonMasters
                           join b in _context.GeneralCategories on a.Type equals b.Description
-                          where b.Description == Remarks && a.Status == "A"
+                          where b.Description == Remarks && a.Status == _employeeSettings.EmployeeStatus
 
 
                           select new DocumentGetGeneralSubCategoryListDto
@@ -8044,7 +8044,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             {
                 var workFlowNeedValue = await (from a in _context.CompanyParameters
                                                join b in _context.HrmValueTypes on a.Value equals b.Value
-                                               where b.Type == "EmployeeReporting" && a.ParameterCode == "ENDOCAPPRL" && a.Type == "COM"
+                                               where b.Type == _employeeSettings.EmployeeReportingType && a.ParameterCode == _employeeSettings.ParameterCode02 && a.Type == _employeeSettings.CompanyParameterType
                                                select b.Code).FirstOrDefaultAsync();
 
                 var tmpDocFileUpList = DocumentBankField;
@@ -8126,7 +8126,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             DocApprovedId = a.DocApprovedId,
                             DocId = a.DocId,
                             EmpId = a.EmpId,
-                            Status = "U",
+                            Status = _employeeSettings.Status04,
                             RequestId = a.RequestId,
                             DateFrom = DateTime.UtcNow,
                             EntryBy = In_EntryBy,
@@ -8224,7 +8224,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 }
                 else
                 {
-                    if (workFlowNeedValue == "No")
+                    if (workFlowNeedValue == _employeeSettings.No)
                     {
 
                         var documentHistory = _context.HrmsEmpdocumentsApproved00s
@@ -8235,7 +8235,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 DocApprovedId = a.DocApprovedId,
                                 DocId = a.DocId,
                                 EmpId = a.EmpId,
-                                Status = "I",
+                                Status = _employeeSettings.Status05,
                                 RequestId = a.RequestId,
                                 DateFrom = DateTime.UtcNow,
                                 EntryBy = In_EntryBy,
@@ -8272,7 +8272,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 }
 
                 await transaction.CommitAsync();
-                return "Successfully Saved";
+                return _employeeSettings.DataInsertSuccessStatus;
             }
             catch (Exception ex)
             {
@@ -8288,11 +8288,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             {
                 var workFlowNeedValue = await (from a in _context.CompanyParameters
                                                join b in _context.HrmValueTypes on a.Value equals b.Value
-                                               where b.Type == "EmployeeReporting" && a.ParameterCode == "ENDOCAPPRL" && a.Type == "COM"
+                                               where b.Type == _employeeSettings.EmployeeReportingType && a.ParameterCode == _employeeSettings.ParameterCode02 && a.Type == _employeeSettings.CompanyParameterType
                                                select b.Code).FirstOrDefaultAsync();
 
 
-                if ((Status == "Approved" || Status == "A") || workFlowNeedValue == "No")
+                if ((Status == _employeeSettings.Approved || Status == _employeeSettings.EmployeeStatus) || workFlowNeedValue == _employeeSettings.No)
                 {
                     int? docHisId = 0;
 
@@ -8347,7 +8347,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     await transaction.CommitAsync();
                 }
 
-                if (Status == "Pending" || Status == "P")
+                if (Status == _employeeSettings.StatusP || Status == _employeeSettings.Status02)
                 {
                     var existingDocs = _context.HrmsEmpdocuments02s.Where(d => d.DetailId == DetailID);
                     _context.HrmsEmpdocuments02s.RemoveRange(existingDocs);
@@ -8362,7 +8362,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                     await _context.HrmsEmpdocuments02s.AddAsync(newDocument);
 
-                    if (workFlowNeedValue == "No")
+                    if (workFlowNeedValue == _employeeSettings.No)
                     {
                         var existingApprovedDocs = _context.HrmsEmpdocumentsApproved02s.Where(d => d.DetailId == DetailID);
                         _context.HrmsEmpdocumentsApproved02s.RemoveRange(existingApprovedDocs);
@@ -8380,7 +8380,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         await _context.SaveChangesAsync();
                     }
                 }
-                else if (Status == "Approved" || Status == "A")
+                else if (Status == _employeeSettings.Approved || Status == _employeeSettings.EmployeeStatus)
                 {
                     var existingDocs01 = _context.HrmsEmpdocuments02s.Where(d => d.DetailId == DetailID);
                     _context.HrmsEmpdocuments02s.RemoveRange(existingDocs01);
@@ -8413,7 +8413,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     await transaction.CommitAsync();
                 }
 
-                return "Successfully Saved";
+                return _employeeSettings.DataInsertSuccessStatus;
             }
             catch (Exception ex)
             {
