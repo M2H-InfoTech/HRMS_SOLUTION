@@ -72,6 +72,32 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(retrieveUniversity);
 
         }
+        [HttpGet]
+        public async Task<IActionResult> EditDependentEmp (int Schemeid)
+            {
+            var EditDependentEmp = await _employeeInformationC.EditDependentEmp (Schemeid);
+            return new JsonResult (EditDependentEmp);
+            }
 
-    }
+        [HttpGet]
+        public async Task<IActionResult> WorkFlowAvailability (int Emp_Id, string Transactiontype, int ParameterID)
+            {
+            var WorkFlowAvailability = await _employeeInformationC.WorkFlowAvailability (Emp_Id, Transactiontype, ParameterID);
+            return new JsonResult (WorkFlowAvailability);
+            }
+
+        [HttpPost]
+        public async Task<IActionResult> InsertDepFields ([FromBody] List<TmpDocFileUpDto> InsertDepFields)   //InsertOrUpdate dependent function
+            {
+            var FieldDetails = await _employeeInformationC.InsertDepFields (InsertDepFields);
+
+            if (FieldDetails == null || !FieldDetails.Any ( ))
+                {
+                return NotFound ( );
+                }
+
+            return Ok (FieldDetails);
+            }
+
+        }
 }
