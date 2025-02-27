@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using EMPLOYEE_INFORMATION.Data;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
@@ -26,6 +27,19 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
             _env = env ?? throw new ArgumentNullException(nameof(env));
         }
 
+        public async Task<List<object>> QualificationDocumentsDetails(int QualificationId)
+        {
+            return await (from a in _context.QualificationAttachments
+                          where a.QualificationId == QualificationId && a.DocStatus == "A"
+                          select new
+                          {
+                              a.QualAttachId,
+                              a.QualificationId,
+                              a.QualFileName,
+                              a.DocStatus,
+                              a.EmpId
+                          }).AsNoTracking().ToListAsync<object>();
+        }
 
 
     }

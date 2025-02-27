@@ -18,7 +18,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return View();
         }
 
-
+        [HttpGet]
+        public async Task<IActionResult> QualificationDocumentsDetails(int QualificationId)
+        {
+            var Qualification = await _employeeInformationB.QualificationDocumentsDetails(QualificationId);
+            return new JsonResult(Qualification);
+        }
 
     }
 }
