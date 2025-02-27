@@ -753,17 +753,331 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                         }
                         ).ToListAsync();
             return result;
-        }
+            }
         public async Task<object> RetrieveUniversity()
-        {
+            {
             var result = await _context.UniversityMasters
                         .Select(a => new
-                        {
+                            {
                             UniId = a.UniId,
                             UniversityDescription = a.UniversityDescription
-                        }
-                        ).ToListAsync();
+                            }
+                        ).ToListAsync ( );
             return result;
+            }
+        public async Task<List<EditDependentEmpDto>> EditDependentEmp (int Schemeid)
+            {
+            var result = await (from a in _context.Dependent00s
+                                join b in _context.Dependent01s on a.DepId equals b.DepId into bGroup
+                                from b in bGroup.DefaultIfEmpty ( )
+                                join c in _context.DependentMasters on a.RelationshipId equals c.DependentId into cGroup
+                                from c in cGroup.DefaultIfEmpty ( )
+                                where a.DepId == Schemeid
+                                select new EditDependentEmpDto
+                                    {
+                                    depid = a.DepId,
+                                    Name = a.Name,
+                                    Gender = a.Gender,
+                                    DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString ("dd/MM/yyyy") : null,
+                                    RelationshipId = a.RelationshipId,
+                                    RelationShip = c != null ? c.Description : null,
+                                    Description = a.Description,
+                                    DepEmpId = a.DepEmpId,
+                                    DocFileType = b != null ? b.DocFileType : null,
+                                    DocFileName = b != null ? b.DocFileName : null,
+                                    FileData = b != null ? b.FileData : null,
+                                    InterEmpID = a.InterEmpId,
+                                    Type = a.Type,
+                                    TicketEligible = a.TicketEligible,
+                                    DocumentID = a.DocumentId,
+                                    IdentificationNo = a.IdentificationNo ?? ""
+                                    }).ToListAsync ( );
+
+            return result;
+            }
+
+
+        public List<WorkFlowAvailabilityDto> GetWorkFlowSequenceAvailability (int employeeId = 0, string transactionType = "", int masterId = 0)
+            {
+            var result = new List<WorkFlowAvailabilityDto> ( );
+
+            int? workFlow = null;
+            int? codeId = null;
+            int? transactionId = _context.TransactionMasters
+                .Where (t => t.TransactionType == transactionType)
+                .Select (t => (int?)t.TransactionId)
+                .FirstOrDefault ( );
+
+            var employee = _context.HrEmpMasters.FirstOrDefault (e => e.EmpId == employeeId);
+            int? firstEntity = int.TryParse (employee?.EmpFirstEntity, out int parsedEntity) ? parsedEntity : (int?)null;
+            string empEntities = employee?.EmpEntity;
+
+            string workFlowNeed = (from a in _context.CompanyParameters
+                                   join b in _context.HrmValueTypes on a.Value equals b.Value
+                                   where b.Type == _employeeSettings.EmployeeReportingType &&
+                                         a.ParameterCode == _employeeSettings.ParameterCode03
+                                   select b.Code).FirstOrDefault ( );
+
+
+
+
+
+
+            codeId = int.TryParse (GetSequence (employeeId, transactionId ?? 0, "", 0), out int parsedCodeId) ? parsedCodeId : (int?)null;
+
+
+            if (workFlow == null && masterId > 0)
+                {
+                workFlow = (from a in _context.SpecialWorkFlows
+                            join b in _context.TransactionMasters on a.TransactionId equals b.TransactionId
+                            where b.TransactionType == transactionType
+                                  && masterId == (transactionType == _employeeSettings.TransactionType02 ? a.GrievanceTypeId
+                                                : transactionType == _employeeSettings.TransactionType03 ? a.LeaveType
+                                                : transactionType == _employeeSettings.TransactionType04 ? a.SurveyTopic
+                                                : (int?)null)
+                            select (int?)1)
+             .FirstOrDefault ( );
+
+                }
+
+            if (workFlow == null)
+                {
+                workFlow = _context.ParamWorkFlow02s
+                    .Where (pw => pw.TransactionId == transactionId && pw.LinkEmpId == employeeId)
+                    .Select (pw => (int?)1)
+                    .FirstOrDefault ( );
+                }
+
+            if (workFlow == null)
+                {
+                List<string> empEntityList = empEntities?.Split (',').ToList ( ) ?? new List<string> ( );
+
+                workFlow = _context.ParamWorkFlow01s
+                    .Where (pw => pw.TransactionId == transactionId &&
+                                 ((pw.LinkLevel == 1 && pw.LinkId == firstEntity) ||
+                                  (pw.LinkLevel > 1 && empEntityList.Contains (pw.LinkId.ToString ( )))))
+                    .Select (pw => (int?)1)
+                    .FirstOrDefault ( );
+
+                }
+
+            if (workFlow == null)
+                {
+                workFlow = _context.ParamWorkFlow00s
+                    .Where (pw => pw.TransactionId == transactionId)
+                    .Select (pw => (int?)1)
+                    .FirstOrDefault ( );
+                }
+
+            if (workFlowNeed == _employeeSettings.No && new[] { _employeeSettings.TransactionType05, _employeeSettings.TransactionType06, _employeeSettings.TransactionType07, _employeeSettings.TransactionType08, _employeeSettings.TransactionType09, _employeeSettings.TransactionType }.Contains (transactionType))
+                {
+                result.Add (new WorkFlowAvailabilityDto { WorkFlowAvailable = _employeeSettings.LetterS, SequenceAvailable = _employeeSettings.LetterS });
+                }
+            else
+                {
+                if (codeId == null && workFlow == null)
+                    result.Add (new WorkFlowAvailabilityDto { WorkFlowAvailable = _employeeSettings.LetterN, SequenceAvailable = _employeeSettings.LetterN });
+                if (codeId == null && workFlow > 0)
+                    result.Add (new WorkFlowAvailabilityDto { WorkFlowAvailable = _employeeSettings.LetterY, SequenceAvailable = _employeeSettings.LetterN });
+                if (codeId > 0 && workFlow == null)
+                    result.Add (new WorkFlowAvailabilityDto { WorkFlowAvailable = _employeeSettings.LetterN, SequenceAvailable = _employeeSettings.LetterY });
+                if (codeId > 0 && workFlow > 0)
+                    result.Add (new WorkFlowAvailabilityDto { WorkFlowAvailable = _employeeSettings.LetterY, SequenceAvailable = _employeeSettings.LetterY });
+                }
+
+            return result;
+            }
+
+        public async Task<List<WorkFlowAvailabilityDto>> WorkFlowAvailability (int Emp_Id, string Transactiontype, int ParameterID)
+            {
+            List<WorkFlowAvailabilityDto> result;
+
+            if (Transactiontype == _employeeSettings.TransactiontypeSHIFT)
+                {
+                bool shiftApprovalExists = await _context.CompanyParameters
+                    .AnyAsync (cp => cp.Type == _employeeSettings.Code && cp.ParameterCode == _employeeSettings.ParameterCodeShift && cp.Value == 1);
+
+                if (shiftApprovalExists)
+                    {
+                    var workflowList = GetWorkFlowSequenceAvailability (Emp_Id, Transactiontype, ParameterID);
+
+                    result = workflowList.Select (wf => new WorkFlowAvailabilityDto
+                        {
+                        WorkFlowAvailable = wf.WorkFlowAvailable,
+                        SequenceAvailable = wf.SequenceAvailable
+                        }).ToList ( );
+                    }
+                else
+                    {
+                    var workflowList = GetWorkFlowSequenceAvailability (Emp_Id, Transactiontype, ParameterID);
+
+                    result = workflowList.Select (wf => new WorkFlowAvailabilityDto
+                        {
+                        WorkFlowAvailable = _employeeSettings.LetterY,
+                        SequenceAvailable = wf.SequenceAvailable
+                        }).ToList ( );
+                    }
+                }
+            else
+                {
+                var workflowList = GetWorkFlowSequenceAvailability (Emp_Id, Transactiontype, ParameterID);
+
+                result = workflowList.Select (wf => new WorkFlowAvailabilityDto
+                    {
+                    WorkFlowAvailable = wf.WorkFlowAvailable,
+                    SequenceAvailable = wf.SequenceAvailable
+                    }).ToList ( );
+                }
+
+            return result;
+            }
+
+        public async Task<string> InsertDepFields (List<TmpDocFileUpDto> InsertDepFields)
+            {
+            using var transaction = await _context.Database.BeginTransactionAsync ( );
+            try
+                {
+                var workFlowNeedValue = await (from a in _context.CompanyParameters
+                                               join b in _context.HrmValueTypes on a.Value equals b.Value
+                                               where b.Type == _employeeSettings.EmployeeReportingType && a.ParameterCode == _employeeSettings.ParameterCode02 && a.Type == _employeeSettings.CompanyParameterType
+                                               select b.Code).FirstOrDefaultAsync ( );
+
+                var tmpDocFileUpList = InsertDepFields;
+
+                bool recordsExist = (from a in _context.HrmsEmpdocuments01s.ToList ( )
+                                     join b in tmpDocFileUpList
+                                     on a.DetailId equals b.DetailID
+                                     select a).Any ( );
+
+                if (recordsExist)
+                    {
+                    var tmpDocFileUpListConverted = tmpDocFileUpList
+                        .Select (b => new
+                            {
+                            DetailID = b.DetailID ?? 0,
+                            DocFieldID = int.TryParse (b.DocFieldID, out int parsedId) ? parsedId : 0,
+                            DocFieldText = b.DocFieldText
+                            })
+                        .ToList ( );
+
+                    var updateRecords = from a in _context.HrmsEmpdocuments01s
+                                        join b in tmpDocFileUpListConverted
+                                        on new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
+                                        equals new { DetailId = b.DetailID, DocFields = b.DocFieldID }
+                                        select new { a, b };
+
+                    foreach (var record in updateRecords)
+                        {
+                        record.a.DocValues = record.b.DocFieldText;
+                        }
+
+                    await _context.SaveChangesAsync ( );
+
+                    var insertRecords = from b in tmpDocFileUpListConverted
+                                        join a in _context.HrmsEmpdocuments01s
+                                            on new { DetailID = b.DetailID, DocFields = b.DocFieldID }
+                                            equals new { DetailID = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 } into joined
+                                        from a in joined.DefaultIfEmpty ( )
+                                        where a == null
+                                        select new HrmsEmpdocuments01
+                                            {
+                                            DetailId = b.DetailID,
+                                            DocFields = b.DocFieldID,
+                                            DocValues = b.DocFieldText
+                                            };
+
+                    await _context.HrmsEmpdocuments01s.AddRangeAsync (insertRecords);
+                    await _context.SaveChangesAsync ( );
+                    }
+                else
+                    {
+                    var insertRecords = tmpDocFileUpList
+                        .Select (b => new HrmsEmpdocuments01
+                            {
+                            DetailId = b.DetailID,
+                            DocFields = int.TryParse (b.DocFieldID, out int parsedId) ? parsedId : 0,
+                            DocValues = b.DocFieldText
+                            })
+                        .ToList ( );
+
+
+                    await _context.HrmsEmpdocuments01s.AddRangeAsync (insertRecords);
+                    await _context.SaveChangesAsync ( );
+                    }
+
+                var detailIds = tmpDocFileUpList.Select (b => b.DetailID).ToList ( );
+
+                bool recordsExistApproved = _context.HrmsEmpdocumentsApproved01s
+                    .Any (a => detailIds.Contains (a.DetailId));
+
+                if (recordsExistApproved)
+                    {
+
+                    var tmpDocFileUpListConverted01 = tmpDocFileUpList
+                        .Select (b => new
+                            {
+                            DetailID = b.DetailID ?? 0,
+                            DocFieldID = string.IsNullOrEmpty (b.DocFieldID) ? 0 : int.Parse (b.DocFieldID),
+                            DocFieldText = b.DocFieldText
+                            })
+                        .ToList ( );
+                    var updateRecords = from a in _context.HrmsEmpdocumentsApproved01s
+                                        join b in tmpDocFileUpListConverted01
+                                        on new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
+                                        equals new { DetailId = b.DetailID, DocFields = b.DocFieldID }
+                                        select new { a, b };
+
+
+                    foreach (var record in updateRecords)
+                        {
+                        record.a.DocValues = record.b.DocFieldText;
+                        }
+                    await _context.SaveChangesAsync ( );
+
+                    var newRecords = (from b in tmpDocFileUpList
+                                      join a in _context.HrmsEmpdocumentsApproved01s
+                                      on new { DetailId = b.DetailID ?? 0, DocFields = int.TryParse (b.DocFieldID, out int parsedId) ? parsedId : 0 }
+                                      equals new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
+                                      into joined
+                                      from a in joined.DefaultIfEmpty ( )
+                                      where a == null
+                                      select new HrmsEmpdocumentsApproved01
+                                          {
+                                          DetailId = b.DetailID,
+                                          DocFields = int.TryParse (b.DocFieldID, out int parsedId) ? parsedId : 0,
+                                          DocValues = b.DocFieldText
+                                          }).ToList ( );
+
+                    await _context.HrmsEmpdocumentsApproved01s.AddRangeAsync (newRecords);
+                    await _context.SaveChangesAsync ( );
+                    }
+                else
+                    {
+                    if (workFlowNeedValue == _employeeSettings.No)
+                        {
+
+                        var newEntries = tmpDocFileUpList.Select (b => new HrmsEmpdocumentsApproved01
+                            {
+                            DetailId = b.DetailID,
+                            DocFields = int.TryParse (b.DocFieldID, out int parsedId) ? parsedId : 0,
+                            DocValues = b.DocFieldText
+                            }).ToList ( );
+
+                        await _context.HrmsEmpdocumentsApproved01s.AddRangeAsync (newEntries);
+                        await _context.SaveChangesAsync ( );
+                        }
+                    }
+
+                await transaction.CommitAsync ( );
+                return _employeeSettings.DataInsertSuccessStatus;
+                }
+            catch (Exception ex)
+                {
+                await transaction.RollbackAsync ( );
+                return $"Error: {ex.Message}";
+                }
+            }
+
+
         }
     }
-}

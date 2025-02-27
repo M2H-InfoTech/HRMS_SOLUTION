@@ -263,6 +263,8 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<EdSpecializationMaster> EdSpecializationMasters { get; set; }
 
     public virtual DbSet<UniversityMaster> UniversityMasters { get; set; }
+    public virtual DbSet<SpecialWorkFlow> SpecialWorkFlows { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -3840,6 +3842,21 @@ public partial class EmployeeDBContext : DbContext
 
             entity.Property (e => e.EntryDate).HasColumnType ("datetime");
         });
+
+        modelBuilder.Entity<SpecialWorkFlow> (entity =>
+        {
+            entity.HasKey (e => e.ValueId).HasName ("PK__SpecialW__93364E48B376BC26");
+
+            entity.ToTable ("SpecialWorkFlow");
+
+            entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
+            entity.Property (e => e.EntityLevel).IsUnicode (false);
+            entity.Property (e => e.GrievanceTypeId)
+                .HasDefaultValue (0)
+                .HasColumnName ("GrievanceTypeID");
+            entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+        });
+
 
         OnModelCreatingPartial (modelBuilder);
     }

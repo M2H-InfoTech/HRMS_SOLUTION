@@ -68,7 +68,23 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? StatusP { get; set; }
 
         public string? DataUpdateSuccessStatus { get; set; }
-    }
+        public string? ParameterCode03 { get; set; }
+        public string? TransactionType02 { get; set; }
+        public string? TransactionType03 { get; set; }
+        public string? TransactionType04 { get; set; }
+        public string? TransactionType05 { get; set; }
+        public string? TransactionType06 { get; set; }
+        public string? TransactionType07 { get; set; }
+        public string? TransactionType08 { get; set; }
+        public string? TransactionType09 { get; set; }
+        public string? LetterS { get; set; }
+        public string? LetterY { get; set; }
+        public string? LetterN { get; set; }
+        public string? TransactiontypeSHIFT { get; set; }
+        public string? Code { get; set; }
+        public string? ParameterCodeShift { get; set; }
 
-}
+        }
+
+    }
 
