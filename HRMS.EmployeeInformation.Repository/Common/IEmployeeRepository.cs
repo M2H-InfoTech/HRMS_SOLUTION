@@ -87,7 +87,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<object>> BankTypeEdit();
         Task<EmployeeDetailsDto> GetHrEmpDetailsAsync(int employeeId, int roleId);
         //Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto, int lastEntity);
-        Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto);
+        Task<string?> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto);
         Task<string?> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto);
         //Task<HrEmpMasterDto> SaveOrUpdateEmployeeDetails(EmployeeParametersDto employeeDetailsDto);
         Task<List<object>> CertificationsDropdown(string description);
