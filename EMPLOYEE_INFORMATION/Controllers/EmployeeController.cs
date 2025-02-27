@@ -502,7 +502,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         }
 
         [HttpPost("uploadDocument")]
-        public async Task<IActionResult> UploadDocument(List<IFormFile> files, [FromForm] QualificationAttachmentDto skillset)
+        public async Task<IActionResult> UploadQualificationDocument(List<IFormFile> files, [FromForm] QualificationAttachmentDto skillset)
         {
             if (files == null || files.Count == 0)
                 return BadRequest("No files uploaded.");
