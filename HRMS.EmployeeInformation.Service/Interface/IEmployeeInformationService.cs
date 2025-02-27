@@ -92,7 +92,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<object> FillCountryAsync();
 
         //Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto, int lastEntity);
-        Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetailsAsync(EmployeeDetailsUpdateDto employeeDetailsDto);
+        Task<string?> UpdateEmployeeDetailsAsync(EmployeeDetailsUpdateDto employeeDetailsDto);
 
         //Task<PersonalDetailsHistoryDto> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto);
         Task<string?> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto);

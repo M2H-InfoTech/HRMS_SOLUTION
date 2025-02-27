@@ -323,7 +323,7 @@ namespace HRMS.EmployeeInformation.Service.Service
         //{
         //    return await _employeeRepository.UpdateEmployeeDetails(employeeDetailsDto, lastEntity);
         //}
-        public async Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetailsAsync(EmployeeDetailsUpdateDto employeeDetailsDto)
+        public async Task<string?> UpdateEmployeeDetailsAsync(EmployeeDetailsUpdateDto employeeDetailsDto)
         {
             return await _employeeRepository.UpdateEmployeeDetails(employeeDetailsDto);
         }
