@@ -2,7 +2,7 @@
 {
     public interface IRepositoryB
     {
-
+        Task<List<object>> QualificationDocumentsDetails(int QualificationId);
 
     }
 }

@@ -11,6 +11,11 @@ namespace HRMS.EmployeeInformation.Service.ServiceB
             _repositoryB = repositoryB;
         }
 
+        public async Task<List<object>> QualificationDocumentsDetails(int QualificationId)
+        {
+            return await _repositoryB.QualificationDocumentsDetails(QualificationId);
+        }
+
 
     }
 }
