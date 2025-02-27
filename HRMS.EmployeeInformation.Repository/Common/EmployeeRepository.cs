@@ -6850,7 +6850,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         FileType = fileType,
                         EntryBy = attachmentDto.EntryBy,
                         EntryDate = DateTime.UtcNow,
-                        DocStatus = "Active",
+                        DocStatus = _employeeSettings.EmployeeStatus,
                         QualificationId= attachmentDto.QualificationId
                     });
                 }

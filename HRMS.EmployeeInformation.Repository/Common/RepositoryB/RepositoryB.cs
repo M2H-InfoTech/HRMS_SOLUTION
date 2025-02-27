@@ -30,7 +30,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
         public async Task<List<object>> QualificationDocumentsDetails(int QualificationId)
         {
             return await (from a in _context.QualificationAttachments
-                          where a.QualificationId == QualificationId && a.DocStatus == "A"
+                          where a.QualificationId == QualificationId && a.DocStatus == _employeeSettings.EmployeeStatus
                           select new
                           {
                               a.QualAttachId,
