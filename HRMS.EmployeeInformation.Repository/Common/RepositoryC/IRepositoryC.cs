@@ -12,8 +12,10 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
         Task<object> RetrieveCourse();
         Task<object> RetrieveSpecial();
         Task<object> RetrieveUniversity();
-        Task<List<EditDependentEmpDto>> EditDependentEmp (int Schemeid);
+        Task<List<EditDependentEmpResultDto>> EditDependentEmpNew (int Schemeid, int EmpId);
         Task<List<WorkFlowAvailabilityDto>> WorkFlowAvailability (int Emp_Id, string Transactiontype, int ParameterID);
         Task<string> InsertDepFields (List<TmpDocFileUpDto> InsertDepFields);
+        Task<List<FillDocumentTypeDto>> GetDocumentTypeEdit ();
+
         }
-}
+    }

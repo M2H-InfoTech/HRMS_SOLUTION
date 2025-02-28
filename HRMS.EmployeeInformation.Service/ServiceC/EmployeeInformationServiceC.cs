@@ -43,9 +43,9 @@ namespace HRMS.EmployeeInformation.Service.ServiceC
         {
             return await _repositoryC.RetrieveUniversity();
         }
-        public async Task<List<EditDependentEmpDto>> EditDependentEmp (int Schemeid)
+        public async Task<List<EditDependentEmpResultDto>> EditDependentEmpNew (int Schemeid,int EmpId)
             {
-            return await _repositoryC.EditDependentEmp (Schemeid);
+            return await _repositoryC.EditDependentEmpNew (Schemeid, EmpId);
             }
         public async Task<List<WorkFlowAvailabilityDto>> WorkFlowAvailability (int Emp_Id, string Transactiontype, int ParameterID)
             {
@@ -54,6 +54,10 @@ namespace HRMS.EmployeeInformation.Service.ServiceC
         public async Task<string> InsertDepFields (List<TmpDocFileUpDto> InsertDepFields)
             {
             return await _repositoryC.InsertDepFields (InsertDepFields);
+            }
+        public async Task<List<FillDocumentTypeDto>> GetDocumentTypeEdit ( )
+            {
+            return await _repositoryC.GetDocumentTypeEdit ();
             }
         }
 }
