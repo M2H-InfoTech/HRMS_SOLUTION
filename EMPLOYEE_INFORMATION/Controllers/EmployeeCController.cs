@@ -73,10 +73,10 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
         }
         [HttpGet]
-        public async Task<IActionResult> EditDependentEmp (int Schemeid)
+        public async Task<IActionResult> EditDependentEmpNew (int Schemeid,int EmpId)
             {
-            var EditDependentEmp = await _employeeInformationC.EditDependentEmp (Schemeid);
-            return new JsonResult (EditDependentEmp);
+            var EditDependentEmpNew = await _employeeInformationC.EditDependentEmpNew (Schemeid, EmpId);
+            return new JsonResult (EditDependentEmpNew);
             }
 
         [HttpGet]
@@ -99,5 +99,14 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok (FieldDetails);
             }
 
+        [HttpGet]
+        public async Task<IActionResult> GetDocumentTypeEdit ()    //dropdown in document edit button
+            {
+            var GetDocumentTypeEdit = await _employeeInformationC.GetDocumentTypeEdit ();
+            return new JsonResult (GetDocumentTypeEdit);
+            }
+
         }
+
+
 }

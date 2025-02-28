@@ -765,9 +765,9 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                         ).ToListAsync ( );
             return result;
             }
-        public async Task<List<EditDependentEmpDto>> EditDependentEmp (int Schemeid)
+        public async Task<List<EditDependentEmpResultDto>> EditDependentEmpNew (int Schemeid, int EmpId)
             {
-            var result = await (from a in _context.Dependent00s
+            var DependentData = await (from a in _context.Dependent00s
                                 join b in _context.Dependent01s on a.DepId equals b.DepId into bGroup
                                 from b in bGroup.DefaultIfEmpty ( )
                                 join c in _context.DependentMasters on a.RelationshipId equals c.DependentId into cGroup
@@ -792,6 +792,31 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                                     DocumentID = a.DocumentId,
                                     IdentificationNo = a.IdentificationNo ?? ""
                                     }).ToListAsync ( );
+            var DependentEducation = await (from a in _context.DependentEducations
+                                            join b in _context.EducationMasters on a.EduId equals b.EducId
+                                            join c in _context.EdCourseMasters on a.CourseId equals c.EducId into cGroup
+                                            from c in cGroup.DefaultIfEmpty ( )
+                                            join d in _context.EdSpecializationMasters on a.SpecialId equals d.EdCourId into dGroup
+                                            from d in dGroup.DefaultIfEmpty ( )
+                                            join e in _context.UniversityMasters on a.UniversityEduId equals e.UniId into eGroup
+                                            from e in eGroup.DefaultIfEmpty ( )
+                                            where a.DepId == Schemeid && a.EmpId == EmpId
+                                            select new EditDependentEducationDto
+                                                {
+                                                UniversityEdu = a.UniversityEdu,
+                                                Year = a.Year,
+                                                CourseType = a.CourseType,
+                                                EducId = a.EduId,
+                                                CourseId = a.CourseId,
+                                                EdSpecId = a.SpecialId,
+                                                UniId = a.UniversityEduId
+                                                }).ToListAsync ( );
+
+            var result = DependentData.Select (dependent => new EditDependentEmpResultDto
+                {
+                EditDependentEmp = DependentData,
+                EditDependentEducation = DependentEducation
+                }).ToList ( );
 
             return result;
             }
@@ -1076,6 +1101,26 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                 await transaction.RollbackAsync ( );
                 return $"Error: {ex.Message}";
                 }
+            }
+        public async Task<List<FillDocumentTypeDto>> GetDocumentTypeEdit ()
+            {
+            return await (from b in _context.HrmsDocument00s
+                          join c in _context.HrmsDocument00s on b.DocId equals c.DocId into bcGroup
+                          from c in bcGroup.DefaultIfEmpty ( )
+                          join d in _context.HrmsDocTypeMasters on c.DocType equals Convert.ToInt32 (d.DocTypeId) into cdGroup
+                          from d in cdGroup.DefaultIfEmpty ( )
+                          where b.Active == true
+                                && d.DocType != _employeeSettings.Documents01
+                                && d.DocType != _employeeSettings.Documents02
+                          select new FillDocumentTypeDto
+                              {
+                              DocID = b.DocId,
+                              DocName = b.DocName
+                              })
+                  .AsNoTracking ( )
+                  .ToListAsync ( );
+
+
             }
 
 
