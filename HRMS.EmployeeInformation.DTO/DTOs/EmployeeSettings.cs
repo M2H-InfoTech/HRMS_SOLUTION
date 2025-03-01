@@ -83,6 +83,8 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? TransactiontypeSHIFT { get; set; }
         public string? Code { get; set; }
         public string? ParameterCodeShift { get; set; }
+        public string? Active { get; set; }
+
 
         }
 

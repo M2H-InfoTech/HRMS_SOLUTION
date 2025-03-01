@@ -16,6 +16,12 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
         Task<List<WorkFlowAvailabilityDto>> WorkFlowAvailability (int Emp_Id, string Transactiontype, int ParameterID);
         Task<string> InsertDepFields (List<TmpDocFileUpDto> InsertDepFields);
         Task<List<FillDocumentTypeDto>> GetDocumentTypeEdit ();
+        Task<List<DocumentFieldCheckBankDto>> DocumentField_CheckBank (int DocumentID);
+        Task<List<DocumentFieldGetEditDocFieldsDto>> DocumentField_GetEditDocFields (int DocumentID, string Status);
+        Task<List<GetCountryNameDto>> DocumentField_GetCountryName ( );
+        Task<object> DocumentField_GetBankTypeEdit ( );
+        Task<List<DocumentGetFolderNameDto>> Document_GetFolderName (int DocumentID);
+        Task<string> UpdateEmpDocumentDetails (object documentDetails, int DetailID, string Status, int EntryBy);
 
         }
     }
