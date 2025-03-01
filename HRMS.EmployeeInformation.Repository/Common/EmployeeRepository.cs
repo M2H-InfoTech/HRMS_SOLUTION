@@ -6851,7 +6851,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         EntryBy = attachmentDto.EntryBy,
                         EntryDate = DateTime.UtcNow,
                         DocStatus = _employeeSettings.EmployeeStatus,
-                        QualificationId= attachmentDto.QualificationId
+                        QualificationId = attachmentDto.QualificationId
                     });
                 }
                 catch (Exception ex)
@@ -8431,6 +8431,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             }
         }
 
+        public async Task<int?> GetEmployeeLastEntity(int employeeid)
+        {
+            return await _context.HrEmpMasters.Where(e => e.EmpId == employeeid).Select(e => e.LastEntity).FirstOrDefaultAsync();
+        }
     }
 }
 

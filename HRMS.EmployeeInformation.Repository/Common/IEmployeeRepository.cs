@@ -117,5 +117,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
         Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
 
+        Task<int?> GetEmployeeLastEntity(int employeeid);
+
     }
 }

@@ -655,6 +655,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
             return Ok(SetEmpDocuments);
         }
+        [HttpGet]
+        public async Task<int?> GetEmployeeLastEntity(int employeeid)
+        {
+            var employeeType = await _employeeInformation.GetEmployeeLastEntity(employeeid);
+            return employeeType;
+        }
 
     }
 }

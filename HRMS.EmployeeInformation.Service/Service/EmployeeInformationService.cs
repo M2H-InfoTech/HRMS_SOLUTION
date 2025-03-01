@@ -380,5 +380,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.SetEmpDocuments(DocumentBankField, DetailID, Status, In_EntryBy);
         }
+
+        public async Task<int?> GetEmployeeLastEntity(int employeeid)
+        {
+            return await _employeeRepository.GetEmployeeLastEntity(employeeid);
+        }
     }
 }

@@ -114,7 +114,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryListAsync(string Remarks);
         Task<string> InsertDocumentsFieldDetailsAsync(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
         Task<string> SetEmpDocumentsAsync(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
-
+        Task<int?> GetEmployeeLastEntity(int employeeid);
     }
 
 }
