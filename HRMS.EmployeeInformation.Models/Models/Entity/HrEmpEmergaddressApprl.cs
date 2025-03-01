@@ -4,23 +4,23 @@ using System.Collections.Generic;
 
 namespace EMPLOYEE_INFORMATION.Models.Entity;
 
-public partial class HrEmpAddress01Apprl
+public partial class HrEmpEmergaddressApprl
 {
     public int AddrId { get; set; }
 
     public int? EmpId { get; set; }
 
-    public string? PermanentAddr { get; set; }
+    public string? Address { get; set; }
 
-    public string? PinNo1 { get; set; }
+    public string? PinNo { get; set; }
 
-    public int? Addr1Country { get; set; }
+    public int? Country { get; set; }
 
-    public string? ContactAddr { get; set; }
+    public string? PhoneNo { get; set; }
 
-    public string? PinNo2 { get; set; }
+    public string? AlterPhoneNo { get; set; }
 
-    public int? Addr2Country { get; set; }
+    public string? MobileNo { get; set; }
 
     public string? RequestId { get; set; }
 
@@ -35,10 +35,4 @@ public partial class HrEmpAddress01Apprl
     public int? EntryBy { get; set; }
 
     public DateTime? EntryDate { get; set; }
-
-    public string? PhoneNo { get; set; }
-
-    public string? AlterPhoneNo { get; set; }
-
-    public string? MobileNo { get; set; }
 }

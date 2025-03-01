@@ -264,7 +264,7 @@ public partial class EmployeeDBContext : DbContext
 
     public virtual DbSet<UniversityMaster> UniversityMasters { get; set; }
     public virtual DbSet<SpecialWorkFlow> SpecialWorkFlows { get; set; }
-
+    public virtual DbSet<HrEmpEmergaddressApprl> HrEmpEmergaddressApprls { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -1064,38 +1064,53 @@ public partial class EmployeeDBContext : DbContext
         });
         modelBuilder.Entity<HrEmpAddress01>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("HR_EMP_ADDRESS_01");
+            entity.ToTable("HR_EMP_ADDRESS_01");
+
+            // Define Primary Key
+            entity.HasKey(e => e.AddrId).HasName("PK_HrEmpAddress");
 
             entity.Property(e => e.AddrId)
-                .ValueGeneratedOnAdd()
+                .ValueGeneratedOnAdd() // This ensures EF knows it's an identity column
                 .HasColumnName("AddrID");
+
             entity.Property(e => e.AlterPhoneNo)
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.ApprlId).HasColumnName("ApprlID");
+
+            entity.Property(e => e.ApprlId)
+                .HasColumnName("ApprlID");
+
             entity.Property(e => e.ContactAddr)
                 .HasMaxLength(5000)
                 .IsUnicode(false);
-            entity.Property(e => e.EmpId).HasColumnName("EmpID");
-            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+
+            entity.Property(e => e.EmpId)
+                .HasColumnName("EmpID");
+
+            entity.Property(e => e.EntryDate)
+                .HasColumnType("datetime");
+
             entity.Property(e => e.MobileNo)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+
             entity.Property(e => e.PermanentAddr)
                 .HasMaxLength(5000)
                 .IsUnicode(false);
+
             entity.Property(e => e.PhoneNo)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+
             entity.Property(e => e.PinNo1)
                 .HasMaxLength(100)
                 .IsUnicode(false);
+
             entity.Property(e => e.PinNo2)
                 .HasMaxLength(100)
                 .IsUnicode(false);
         });
+
         modelBuilder.Entity<HrEmpLanguagemaster>(entity =>
         {
             entity.HasKey(e => e.LanguageId).HasName("PK__HR_EMP_L__12696A622B6100D9");
@@ -1225,47 +1240,69 @@ public partial class EmployeeDBContext : DbContext
 
         modelBuilder.Entity<HrEmpAddress01Apprl>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("HR_EMP_ADDRESS_01_APPRL");
+            entity.ToTable("HR_EMP_ADDRESS_01_APPRL");
 
+            // Define Primary Key
+            entity.HasKey(e => e.AddrId).HasName("PK_HrEmpAddress");
+
+            // Handle Primary Key Mapping
             entity.Property(e => e.AddrId)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("AddrID");
+                .HasColumnName("AddrID")
+                .ValueGeneratedOnAdd(); // Use this if AddrId is an Identity Column
+
+            // If AddrId is NOT an identity column, use this instead:
+            // entity.Property(e => e.AddrId).ValueGeneratedNever();
+
             entity.Property(e => e.AlterPhoneNo)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+
             entity.Property(e => e.ContactAddr)
                 .HasMaxLength(5000)
                 .IsUnicode(false);
-            entity.Property(e => e.DateFrom).HasColumnType("datetime");
-            entity.Property(e => e.EmpId).HasColumnName("EmpID");
-            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+
+            entity.Property(e => e.DateFrom)
+                .HasColumnType("datetime");
+
+            entity.Property(e => e.EmpId)
+                .HasColumnName("EmpID");
+
+            entity.Property(e => e.EntryDate)
+                .HasColumnType("datetime");
+
             entity.Property(e => e.FlowStatus)
                 .HasMaxLength(10)
                 .IsUnicode(false);
+
             entity.Property(e => e.MasterId)
                 .HasDefaultValue(0)
                 .HasColumnName("MasterID");
+
             entity.Property(e => e.MobileNo)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+
             entity.Property(e => e.PermanentAddr)
                 .HasMaxLength(5000)
                 .IsUnicode(false);
+
             entity.Property(e => e.PhoneNo)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+
             entity.Property(e => e.PinNo1)
                 .HasMaxLength(100)
                 .IsUnicode(false);
+
             entity.Property(e => e.PinNo2)
                 .HasMaxLength(100)
                 .IsUnicode(false);
+
             entity.Property(e => e.RequestId)
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("Request_ID");
+
             entity.Property(e => e.Status)
                 .HasMaxLength(10)
                 .IsUnicode(false);
@@ -3857,7 +3894,45 @@ public partial class EmployeeDBContext : DbContext
             entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
         });
 
+        modelBuilder.Entity<HrEmpEmergaddressApprl>(entity =>
+        {
+            entity.HasKey(e => e.AddrId).HasName("PK__HR_EMP_E__BCDB8FA31D1B7990");
 
+            entity.ToTable("HR_EMP_EMERGADDRESS_APPRL");
+
+            entity.Property(e => e.AddrId).HasColumnName("AddrID");
+            entity.Property(e => e.Address)
+                .HasMaxLength(5000)
+                .IsUnicode(false);
+            entity.Property(e => e.AlterPhoneNo)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.DateFrom).HasColumnType("datetime");
+            entity.Property(e => e.EmpId).HasColumnName("EmpID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FlowStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.MasterId)
+                .HasDefaultValue(0)
+                .HasColumnName("MasterID");
+            entity.Property(e => e.MobileNo)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.PhoneNo)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.PinNo)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.RequestId)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Request_ID");
+            entity.Property(e => e.Status)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+        });
         OnModelCreatingPartial (modelBuilder);
     }
 
