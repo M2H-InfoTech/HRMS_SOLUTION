@@ -3497,7 +3497,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         //    }
         //}
 
-        private async Task<bool> IsWorkflowNeeded()
+        public async Task<bool> IsWorkflowNeeded()
         {
             return await _context.CompanyParameters
                 .Join(_context.HrmValueTypes, a => a.Value, b => b.Value, (a, b) => new { a, b })
@@ -3506,7 +3506,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 .FirstOrDefaultAsync() == "Yes";
         }
 
-        private async Task<string?> GenerateRequestId(int empId)
+        public async Task<string?> GenerateRequestId(int empId)
         {
             var transactionID = await _context.TransactionMasters
                 .Where(a => a.TransactionType == "Professional")
@@ -3516,7 +3516,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return GetSequence(empId, transactionID, "", 0);
         }
 
-        private async Task<string?> GetLastSequence(string codeId)
+        public async Task<string?> GetLastSequence(string codeId)
         {
             return await _context.AdmCodegenerationmasters
                 .Where(a => a.Code == codeId)
@@ -3524,7 +3524,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 .FirstOrDefaultAsync();
         }
 
-        private async Task UpdateCodeGeneration(string codeId)
+        public async Task UpdateCodeGeneration(string codeId)
         {
             var codeGenEntity = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(c => c.CodeId == Convert.ToInt32(codeId));
 

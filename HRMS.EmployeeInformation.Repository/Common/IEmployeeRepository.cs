@@ -116,6 +116,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryList(string Remarks);
         Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
         Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
+        Task<bool>   IsWorkflowNeeded();
+        Task<string> GenerateRequestId(int empId);
+        Task<string?> GetLastSequence(string codeId);
+        Task UpdateCodeGeneration(string codeId);
 
     }
 }
