@@ -84,6 +84,8 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? Code { get; set; }
         public string? ParameterCodeShift { get; set; }
         public string? Active { get; set; }
+        public string? LetterD { get; set; }
+        public string? SubmitDesc { get; set; }
 
 
         }

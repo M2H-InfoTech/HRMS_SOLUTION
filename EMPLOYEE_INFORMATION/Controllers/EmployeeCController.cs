@@ -150,6 +150,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok (new { Message = result });
             }
 
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeVisaDetails (int EmpId)   //retrieve folder name in edit document tab
+            {
+            var GetEmployeeVisaDetails = await _employeeInformationC.GetEmployeeVisaDetails (EmpId);
+            return new JsonResult (GetEmployeeVisaDetails);
+            }
+
 
         }
 
