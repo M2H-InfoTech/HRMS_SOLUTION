@@ -105,8 +105,53 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var GetDocumentTypeEdit = await _employeeInformationC.GetDocumentTypeEdit ();
             return new JsonResult (GetDocumentTypeEdit);
             }
+        [HttpGet]
+        public async Task<IActionResult> DocumentFieldOfCheckBank (int DocumentID)   //checking if bank is the type inside document edit button
+            {
+            var DocumentFieldOfCheckBank = await _employeeInformationC.DocumentFieldOfCheckBank (DocumentID);
+            return new JsonResult (DocumentFieldOfCheckBank);
+            }
+        [HttpGet]
+        public async Task<IActionResult> DocumentFieldOfGetEditDocFields (int DocumentID, string Status)   //fetching doc field name inside document edit button
+            {
+            var DocumentFieldOfGetEditDocFields = await _employeeInformationC.DocumentFieldOfGetEditDocFields (DocumentID, Status);
+            return new JsonResult (DocumentFieldOfGetEditDocFields);
+            }
+        [HttpGet]
+        public async Task<IActionResult> DocumentFieldOfGetCountryName ( )   //fetching Country name inside document edit button
+            {
+            var DocumentFieldOfGetCountryName = await _employeeInformationC.DocumentFieldOfGetCountryName ( );
+            return new JsonResult (DocumentFieldOfGetCountryName);
+            }
+        [HttpGet]
+        public async Task<IActionResult> DocumentFieldOfGetBankTypeEdit ( )   //if bank dropdown is clicked inside document edit button
+            {
+            var DocumentFieldOfGetBankTypeEdit = await _employeeInformationC.DocumentFieldOfGetBankTypeEdit ( );
+            return new JsonResult (DocumentFieldOfGetBankTypeEdit);
+            }
+
+        [HttpGet]
+        public async Task<IActionResult> DocumentOfGetFolderName (int DocumentID)   //retrieve folder name in edit document tab
+            {
+            var DocumentOfGetFolderName = await _employeeInformationC.DocumentOfGetFolderName (DocumentID);
+            return new JsonResult (DocumentOfGetFolderName);
+            }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateEmpDocumentDetails ([FromBody] object documentDetails, int DetailID, string Status, int EntryBy) // insertion on edit of document tab
+            {
+            var result = await _employeeInformationC.UpdateEmpDocumentDetailsAsync (documentDetails, DetailID, Status, EntryBy);
+
+            if (string.IsNullOrEmpty (result))
+                {
+                return NotFound ( );
+                }
+
+            return Ok (new { Message = result });
+            }
+
 
         }
 
 
-}
+    }

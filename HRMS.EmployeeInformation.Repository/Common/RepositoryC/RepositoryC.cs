@@ -1122,6 +1122,216 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
 
 
             }
+        public async Task<List<DocumentFieldCheckBankDto>> DocumentFieldOfCheckBank (int DocumentID)
+            {
+            var bankDetailsDocTypeId = await _context.HrmsDocTypeMasters
+    .Where (dt => dt.DocType == _employeeSettings.Documents02)
+    .Select (dt => dt.DocTypeId)
+    .FirstOrDefaultAsync ( );
+
+            var result = await (from a in _context.HrmsDocumentField00s
+                                join b in _context.HrmsDatatypes on a.DataTypeId equals b.DataTypeId into datatypeGroup
+                                from b in datatypeGroup.DefaultIfEmpty ( )
+                                join c in _context.HrmsEmpdocuments00s on a.DocId equals c.DocId into doc00
+                                from c in doc00.DefaultIfEmpty ( )
+                                join d in _context.HrmsEmpdocuments01s
+                                on new { DetailID = (int?)c.DetailId, DocFieldID = (int?)a.DocFieldId }
+                                equals new { DetailID = d.DetailId, DocFieldID = d.DocFields } into doc01
+                                from d in doc01.DefaultIfEmpty ( )
+                                join e in _context.HrmsDocument00s on (long?)a.DocId equals e.DocId
+                                join f in _context.HrmsDocTypeMasters on (long?)e.DocType equals f.DocTypeId
+                                join g in _context.AdmCountryMasters on d.DocValues equals g.CountryName into countryGroup
+                                from g in countryGroup.DefaultIfEmpty ( )
+                                join h in _context.ReasonMasters on d.DocValues equals h.Description into reasonGroup
+                                from h in reasonGroup.DefaultIfEmpty ( )
+                                where c.DetailId == DocumentID && e.DocType == bankDetailsDocTypeId && (a.DocDescription != _employeeSettings.Active || a.DocDescription == null)
+                                select new DocumentFieldCheckBankDto
+                                    {
+                                    DocFieldID = a.DocFieldId,
+                                    DocDescription = a.DocDescription,
+                                    DocID = a.DocId,
+                                    DataTypeId = a.DataTypeId,
+                                    IsDate = b.IsDate,
+                                    IsGeneralCategory = b.IsGeneralCategory,
+                                    DataType = b.DataType,
+                                    DetailID = c.DetailId,
+                                    TransactionType = c.TransactionType,
+                                    Status = c.Status,
+                                    DocFieldID01 = d.DocFieldId,
+                                    DocValues = d.DocValues,
+                                    CountryId = g.CountryId,
+                                    GeneralCategoryId = h.ReasonId,
+                                    FolderName = e.FolderName
+                                    }).AsNoTracking ( ).ToListAsync ( );
+
+            return result;
+            }
+
+        public async Task<List<DocumentFieldGetEditDocFieldsDto>> DocumentFieldOfGetEditDocFields (int DocumentID, string Status)
+            {
+            if (Status == "Pending")
+                {
+                var result = await (
+                      from a in _context.HrmsDocumentField00s
+                      join f in _context.HrmsDocument00s on (long?)a.DocId equals f.DocId
+                      join g in _context.HrmsDocTypeMasters on (long?)f.DocType equals g.DocTypeId
+                      join b in _context.HrmsDatatypes on a.DataTypeId equals b.DataTypeId into bGroup
+                      from b in bGroup.DefaultIfEmpty ( )
+                      join c in _context.HrmsEmpdocuments00s on a.DocId equals c.DocId into cGroup
+                      from c in cGroup.DefaultIfEmpty ( )
+                      join d in _context.HrmsEmpdocuments01s on c.DetailId equals d.DetailId into dGroup
+                      from d in dGroup.DefaultIfEmpty ( )
+                      where c.DetailId == DocumentID && g.DocType != _employeeSettings.Documents01 && a.DocDescription != _employeeSettings.Active && a.DocFieldId == d.DocFields
+
+                      select new DocumentFieldGetEditDocFieldsDto
+                          {
+                          DocFieldID = a.DocFieldId,
+                          DocDescription = a.DocDescription,
+                          DocID = a.DocId,
+                          DataTypeId = a.DataTypeId,
+                          IsDate = b.IsDate,
+                          IsGeneralCategory = b.IsGeneralCategory,
+                          DataType = b.DataType,
+                          DetailID = c.DetailId,
+                          TransactionType = c.TransactionType,
+                          Status = c.Status,
+                          DocFieldID01 = d.DocFieldId,
+                          DocValues = d.DocValues ?? "",
+                          FolderName = f.FolderName,
+                          EmpID = c.EmpId ?? 0,
+                          IsMandatory = a.IsMandatory,
+                          IsAllowMultiple = f.IsAllowMultiple
+                          }).AsNoTracking ( ).ToListAsync ( );
+                return result;
+                }
+            else
+                {
+                var result = await (
+                 from a in _context.HrmsDocumentField00s
+                 join f in _context.HrmsDocument00s on (long?)a.DocId equals f.DocId
+                 join g in _context.HrmsDocTypeMasters on (long?)f.DocType equals g.DocTypeId
+                 join b in _context.HrmsDatatypes on a.DataTypeId equals b.DataTypeId into bGroup
+                 from b in bGroup.DefaultIfEmpty ( )
+                 join c in _context.HrmsEmpdocumentsApproved00s on a.DocId equals c.DocId into cGroup
+                 from c in cGroup.DefaultIfEmpty ( )
+                 join d in _context.HrmsEmpdocumentsApproved01s on c.DetailId equals d.DetailId into dGroup
+                 from d in dGroup.DefaultIfEmpty ( )
+                 where c.DetailId == DocumentID && g.DocType != _employeeSettings.Documents01 && a.DocDescription != _employeeSettings.Active && a.DocFieldId == d.DocFields
+
+                 select new DocumentFieldGetEditDocFieldsDto
+                     {
+                     DocFieldID = a.DocFieldId,
+                     DocDescription = a.DocDescription,
+                     DocID = a.DocId,
+                     DataTypeId = a.DataTypeId,
+                     IsDate = b.IsDate,
+                     IsGeneralCategory = b.IsGeneralCategory,
+                     DataType = b.DataType,
+                     DetailID = c.DetailId ?? 0,
+                     TransactionType = c.TransactionType,
+                     Status = c.Status,
+                     DocFieldID01 = d.DocFieldId,
+                     DocValues = d.DocValues ?? "",
+                     FolderName = f.FolderName,
+                     EmpID = c.EmpId ?? 0,
+                     IsMandatory = a.IsMandatory,
+                     IsAllowMultiple = f.IsAllowMultiple
+                     }).AsNoTracking ( ).ToListAsync ( );
+                return result;
+                }
+
+
+            }
+        public async Task<List<GetCountryNameDto>> DocumentFieldOfGetCountryName ( )
+            {
+            return await (from a in _context.AdmCountryMasters
+
+                          select new GetCountryNameDto
+                              {
+                              Country_ID = a.CountryId,
+                              Country_Name = a.CountryName
+                              }).AsNoTracking ( ).ToListAsync ( );
+
+            }
+        public async Task<object> DocumentFieldOfGetBankTypeEdit ( )
+            {
+            var result = await (from b in _context.HrmsDocument00s
+                                join c in _context.HrmsDocTypeMasters
+                                    on (long?)b.DocType equals c.DocTypeId into docTypeGroup
+                                from c in docTypeGroup.DefaultIfEmpty ( )
+                                where b.Active == true && c.DocType == _employeeSettings.Documents02
+                                select new
+                                    {
+                                    DocId = b.DocId,
+                                    DocName = b.DocName
+                                    }).ToListAsync ( );
+
+            return result;
+            }
+
+        public async Task<List<DocumentGetFolderNameDto>> DocumentOfGetFolderName (int DocumentID)
+            {
+            var result = await (from a in _context.HrmsDocument00s
+
+                                where a.DocId == DocumentID
+
+                                select new DocumentGetFolderNameDto
+                                    {
+                                    DocID = a.DocId,
+                                    DocName = a.DocName,
+                                    FolderName = a.FolderName
+                                    }).AsNoTracking ( ).ToListAsync ( );
+            return result;
+
+            }
+        public async Task<string> UpdateEmpDocumentDetails (object documentDetails, int DetailID, string Status, int EntryBy)
+            {
+            if (documentDetails == null || string.IsNullOrEmpty (Status) || DetailID <= 0)
+                {
+                return "Invalid input data";
+                }
+
+            try
+                {
+                var utcNow = DateTime.UtcNow;
+
+                if (Status == "Pending")
+                    {
+                    var document = await _context.HrmsEmpdocuments00s
+                        .FirstOrDefaultAsync (d => d.DetailId == DetailID);
+
+                    if (document != null)
+                        {
+                        document.EntryDate = utcNow;
+                        document.UpdatedBy = EntryBy;
+                        document.UpdatedDate = utcNow;
+
+                        await _context.SaveChangesAsync ( );
+                        }
+                    }
+                else if (Status == "Approved")
+                    {
+                    var document = await _context.HrmsEmpdocumentsApproved00s
+                        .FirstOrDefaultAsync (d => d.DetailId == DetailID);
+
+                    if (document != null)
+                        {
+                        document.EntryDate = utcNow;
+                        document.UpdatedBy = EntryBy;
+                        document.UpdatedDate = utcNow;
+
+                        await _context.SaveChangesAsync ( );
+                        }
+                    }
+
+                return "Success";
+                }
+            catch (Exception ex)
+                {
+                return $"Error: {ex.Message}";
+                }
+            }
+
 
 
         }

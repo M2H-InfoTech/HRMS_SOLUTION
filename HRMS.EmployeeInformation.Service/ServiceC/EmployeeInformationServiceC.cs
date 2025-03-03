@@ -59,5 +59,31 @@ namespace HRMS.EmployeeInformation.Service.ServiceC
             {
             return await _repositoryC.GetDocumentTypeEdit ();
             }
+        public async Task<List<DocumentFieldCheckBankDto>> DocumentFieldOfCheckBank (int DocumentID)
+            {
+            return await _repositoryC.DocumentFieldOfCheckBank (DocumentID);
+            }
+        public async Task<List<DocumentFieldGetEditDocFieldsDto>> DocumentFieldOfGetEditDocFields (int DocumentID, string Status)
+            {
+            return await _repositoryC.DocumentFieldOfGetEditDocFields (DocumentID, Status);
+            }
+        public async Task<List<GetCountryNameDto>> DocumentFieldOfGetCountryName ( )
+            {
+            return await _repositoryC.DocumentFieldOfGetCountryName ( );
+            }
+        public async Task<object> DocumentFieldOfGetBankTypeEdit ( )
+            {
+            return await _repositoryC.DocumentFieldOfGetBankTypeEdit ( );
+            }
+        public async Task<List<DocumentGetFolderNameDto>> DocumentOfGetFolderName (int DocumentID)
+            {
+            return await _repositoryC.DocumentOfGetFolderName (DocumentID);
+            }
+        public async Task<string> UpdateEmpDocumentDetailsAsync (object documentDetails, int DetailID, string Status, int EntryBy)
+            {
+            return await _repositoryC.UpdateEmpDocumentDetails (documentDetails, DetailID, Status, EntryBy);
+            }
         }
-}
+
+    }
+
