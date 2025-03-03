@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
+using System.Linq;
 
 namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
 {
@@ -1332,6 +1333,270 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                 }
             }
 
+        public async Task<VisaDetailsRestultDto> GetEmployeeVisaDetails (int EmpId)
+            {
+            // Helper function for date formatting
+            string FormatDate (string value, int? isDate)
+                {
+                if (isDate == 1)
+                    {
+                    if (string.IsNullOrEmpty (value)) return "";
+                    return EF.Functions.Like (value, "%/%") ? value : DateTime.Parse (value).ToString ("dd/MM/yyyy");
+                    }
+                return value;
+                }
+
+            // Fetch DocumentFill01 data
+            // Fetch DocumentFill01 data
+            var documentFill01Raw = await (
+                from a in _context.ReasonMasterFieldValues
+                join b in _context.GeneralCategoryFields on a.CategoryFieldId equals b.CategoryFieldId
+                join c in _context.HrmsDatatypes on b.DataTypeId equals c.DataTypeId into cJoin
+                from c in cJoin.DefaultIfEmpty ( )
+                join d in _context.AdmCountryMasters on a.FieldValues equals d.CountryId.ToString ( ) into dJoin
+                from d in dJoin.DefaultIfEmpty ( )
+                join e in _context.ReasonMasters on a.FieldValues equals e.ReasonId.ToString ( ) into eJoin
+                from e in eJoin.DefaultIfEmpty ( )
+                orderby a.ReasonId
+                select new
+                    {
+                    Reason_Id = (int)a.ReasonId,
+                    CategoryFieldID = a.CategoryFieldId,
+                    FieldValuesRaw = a.FieldValues,
+                    IsDropdown = c.IsDropdown,
+                    CountryName = d.CountryName,
+                    Description = e.Description,
+                    IsDate = c.IsDate,
+                    FieldDescription = b.FieldDescription,
+                    DataTypeID = b.DataTypeId
+                    }).ToListAsync ( );
+
+            // Process the data after fetching from the database
+            var documentFill01 = documentFill01Raw.Select (x => new DocumentFill01Dto
+                {
+                Reason_Id = x.Reason_Id,
+                CategoryFieldID = x.CategoryFieldID,
+                FieldValues = x.IsDropdown switch
+                    {
+                        1 => x.CountryName,
+                        2 => x.Description,
+                        _ => FormatDate (x.FieldValuesRaw, x.IsDate)
+                        },
+                FieldDescription = x.FieldDescription,
+                DataTypeID = x.DataTypeID
+                }).ToList ( );
+
+            // Step 1: Fetch raw data first (without calling FormatDate01 inside the EF query)
+            var visaTableDataRaw = await (
+                from t1 in _context.HrmsEmpdocumentsApproved00s
+                join t2 in _context.HrmsEmpdocumentsApproved01s on t1.DetailId equals t2.DetailId
+                join t3 in _context.HrmsDocumentField00s on (long?)t2.DocFields equals t3.DocFieldId into t3Join
+                from t3 in t3Join.DefaultIfEmpty ( )
+                join t4 in _context.HrmsDocument00s on (long?)t1.DocId equals t4.DocId
+                join t5 in _context.HrmsDocTypeMasters on (long?)t4.DocType equals t5.DocTypeId
+                join t6 in _context.HrmsDatatypes on t3.DataTypeId equals t6.DataTypeId into t6Join
+                from t6 in t6Join.DefaultIfEmpty ( )
+                where t1.EmpId == EmpId && t1.Status == _employeeSettings.EmployeeStatus && t5.DocType == _employeeSettings.Documents03
+                orderby t1.DocId
+                select new
+                    {
+                    DetailID = (int)t1.DetailId,
+                    DocID = t1.DocId,
+                    EmpID = t1.EmpId,
+                    DocFieldID = t3.DocFieldId,
+                    DocDescription = t3.DocDescription,
+                    DocValuesRaw = t2.DocValues, 
+                    IsDate = t6.IsDate
+                    }).ToListAsync ( );
+
+            // Step 2: Apply FormatDate after retrieving data (in-memory)
+            var visaTableData = visaTableDataRaw.Select (x => new VisaTableApproversDto
+                {
+                DetailID = x.DetailID,
+                DocID = x.DocID,
+                EmpID = x.EmpID,
+                DocFieldID = x.DocFieldID,
+                DocDescription = x.DocDescription,
+                DocValues = FormatDate01 (x.DocValuesRaw, x.IsDate), 
+                }).ToList ( );
+
+            // Local function (MUST be applied after fetching data)
+            string FormatDate01 (string value, int? isDate)
+                {
+                if (isDate == 1 && !string.IsNullOrEmpty (value))
+                    {
+                    return DateTime.TryParse (value, out DateTime parsedDate)
+                        ? parsedDate.ToString ("dd/MM/yyyy")
+                        : value; 
+                    }
+                return value;
+                }
+
+            // Apply ranking
+            var visaTableDataRanked = visaTableData
+                .GroupBy (x => x.DetailID)
+                .SelectMany (group => group
+                    .OrderByDescending (x => x.DocFieldID)
+                    .Select ((item, index) => { item.repeatrank = index + 1; return item; }))
+                .ToList ( );
+
+            var visaTableDataPendingRaw = await (
+       from t1 in _context.HrmsEmpdocuments00s
+       join t2 in _context.HrmsEmpdocuments01s on t1.DetailId equals t2.DetailId
+       join t3 in _context.HrmsDocumentField00s on (long?)t2.DocFields equals t3.DocFieldId into t3Join
+       from t3 in t3Join.DefaultIfEmpty ( )
+       join t4 in _context.HrmsDocument00s on (long?)t1.DocId equals t4.DocId
+       join t5 in _context.HrmsDocTypeMasters on (long?)t4.DocType equals t5.DocTypeId
+       join t6 in _context.HrmsDatatypes on t3.DataTypeId equals t6.DataTypeId into t6Join
+       from t6 in t6Join.DefaultIfEmpty ( )
+       where t1.EmpId == EmpId
+             && !_context.HrmsEmpdocumentsApproved00s
+                 .Where (appr => appr.EmpId == EmpId && appr.Status == _employeeSettings.EmployeeStatus)
+                 .Select (appr => appr.DetailId)
+                 .Contains (t1.DetailId)
+             && t1.Status == _employeeSettings.Status02
+             && t3.DocDescription != _employeeSettings.Active
+             && t5.DocType == _employeeSettings.Documents03
+       select new
+           {
+           DetailID = (int)t1.DetailId,
+           DocID = t1.DocId,
+           EmpID = t1.EmpId,
+           DocFieldID = t3.DocFieldId,
+           DocDescription = t3.DocDescription,
+           DocValuesRaw = t2.DocValues,
+           IsDate = t6.IsDate,
+           IsDropdown = t6.IsDropdown,
+           IsGeneralCategory = t6.IsGeneralCategory,
+           DataType = t6.DataType,
+           DocName = t4.DocName.ToUpper ( ),
+           }).ToListAsync ( );
+
+            // Fetch dropdown values separately (Avoiding EF issues)
+            var countryMapping = await _context.AdmCountryMasters
+                .ToDictionaryAsync (x => x.CountryId.ToString ( ), x => x.CountryName);
+
+            var reasonMapping = await _context.ReasonMasters
+                .ToDictionaryAsync (x => x.ReasonId.ToString ( ), x => x.Description);
+
+            var fieldMapping = documentFill01
+                .ToDictionary (x => x.Reason_Id, x => new { x.FieldValues, x.FieldDescription });
+
+            // Step 2: Apply FormatDate01 & Left Join Data (in-memory)
+            var visaTableDataPending = visaTableDataPendingRaw.Select (x => new VisaTableDto
+                {
+                DetailID = x.DetailID,
+                DocID = x.DocID,
+                EmpID = x.EmpID,
+                DocFieldID = x.DocFieldID,
+                DocDescription = x.DocDescription,
+                DocValues = x.IsDropdown switch
+                    {
+                        1 => countryMapping.TryGetValue (x.DocValuesRaw ?? "", out var country) ? country : x.DocValuesRaw,
+                        2 => reasonMapping.TryGetValue (x.DocValuesRaw ?? "", out var reason) ? reason : x.DocValuesRaw,
+                        _ => FormatDate01 (x.DocValuesRaw, x.IsDate)
+                        },
+                IsGeneralCategory = x.IsGeneralCategory,
+                DataType = x.DataType,
+                DocName = x.DocName,
+
+                // Convert string to int safely before looking up fieldMapping
+                FieldValues = int.TryParse (x.DocValuesRaw, out var reasonId) && fieldMapping.TryGetValue (reasonId, out var field)
+                    ? field.FieldValues
+                    : null,
+
+                FieldDescription = int.TryParse (x.DocValuesRaw, out var reasonIdDesc) && fieldMapping.TryGetValue (reasonIdDesc, out var fieldDesc)
+                    ? fieldDesc.FieldDescription
+                    : null
+
+                }).ToList ( );
+            // Apply ranking
+            var visaTableDataPendingRanked = visaTableDataPending
+                .GroupBy (x => x.DetailID)
+                .SelectMany (group => group
+                    .OrderByDescending (x => x.DocFieldID)
+                    .Select ((item, index) => { item.repeatrank = index + 1; return item; }))
+                .ToList ( );
+
+            // Fetch Excluded and Multiple Allowed Doc IDs
+            var excludedDocIds = await _context.HrmsEmpdocuments00s
+                .Where (a => a.EmpId == EmpId && a.Status != _employeeSettings.Status01 && a.Status != _employeeSettings.LetterD)
+                .Select (a => (long?)a.DocId)
+                .ToListAsync ( );
+
+            var multipleAllowedDocIds = await (
+      from a in _context.HrmsDocument00s
+      join b in _context.HrmsDocTypeMasters on (long)a.DocType equals b.DocTypeId
+      where 
+      a.IsAllowMultiple == 1 && 
+      b.DocType == _employeeSettings.Documents03
+      select a.DocId
+  ).ToListAsync ( );
+
+
+            // Fetch Visa Submitted Docs
+            var visaSubmittedDoc = await (
+                from a in _context.HrmsDocument00s
+                join b in _context.HrmsDocTypeMasters on (long?)a.DocType equals b.DocTypeId
+                join c in _context.EmpDocumentAccesses on a.DocId equals (long?)c.DocId
+                where c.EmpId == EmpId &&
+                      !excludedDocIds.Contains (a.DocId) &&
+                      (b.DocType == _employeeSettings.Documents03 || multipleAllowedDocIds.Contains (a.DocId))
+                select new VisaSubmitedDoc
+                    {
+                    DocID = a.DocId,
+                    DocName = a.DocName,
+                    DocDescription = _employeeSettings.SubmitDesc
+                    }).Distinct ( ).ToListAsync ( );
+
+            // Fetch Visa Doc Details
+            var visaDocDetails = await _context.HrmsDocTypeMasters
+                .Select (d => new VisaDocDetailsDto
+                    {
+                    DocTypeId = d.DocTypeId,
+                    DocType = d.DocType,
+                    Code = d.Code
+                    }).ToListAsync ( );
+
+            // Fetch Pending Visa Files
+            var visaFilesPending = await (
+                from a in _context.HrmsEmpdocuments02s
+                join b in _context.HrmsEmpdocuments00s on a.DetailId equals b.DetailId
+                join c in _context.HrmsDocument00s on b.DocId equals (long?)c.DocId
+                where b.EmpId == EmpId && b.Status == _employeeSettings.Status02
+                select new VisaFilesPendingDto
+                    {
+                    DocID = b.DocId,
+                    DetailID = a.DetailId,
+                    FolderName = c.FolderName + a.FileName,
+                    Status = b.Status
+                    }).ToListAsync ( );
+
+            // Fetch Approved Visa Files
+            var visaFilesApproved = await (
+                from a in _context.HrmsEmpdocumentsApproved02s
+                join b in _context.HrmsEmpdocumentsApproved00s on a.DetailId equals b.DetailId
+                join c in _context.HrmsDocument00s on b.DocId equals (long?)c.DocId
+                where b.EmpId == EmpId && b.Status == _employeeSettings.EmployeeStatus
+                select new VisaFilesApprovedDto
+                    {
+                    DocID = b.DocId,
+                    DetailID = a.DetailId,
+                    FolderName = c.FolderName + a.FileName,
+                    Status = b.Status
+                    }).ToListAsync ( );
+
+            // Return the final DTO
+            return new VisaDetailsRestultDto
+                {
+                VisaTable01 = visaTableDataRanked,
+                VisaTable02 = visaTableDataPendingRanked,
+                VisaSubmitedDoc = visaSubmittedDoc,
+                VisaDocDetails = visaDocDetails,
+                VisaFiles01 = visaFilesPending,
+                VisaFiles02 = visaFilesApproved
+                };
+            }
 
 
         }

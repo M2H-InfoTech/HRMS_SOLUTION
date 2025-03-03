@@ -83,6 +83,10 @@ namespace HRMS.EmployeeInformation.Service.ServiceC
             {
             return await _repositoryC.UpdateEmpDocumentDetails (documentDetails, DetailID, Status, EntryBy);
             }
+        public async Task<VisaDetailsRestultDto> GetEmployeeVisaDetails (int EmpId)
+            {
+            return await _repositoryC.GetEmployeeVisaDetails (EmpId);
+            }
         }
 
     }

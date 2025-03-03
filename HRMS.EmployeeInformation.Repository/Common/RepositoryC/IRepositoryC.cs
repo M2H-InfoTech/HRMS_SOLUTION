@@ -22,6 +22,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
         Task<object> DocumentFieldOfGetBankTypeEdit ( );
         Task<List<DocumentGetFolderNameDto>> DocumentOfGetFolderName (int DocumentID);
         Task<string> UpdateEmpDocumentDetails (object documentDetails, int DetailID, string Status, int EntryBy);
+        Task<VisaDetailsRestultDto> GetEmployeeVisaDetails (int EmpId);
 
         }
     }
