@@ -59,25 +59,25 @@ namespace HRMS.EmployeeInformation.Service.ServiceC
             {
             return await _repositoryC.GetDocumentTypeEdit ();
             }
-        public async Task<List<DocumentFieldCheckBankDto>> DocumentField_CheckBank (int DocumentID)
+        public async Task<List<DocumentFieldCheckBankDto>> DocumentFieldOfCheckBank (int DocumentID)
             {
-            return await _repositoryC.DocumentField_CheckBank (DocumentID);
+            return await _repositoryC.DocumentFieldOfCheckBank (DocumentID);
             }
-        public async Task<List<DocumentFieldGetEditDocFieldsDto>> DocumentField_GetEditDocFields (int DocumentID, string Status)
+        public async Task<List<DocumentFieldGetEditDocFieldsDto>> DocumentFieldOfGetEditDocFields (int DocumentID, string Status)
             {
-            return await _repositoryC.DocumentField_GetEditDocFields (DocumentID, Status);
+            return await _repositoryC.DocumentFieldOfGetEditDocFields (DocumentID, Status);
             }
-        public async Task<List<GetCountryNameDto>> DocumentField_GetCountryName ( )
+        public async Task<List<GetCountryNameDto>> DocumentFieldOfGetCountryName ( )
             {
-            return await _repositoryC.DocumentField_GetCountryName ( );
+            return await _repositoryC.DocumentFieldOfGetCountryName ( );
             }
-        public async Task<object> DocumentField_GetBankTypeEdit ( )
+        public async Task<object> DocumentFieldOfGetBankTypeEdit ( )
             {
-            return await _repositoryC.DocumentField_GetBankTypeEdit ( );
+            return await _repositoryC.DocumentFieldOfGetBankTypeEdit ( );
             }
-        public async Task<List<DocumentGetFolderNameDto>> Document_GetFolderName (int DocumentID)
+        public async Task<List<DocumentGetFolderNameDto>> DocumentOfGetFolderName (int DocumentID)
             {
-            return await _repositoryC.Document_GetFolderName (DocumentID);
+            return await _repositoryC.DocumentOfGetFolderName (DocumentID);
             }
         public async Task<string> UpdateEmpDocumentDetailsAsync (object documentDetails, int DetailID, string Status, int EntryBy)
             {

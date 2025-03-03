@@ -106,35 +106,35 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult (GetDocumentTypeEdit);
             }
         [HttpGet]
-        public async Task<IActionResult> DocumentField_CheckBank (int DocumentID)   //checking if bank is the type inside document edit button
+        public async Task<IActionResult> DocumentFieldOfCheckBank (int DocumentID)   //checking if bank is the type inside document edit button
             {
-            var DocumentField_CheckBank = await _employeeInformationC.DocumentField_CheckBank (DocumentID);
-            return new JsonResult (DocumentField_CheckBank);
+            var DocumentFieldOfCheckBank = await _employeeInformationC.DocumentFieldOfCheckBank (DocumentID);
+            return new JsonResult (DocumentFieldOfCheckBank);
             }
         [HttpGet]
-        public async Task<IActionResult> DocumentField_GetEditDocFields (int DocumentID, string Status)   //fetching doc field name inside document edit button
+        public async Task<IActionResult> DocumentFieldOfGetEditDocFields (int DocumentID, string Status)   //fetching doc field name inside document edit button
             {
-            var DocumentField_GetEditDocFields = await _employeeInformationC.DocumentField_GetEditDocFields (DocumentID, Status);
-            return new JsonResult (DocumentField_GetEditDocFields);
+            var DocumentFieldOfGetEditDocFields = await _employeeInformationC.DocumentFieldOfGetEditDocFields (DocumentID, Status);
+            return new JsonResult (DocumentFieldOfGetEditDocFields);
             }
         [HttpGet]
-        public async Task<IActionResult> DocumentField_GetCountryName ( )   //fetching Country name inside document edit button
+        public async Task<IActionResult> DocumentFieldOfGetCountryName ( )   //fetching Country name inside document edit button
             {
-            var DocumentField_GetCountryName = await _employeeInformationC.DocumentField_GetCountryName ( );
-            return new JsonResult (DocumentField_GetCountryName);
+            var DocumentFieldOfGetCountryName = await _employeeInformationC.DocumentFieldOfGetCountryName ( );
+            return new JsonResult (DocumentFieldOfGetCountryName);
             }
         [HttpGet]
-        public async Task<IActionResult> DocumentField_GetBankTypeEdit ( )   //if bank dropdown is clicked inside document edit button
+        public async Task<IActionResult> DocumentFieldOfGetBankTypeEdit ( )   //if bank dropdown is clicked inside document edit button
             {
-            var DocumentField_GetBankTypeEdit = await _employeeInformationC.DocumentField_GetBankTypeEdit ( );
-            return new JsonResult (DocumentField_GetBankTypeEdit);
+            var DocumentFieldOfGetBankTypeEdit = await _employeeInformationC.DocumentFieldOfGetBankTypeEdit ( );
+            return new JsonResult (DocumentFieldOfGetBankTypeEdit);
             }
 
         [HttpGet]
-        public async Task<IActionResult> Document_GetFolderName (int DocumentID)   //retrieve folder name in edit document tab
+        public async Task<IActionResult> DocumentOfGetFolderName (int DocumentID)   //retrieve folder name in edit document tab
             {
-            var Document_GetFolderName = await _employeeInformationC.Document_GetFolderName (DocumentID);
-            return new JsonResult (Document_GetFolderName);
+            var DocumentOfGetFolderName = await _employeeInformationC.DocumentOfGetFolderName (DocumentID);
+            return new JsonResult (DocumentOfGetFolderName);
             }
 
         [HttpPost]

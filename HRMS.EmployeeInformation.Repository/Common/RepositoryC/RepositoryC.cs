@@ -1122,7 +1122,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
 
 
             }
-        public async Task<List<DocumentFieldCheckBankDto>> DocumentField_CheckBank (int DocumentID)
+        public async Task<List<DocumentFieldCheckBankDto>> DocumentFieldOfCheckBank (int DocumentID)
             {
             var bankDetailsDocTypeId = await _context.HrmsDocTypeMasters
     .Where (dt => dt.DocType == _employeeSettings.Documents02)
@@ -1167,7 +1167,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
             return result;
             }
 
-        public async Task<List<DocumentFieldGetEditDocFieldsDto>> DocumentField_GetEditDocFields (int DocumentID, string Status)
+        public async Task<List<DocumentFieldGetEditDocFieldsDto>> DocumentFieldOfGetEditDocFields (int DocumentID, string Status)
             {
             if (Status == "Pending")
                 {
@@ -1242,7 +1242,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
 
 
             }
-        public async Task<List<GetCountryNameDto>> DocumentField_GetCountryName ( )
+        public async Task<List<GetCountryNameDto>> DocumentFieldOfGetCountryName ( )
             {
             return await (from a in _context.AdmCountryMasters
 
@@ -1253,7 +1253,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                               }).AsNoTracking ( ).ToListAsync ( );
 
             }
-        public async Task<object> DocumentField_GetBankTypeEdit ( )
+        public async Task<object> DocumentFieldOfGetBankTypeEdit ( )
             {
             var result = await (from b in _context.HrmsDocument00s
                                 join c in _context.HrmsDocTypeMasters
@@ -1269,7 +1269,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
             return result;
             }
 
-        public async Task<List<DocumentGetFolderNameDto>> Document_GetFolderName (int DocumentID)
+        public async Task<List<DocumentGetFolderNameDto>> DocumentOfGetFolderName (int DocumentID)
             {
             var result = await (from a in _context.HrmsDocument00s
 
