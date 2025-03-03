@@ -10,11 +10,8 @@ namespace HRMS.EmployeeInformation.DTO.DTOs
     {
         public string? Achievement { get; set; }
         public int EmpId { get; set; }
-        public int? AchievementID { get; set; }
         public int RewardType { get; set; }
-        public string? Status { get; set; }
         public string? Reason { get; set; }
-        public string? RewardDate { get; set; }
         public decimal Amount { get; set; }
         public int DetailID { get; set; }
 
