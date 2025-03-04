@@ -132,7 +132,7 @@
 
         public int? PayrollMode { get; set; }
 
-        public int? CanteenRequest { get; set; }
+        public bool? CanteenRequest { get; set; }
 
         public DateTime? WeddingDate { get; set; } = DateTime.Now;
         public string? Phone { get; set; }
