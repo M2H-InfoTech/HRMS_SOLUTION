@@ -113,7 +113,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<List<FillDocumentTypeDto>> FillDocumentType(int EmpID);
         Task<List<DocumentFieldDto>> DocumentField(int DocumentID);
-        Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryList(string Remarks);
+
         Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
         Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
         Task<bool>   IsWorkflowNeeded();
@@ -121,5 +121,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string?> GetLastSequence(string codeId);
         Task UpdateCodeGeneration(string codeId);
 
+        Task<string?> InsertLetterTypeRequest(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos);
     }
 }

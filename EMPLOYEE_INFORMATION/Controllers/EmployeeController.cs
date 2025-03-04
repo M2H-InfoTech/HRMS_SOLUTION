@@ -622,12 +622,6 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var DocumentField = await _employeeInformation.DocumentFieldAsync(DocumentID);
             return new JsonResult(DocumentField);
         }
-        [HttpGet]
-        public async Task<IActionResult> DocumentGetGeneralSubCategoryList(string Remarks)   // "bank name" drop down inside document add button
-        {
-            var DocumentGetGeneralSubCategoryList = await _employeeInformation.DocumentGetGeneralSubCategoryListAsync(Remarks);
-            return new JsonResult(DocumentGetGeneralSubCategoryList);
-        }
 
 
         [HttpPost]
@@ -655,6 +649,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
             return Ok(SetEmpDocuments);
         }
-
+        [HttpPost]
+        public async Task<IActionResult> InsertLetterTypeRequest(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos)
+        {
+            var InsertLetterTypeRequest = await _employeeInformation.InsertLetterTypeRequestAsync(files, LetterInsertUpdateDtos);
+            return new JsonResult(InsertLetterTypeRequest);
+        }
     }
 }

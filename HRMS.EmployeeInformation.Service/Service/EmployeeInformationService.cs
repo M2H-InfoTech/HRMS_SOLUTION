@@ -368,10 +368,6 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.DocumentField(DocumentID);
         }
-        public async Task<List<DocumentGetGeneralSubCategoryListDto>> DocumentGetGeneralSubCategoryListAsync(string Remarks)
-        {
-            return await _employeeRepository.DocumentGetGeneralSubCategoryList(Remarks);
-        }
         public async Task<string> InsertDocumentsFieldDetailsAsync(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy)
         {
             return await _employeeRepository.InsertDocumentsFieldDetails(DocumentBankField, DocumentID, In_EntryBy);
@@ -379,6 +375,11 @@ namespace HRMS.EmployeeInformation.Service.Service
         public async Task<string> SetEmpDocumentsAsync(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)
         {
             return await _employeeRepository.SetEmpDocuments(DocumentBankField, DetailID, Status, In_EntryBy);
+        }
+
+        public async Task<string?> InsertLetterTypeRequestAsync(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos)
+        {
+            return await _employeeRepository.InsertLetterTypeRequest(files, LetterInsertUpdateDtos);
         }
     }
 }
