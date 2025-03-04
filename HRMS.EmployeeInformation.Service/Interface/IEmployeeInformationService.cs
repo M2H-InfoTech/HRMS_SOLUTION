@@ -37,7 +37,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID);
         Task<List<PersonalDetailsDto>> GetPersonalDetailsByIdAsync(int employeeid);
         Task<List<TrainingDto>> TrainingAsync(int employeeid);
-        Task<List<CareerHistoryDto>> CareerHistoryAsync(int employeeid);
+        Task<CareerHistoryResultDto> CareerHistoryAsync(int employeeid);
         Task<List<object>> BiometricDetailsAsync(int employeeId);
         //Task<List<object>> AccessDetails(int employeeId);
         Task<object> AccessDetailsAsync(int employeeId);

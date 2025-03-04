@@ -133,7 +133,7 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.TrainingAsync(employeeid);
         }
 
-        public async Task<List<CareerHistoryDto>> CareerHistoryAsync(int employeeid)
+        public async Task<CareerHistoryResultDto> CareerHistoryAsync(int employeeid)
         {
             return await _employeeRepository.CareerHistoryAsync(employeeid);
         }
