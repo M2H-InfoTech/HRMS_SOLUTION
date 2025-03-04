@@ -39,7 +39,7 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? DateFormat { get; set; }
         public string? EmployeeStatus { get; set; }
 
-        public int? LinkLevel { get; set; } = 15;
+        public int? LinkLevel { get; set; } 
         public string? NotAvailable { get; set; }
 
         public string? Hobbies { get; set; }
@@ -86,6 +86,10 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? Active { get; set; }
         public string? LetterD { get; set; }
         public string? SubmitDesc { get; set; }
+        public string? TransactionTypeSeq { get; set; }
+        public string? LinkLevel16 { get; set; }
+        public string? LinkLevel17 { get; set; }
+        public int? LinkLevel1 { get; set; }
 
 
         }

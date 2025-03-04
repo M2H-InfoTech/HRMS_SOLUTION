@@ -301,11 +301,19 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
         {
             string sequence = null;
             int? codeId = null;
-            bool isLevel17 = (from ls in _context.LevelSettingsAccess00s
-                              join tm in _context.TransactionMasters
-                              on ls.TransactionId equals tm.TransactionId
-                              where tm.TransactionType == "Seq_Gen" && ls.Levels == "17"
-                              select ls).Any();
+            List<int> transactionIds = _context.TransactionMasters
+                .Where(a => a.TransactionType == _employeeSettings.TransactionTypeSeq)
+                .Select(a => a.TransactionId)
+                .ToList();
+
+            bool isLevel17 = _context.LevelSettingsAccess00s
+                .Any(ls => transactionIds.Contains ((int)ls.TransactionId) && ls.Levels == _employeeSettings.LinkLevel17);
+            
+            bool isLevel16 = _context.LevelSettingsAccess00s
+                .Any(ls => transactionIds.Contains ((int)ls.TransactionId) && ls.Levels == _employeeSettings.LinkLevel16);
+
+            bool isEntityLevel = _context.LevelSettingsAccess00s
+                .Any (ls => transactionIds.Contains ((int)ls.TransactionId) && ls.Levels != _employeeSettings.LinkLevel16 && ls.Levels != _employeeSettings.LinkLevel17);
 
             if (isLevel17)
             {
@@ -315,11 +323,9 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                     var entityQuery = (from a in _context.EntityApplicable00s
                                        join c in _context.AdmCodegenerationmasters
                                        on a.MasterId equals c.CodeId
-                                       join tm in _context.TransactionMasters
-                                       on a.TransactionId equals tm.TransactionId
-                                       where tm.TransactionType == "Seq_Gen" &&
-                                             a.MainMasterId == mainMasterId &&
-                                             a.LinkLevel != 1 &&
+                                       where transactionIds.Contains ((int)a.TransactionId) &&
+                                            a.MainMasterId == mainMasterId &&
+                                             a.LinkLevel != _employeeSettings.LinkLevel1 &&
                                              SplitStrings_XML(entity, ',').Contains(a.LinkId.ToString())
                                        orderby a.LinkLevel
                                        select new { a, c })
@@ -336,11 +342,9 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                         var firstEntityQuery = (from a in _context.EntityApplicable00s
                                                 join c in _context.AdmCodegenerationmasters
                                                 on a.MasterId equals c.CodeId
-                                                join tm in _context.TransactionMasters
-                                                on a.TransactionId equals tm.TransactionId
-                                                where tm.TransactionType == "Seq_Gen" &&
+                                                where transactionIds.Contains ((int)a.TransactionId) &&
                                                       a.MainMasterId == mainMasterId &&
-                                                      a.LinkLevel == 1 &&
+                                                      a.LinkLevel == _employeeSettings.LinkLevel1 &&
                                                       a.LinkId == firstEntity
                                                 orderby a.LinkLevel
                                                 select new { a, c })
@@ -358,11 +362,9 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                         var defaultQuery = (from a in _context.EntityApplicable00s
                                             join c in _context.AdmCodegenerationmasters
                                             on a.MasterId equals c.CodeId
-                                            join tm in _context.TransactionMasters
-                                            on a.TransactionId equals tm.TransactionId
-                                            where tm.TransactionType == "Seq_Gen" &&
-                                                  a.MainMasterId == mainMasterId &&
-                                                  a.LinkLevel == 15
+                                            where transactionIds.Contains ((int)a.TransactionId) &&
+                                              a.MainMasterId == mainMasterId &&
+                                                  a.LinkLevel == _employeeSettings.LinkLevel
                                             select new { a, c })
                        .FirstOrDefault();
 
@@ -375,23 +377,19 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                 }
                 else
                 {
-                    // Entity is empty, handle alternate logic
                     var empQuery = (from emp in _context.HrEmpMasters
                                     where emp.EmpId == employeeId
-                                    from e in SplitStrings_XML(emp.EmpEntity, ',')
+                                    from e in SplitStrings_XML (emp.EmpEntity, ',')  
                                     join ea in _context.EntityApplicable00s
-                                    on e equals ea.LinkId.ToString()
+                                    on e equals ea.LinkId.ToString ( )
                                     join adm in _context.AdmCodegenerationmasters
                                     on ea.MasterId equals adm.CodeId
-                                    join tm in _context.TransactionMasters
-                                    on ea.TransactionId equals tm.TransactionId
-                                    where tm.TransactionType == "Seq_Gen" &&
+                                    where transactionIds.Contains ((int)ea.TransactionId) &&  
                                           ea.MainMasterId == mainMasterId &&
-                                          ea.LinkLevel != 1
+                                          ea.LinkLevel != _employeeSettings.LinkLevel1
                                     orderby ea.LinkLevel
                                     select new { emp, ea, adm })
-                  .FirstOrDefault();
-
+                    .FirstOrDefault ( );
                     if (empQuery != null)
                     {
                         //sequence = empQuery.ea.LastSequence;
@@ -403,17 +401,15 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                         var fallbackQuery = (from emp in _context.HrEmpMasters
                                              where emp.EmpId == employeeId
                                              join ea in _context.EntityApplicable00s
-                                             on Convert.ToInt64(emp.EmpFirstEntity) equals ea.LinkId
+                                             on Convert.ToInt64 (emp.EmpFirstEntity) equals ea.LinkId
                                              join adm in _context.AdmCodegenerationmasters
                                              on ea.MasterId equals adm.CodeId
-                                             join tm in _context.TransactionMasters
-                                             on ea.TransactionId equals tm.TransactionId
-                                             where tm.TransactionType == "Seq_Gen" &&
+                                             where transactionIds.Contains ((int)ea.TransactionId) &&  
                                                    ea.MainMasterId == mainMasterId &&
-                                                   ea.LinkLevel == 1
+                                                   ea.LinkLevel == _employeeSettings.LinkLevel1
                                              orderby ea.LinkLevel
                                              select new { ea, adm })
-                    .FirstOrDefault();
+                        .FirstOrDefault ( );
 
                         if (fallbackQuery != null)
                         {
@@ -421,13 +417,52 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                             codeId = fallbackQuery.adm.CodeId;
                         }
                     }
+                    if (sequence == null)
+                        {
+                        var defaultQuery = (from a in _context.EntityApplicable00s
+                                            join c in _context.AdmCodegenerationmasters
+                                            on a.MasterId equals c.CodeId
+                                            where transactionIds.Contains ((int)a.TransactionId) &&  
+                                                  a.MainMasterId == mainMasterId &&
+                                                  a.LinkLevel == _employeeSettings.LinkLevel
+                                            select new { a, c })
+                        .FirstOrDefault ( );
+
+                        if (defaultQuery != null)
+                            {
+                            //sequence = defaultQuery.a.LastSequence;
+                            codeId = defaultQuery.c.CodeId;
+                            }
+                        }
+
+                    }
                 }
-            }
-            else
-            {
-                // Handle 'level == 16' and other cases
-                // Add similar LINQ logic here based on the SQL conditions
-            }
+
+            else if (isLevel16)
+                {
+                var companyQuery = (from adm in _context.AdmCodegenerationmasters
+                                    where adm.TypeId == mainMasterId
+                                    select new { adm.LastSequence, adm.CodeId }).FirstOrDefault ( );
+
+                if (companyQuery != null)
+                    {
+                    //sequence = companyQuery.LastSequence;
+                    codeId = companyQuery.CodeId;
+                    }
+                }
+            else if (isEntityLevel)  
+                {
+                var entityLevelQuery = (from adm in _context.AdmCodegenerationmasters
+                                        join tm in _context.TransactionMasters on adm.TypeId equals tm.TransactionId
+                                        join esa in _context.EmployeeSequenceAccesses on adm.CodeId equals esa.SequenceId
+                                        where tm.TransactionId == mainMasterId && esa.EmployeeId == employeeId
+                                        select adm.CodeId).FirstOrDefault ( );
+
+                if (entityLevelQuery != null)
+                    {
+                    codeId = entityLevelQuery;
+                    }
+                }
 
             return codeId?.ToString();
         }

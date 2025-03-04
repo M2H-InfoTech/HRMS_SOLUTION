@@ -270,6 +270,8 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<EmailNotification> EmailNotifications { get; set; }
 
     public virtual DbSet<HrEmpEmergaddressApprl> HrEmpEmergaddressApprls { get; set; }
+    public virtual DbSet<EmployeeSequenceAccess> EmployeeSequenceAccesses { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4048,6 +4050,17 @@ public partial class EmployeeDBContext : DbContext
                 .HasMaxLength(10)
                 .IsUnicode(false);
         });
+        modelBuilder.Entity<EmployeeSequenceAccess> (entity =>
+        {
+            entity.HasKey (e => e.SequenceEmployeeId);
+
+            entity.ToTable ("EmployeeSequenceAccess");
+
+            entity.Property (e => e.FromDate).HasColumnType ("datetime");
+            entity.Property (e => e.ValidTo).HasColumnType ("datetime");
+        });
+
+
         OnModelCreatingPartial (modelBuilder);
     }
 
