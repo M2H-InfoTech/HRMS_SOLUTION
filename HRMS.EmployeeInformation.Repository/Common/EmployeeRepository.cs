@@ -3919,8 +3919,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result;
         }
 
-        public async Task<List<CareerHistoryDto>> CareerHistoryAsync(int employeeId)
-        {
+        public async Task<CareerHistoryResultDto> CareerHistoryAsync(int employeeId)
+        {  
             // Fetch previous experience data in a single query
             var previousExpDays = await _context.HrEmpProfdtls
                 .Where(empProf => empProf.EmpId == employeeId)
@@ -3941,7 +3941,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 .FirstOrDefaultAsync();
 
             var companyExp = new CareerHistoryDto
-            {
+                {
                 Category = "Company Experience (First Entry Date)",
                 Relevant = await GetEmployeeExperienceLengthAsync(employeeId, relevantDays),
                 NonRelevent = "0Y: 0M: 0D",
@@ -3954,15 +3954,153 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var totalDays = totalRelevantDays + totalNonRelevantDays;
 
             var totalSummary = new CareerHistoryDto
-            {
+                {
                 Category = "Total",
                 Relevant = await GetEmployeeExperienceLengthAsync(employeeId, totalRelevantDays),
                 NonRelevent = await GetEmployeeExperienceLengthAsync(employeeId, totalNonRelevantDays),
                 Total = await GetEmployeeExperienceLengthAsync(employeeId, totalDays)
             };
 
-            return new List<CareerHistoryDto> { totalSummary, previousExp, companyExp };
-        }
+            var careerHistoryList = new List<CareerHistoryDto> { totalSummary, previousExp, companyExp };
+
+            //table 1
+            var TransferTransition00 = _context.TransferTransition00s
+                .Where (a => a.BatchApprovalStatus != _employeeSettings.Status01
+                            && (a.EmpApprovalStatus ?? _employeeSettings.EmployeeStatus) != _employeeSettings.Status01
+                            && a.EmployeeId == employeeId)
+                .Select (a => new
+                    {
+                    a.TransferBatchId,
+                    a.TransferId,
+                    a.EntityOrder,
+                    a.ActionId,
+                    a.EmployeeId,
+                    a.OldEntityId,
+                    a.OldEntityDescription,
+                    a.NewEntityId,
+                    a.NewEntityDescription,
+                    a.FromDate,
+                    a.ToDate,
+                    a.BatchApprovalStatus,
+                    a.EmpApprovalStatus
+                    })
+                .ToList();
+
+            var transferCareerHistory = TransferTransition00
+                .Select (t => new CareerHistoryTransferModelDto
+                    {
+                    TransferId = t.TransferId,
+                    EmployeeId = t.EmployeeId,
+                    FromDate = null,  
+                    ToDate = null,
+                    Level1 = null,
+                    Level2 = null,
+                    Level3 = null,
+                    Level4 = null,
+                    Level5 = null,
+                    Level6 = null,
+                    Level7 = null,
+                    Level8 = null,
+                    Level9 = null,
+                    Level10 = null,
+                    Level11 = null
+                    })
+                .Distinct()
+                .ToList();
+
+            var transitionDict = TransferTransition00
+                .GroupBy (t => t.TransferId)
+                .ToDictionary (g => g.Key, g => g.ToList ( ));
+
+            foreach (var history in transferCareerHistory)
+                {
+                if (transitionDict.TryGetValue (history.TransferId, out var transitions))
+                    {
+                    foreach (var transition in transitions)
+                        {
+                        history.FromDate = transition.FromDate;
+                        history.ToDate = transition.ToDate;
+
+                        switch (transition.EntityOrder)
+                            {
+                            case 1: history.Level1 = transition.OldEntityDescription; break;
+                            case 2: history.Level2 = transition.OldEntityDescription; break;
+                            case 3: history.Level3 = transition.OldEntityDescription; break;
+                            case 4: history.Level4 = transition.OldEntityDescription; break;
+                            case 5: history.Level5 = transition.OldEntityDescription; break;
+                            case 6: history.Level6 = transition.OldEntityDescription; break;
+                            case 7: history.Level7 = transition.OldEntityDescription; break;
+                            case 8: history.Level8 = transition.OldEntityDescription; break;
+                            case 9: history.Level9 = transition.OldEntityDescription; break;
+                            case 10: history.Level10 = transition.OldEntityDescription; break;
+                            case 11: history.Level11 = transition.OldEntityDescription; break;
+                            }
+                        }
+                    }
+                }
+            var entityLimit = _context.LicensedCompanyDetails
+                .Select (l => l.EntityLimit)
+                .FirstOrDefault();
+
+            var categoryMaster = _context.Categorymasters
+                .Where (c => c.SortOrder >= 1 && c.SortOrder <= 11)
+                .OrderBy (c => c.SortOrder)
+                .ToList();
+
+            var categoryLevels = _context.Categorymasters
+                .Where (c => c.SortOrder >= 1 && c.SortOrder <= entityLimit)
+                .OrderBy (c => c.SortOrder)
+                .ToDictionary (c => c.SortOrder, c => c.Description);
+
+            var careerHistoryList01 = transferCareerHistory
+                .Select (t => new CareerHistoryDataDto
+                    {
+                    FromDate = t.FromDate,
+                    ToDate = t.ToDate,
+                    LevelData = categoryLevels.ToDictionary (
+                        level => level.Value, 
+                        level => level.Key switch 
+                            {
+                                1 => t.Level1 ?? "",
+                                2 => t.Level2 ?? "",
+                                3 => t.Level3 ?? "",
+                                4 => t.Level4 ?? "",
+                                5 => t.Level5 ?? "",
+                                6 => t.Level6 ?? "",
+                                7 => t.Level7 ?? "",
+                                8 => t.Level8 ?? "",
+                                9 => t.Level9 ?? "",
+                                10 => t.Level10 ?? "",
+                                11 => t.Level11 ?? "",
+                                _ => ""
+                                })
+                    })
+                .ToList();
+
+            var finalResult = careerHistoryList01
+                .Select (x =>
+                {
+                    var flatObject = new Dictionary<string, object>
+                    {
+            { "FromDate", x.FromDate },
+            { "ToDate", x.ToDate }
+                    };
+
+                    foreach (var kvp in x.LevelData)
+                        {
+                        flatObject[kvp.Key] = kvp.Value; 
+                        }
+
+                    return flatObject;
+                })
+                .ToList();
+
+            return new CareerHistoryResultDto
+                {
+                Table = careerHistoryList,
+                Table1 = finalResult
+                };
+            }
 
         public async Task<List<object>> BiometricDetailsAsync(int employeeId)
         {
