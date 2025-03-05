@@ -11,7 +11,6 @@ namespace HRMS.EmployeeInformation.DTO.DTOs
         public int? EmpID { get; set; }
         public int? ProxyID { get; set; }
         public int EntryBy { get; set; }
-        public string? EntryDate { get; set; }
         public int DocumentID { get; set; }
         public string? FlowStatus { get; set; }
 
