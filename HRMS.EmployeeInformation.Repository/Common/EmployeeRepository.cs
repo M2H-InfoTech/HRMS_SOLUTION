@@ -7450,90 +7450,192 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
 
+        //public async Task<string> AssetEdit(AssetEditDto assetEdits)
+        //{
+        //    using (var transaction = await _context.Database.BeginTransactionAsync()) // Start Transaction
+        //    {
+        //        // Check if the asset is already assigned and not returned
+        //        var existingAssignment = await _context.EmployeesAssetsAssigns
+        //            .FirstOrDefaultAsync(ea => ea.AssetNo == assetEdits.AssetNo &&
+        //                                       ea.AssignId != assetEdits.varAssestID &&
+        //                                       (ea.ReturnDate == null || ea.ReturnDate >= assetEdits.ReceiveDate));
+
+        //        if (existingAssignment != null)
+        //        {
+        //            return "2"; // Asset is already assigned and not available
+        //        }
+
+        //        // Update asset category status to 'P' for previous assignment
+        //        var assetCategory = await _context.AssetcategoryCodes
+        //            .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo);
+        //        if (assetCategory != null)
+        //        {
+        //            var previousAssignment = await _context.EmployeesAssetsAssigns
+        //                .FirstOrDefaultAsync(ea => ea.AssignId == assetEdits.varAssestID);
+
+        //            if (previousAssignment != null)
+        //            {
+
+        //                assetCategory.Status = "P";
+        //            }
+        //        }
+
+
+        //        var assetToUpdate = await _context.EmployeesAssetsAssigns
+        //            .FirstOrDefaultAsync(a => a.AssignId == assetEdits.varAssestID);
+        //        if (assetToUpdate != null)
+        //        {
+        //            assetToUpdate.AssetGroup = assetEdits.AssetGroup;
+        //            assetToUpdate.Asset = assetEdits.varAssestName;
+        //            assetToUpdate.AssetNo = assetEdits.AssetNo;
+        //            assetToUpdate.AssetModel = assetEdits.AssetModel;
+        //            assetToUpdate.Monitor = assetEdits.Monitor;
+        //            assetToUpdate.InWarranty = assetEdits.InWarranty;
+        //            assetToUpdate.OutOfWarranty = assetEdits.OutOfWarranty;
+        //            assetToUpdate.Status = assetEdits.varAssignAsetStatus;
+        //            assetToUpdate.ReceivedDate = assetEdits.ReceiveDate;
+        //            assetToUpdate.ExpiryDate = assetEdits.ExpiryDate;
+        //            assetToUpdate.ReturnDate = assetEdits.ReturnDate;
+        //            assetToUpdate.Remarks = assetEdits.Remarks;
+        //            await _context.SaveChangesAsync();
+        //        }
+
+        //        // Update AssetcategoryCode status to 'A' for the current asset
+        //        var updatedCategory = await _context.AssetcategoryCodes
+        //            .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo);
+        //        if (updatedCategory != null)
+        //        {
+        //            updatedCategory.Status = "A";
+        //            await _context.SaveChangesAsync();
+        //        }
+
+        //        var returnedCategory = await _context.AssetcategoryCodes
+        //            .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo && assetEdits.ReturnDate != null);
+        //        if (returnedCategory != null)
+        //        {
+        //            returnedCategory.Status = "P";
+        //            await _context.SaveChangesAsync();
+        //        }
+
+        //        var assetRequestHistory = new AssetRequestHistory
+        //        {
+        //            RequestId = assetEdits.varAssestID,
+        //            AssetEntryBy = assetEdits.EntryBy,
+        //            EntryDate = DateTime.UtcNow,
+        //            StatusType = 2,
+        //            AssetEmpId = assetEdits.varEmpID
+        //        };
+
+        //        _context.AssetRequestHistories.Add(assetRequestHistory);
+        //        await _context.SaveChangesAsync();
+
+        //        await transaction.CommitAsync();
+
+        //        return "1";
+        //    }
+        //}
+
         public async Task<string> AssetEdit(AssetEditDto assetEdits)
         {
             using (var transaction = await _context.Database.BeginTransactionAsync()) // Start Transaction
             {
-                // Check if the asset is already assigned and not returned
-                var existingAssignment = await _context.EmployeesAssetsAssigns
-                    .FirstOrDefaultAsync(ea => ea.AssetNo == assetEdits.AssetNo &&
-                                               ea.AssignId != assetEdits.varAssestID &&
-                                               (ea.ReturnDate == null || ea.ReturnDate >= assetEdits.ReceiveDate));
-
-                if (existingAssignment != null)
+                try
                 {
-                    return "2"; // Asset is already assigned and not available
-                }
+                    // Check if the asset is already assigned and not returned
+                    bool isAssetAssigned = await _context.EmployeesAssetsAssigns
+                        .AnyAsync(ea => ea.AssetNo == assetEdits.AssetNo &&
+                                        ea.AssignId != assetEdits.varAssestID &&
+                                        (ea.ReturnDate == null || ea.ReturnDate >= assetEdits.ReceiveDate) &&
+                                        ea.Status == "Open");
 
-                // Update asset category status to 'P' for previous assignment
-                var assetCategory = await _context.AssetcategoryCodes
-                    .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo);
-                if (assetCategory != null)
-                {
-                    var previousAssignment = await _context.EmployeesAssetsAssigns
-                        .FirstOrDefaultAsync(ea => ea.AssignId == assetEdits.varAssestID);
-
-                    if (previousAssignment != null)
+                    if (isAssetAssigned)
                     {
-
-                        assetCategory.Status = "P";
+                        return "2"; // Asset is already assigned and not available
                     }
-                }
 
+                    // Retrieve asset assignment
+                    var assetToUpdate = await _context.EmployeesAssetsAssigns
+                        .FirstOrDefaultAsync(a => a.AssignId == assetEdits.varAssestID);
 
-                var assetToUpdate = await _context.EmployeesAssetsAssigns
-                    .FirstOrDefaultAsync(a => a.AssignId == assetEdits.varAssestID);
-                if (assetToUpdate != null)
-                {
-                    assetToUpdate.AssetGroup = assetEdits.AssetGroup;
-                    assetToUpdate.Asset = assetEdits.varAssestName;
-                    assetToUpdate.AssetNo = assetEdits.AssetNo;
-                    assetToUpdate.AssetModel = assetEdits.AssetModel;
-                    assetToUpdate.Monitor = assetEdits.Monitor;
-                    assetToUpdate.InWarranty = assetEdits.InWarranty;
-                    assetToUpdate.OutOfWarranty = assetEdits.OutOfWarranty;
-                    assetToUpdate.Status = assetEdits.varAssignAsetStatus;
-                    assetToUpdate.ReceivedDate = assetEdits.ReceiveDate;
-                    assetToUpdate.ExpiryDate = assetEdits.ExpiryDate;
-                    assetToUpdate.ReturnDate = assetEdits.ReturnDate;
-                    assetToUpdate.Remarks = assetEdits.Remarks;
+                    var assetCategory = await _context.AssetcategoryCodes
+                        .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo);
+
+                    if (assetToUpdate != null)
+                    {
+                        // Update existing asset details
+                        assetToUpdate.EmpId = assetEdits.varEmpID;
+                        assetToUpdate.AssetGroup = assetEdits.AssetGroup;
+                        assetToUpdate.Asset = assetEdits.varAssestName;
+                        assetToUpdate.AssetNo = assetEdits.AssetNo;
+                        assetToUpdate.AssetModel = assetEdits.AssetModel;
+                        assetToUpdate.Monitor = assetEdits.Monitor;
+                        assetToUpdate.InWarranty = assetEdits.InWarranty;
+                        assetToUpdate.OutOfWarranty = assetEdits.OutOfWarranty;
+                        assetToUpdate.Status = assetEdits.varAssignAsetStatus;
+                        assetToUpdate.ReceivedDate = assetEdits.ReceiveDate;
+                        assetToUpdate.ExpiryDate = assetEdits.ExpiryDate;
+                        assetToUpdate.ReturnDate = assetEdits.ReturnDate;
+                        assetToUpdate.Remarks = assetEdits.Remarks;
+                    }
+                    else
+                    {
+                        // Insert new asset assignment if not found
+                        var newAssetAssign = new EmployeesAssetsAssign
+                        {
+                       
+                            EmpId = assetEdits.varEmpID,
+                            AssetGroup = assetEdits.AssetGroup,
+                            Asset = assetEdits.varAssestName,
+                            AssetNo = assetEdits.AssetNo,
+                            AssetModel = assetEdits.AssetModel,
+                            Monitor = assetEdits.Monitor,
+                            InWarranty = assetEdits.InWarranty,
+                            OutOfWarranty = assetEdits.OutOfWarranty,
+                            Status = assetEdits.varAssignAsetStatus,
+                            ReceivedDate = assetEdits.ReceiveDate,
+                            ExpiryDate = assetEdits.ExpiryDate,
+                            ReturnDate = assetEdits.ReturnDate,
+                            Remarks = assetEdits.Remarks
+                        };
+
+                        _context.EmployeesAssetsAssigns.Add(newAssetAssign);
+                    }
+
+                    // Update AssetCategoryCode Status
+                    if (assetCategory != null)
+                    {
+                        assetCategory.Status = assetEdits.ReturnDate != null ? "P" : "A";
+                    }
+
+                    // Add Asset Request History
+                    var assetRequestHistory = new AssetRequestHistory
+                    {
+                        RequestId = assetEdits.varAssestID,
+                        AssetEntryBy = assetEdits.EntryBy,
+                        EntryDate = DateTime.UtcNow,
+                        StatusType = 2,
+                        AssetEmpId = assetEdits.varEmpID
+                    };
+
+                    _context.AssetRequestHistories.Add(assetRequestHistory);
+
+                    // Save all changes in one go
                     await _context.SaveChangesAsync();
+
+                    // Commit transaction
+                    await transaction.CommitAsync();
+
+                    return "1";
                 }
-
-                // Update AssetcategoryCode status to 'A' for the current asset
-                var updatedCategory = await _context.AssetcategoryCodes
-                    .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo);
-                if (updatedCategory != null)
+                catch (Exception ex)
                 {
-                    updatedCategory.Status = "A";
-                    await _context.SaveChangesAsync();
+                    // Rollback in case of error
+                    await transaction.RollbackAsync();
+                    throw;
                 }
-
-                var returnedCategory = await _context.AssetcategoryCodes
-                    .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo && assetEdits.ReturnDate != null);
-                if (returnedCategory != null)
-                {
-                    returnedCategory.Status = "P";
-                    await _context.SaveChangesAsync();
-                }
-
-                var assetRequestHistory = new AssetRequestHistory
-                {
-                    RequestId = assetEdits.varAssestID,
-                    AssetEntryBy = assetEdits.EntryBy,
-                    EntryDate = DateTime.UtcNow,
-                    StatusType = 2,
-                    AssetEmpId = assetEdits.varEmpID
-                };
-
-                _context.AssetRequestHistories.Add(assetRequestHistory);
-                await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
-
-                return "1";
             }
         }
+
         public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
         {
             List<object> result = new List<object>();
