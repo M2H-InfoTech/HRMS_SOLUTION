@@ -115,6 +115,9 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<string> InsertDocumentsFieldDetailsAsync(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
         Task<string> SetEmpDocumentsAsync(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
         Task<string?> InsertLetterTypeRequestAsync(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos);
+        Task<object> EditEmployeeCommonInformationAsync(string? empIds, int? employeeid);
+
+        Task<string?> EditInformationAsync(List<TmpEmpInformation> inputs);
     }
 
 }

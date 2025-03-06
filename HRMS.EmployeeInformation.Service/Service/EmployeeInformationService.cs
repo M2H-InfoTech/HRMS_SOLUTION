@@ -381,5 +381,13 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.InsertLetterTypeRequest(files, LetterInsertUpdateDtos);
         }
+        public async Task<object> EditEmployeeCommonInformationAsync(string? empIds, int? employeeid)
+        {
+            return await _employeeRepository.EditEmployeeCommonInformation(empIds, employeeid);
+        }
+        public async Task<string?> EditInformationAsync(List<TmpEmpInformation> inputs)
+        {
+            return await _employeeRepository.EditInformationAsync(inputs);
+        }
     }
 }

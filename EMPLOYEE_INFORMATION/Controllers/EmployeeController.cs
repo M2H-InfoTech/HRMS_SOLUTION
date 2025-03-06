@@ -655,5 +655,18 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var InsertLetterTypeRequest = await _employeeInformation.InsertLetterTypeRequestAsync(files, LetterInsertUpdateDtos);
             return new JsonResult(InsertLetterTypeRequest);
         }
+        [HttpGet]
+        public async Task<IActionResult> EditEmployeeCommonInformationAsync(string? empIds, int? employeeid)
+        {
+            var employeeType = await _employeeInformation.EditEmployeeCommonInformationAsync(empIds, employeeid);
+            return new JsonResult(employeeType);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateEmployeeInfo(List<TmpEmpInformation> inputs)
+        {
+            var employeeType = await _employeeInformation.EditInformationAsync(inputs);
+            return new JsonResult(employeeType);
+        }
     }
 }
