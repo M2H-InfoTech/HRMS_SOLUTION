@@ -668,5 +668,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeType = await _employeeInformation.EditInformationAsync(inputs);
             return new JsonResult(employeeType);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetInformationDescriptionAsync(int infoId)
+        {
+            var employeeType = await _employeeInformation.GetInformationDescriptionAsync(infoId);
+            return new JsonResult(employeeType);
+        }
     }
 }

@@ -9797,10 +9797,18 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             }
         }
 
-
-
-
-
+        public async Task<object> GetInformationDescriptionAsync(int infoId)
+        {
+            return await _context.EditInfoMaster01s
+                 .Where(e => e.InfoId == infoId)
+                 .Select(e => new
+                 {
+                     e.Info01Id,
+                     e.InfoId,
+                     e.InfoCode,
+                     e.Description
+                 }).ToListAsync();
+        }
     }
 
 }

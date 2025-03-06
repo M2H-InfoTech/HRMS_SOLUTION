@@ -118,6 +118,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<object> EditEmployeeCommonInformationAsync(string? empIds, int? employeeid);
 
         Task<string?> EditInformationAsync(List<TmpEmpInformation> inputs);
+        Task<object> GetInformationDescriptionAsync(int infoId);
     }
 
 }
