@@ -389,5 +389,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.EditInformationAsync(inputs);
         }
+
+        public async Task<object> GetInformationDescriptionAsync(int infoId)
+        {
+            return await _employeeRepository.GetInformationDescriptionAsync(infoId);
+        }
     }
 }

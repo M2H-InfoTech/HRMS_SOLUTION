@@ -125,5 +125,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> EditEmployeeCommonInformation(string? empIds, int? employeeid);
 
         Task<string?> EditInformationAsync(List<TmpEmpInformation> inputs);
+        Task<object> GetInformationDescriptionAsync(int infoId);
     }
 }
