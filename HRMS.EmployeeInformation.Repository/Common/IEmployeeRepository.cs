@@ -116,11 +116,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
         Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
-        Task<bool>   IsWorkflowNeeded();
+        Task<bool> IsWorkflowNeeded();
         Task<string> GenerateRequestId(int empId);
         Task<string?> GetLastSequence(string codeId);
         Task UpdateCodeGeneration(string codeId);
 
         Task<string?> InsertLetterTypeRequest(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos);
+        Task<object> EditEmployeeCommonInformation(string? empIds, int? employeeid);
+
+        Task<string?> EditInformationAsync(List<TmpEmpInformation> inputs);
     }
 }

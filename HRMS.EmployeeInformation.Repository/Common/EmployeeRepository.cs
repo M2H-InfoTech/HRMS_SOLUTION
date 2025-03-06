@@ -40,7 +40,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             _mapper = mapper;
             _env = env ?? throw new ArgumentNullException(nameof(env));
             _employeeRepositoryC = employeeRepositoryC;
-
         }
         public async Task<string> GetDefaultCompanyParameter(int employeeId, string parameterCode, string type)
         {
@@ -3920,7 +3919,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
         public async Task<CareerHistoryResultDto> CareerHistoryAsync(int employeeId)
-        {  
+        {
             // Fetch previous experience data in a single query
             var previousExpDays = await _context.HrEmpProfdtls
                 .Where(empProf => empProf.EmpId == employeeId)
@@ -3941,7 +3940,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 .FirstOrDefaultAsync();
 
             var companyExp = new CareerHistoryDto
-                {
+            {
                 Category = "Company Experience (First Entry Date)",
                 Relevant = await GetEmployeeExperienceLengthAsync(employeeId, relevantDays),
                 NonRelevent = "0Y: 0M: 0D",
@@ -3954,7 +3953,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var totalDays = totalRelevantDays + totalNonRelevantDays;
 
             var totalSummary = new CareerHistoryDto
-                {
+            {
                 Category = "Total",
                 Relevant = await GetEmployeeExperienceLengthAsync(employeeId, totalRelevantDays),
                 NonRelevent = await GetEmployeeExperienceLengthAsync(employeeId, totalNonRelevantDays),
@@ -3965,11 +3964,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             //table 1
             var TransferTransition00 = _context.TransferTransition00s
-                .Where (a => a.BatchApprovalStatus != _employeeSettings.Status01
+                .Where(a => a.BatchApprovalStatus != _employeeSettings.Status01
                             && (a.EmpApprovalStatus ?? _employeeSettings.EmployeeStatus) != _employeeSettings.Status01
                             && a.EmployeeId == employeeId)
-                .Select (a => new
-                    {
+                .Select(a => new
+                {
                     a.TransferBatchId,
                     a.TransferId,
                     a.EntityOrder,
@@ -3983,15 +3982,15 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     a.ToDate,
                     a.BatchApprovalStatus,
                     a.EmpApprovalStatus
-                    })
+                })
                 .ToList();
 
             var transferCareerHistory = TransferTransition00
-                .Select (t => new CareerHistoryTransferModelDto
-                    {
+                .Select(t => new CareerHistoryTransferModelDto
+                {
                     TransferId = t.TransferId,
                     EmployeeId = t.EmployeeId,
-                    FromDate = null,  
+                    FromDate = null,
                     ToDate = null,
                     Level1 = null,
                     Level2 = null,
@@ -4004,25 +4003,25 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     Level9 = null,
                     Level10 = null,
                     Level11 = null
-                    })
+                })
                 .Distinct()
                 .ToList();
 
             var transitionDict = TransferTransition00
-                .GroupBy (t => t.TransferId)
-                .ToDictionary (g => g.Key, g => g.ToList ( ));
+                .GroupBy(t => t.TransferId)
+                .ToDictionary(g => g.Key, g => g.ToList());
 
             foreach (var history in transferCareerHistory)
+            {
+                if (transitionDict.TryGetValue(history.TransferId, out var transitions))
                 {
-                if (transitionDict.TryGetValue (history.TransferId, out var transitions))
-                    {
                     foreach (var transition in transitions)
-                        {
+                    {
                         history.FromDate = transition.FromDate;
                         history.ToDate = transition.ToDate;
 
                         switch (transition.EntityOrder)
-                            {
+                        {
                             case 1: history.Level1 = transition.OldEntityDescription; break;
                             case 2: history.Level2 = transition.OldEntityDescription; break;
                             case 3: history.Level3 = transition.OldEntityDescription; break;
@@ -4034,32 +4033,32 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             case 9: history.Level9 = transition.OldEntityDescription; break;
                             case 10: history.Level10 = transition.OldEntityDescription; break;
                             case 11: history.Level11 = transition.OldEntityDescription; break;
-                            }
                         }
                     }
                 }
+            }
             var entityLimit = _context.LicensedCompanyDetails
-                .Select (l => l.EntityLimit)
+                .Select(l => l.EntityLimit)
                 .FirstOrDefault();
 
             var categoryMaster = _context.Categorymasters
-                .Where (c => c.SortOrder >= 1 && c.SortOrder <= 11)
-                .OrderBy (c => c.SortOrder)
+                .Where(c => c.SortOrder >= 1 && c.SortOrder <= 11)
+                .OrderBy(c => c.SortOrder)
                 .ToList();
 
             var categoryLevels = _context.Categorymasters
-                .Where (c => c.SortOrder >= 1 && c.SortOrder <= entityLimit)
-                .OrderBy (c => c.SortOrder)
-                .ToDictionary (c => c.SortOrder, c => c.Description);
+                .Where(c => c.SortOrder >= 1 && c.SortOrder <= entityLimit)
+                .OrderBy(c => c.SortOrder)
+                .ToDictionary(c => c.SortOrder, c => c.Description);
 
             var careerHistoryList01 = transferCareerHistory
-                .Select (t => new CareerHistoryDataDto
-                    {
+                .Select(t => new CareerHistoryDataDto
+                {
                     FromDate = t.FromDate,
                     ToDate = t.ToDate,
-                    LevelData = categoryLevels.ToDictionary (
-                        level => level.Value, 
-                        level => level.Key switch 
+                    LevelData = categoryLevels.ToDictionary(
+                        level => level.Value,
+                        level => level.Key switch
                             {
                                 1 => t.Level1 ?? "",
                                 2 => t.Level2 ?? "",
@@ -4073,12 +4072,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 10 => t.Level10 ?? "",
                                 11 => t.Level11 ?? "",
                                 _ => ""
-                                })
-                    })
+                            })
+                })
                 .ToList();
 
             var finalResult = careerHistoryList01
-                .Select (x =>
+                .Select(x =>
                 {
                     var flatObject = new Dictionary<string, object>
                     {
@@ -4087,20 +4086,20 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     };
 
                     foreach (var kvp in x.LevelData)
-                        {
-                        flatObject[kvp.Key] = kvp.Value; 
-                        }
+                    {
+                        flatObject[kvp.Key] = kvp.Value;
+                    }
 
                     return flatObject;
                 })
                 .ToList();
 
             return new CareerHistoryResultDto
-                {
+            {
                 Table = careerHistoryList,
                 Table1 = finalResult
-                };
-            }
+            };
+        }
 
         public async Task<List<object>> BiometricDetailsAsync(int employeeId)
         {
@@ -6993,7 +6992,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         EntryBy = attachmentDto.EntryBy,
                         EntryDate = DateTime.UtcNow,
                         DocStatus = _employeeSettings.EmployeeStatus,
-                        QualificationId= attachmentDto.QualificationId
+                        QualificationId = attachmentDto.QualificationId
                     });
                 }
                 catch (Exception ex)
@@ -7582,7 +7581,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         // Insert new asset assignment if not found
                         var newAssetAssign = new EmployeesAssetsAssign
                         {
-                       
+
                             EmpId = assetEdits.varEmpID,
                             AssetGroup = assetEdits.AssetGroup,
                             Asset = assetEdits.varAssestName,
@@ -9190,9 +9189,620 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return (uploadedFiles, errors);
         }
+        public async Task<object> EditEmployeeCommonInformation(string? empIds, int? employeeid)
+        {
+            var employeeList = empIds?.Split(',')
+                                   .Select(s => int.Parse(s.Trim()))
+                                   .ToList();
+
+            var employees = await _context.EmployeeDetails.Where(e => employeeList.Contains(e.EmpId))
+                            .Select(e => new
+                            {
+                                e.EmpId,
+                                EmpName = e.EmpCode + " || " + e.Name
+                            }).ToListAsync();
+            var infoData = await _context.EditInfoMaster00s
+                           .Where(info => info.InfoCode == _employeeSettings.companyParameterCodesType.Substring(0, _employeeSettings.companyParameterCodesType.Length - 1))
+                           .Select(info => new
+                           {
+                               info.InfoId,
+                               info.InfoCode,
+                               info.Description
+                           }).ToListAsync();
+
+
+            var employeeDetails = await _context.EmployeeDetails.Where(e => e.EmpId == 115)
+                .Join(_context.DesignationDetails, e => e.DesigId, d => d.LinkId, (e, d) => new { e, d })
+                .Join(_context.BranchDetails, ed => ed.e.BranchId, b => b.LinkId, (ed, b) => new { ed.e, ed.d, b })
+                .GroupJoin(_context.HrEmpImages, edb => edb.e.EmpId, img => img.EmpId, (edb, img) => new { edb, img })
+                .SelectMany(edb_img => edb_img.img.DefaultIfEmpty(),
+                  (edb_img, img) => new
+                  {
+                      edb_img.edb.e.Name,
+                      Branch = edb_img.edb.d.Designation + " / " + edb_img.edb.e.EmpCode + " / " + edb_img.edb.b.Branch,
+                      Image = img != null ? img.ImageUrl : null
+                  }).ToListAsync();
+
+            return new
+            {
+                Employees = employees,
+                InfoData = infoData,
+                EmployeeDetails = employeeDetails
+            };
+        }
+        public static string TrimSpace(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            // Define unwanted characters including backslash
+            char[] unwantedChars = { '\n', '\r', '\t', '\u00A0', '\\' };
+
+            // Replace unwanted characters with a space
+            string cleaned = new string(value.Where(c => !unwantedChars.Contains(c)).ToArray());
+
+            // Trim leading/trailing spaces and replace multiple spaces with a single space
+            return string.Join(" ", cleaned.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        //    public async Task<string?> UpdateEmployeeInfo1(List<TmpEmpInformation> inputs)
+        //    {
+        //        try
+        //        {
+
+        //            var empIds = inputs.Select(i => i.EmpID).Distinct().ToList();
+        //            var userMasters = await _context.HrEmpMasters
+        //                .Where(e => empIds.Contains(e.EmpId))
+        //                .ToListAsync();
+
+        //            var personalInfos = await _context.HrEmpPersonals
+        //                .Where(p => empIds.Contains(p.EmpId))
+        //                .ToListAsync();
+
+        //            var addressInfos = await _context.HrEmpAddresses
+        //                .Where(a => empIds.Contains(a.EmpId))
+        //                .ToListAsync();
+
+        //            var userRelations = await _context.HrEmployeeUserRelations
+        //                .Where(r => empIds.Contains(r.EmpId))
+        //                .ToListAsync();
+
+        //            var userIds = userRelations.Select(r => r.UserId).ToList();
+        //            var users = await _context.AdmUserMasters
+        //                .Where(u => userIds.Contains(u.UserId))
+        //                .ToListAsync();
+
+        //            var surveyRelations = await _context.SurveyRelations
+        //.Where(sr => empIds.Contains(sr.EmpId))
+        //.ToListAsync();
+        //            List<EditInfoHistory> editHistoryRecords = new List<EditInfoHistory>();
+
+        //            foreach (var input in inputs)
+        //            {
+        //                var userMaster = userMasters.FirstOrDefault(e => e.EmpId == input.EmpID);
+        //                if (userMasters != null)
+        //                {
+        //                    switch (input.InfoCode.ToUpper())
+        //                    {
+        //                        case "EMPCODE":
+        //                            userMaster.EmpCode = input.Value;
+        //                            break;
+        //                        case "FIRSTNAME":
+        //                            userMaster.FirstName = input.Value;
+        //                            break;
+        //                        case "MIDDLENAME":
+        //                            userMaster.MiddleName = input.Value;
+        //                            break;
+        //                        case "LASTNAME":
+        //                            userMaster.LastName = input.Value;
+        //                            break;
+        //                        case "GUARDIANSNAME":
+        //                            userMaster.GuardiansName = input.Value;
+        //                            break;
+        //                        case "GENDER":
+        //                            userMaster.Gender = input.Value;
+        //                            break;
+        //                        case "EMPDOB":
+        //                            userMaster.DateOfBirth = Convert.ToDateTime(input.Value);
+        //                            break;
+        //                        case "NATIONALID":
+        //                            userMaster.NationalIdNo = input.Value;
+        //                            break;
+        //                        case "PASSPORTID":
+        //                            userMaster.PassportNo = input.Value;
+        //                            break;
+        //                        case "JOINDATE":
+        //                            userMaster.JoinDt = Convert.ToDateTime(input.Value);
+        //                            break;
+        //                        case "REVIEWDATE":
+        //                            userMaster.ReviewDt = Convert.ToDateTime(input.Value);
+        //                            break;
+        //                        case "GRATUITYDATE":
+        //                            userMaster.GratuityStrtDate = Convert.ToDateTime(input.Value);
+        //                            break;
+        //                        case "FIRSTENTRYDATE":
+        //                            userMaster.FirstEntryDate = Convert.ToDateTime(input.Value);
+        //                            break;
+        //                        case "NOTICEPERIOD":
+        //                            userMaster.NoticePeriod = Convert.ToInt32(input.Value);
+        //                            break;
+        //                        case "COMPANYACCOMODATION":
+        //                            userMaster.Ishra = Convert.ToBoolean(input.Value);
+        //                            break;
+        //                        case "EXPATRIATE":
+        //                            userMaster.IsExpat = Convert.ToInt32(input.Value);
+        //                            break;
+        //                        case "CASUALHOLYDAY":
+        //                            userMaster.PublicHoliday = Convert.ToBoolean(input.Value);
+        //                            break;
+        //                        case "COMPANYCONVEYANCE":
+        //                            userMaster.CompanyConveyance = Convert.ToBoolean(input.Value);
+        //                            break;
+        //                        case "COMPANYVEHICLE":
+        //                            userMaster.CompanyVehicle = Convert.ToBoolean(input.Value);
+        //                            break;
+        //                        case "ISPROBATION":
+        //                            userMaster.IsProbation = Convert.ToBoolean(input.Value);
+        //                            break;
+        //                        case "PROBATIONENDDATE":
+        //                            userMaster.ProbationDt = Convert.ToDateTime(input.Value);
+        //                            break;
+        //                        case "PROBATIONNOTICEPERIOD":
+        //                            userMaster.ProbationNoticePeriod = Convert.ToInt32(input.Value);
+        //                            break;
+        //                        case "MEALALLOWANCEDEDUCTION":
+        //                            userMaster.MealAllowanceDeduct = Convert.ToBoolean(input.Value);
+        //                            break;
+        //                    }
+        //                }
+
+        //                var personalInfo = personalInfos.FirstOrDefault(p => p.EmpId == input.EmpID);
+        //                if (personalInfo != null)
+        //                {
+        //                    switch (input.InfoCode.ToUpper())
+        //                    {
+        //                        case "GENDER":
+        //                            personalInfo.Gender = input.Value;
+        //                            break;
+        //                        case "EMPCOUNTRY":
+        //                            personalInfo.Country = int.TryParse(input.Value, out int country) ? country : personalInfo.Country;
+        //                            break;
+        //                        case "NATIONALITY":
+        //                            personalInfo.Nationality = int.TryParse(input.Value, out int nationality) ? nationality : personalInfo.Nationality;
+        //                            break;
+        //                        case "COUNTRYOFBIRTH":
+        //                            personalInfo.CountryOfBirth = Convert.ToInt32(input.Value);
+        //                            break;
+        //                        case "EMPLOYEE_TYPE":
+        //                            personalInfo.EmployeeType = input.Value == "1" ? "D" : input.Value == "2" ? "H" : personalInfo.EmployeeType;
+        //                            break;
+        //                        case "MARITAL":
+        //                            personalInfo.MaritalStatus = input.Value;
+        //                            break;
+        //                        case "BLOODGROUP":
+        //                            var bloodGroup = await _context.HrmValueTypes
+        //                                .Where(v => v.Type == "BloodGroup" && v.Value == Convert.ToInt32(input.Value))
+        //                                .Select(v => v.Code)
+        //                                .FirstOrDefaultAsync();
+        //                            personalInfo.BloodGrp = bloodGroup ?? personalInfo.BloodGrp;
+        //                            break;
+        //                        case "WEDDING_DATE":
+        //                            personalInfo.WeddingDate = Convert.ToDateTime(input.Value);
+        //                            break;
+        //                        case "RELIGION":
+        //                            personalInfo.Religion = Convert.ToInt32(input.Value);
+        //                            break;
+        //                        case "HEIGHT":
+        //                            personalInfo.Height = input.Value;
+        //                            break;
+        //                        case "WEIGHT":
+        //                            personalInfo.Weight = input.Value;
+        //                            break;
+        //                        case "IDENTIFICATION":
+        //                            personalInfo.IdentMark = input.Value;
+        //                            break;
+        //                    }
+        //                }
+
+        //                var addressInfo = addressInfos.FirstOrDefault(a => a.EmpId == input.EmpID);
+        //                if (addressInfo != null)
+        //                {
+        //                    switch (input.InfoCode.ToUpper())
+        //                    {
+
+        //                        case "COMPANYMAIL":
+        //                            addressInfo.OfficialEmail = input.Value;
+        //                            break;
+        //                        case "PERSONALMAIL":
+        //                            addressInfo.PersonalEmail = input.Value;
+        //                            break;
+        //                        case "PERSONALMOBILE":
+        //                            addressInfo.Mobile = input.Value;
+        //                            break;
+        //                        case "OFFICIALMOBILE":
+        //                            addressInfo.Phone = input.Value;
+        //                            break;
+        //                        case "HOMECOUNTRYPHONENO":
+        //                            addressInfo.HomeCountryPhone = input.Value;
+        //                            break;
+        //                    }
+        //                }
+
+        //                var userRelation = userRelations.FirstOrDefault(r => r.EmpId == input.EmpID);
+        //                if (userRelation != null)
+        //                {
+        //                    var user = users.FirstOrDefault(u => u.UserId == userRelation.UserId);
+        //                    if (user != null)
+        //                    {
+        //                        switch (input.InfoCode.ToUpper())
+        //                        {
+        //                            case "COMPANYMAIL":
+        //                                user.Email = input.Value;
+        //                                break;
+        //                            case "EMPCODE":
+        //                                user.UserName = input.Value;
+        //                                break;
+        //                            case "APPNEEDED":
+        //                                user.NeedApp = Convert.ToBoolean(input.Value);
+        //                                break;
+        //                        }
+
+        //                    }
+        //                }
+        //                var hraLatestRecords = await _context.HraHistories
+        //                   .Where(h => _context.HraHistories
+        //                       .Where(inner => inner.EmployeeId == h.EmployeeId)
+        //                       .OrderByDescending(inner => inner.Id)
+        //                       .Select(inner => inner.Id)
+        //                       .FirstOrDefault() == h.Id)
+        //                   .ToListAsync();
+
+        //                foreach (var hra in hraLatestRecords)
+        //                {
+        //                    hra.ToDate = DateTime.UtcNow;
+        //                }
+
+        //                var hraNewRecords = inputs
+        //                    .Where(input => input.InfoCode.ToUpper() == "HRA")
+        //                    .Select(input => new HraHistory
+        //                    {
+        //                        EmployeeId = input.EmpID,
+        //                        IsHra = Convert.ToBoolean(input.Value),
+        //                        FromDate = DateTime.UtcNow,
+        //                        ToDate = null,
+        //                        Remarks = "",
+        //                        Entryby = input.UserId
+        //                    })
+        //                    .ToList();
+
+        //                await _context.HraHistories.AddRangeAsync(hraNewRecords);
+
+
+
+        //                editHistoryRecords.Add(new EditInfoHistory
+        //                {
+        //                    EmpId = input.EmpID,
+        //                    InfoCode = input.InfoCode,
+        //                    InfoId = input.InfoID,
+        //                    Info01Id = input.Info01ID,
+        //                    Value = input.Value,
+        //                    UpdatedBy = input.UserId,
+        //                    UpdatedDate = DateTime.UtcNow
+        //                });
+        //            }
+
+        //            if (editHistoryRecords.Any())
+        //            {
+        //                await _context.EditInfoHistories.AddRangeAsync(editHistoryRecords);
+        //            }
+
+
+        //            int result = await _context.SaveChangesAsync();
+        //            return result > 0 ? "Updated" : "Falied";
+
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Console.WriteLine($"Error updating employee info: {ex.Message}");
+        //            return "Falied";
+        //        }
+        //    }
+
+        public async Task<string?> EditInformationAsync(List<TmpEmpInformation> inputs)
+        {
+            try
+            {
+                var empIds = inputs.Select(i => i.EmpID).Distinct().ToList();
+                var userMasters = await _context.HrEmpMasters.Where(e => empIds.Contains(e.EmpId)).ToListAsync();
+                var personalInfos = await _context.HrEmpPersonals.Where(p => empIds.Contains(p.EmpId)).ToListAsync();
+                var addressInfos = await _context.HrEmpAddresses.Where(a => empIds.Contains(a.EmpId)).ToListAsync();
+                var userRelations = await _context.HrEmployeeUserRelations.Where(r => empIds.Contains(r.EmpId)).ToListAsync();
+                var surveyRelations = await _context.SurveyRelations.Where(sr => empIds.Contains(sr.EmpId)).ToListAsync();
+
+                var userIds = userRelations.Select(r => r.UserId).Distinct().ToList();
+                var users = await _context.AdmUserMasters.Where(u => userIds.Contains(u.UserId)).ToListAsync();
+
+                List<EditInfoHistory> editHistoryRecords = new();
+
+                foreach (var input in inputs)
+                {
+                    var userMaster = userMasters.FirstOrDefault(e => e.EmpId == input.EmpID);
+                    if (userMaster != null)
+                    {
+                        UpdateUserMaster(userMaster, input);
+                    }
+
+                    var personalInfo = personalInfos.FirstOrDefault(p => p.EmpId == input.EmpID);
+                    if (personalInfo != null)
+                    {
+                        UpdatePersonalInfo(personalInfo, input);
+                    }
+
+                    var addressInfo = addressInfos.FirstOrDefault(a => a.EmpId == input.EmpID);
+                    if (addressInfo != null)
+                    {
+                        UpdateAddressInfo(addressInfo, input);
+                    }
+
+                    var userRelation = userRelations.FirstOrDefault(r => r.EmpId == input.EmpID);
+                    if (userRelation != null)
+                    {
+                        var user = users.FirstOrDefault(u => u.UserId == userRelation.UserId);
+                        if (user != null)
+                        {
+                            UpdateUser(user, input);
+                        }
+                    }
+
+                    if (input.InfoCode.ToUpper() == "PROBATIONENDDATE")
+                    {
+                        foreach (var survey in surveyRelations.Where(sr => sr.EmpId == input.EmpID))
+                        {
+                            if (DateTime.TryParse(input.Value, out DateTime dateValue))
+                            {
+                                int daysToSubtract = input.probationReviewCount > 0 ? input.probationReviewCount : 30;
+                                survey.ReviewDate = dateValue.AddDays(-daysToSubtract);
+                            }
+                        }
+                    }
+                    if (input.InfoCode.ToUpper() == "COMPANYACCOMODATION")
+                    {
+                        var hraLatestRecords = await _context.HraHistories.Where(h => _context.HraHistories
+                                                      .Where(inner => inner.EmployeeId == h.EmployeeId)
+                                                      .OrderByDescending(inner => inner.Id)
+                                                      .Select(inner => inner.Id)
+                                                      .FirstOrDefault() == h.Id)
+                                                      .ToListAsync();
+
+                        foreach (var hra in hraLatestRecords)
+                        {
+                            hra.ToDate = DateTime.UtcNow;
+                        }
+
+                        var hraNewRecords = inputs
+                                            .Where(input => input.InfoCode.ToUpper() == "COMPANYACCOMODATION")
+                                            .Select(input => new HraHistory
+                                            {
+                                                EmployeeId = input.EmpID,
+                                                IsHra = Convert.ToBoolean(input.Value),
+                                                FromDate = DateTime.UtcNow,
+                                                ToDate = null,
+                                                Remarks = "",
+                                                Entryby = input.UserId
+                                            })
+                                            .ToList();
+
+                        await _context.HraHistories.AddRangeAsync(hraNewRecords);
+                    }
+
+
+                    editHistoryRecords.Add(new EditInfoHistory
+                    {
+                        EmpId = input.EmpID,
+                        InfoCode = input.InfoCode,
+                        InfoId = input.InfoID,
+                        Info01Id = input.Info01ID,
+                        Value = input.Value,
+                        UpdatedBy = input.UserId,
+                        UpdatedDate = DateTime.UtcNow
+                    });
+                }
+
+                if (editHistoryRecords.Any())
+                {
+                    await _context.EditInfoHistories.AddRangeAsync(editHistoryRecords);
+                }
+
+                int result = await _context.SaveChangesAsync();
+                return result > 0 ? "Updated" : "Failed";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating employee info: {ex.Message}");
+                return "Failed";
+            }
+        }
+
+        private void UpdateUserMaster(HrEmpMaster userMaster, TmpEmpInformation input)
+        {
+            switch (input.InfoCode.ToUpper())
+            {
+                case "EMPCODE":
+                    userMaster.EmpCode = input.Value;
+                    break;
+                case "WEDDING_DATE":
+                    userMaster.WeddingDate = Convert.ToDateTime(input.Value);
+                    break;
+                case "FIRSTNAME":
+                    userMaster.FirstName = input.Value;
+                    break;
+                case "MIDDLENAME":
+                    userMaster.MiddleName = input.Value;
+                    break;
+                case "LASTNAME":
+                    userMaster.LastName = input.Value;
+                    break;
+                case "GUARDIANSNAME":
+                    userMaster.GuardiansName = input.Value;
+                    break;
+                case "GENDER":
+                    userMaster.Gender = input.Value;
+                    break;
+                case "EMPDOB":
+                    userMaster.DateOfBirth = Convert.ToDateTime(input.Value);
+                    break;
+                case "NATIONALID":
+                    userMaster.NationalIdNo = input.Value;
+                    break;
+                case "PASSPORTID":
+                    userMaster.PassportNo = input.Value;
+                    break;
+                case "JOINDATE":
+                    userMaster.JoinDt = Convert.ToDateTime(input.Value);
+                    break;
+                case "REVIEWDATE":
+                    userMaster.ReviewDt = Convert.ToDateTime(input.Value);
+                    break;
+                case "GRATUITYDATE":
+                    userMaster.GratuityStrtDate = Convert.ToDateTime(input.Value);
+                    break;
+                case "FIRSTENTRYDATE":
+                    userMaster.FirstEntryDate = Convert.ToDateTime(input.Value);
+                    break;
+                case "NOTICEPERIOD":
+                    userMaster.NoticePeriod = Convert.ToInt32(input.Value);
+                    break;
+                case "COMPANYACCOMODATION":
+                    userMaster.Ishra = Convert.ToBoolean(input.Value);
+                    break;
+                case "EXPATRIATE":
+                    userMaster.IsExpat = Convert.ToInt32(input.Value);
+                    break;
+                case "CASUALHOLYDAY":
+                    userMaster.PublicHoliday = Convert.ToBoolean(input.Value);
+                    break;
+                case "COMPANYCONVEYANCE":
+                    userMaster.CompanyConveyance = Convert.ToBoolean(input.Value);
+                    break;
+                case "COMPANYVEHICLE":
+                    userMaster.CompanyVehicle = Convert.ToBoolean(input.Value);
+                    break;
+                case "ISPROBATION":
+                    userMaster.IsProbation = Convert.ToBoolean(input.Value);
+                    break;
+                case "PROBATIONENDDATE":
+                    userMaster.ProbationDt = Convert.ToDateTime(input.Value);
+                    break;
+                case "PROBATIONNOTICEPERIOD":
+                    userMaster.ProbationNoticePeriod = Convert.ToInt32(input.Value);
+                    break;
+                case "MEALALLOWANCEDEDUCTION":
+                    userMaster.MealAllowanceDeduct = Convert.ToBoolean(input.Value);
+                    break;
+            }
+        }
+
+        private void UpdatePersonalInfo(HrEmpPersonal personalInfo, TmpEmpInformation input)
+        {
+            switch (input.InfoCode.ToUpper())
+            {
+
+                case "GENDER":
+                    personalInfo.Gender = input.Value;
+                    break;
+                case "EMPCOUNTRY":
+                    personalInfo.Country = int.TryParse(input.Value, out int country) ? country : personalInfo.Country;
+                    break;
+                case "NATIONALITY":
+                    personalInfo.Nationality = int.TryParse(input.Value, out int nationality) ? nationality : personalInfo.Nationality;
+                    break;
+                case "COUNTRYOFBIRTH":
+                    personalInfo.CountryOfBirth = Convert.ToInt32(input.Value);
+                    break;
+                case "EMPLOYEE_TYPE":
+                    personalInfo.EmployeeType = input.Value == "1" ? "D" : input.Value == "2" ? "H" : personalInfo.EmployeeType;
+                    break;
+                case "MARITAL":
+                    personalInfo.MaritalStatus = input.Value;
+                    break;
+                case "BLOODGROUP":
+
+                    if (int.TryParse(input.Value, out int bloodGroupValue))
+                    {
+                        var bloodGroup = _context.HrmValueTypes
+                            .Where(v => v.Type == "BloodGroup" && v.Value == bloodGroupValue)
+                            .Select(v => v.Code)
+                            .FirstOrDefault();
+
+                        personalInfo.BloodGrp = bloodGroup ?? personalInfo.BloodGrp;
+                    }
+                    else
+                    {
+                        personalInfo.BloodGrp = input.Value;
+                    }
+                    break;
+                case "WEDDING_DATE":
+                    personalInfo.WeddingDate = Convert.ToDateTime(input.Value);
+                    break;
+                case "RELIGION":
+                    personalInfo.Religion = Convert.ToInt32(input.Value);
+                    break;
+                case "HEIGHT":
+                    personalInfo.Height = input.Value;
+                    break;
+                case "WEIGHT":
+                    personalInfo.Weight = input.Value;
+                    break;
+                case "IDENTIFICATION":
+                    personalInfo.IdentMark = input.Value;
+                    break;
+            }
+        }
+
+        private void UpdateAddressInfo(HrEmpAddress addressInfo, TmpEmpInformation input)
+        {
+            switch (input.InfoCode.ToUpper())
+            {
+                case "COMPANYMAIL":
+                    addressInfo.OfficialEmail = input.Value;
+                    break;
+                case "PERSONALMAIL":
+                    addressInfo.PersonalEmail = input.Value;
+                    break;
+                case "PERSONALMOBILE":
+                    addressInfo.Mobile = input.Value;
+                    break;
+                case "OFFICIALMOBILE":
+                    addressInfo.Phone = input.Value;
+                    break;
+                case "HOMECOUNTRYPHONENO":
+                    addressInfo.HomeCountryPhone = input.Value;
+                    break;
+            }
+        }
+
+        private void UpdateUser(AdmUserMaster user, TmpEmpInformation input)
+        {
+            switch (input.InfoCode.ToUpper())
+            {
+                case "COMPANYMAIL":
+                    user.Email = input.Value;
+                    break;
+                case "EMPCODE":
+                    user.UserName = input.Value;
+                    break;
+                case "APPNEEDED":
+                    user.NeedApp = Convert.ToBoolean(input.Value);
+                    break;
+            }
+        }
+
+
+
 
 
     }
+
 }
 
 

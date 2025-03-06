@@ -272,6 +272,9 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrEmpEmergaddressApprl> HrEmpEmergaddressApprls { get; set; }
     public virtual DbSet<EmployeeSequenceAccess> EmployeeSequenceAccesses { get; set; }
 
+    public virtual DbSet<EditInfoMaster00> EditInfoMaster00s { get; set; }
+    public virtual DbSet<DesignationDetail> DesignationDetails { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4050,18 +4053,46 @@ public partial class EmployeeDBContext : DbContext
                 .HasMaxLength(10)
                 .IsUnicode(false);
         });
-        modelBuilder.Entity<EmployeeSequenceAccess> (entity =>
+        modelBuilder.Entity<EmployeeSequenceAccess>(entity =>
         {
-            entity.HasKey (e => e.SequenceEmployeeId);
+            entity.HasKey(e => e.SequenceEmployeeId);
 
-            entity.ToTable ("EmployeeSequenceAccess");
+            entity.ToTable("EmployeeSequenceAccess");
 
-            entity.Property (e => e.FromDate).HasColumnType ("datetime");
-            entity.Property (e => e.ValidTo).HasColumnType ("datetime");
+            entity.Property(e => e.FromDate).HasColumnType("datetime");
+            entity.Property(e => e.ValidTo).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<EditInfoMaster00>(entity =>
+        {
+            entity.HasKey(e => e.InfoId).HasName("PK__EditInfo__4DEC9D9AAFC859D1");
+
+            entity.ToTable("EditInfoMaster00");
+
+            entity.Property(e => e.InfoId).HasColumnName("InfoID");
+            entity.Property(e => e.Description)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.InfoCode)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+        });
+        modelBuilder.Entity<DesignationDetail>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("DesignationDetails");
+
+            entity.Property(e => e.Designation).IsUnicode(false);
+            entity.Property(e => e.LinkId).HasColumnName("LinkID");
         });
 
-
-        OnModelCreatingPartial (modelBuilder);
+        OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
