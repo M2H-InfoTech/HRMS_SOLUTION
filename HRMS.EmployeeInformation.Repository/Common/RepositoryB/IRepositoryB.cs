@@ -11,7 +11,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
         Task<string> UpdateCommunication(SaveCommunicationSDto communications);
         Task<string> SubmitAssetDetailsNewAsync(SubmitAssetNewDto submitAssetNewDto);
         Task<string> UpdateAssetDetailsNewAsync(SubmitAssetNewDto submitAssetNewDto, int assetID);
-        Task<List<AssetParameterDto>> GetAssetParameter();
+        Task<List<AssetParameterDto>> GetAssetParameterAsync();
 
     }
 }

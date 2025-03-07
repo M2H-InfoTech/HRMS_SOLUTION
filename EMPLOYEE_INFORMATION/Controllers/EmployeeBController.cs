@@ -88,7 +88,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAssetParameter()
         {
-            var getAssetParameter = await _employeeInformationB.GetAssetParameter();
+            var getAssetParameter = await _employeeInformationB.GetAssetParameterAsync();
 
             if (getAssetParameter == null || !getAssetParameter.Any())
             {

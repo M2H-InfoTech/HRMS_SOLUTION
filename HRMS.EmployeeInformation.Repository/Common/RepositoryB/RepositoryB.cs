@@ -365,7 +365,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
                             hrEmpAddress.EntryBy = communications.Entry_By;
                             hrEmpAddress.EntryDt = DateTime.UtcNow;
 
-                            _context.HrEmpAddresses.Update(hrEmpAddress);
+                            _context.HrEmpAddresses.UpdateRange(hrEmpAddress);
                         }
 
                         var hrEmpMaster = await _context.HrEmpMasters
@@ -452,19 +452,19 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
                     AssetSpecEmpId = submitAssetNewDto.EmpID
                 };
 
-                _context.ReasonMasters.Add(reasonMaster);
+                await _context.ReasonMasters.AddAsync(reasonMaster);
                 await _context.SaveChangesAsync();
-                int reasonId = reasonMaster.ReasonId; // Newly inserted Reason_Id
+                int reasonId = reasonMaster.ReasonId; 
 
-                // Step 2: Insert into ReasonMasterFieldValue using AssetFieldDto
+                
                 if (submitAssetNewDto.Array?.Any() == true)
                 {
                     var reasonMasterFieldValues = submitAssetNewDto.Array
-                        .Where(field => field.FieldValues != null && field.GcategoryFieldID > 0) // Ensure valid int
+                        .Where(field => field.FieldValues != null && field.GcategoryFieldID > 0) 
                         .Select(field => new ReasonMasterFieldValue
                         {
                             ReasonId = reasonId,
-                            CategoryFieldId = field.GcategoryFieldID, // No conversion needed
+                            CategoryFieldId = field.GcategoryFieldID, 
                             FieldValues = field.FieldValues,
                             CreatedDate = DateTime.UtcNow
                         }).ToList();
@@ -473,10 +473,10 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
                     await _context.SaveChangesAsync();
                 }
 
-                // Step 3: Process EmployeesAssetsAssign
+
                 if (submitAssetNewDto.ArraySecond?.Any() == true)
                 {
-                    // Extract valid GcategoryIDs
+                 
                     var generalCategoryIds = submitAssetNewDto.ArraySecond
                         .Select(c => c.GcategoryID) // Ensure GcategoryID is int
                         .Distinct()
@@ -500,11 +500,11 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
 
                         foreach (var rm in reasonMasters)
                         {
-                            reasonMasterDict.TryAdd(rm.Value.Value, rm.ReasonId); // ✅ Avoid duplicate keys
+                            reasonMasterDict.TryAdd(rm.Value.Value, rm.ReasonId); 
                         }
                     }
 
-                    // Step 4: Insert into EmployeesAssetsAssign
+                  
                     var employeesAssetsAssignList = submitAssetNewDto.ArraySecond
                         .Select(category => new EmployeesAssetsAssign
                         {
@@ -526,7 +526,6 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
                     await _context.SaveChangesAsync();
                 }
 
-                // Commit transaction
                 await transaction.CommitAsync();
                 return "Successfully Saved";
             }
@@ -561,7 +560,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
                 if (reasonMaster != null)
                 {
                     reasonMaster.Description = submitAssetNewDto.Description;
-                    _context.ReasonMasters.Update(reasonMaster);
+                    _context.ReasonMasters.UpdateRange(reasonMaster);
                 }
 
                 // Step 3: Update ReasonMasterFieldValue using array data
@@ -614,7 +613,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
         }
 
 
-        public async Task<List<AssetParameterDto>> GetAssetParameter()
+        public async Task<List<AssetParameterDto>> GetAssetParameterAsync()
         {
             return await _context.CompanyParameters
                 .Where(c => c.ParameterCode == "EnableAssetSequenceNodropdown")

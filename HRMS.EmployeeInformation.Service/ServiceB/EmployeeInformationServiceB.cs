@@ -38,9 +38,9 @@ namespace HRMS.EmployeeInformation.Service.ServiceB
             return await _repositoryB.UpdateAssetDetailsNewAsync(submitAssetNewDto, AssetRole);
         }
 
-        public async Task<List<AssetParameterDto>> GetAssetParameter()
+        public async Task<List<AssetParameterDto>> GetAssetParameterAsync()
         {
-            return await _repositoryB.GetAssetParameter();
+            return await _repositoryB.GetAssetParameterAsync();
         }
 
     }
