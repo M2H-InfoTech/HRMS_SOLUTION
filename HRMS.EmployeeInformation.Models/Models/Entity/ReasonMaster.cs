@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace EMPLOYEE_INFORMATION.Models;
 
 public partial class ReasonMaster
 {
+    
+   [Key]
     public int ReasonId { get; set; }
 
     public string? Type { get; set; }

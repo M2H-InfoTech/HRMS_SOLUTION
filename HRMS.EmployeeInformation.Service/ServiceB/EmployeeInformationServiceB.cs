@@ -29,5 +29,19 @@ namespace HRMS.EmployeeInformation.Service.ServiceB
         {
             return await _repositoryB.UpdateCommunication(communications);
         }
+        public async Task<string> SubmitAssetDetailsNewAsync(SubmitAssetNewDto submitAssetNewDto)
+        {
+            return await _repositoryB.SubmitAssetDetailsNewAsync(submitAssetNewDto);
+        }
+        public async Task<string> UpdateAssetDetailsNewAsync(SubmitAssetNewDto submitAssetNewDto, int AssetRole)
+        {
+            return await _repositoryB.UpdateAssetDetailsNewAsync(submitAssetNewDto, AssetRole);
+        }
+
+        public async Task<List<AssetParameterDto>> GetAssetParameter()
+        {
+            return await _repositoryB.GetAssetParameter();
+        }
+
     }
 }
