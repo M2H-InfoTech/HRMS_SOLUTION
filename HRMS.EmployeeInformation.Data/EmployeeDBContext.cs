@@ -303,7 +303,11 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.Type)
                 .HasMaxLength(30)
                 .IsUnicode(false);
+
+            // ✅ Ensure `Value` is defined as an integer
+            entity.Property(e => e.Value).HasColumnName("Value");
         });
+
 
         modelBuilder.Entity<Payscale00>(entity =>
         {
@@ -959,32 +963,53 @@ public partial class EmployeeDBContext : DbContext
         modelBuilder.Entity<ReasonMaster>(entity =>
         {
             entity
-                .HasNoKey()
-                .ToTable("ReasonMaster");
+                .ToTable("ReasonMaster")
+                .HasKey(e => e.ReasonId)
+                .HasName("PK_ReasonMaster"); // ✅ Explicitly setting primary key constraint name
 
-            entity.Property(e => e.AssetRoleId).HasColumnName("AssetRoleID");
-            entity.Property(e => e.AssetSpecEmpId).HasColumnName("AssetSpecEmpID");
+            entity.Property(e => e.ReasonId)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("Reason_Id"); // ✅ Maps ReasonId to column Reason_Id
+
+            entity.Property(e => e.AssetRoleId)
+                .HasColumnName("AssetRoleID");
+
+            entity.Property(e => e.AssetSpecEmpId)
+                .HasColumnName("AssetSpecEmpID");
+
             entity.Property(e => e.Description)
                 .HasMaxLength(500)
                 .IsUnicode(false);
-            entity.Property(e => e.DisableInEss).HasColumnName("DisableInESS");
+
+            entity.Property(e => e.DisableInEss)
+                .HasColumnName("DisableInESS");
+
             entity.Property(e => e.DivMasterId)
                 .HasDefaultValue(0)
                 .HasColumnName("DivMasterID");
-            entity.Property(e => e.EntryDate).HasColumnType("datetime");
-            entity.Property(e => e.IsMultiAsset).HasColumnName("isMultiAsset");
-            entity.Property(e => e.ReasonId)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("Reason_Id");
-            entity.Property(e => e.SeperationType).HasDefaultValue(0);
+
+            entity.Property(e => e.EntryDate)
+                .HasColumnType("datetime");
+
+            entity.Property(e => e.IsMultiAsset)
+                .HasColumnName("isMultiAsset");
+
+            entity.Property(e => e.SeperationType)
+                .HasDefaultValue(0);
+
             entity.Property(e => e.Status)
                 .HasMaxLength(10)
                 .IsUnicode(false);
+
             entity.Property(e => e.Type)
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.Value).HasColumnName("value");
+
+            entity.Property(e => e.Value)
+                .HasColumnName("value");
         });
+
+
         modelBuilder.Entity<SpecialAccessRight>(entity =>
         {
             entity.HasKey(e => e.SpecialId);
@@ -1733,21 +1758,35 @@ public partial class EmployeeDBContext : DbContext
         .HasMaxLength(10)
         .IsUnicode(false);
 });
-
         modelBuilder.Entity<ReasonMasterFieldValue>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("ReasonMasterFieldValue");
+            entity.ToTable("ReasonMasterFieldValue");
 
-            entity.Property(e => e.CategoryFieldId).HasColumnName("CategoryFieldID");
-            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
-            entity.Property(e => e.FieldValues).IsUnicode(false);
+            entity.HasKey(e => e.ReasonFieldId)
+                  .HasName("PK_ReasonMasterFieldValue"); // Explicitly setting primary key constraint name
+
             entity.Property(e => e.ReasonFieldId)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("ReasonFieldID");
-            entity.Property(e => e.ReasonId).HasColumnName("Reason_Id");
+                  .ValueGeneratedOnAdd()
+                  .HasColumnName("ReasonFieldID"); // Maps to DB column
+
+            entity.Property(e => e.CategoryFieldId)
+                  .HasColumnName("CategoryFieldID");
+
+            entity.Property(e => e.CreatedDate)
+                  .HasColumnType("datetime");
+
+            entity.Property(e => e.FieldValues)
+                  .IsUnicode(false);
+
+            entity.Property(e => e.ReasonId)
+                  .HasColumnName("Reason_Id");
+
+            entity.Property(e => e.CreatedBy)
+                  .HasColumnName("CreatedBy"); // Ensure this column exists in DB
         });
+
+
+
 
 
         modelBuilder.Entity<GeneralCategoryField>(entity =>

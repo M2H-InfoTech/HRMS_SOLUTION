@@ -72,5 +72,31 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
             return Ok(empcommunication);
         }
+        [HttpPost]
+        public async Task<IActionResult> SubmitAssetDetailsNew([FromBody] SubmitAssetNewDto submitAssetNewDto)
+        {
+            var result = await _employeeInformationB.SubmitAssetDetailsNewAsync(submitAssetNewDto);
+            return Ok(result);
+        }
+        [HttpPost]
+        public async Task<IActionResult> UpdateAssetDetailsNew([FromBody] SubmitAssetNewDto submitAssetNewDto, int AssetRole)
+        {
+            var result = await _employeeInformationB.UpdateAssetDetailsNewAsync(submitAssetNewDto, AssetRole);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAssetParameter()
+        {
+            var getAssetParameter = await _employeeInformationB.GetAssetParameterAsync();
+
+            if (getAssetParameter == null || !getAssetParameter.Any())
+            {
+                return NotFound("No asset parameters found."); // ✅ Return 404 if empty
+            }
+
+            return Ok(getAssetParameter);
+        }
+
     }
 }

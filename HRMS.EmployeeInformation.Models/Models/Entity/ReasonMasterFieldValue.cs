@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.EmployeeInformation.Models;
 
 public partial class ReasonMasterFieldValue
 {
+    
+    [Key]
     public int ReasonFieldId { get; set; }
 
     public int? ReasonId { get; set; }
