@@ -98,5 +98,27 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(getAssetParameter);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GenrlCategoryFieldsReason(int Reason_Id)
+        {
+            var genrlCategoryFieldsReason = await _employeeInformationB.GenrlCategoryFieldsReasonAsync(Reason_Id);
+            return new JsonResult(genrlCategoryFieldsReason);
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillAssetsubOnchange1(int ComFieldID, string AssignAssetStatus)
+        {
+            var fillAssetsubOnchange1 = await _employeeInformationB.FillAssetsubOnchange1Async(ComFieldID, AssignAssetStatus);
+            return new JsonResult(fillAssetsubOnchange1);
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> SavefieldsReasons([FromBody] SaveReasonDto saveReasonDto)
+        {
+            var result = await _employeeInformationB.SavefieldsReasonsAsync(saveReasonDto);
+            return Ok(result);
+        }
+
+
     }
 }

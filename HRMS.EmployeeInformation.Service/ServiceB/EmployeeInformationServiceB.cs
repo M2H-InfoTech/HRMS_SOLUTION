@@ -42,6 +42,22 @@ namespace HRMS.EmployeeInformation.Service.ServiceB
         {
             return await _repositoryB.GetAssetParameterAsync();
         }
+        public async Task<List<dynamic>> FillAssetsubOnchange1Async(int ComFieldID, string AssignAssetStatus)
+        {
+            return await _repositoryB.FillAssetsubOnchange1Async(ComFieldID, AssignAssetStatus);
+        }
+
+
+        public async Task<List<dynamic>> GenrlCategoryFieldsReasonAsync(int Reason_Id)
+        {
+            return await _repositoryB.GenrlCategoryFieldsReasonAsync(Reason_Id);
+        }
+
+
+        public async Task<string> SavefieldsReasonsAsync(SaveReasonDto saveReasonDto)
+        {
+            return await _repositoryB.SavefieldsReasonsAsync(saveReasonDto);
+        }
 
     }
 }

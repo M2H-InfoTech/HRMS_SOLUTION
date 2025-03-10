@@ -6,7 +6,7 @@ namespace HRMS.EmployeeInformation.Models;
 
 public partial class ReasonMasterFieldValue
 {
-    
+
     [Key]
     public int ReasonFieldId { get; set; }
 

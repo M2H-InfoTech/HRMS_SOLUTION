@@ -12,6 +12,11 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
         Task<string> SubmitAssetDetailsNewAsync(SubmitAssetNewDto submitAssetNewDto);
         Task<string> UpdateAssetDetailsNewAsync(SubmitAssetNewDto submitAssetNewDto, int assetID);
         Task<List<AssetParameterDto>> GetAssetParameterAsync();
+        Task<List<dynamic>> FillAssetsubOnchange1Async(int ComFieldID, string AssignAssetStatus);
+
+        Task<List<dynamic>> GenrlCategoryFieldsReasonAsync(int Reason_Id);
+
+        Task<string> SavefieldsReasonsAsync(SaveReasonDto saveReasonDto);
 
     }
 }
