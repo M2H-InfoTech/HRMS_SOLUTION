@@ -628,6 +628,133 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
 
 
 
+        public async Task<List<dynamic>> FillAssetsubOnchange1Async(int comFieldID, string assignAssetStatus)
+        {
+            return await _context.AssetcategoryCodes
+                .Where(a => a.Value.HasValue && a.Value == comFieldID
+                    && a.Status != "D"
+                    && ((a.AssetModel == assignAssetStatus && a.Status == "A") || a.Status == "P"))
+                .Select(a => new
+                {
+                    Id = a.Id,
+                    Value = a.Value,
+                    AssetModel = a.AssetModel,
+                    Status = a.Status
+                })
+                .ToListAsync<dynamic>();
+        }
+        public async Task<List<dynamic>> GenrlCategoryFieldsReasonAsync(int Reason_Id)
+        {
+            return await (from a in _context.GeneralCategoryFields
+                          join b in _context.HrmsDatatypes on a.DataTypeId equals b.DataTypeId
+                          where a.GeneralCategoryId == Reason_Id && a.FieldDescription != "IsActive"
+                          select new
+                          {
+                              a.CategoryFieldId,
+                              a.FieldDescription,
+                              a.GeneralCategoryId,
+                              a.DataTypeId,
+                              a.IsMandatory,
+                              b.DataType,
+                              b.IsDate,
+                              b.IsGeneralCategory,
+                              b.IsDropdown
+                          }).ToListAsync<dynamic>();
+        }
+
+
+        public async Task<string> SavefieldsReasonsAsync(SaveReasonDto saveReasonDto)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Check if any existing records match the given Reason_Id
+                bool exists = await _context.ReasonMasterFieldValues
+                    .AnyAsync(f => f.ReasonId == saveReasonDto.Reason_Id);
+
+                if (exists)
+                {
+                    // Update existing ReasonMasterFieldValue records
+                    foreach (var field in saveReasonDto.Array)
+                    {
+                        var existingField = await _context.ReasonMasterFieldValues
+                            .FirstOrDefaultAsync(f => f.ReasonId == saveReasonDto.Reason_Id && f.CategoryFieldId == field.GcategoryFieldID);
+
+                        if (existingField != null)
+                        {
+                            existingField.FieldValues = field.FieldValues;
+                        }
+                    }
+
+                    // Update ReasonMaster details
+                    var reasonMaster = await _context.ReasonMasters
+                        .FirstOrDefaultAsync(r => r.ReasonId == saveReasonDto.Reason_Id);
+
+                    if (reasonMaster != null)
+                    {
+                        reasonMaster.AssetRoleId = saveReasonDto.AssetRole;
+                        reasonMaster.Description = saveReasonDto.Description;
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    // Insert new ReasonMaster using ArraySecond (#Categorydetails)
+                    foreach (var category in saveReasonDto.ArraySecond)
+                    {
+                        // 🔹 Fetch GeneralCategory Description
+                        var generalCategory = await _context.GeneralCategories
+                            .FirstOrDefaultAsync(g => g.Id == category.GcategoryID);
+
+                        string description = generalCategory?.Description ?? "Unknown"; // Default if not found
+
+                        var reasonMaster = new ReasonMaster
+                        {
+                            Description = category.FieldValues, // Using Description from GeneralCategory
+                            Type = description,
+                            EntryBy = 186, // Hardcoded EntryBy user
+                            EntryDate = DateTime.UtcNow,
+                            Value = saveReasonDto.Value,
+                            Others = saveReasonDto.Others,
+                            AssetRoleId = saveReasonDto.AssetRole,
+                            Status = "A",
+                            DivMasterId = category.MasterID, // From ArraySecond
+                            SubCatLinkId = category.SubCatLinkId
+                        };
+
+                        _context.ReasonMasters.Add(reasonMaster);
+                        await _context.SaveChangesAsync(); // Save to get ReasonId
+
+                        int reasonMasterId = reasonMaster.ReasonId;
+
+                        // Insert into ReasonMasterFieldValue using saved ReasonMaster ID
+                        var reasonMasterFieldValues = saveReasonDto.Array
+                            .Select(f => new ReasonMasterFieldValue
+                            {
+                                ReasonId = reasonMasterId,
+                                CategoryFieldId = f.GcategoryFieldID,
+                                FieldValues = f.FieldValues,
+                                CreatedDate = DateTime.UtcNow
+                            }).ToList();
+
+                        _context.ReasonMasterFieldValues.AddRange(reasonMasterFieldValues);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                await transaction.CommitAsync();
+                return "Success";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return $"Error: {ex.Message}";
+            }
+        }
+
+
+
 
 
 
