@@ -101,7 +101,7 @@ namespace HRMS.EmployeeInformation.Service.Service
         }
         public async Task<List<AssetDto>> AssetAsync()
         {
-            return await _employeeRepository.AsseAsynct();
+            return await _employeeRepository.AsseAsync();
         }
         public async Task<List<AssetDetailsDto>> AssetDetailsAsync(int employeeId)
         {

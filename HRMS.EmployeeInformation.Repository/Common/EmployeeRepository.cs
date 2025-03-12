@@ -185,7 +185,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
 
             // Check Company level parameters if DefaultValue is still null
-            if (string.IsNullOrEmpty(defaultValue) || defaultValue == "0")
+            if (string.IsNullOrEmpty(defaultValue) || defaultValue == _employeeSettings.empSystemStatus)
             {
 
                 var queryResultCompanyLevel = (from a in _context.CompanyParameters
@@ -734,7 +734,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 from res in resGroup.DefaultIfEmpty()
                 where
 (durationFrom == null || durationTo == null || emp.JoinDt >= durationFrom && emp.JoinDt <= durationTo || durationFrom == null || durationTo == null || emp.ProbationDt >= durationFrom && emp.ProbationDt <= durationTo || durationFrom == null || durationTo == null || emp.RelievingDate >= durationFrom && emp.RelievingDate <= durationTo)
-                        && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) || empSystemStatus == "0"
+                        && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) || empSystemStatus == _employeeSettings.empSystemStatus
                         || empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
                         && result12.Contains(emp.EmpStatus.GetValueOrDefault())
                         && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
@@ -1098,7 +1098,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into tempCountry
                 from cm in tempCountry.DefaultIfEmpty()
                 where a.CurrentStatus == Convert.ToInt32(systemStatus)
-                   || systemStatus == "0"
+                   || systemStatus == _employeeSettings.empSystemStatus
                    || systemStatus == currentStatusDesc && t.RelievingDate >= DateTime.UtcNow
                 orderby a.EmpCode
                 select new EmployeeResultDto
@@ -1579,7 +1579,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 "M" => Gender.Male,
                 "F" => Gender.Female,
                 "O" => Gender.Other,
-                _ => Gender.UnKnown
+                null or _ => Gender.UnKnown
             };
         }
         public static MaritalStatus GetMaritalStatus(string genderCode)
@@ -1968,7 +1968,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 {
                                     DepId = a.DepId,
                                     Description = b.Description,
-                                    DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString(_employeeSettings.DateFormat) : "0",
+                                    DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.empSystemStatus,
                                     InterEmpID = a.InterEmpId,
                                     Type = a.Type,
                                     Phone = a.Description, // Assuming "Phone" is mapped to "Description"
@@ -1994,7 +1994,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             // Fetch employee certifications
             var certifications = await _context.EmployeeCertifications
-                .Where(ec => ec.EmpId == employeeId && ec.Status != "D")
+                .Where(ec => ec.EmpId == employeeId && ec.Status != ApprovalStatus.Deleted.ToString())
                 .Select(ec => new CertificationDto
                 {
                     Emp_Id = ec.EmpId,
@@ -2258,11 +2258,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result;
         }
 
-        public async Task<List<AssetDto>> AsseAsynct()
+        public async Task<List<AssetDto>> AsseAsync()
         {
             var result = await (
                  from a in _context.CompanyParameters
-                 where a.ParameterCode == "ASTDYN" && a.Type == "COM"
+                 where a.ParameterCode == "ASTDYN" && a.Type == _employeeSettings.CompanyParameterType //"COM"
                  select new AssetDto
                  {
                      DynamicAsset = a.Value == 0 ? 0 : a.Value
@@ -2276,7 +2276,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
             var paramVal01 = await (from a in _context.CompanyParameters
-                                    where a.ParameterCode == "AST" && a.Type == "COM"
+                                    where a.ParameterCode == "AST" && a.Type == _employeeSettings.CompanyParameterType// "COM"
                                     select new
                                     {
                                         a.Value
@@ -2284,7 +2284,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             int paramVal = paramVal01?.Value ?? 0;
 
             var paramDynVal01 = await (from a in _context.CompanyParameters
-                                       where a.ParameterCode == "ASTDYN" && a.Type == "COM"
+                                       where a.ParameterCode == "ASTDYN" && a.Type == _employeeSettings.CompanyParameterType// "COM"
                                        select new
                                        {
                                            a.Value
@@ -2413,7 +2413,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             bool isLevel17 = (from ls in _context.LevelSettingsAccess00s
                               join tm in _context.TransactionMasters
                               on ls.TransactionId equals tm.TransactionId
-                              where tm.TransactionType == "Seq_Gen" && ls.Levels == "17"
+                              where tm.TransactionType == _employeeSettings.SeqGen && ls.Levels == "17"
                               select ls).Any();
 
             if (isLevel17)
@@ -2426,7 +2426,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                        on a.MasterId equals c.CodeId
                                        join tm in _context.TransactionMasters
                                        on a.TransactionId equals tm.TransactionId
-                                       where tm.TransactionType == "Seq_Gen" &&
+                                       where tm.TransactionType == _employeeSettings.SeqGen &&
                                              a.MainMasterId == mainMasterId &&
                                              a.LinkLevel != 1 &&
                                              SplitStrings_XML(entity, ',').Contains(a.LinkId.ToString())
@@ -2447,7 +2447,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                 on a.MasterId equals c.CodeId
                                                 join tm in _context.TransactionMasters
                                                 on a.TransactionId equals tm.TransactionId
-                                                where tm.TransactionType == "Seq_Gen" &&
+                                                where tm.TransactionType == _employeeSettings.SeqGen &&
                                                       a.MainMasterId == mainMasterId &&
                                                       a.LinkLevel == 1 &&
                                                       a.LinkId == firstEntity
@@ -2469,7 +2469,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                             on a.MasterId equals c.CodeId
                                             join tm in _context.TransactionMasters
                                             on a.TransactionId equals tm.TransactionId
-                                            where tm.TransactionType == "Seq_Gen" &&
+                                            where tm.TransactionType == _employeeSettings.SeqGen &&
                                                   a.MainMasterId == mainMasterId &&
                                                   a.LinkLevel == 15
                                             select new { a, c })
@@ -2494,7 +2494,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     on ea.MasterId equals adm.CodeId
                                     join tm in _context.TransactionMasters
                                     on ea.TransactionId equals tm.TransactionId
-                                    where tm.TransactionType == "Seq_Gen" &&
+                                    where tm.TransactionType == _employeeSettings.SeqGen &&
                                           ea.MainMasterId == mainMasterId &&
                                           ea.LinkLevel != 1
                                     orderby ea.LinkLevel
@@ -2517,7 +2517,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                              on ea.MasterId equals adm.CodeId
                                              join tm in _context.TransactionMasters
                                              on ea.TransactionId equals tm.TransactionId
-                                             where tm.TransactionType == "Seq_Gen" &&
+                                             where tm.TransactionType == _employeeSettings.SeqGen &&
                                                    ea.MainMasterId == mainMasterId &&
                                                    ea.LinkLevel == 1
                                              orderby ea.LinkLevel
@@ -2848,8 +2848,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             FileName = c.FolderName + a.FileName,
                             Status = b.Status
                         };
-            var pendingFiles = files.Where(f => f.Status == "P").ToList();
-            var approvedFiles = files.Where(f => f.Status == "A").ToList();
+            var pendingFiles = files.Where(f => f.Status == ApprovalStatus.Pending.ToString()).ToList();
+            var approvedFiles = files.Where(f => f.Status == ApprovalStatus.Approved.ToString()).ToList();
 
             return new List<AllDocumentsDto>
      {
@@ -2868,7 +2868,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         public async Task<List<PersonalDetailsDto>> GetPersonalDetailsByIdAsync(int employeeid)
         {
-            var enableWeddingDate = await GetDefaultCompanyParameter(employeeid, "ENABLEWEDDINGDATE", "EMP1");
+            var enableWeddingDate = await GetDefaultCompanyParameter(employeeid, "ENABLEWEDDINGDATE", _employeeSettings.companyParameterCodesType);// "EMP1"
 
             var employeeDetails = await (from a in _context.HrEmpMasters
                                          join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId
@@ -3689,8 +3689,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         public async Task<List<AuditInformationDto>> AuditInformationAsync(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
         {
-            infoDesc = string.IsNullOrEmpty(infoDesc) ? "0" : infoDesc;
-            infotype = string.IsNullOrEmpty(infotype) ? "0" : infotype;
+            infoDesc = string.IsNullOrEmpty(infoDesc) ? _employeeSettings.empSystemStatus : infoDesc;
+            infotype = string.IsNullOrEmpty(infotype) ? _employeeSettings.empSystemStatus : infotype;
             var employeeIdss = employeeIDs?.Split(',').Select(id => id.Trim()).ToList() ?? new List<string>();
             if (string.IsNullOrEmpty(datefrom))
             {
@@ -4460,7 +4460,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
 
-            var defaultCompParameter = GetDefaultCompanyParameter(employeeId, "EMPLINKADD", "EMP1").Result;
+            var defaultCompParameter = GetDefaultCompanyParameter(employeeId, "EMPLINKADD", _employeeSettings.companyParameterCodesType).Result;
 
 
 
@@ -5383,7 +5383,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         public async Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType)
         {
-            string ErrorID = "0";
+            string ErrorID = _employeeSettings.empSystemStatus;
             var employee = await _context.HrEmpPersonals
         .FirstOrDefaultAsync(e => e.EmpId == EmployeeType.EmpID);
 
@@ -5718,7 +5718,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             else
             {
                 // Check Employee Qualification Settings
-                int? optionenb = GetEmployeeParametersettingsNew(Qualification.Entryby, "ENBQUALIF", "EMP1");
+                int? optionenb = GetEmployeeParametersettingsNew(Qualification.Entryby, "ENBQUALIF", _employeeSettings.companyParameterCodesType);
 
                 var qualificationApprl = new HrEmpQualificationApprl
                 {
@@ -5735,7 +5735,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     MarkPer = Qualification.MarkPer,
                     Class = Qualification.Class,
                     Subjects = Qualification.Subjects,
-                    Status = "A",
+                    Status = ApprovalStatus.Approved.ToString(),// "A",
                     FlowStatus = "E",
                     EntryBy = (int)Qualification.Entryby,
                     EntryDt = (DateTime)Qualification.EntryDate,
@@ -5945,10 +5945,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return assetCategories.Cast<object>().ToList();
         }
-
-
-
-
         public async Task<string> AssetEdit(AssetEditDto assetEdits)
         {
             using (var transaction = await _context.Database.BeginTransactionAsync()) // Start Transaction
@@ -6297,7 +6293,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                 string seq = record.NumberFormat.Substring(0, Math.Max(0, length));
 
-                string finalvalue = record.Code.ToString() + seq + (record.CurrentCodeValue?.ToString() ?? "0");
+                string finalvalue = record.Code.ToString() + seq + (record.CurrentCodeValue?.ToString() ?? _employeeSettings.empSystemStatus);
                 record.LastSequence = finalvalue;
                 _context.SaveChanges();
 
@@ -6479,7 +6475,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             string errorID = _context.HrmsEmpdocuments00s
                 .OrderByDescending(d => d.DetailId)
                 .Select(d => d.DetailId.ToString())
-                .FirstOrDefault() ?? "0";
+                .FirstOrDefault() ?? _employeeSettings.empSystemStatus;
 
             return errorID;
 
@@ -7053,7 +7049,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                && a.Active == true
                                          select a).CountAsync();
 
-                var varReturn = varRowCount > 0 ? "-1" : "0";
+                var varReturn = varRowCount > 0 ? "-1" : _employeeSettings.empSystemStatus;
             }
             else if (dto.Mode == "InsertLetterTypeRequest")
             {
@@ -7418,7 +7414,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     await _context.SaveChangesAsync();
                 }
             }
-            return "0";
+            return _employeeSettings.empSystemStatus;
 
             //return await Task.FromResult(GetSequence(0, transactionId, "", 0));
         }
@@ -7871,7 +7867,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                }).ToListAsync();
         }
 
-
         public async Task<LoadCompanyDetailsResultDto> LoadCompanyDetailsAsync(LoadCompanyDetailsRequestDto loadCompanyDetailsRequestDto)
         {
             DateTime? offsetDateApp = null;
@@ -7928,9 +7923,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 LinkSelect = linkSelect
             };
         }
-
-
-
         public async Task<object> GetLevelAsync(int level)
         {
             var query = _context.HighLevelViewTables.AsQueryable();
@@ -8020,35 +8012,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 default:
                     return new List<object>();
             }
-        }
-
-        public async Task<int?> InsertOrUpdateLetterAsync(LetterMaster01Dto letter)
-        {
-            var existingLetter = await _context.LetterMaster01s
-                .FirstOrDefaultAsync(l => l.ModuleSubId == letter.LetterTypeId);
-
-            if (existingLetter == null)
-            {
-                var entity = _mapper.Map<LetterMaster01>(letter);
-                await _context.LetterMaster01s.AddAsync(entity);
-            }
-            else
-            {
-                // Update Existing Record
-                existingLetter.LetterSubName = letter.LetterSubName;
-                existingLetter.LetterTypeId = letter.LetterTypeId;
-                existingLetter.IsEss = letter.IsEss;
-                existingLetter.ModifiedBy = letter.ModifiedBy;
-                existingLetter.ModifiedDate = DateTime.UtcNow;
-                existingLetter.IsSelfApprove = letter.IsSelfApprove;
-                existingLetter.ApproveText = letter.ApproveText;
-                existingLetter.RejectText = letter.RejectText;
-                existingLetter.HideReject = letter.HideReject;
-                existingLetter.WrkFlowRoleId = letter.WrkFlowRoleId;
-            }
-
-            await _context.SaveChangesAsync();
-            return letter.LetterTypeId; // Return the ID of the inserted/updated record
         }
 
     }
