@@ -39,7 +39,7 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? DateFormat { get; set; }
         public string? EmployeeStatus { get; set; }
 
-        public int? LinkLevel { get; set; } 
+        public int? LinkLevel { get; set; }
         public string? NotAvailable { get; set; }
 
         public string? Hobbies { get; set; }
@@ -93,8 +93,11 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string Status06 { get; set; }
 
 
+        public string ProbationEndDate { get; set; }
+        public string? CompanyAccomodation { get; set; }
 
-        }
 
     }
+
+}
 

@@ -32,9 +32,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private readonly IWebHostEnvironment _env;
         private readonly IRepositoryC _employeeRepositoryC;
         private readonly IRepository<QualificationAttachment> _repository;
+        private readonly IRepository<AssignedLetterType> _assignedLetterTypeRepository;
 
 
-        public EmployeeRepository(EmployeeDBContext dbContext, EmployeeSettings employeeSettings, IMemoryCache memoryCache, IMapper mapper, IWebHostEnvironment env, IRepositoryC employeeRepositoryC, IRepository<QualificationAttachment> repository)
+        public EmployeeRepository(EmployeeDBContext dbContext, EmployeeSettings employeeSettings, IMemoryCache memoryCache, IMapper mapper, IWebHostEnvironment env, IRepositoryC employeeRepositoryC, IRepository<QualificationAttachment> repository, IRepository<AssignedLetterType> assignedLetterTypeRepository)
         {
             _context = dbContext;
             _employeeSettings = employeeSettings;
@@ -42,6 +43,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             _mapper = mapper;
             _env = env ?? throw new ArgumentNullException(nameof(env));
             _repository = repository;
+            _assignedLetterTypeRepository = assignedLetterTypeRepository;
 
         }
         public async Task<string> GetDefaultCompanyParameter(int employeeId, string parameterCode, string type)
@@ -274,57 +276,17 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<PaginatedResult<EmployeeResultDto>> GetEmpData(EmployeeInformationParameters employeeInformationParameters)
         {
 
-
-
-            //var infoFormat = await _memoryCache.GetOrCreateAsync(infoFormatCacheKey, async entry =>
-            //{
-            //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5)); // Cache expires 5 minutes after the last access
-            //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));  // Cache expires 1 hour after creation
-            //    return await GetDefaultCompanyParameter(employeeInformationParameters.empId, _employeeSettings.CompanyParameterEmpInfoFormat, _employeeSettings.CompanyParameterType);
-            //});
-
-
             var infoFormat = await GetDefaultCompanyParameter(employeeInformationParameters.empId, _employeeSettings.CompanyParameterEmpInfoFormat, _employeeSettings.CompanyParameterType);
             int format = Convert.ToInt32(infoFormat);
 
             if (infoFormat != null)
             {
 
-
-                //var linkLevelExists = _memoryCache.GetOrCreate(linkLevelCacheKey, entry =>
-                //{
-                //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-                //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-                //    return IsLinkLevelExists(employeeInformationParameters.roleId);
-                //});
-
-
                 var linkLevelExists = IsLinkLevelExists(employeeInformationParameters.roleId);
-
-                //var CurrentStatusDesc = _memoryCache.GetOrCreate(currentStatusCacheKey, entry =>
-                //{
-                //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-                //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-                //    return (from ec in _context.EmployeeCurrentStatuses
-                //            where ec.StatusDesc == _employeeSettings.OnNotice
-                //            select ec.Status).FirstOrDefault();
-                //});
-
 
                 var CurrentStatusDesc = (from ec in _context.EmployeeCurrentStatuses
                                          where ec.StatusDesc == _employeeSettings.OnNotice
                                          select ec.Status).FirstOrDefault();
-
-
-                //string? ageFormat = await _memoryCache.GetOrCreateAsync(ageFormatCacheKey, async entry =>
-                //{
-                //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-                //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-                //    return await (from cp in _context.CompanyParameters
-                //                  join vt in _context.HrmValueTypes on cp.Value equals vt.Value
-                //                  where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
-                //                  select vt.Code).FirstOrDefaultAsync();
-                //});
 
                 string? ageFormat = await (from cp in _context.CompanyParameters
                                            join vt in _context.HrmValueTypes on cp.Value equals vt.Value
@@ -332,30 +294,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                            select vt.Code).FirstOrDefaultAsync();
 
                 bool existsEmployee = _context.HrEmpMasters.Any(emp => (emp.IsSave ?? 0) == 1);
-
-
-
-                //bool existsEmployee = await _memoryCache.GetOrCreateAsync(existsEmployeeCacheKey, async entry =>
-                //{
-                //    entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-                //    entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-                //    return await _context.HrEmpMasters.AnyAsync(emp => (emp.IsSave ?? 0) == 1);
-                //});
-                //bool existsEmployee = await _context.HrEmpMasters.AnyAsync(emp => (emp.IsSave ?? 0) == 1);
-
-                //return format switch
-                //{
-                //    0 or 1 => await HandleFormatZeroOrOne(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-                //    2 => await HandleFormatTwo(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-                //    3 => await HandleFormatThree(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-                //    4 => await HandleFormatFour(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-                //};
-                //string cacheKey = $"{employeeInformationParameters.empId}_{employeeInformationParameters.roleId}_{employeeInformationParameters.empStatus}";
-                //return await _memoryCache.GetOrCreateAsync(cacheKey, async entry =>
-                //{
-                //entry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
-                //entry.SetAbsoluteExpiration(TimeSpan.FromHours(1));
-
                 return format switch
                 {
                     0 or 1 => await HandleFormatZeroOrOne(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
@@ -501,10 +439,140 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return new PaginatedResult<EmployeeResultDto>();
 
         }
+        public async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc, List<int> result, List<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
+        {
+            var finalQuery = await (
+                from emp in (
+                    from emp in _context.HrEmpMasters
+                    join res in _context.Resignations
+                           .Where(r => r.CurrentRequest == 1 &&
+                               !new[] { ApprovalStatus.Deleted.ToString(), ApprovalStatus.Rejceted.ToString() }
+                               .Contains(r.ApprovalStatus) &&
+                               r.ApprovalStatus == (empSystemStatus == currentStatusDesc ?
+                                   ApprovalStatus.Pending.ToString() : ApprovalStatus.Approved.ToString()) &&
+                               r.RejoinStatus == ApprovalStatus.Pending.ToString())
+                    on emp.EmpId equals res.EmpId into resGroup
+                    from res in resGroup.DefaultIfEmpty()
+                    where
+                        (durationFrom == null || durationTo == null ||
+                         emp.JoinDt >= durationFrom && emp.JoinDt <= durationTo ||
+                         emp.ProbationDt >= durationFrom && emp.ProbationDt <= durationTo ||
+                         emp.RelievingDate >= durationFrom && emp.RelievingDate <= durationTo)
+                        && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) ||
+                            empSystemStatus.Equals(byte.MinValue.ToString()) ||
+                            empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
+                        && result.Contains(emp.EmpStatus.GetValueOrDefault())
+                        && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
+                        && (probationStatus == 2 && emp.IsProbation == true ||
+                            probationStatus == 3 && emp.IsProbation == false ||
+                            probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
+                        && emp.IsDelete.Equals(false)
+                    select new
+                    {
+                        EmpId = emp.EmpId,
+                        EmpCode = emp.EmpCode,
+                        Name = $"{emp.FirstName} {emp.MiddleName} {emp.LastName}",
+                        GuardiansName = emp.GuardiansName,
+                        DateOfBirth = FormatDate(emp.DateOfBirth, _employeeSettings.DateFormat),
+                        JoinDate = emp.JoinDt.ToString(),
+                        DataDate = emp.JoinDt.ToString(),
+                        SeperationStatus = emp.SeperationStatus,
+                        Gender = emp.Gender,
+                        WorkingStatus = emp.SeperationStatus == (int)SeparationStatus.Live ? nameof(SeparationStatus.Live) : nameof(SeparationStatus.Resigned),
+                        Age = CalculateAge(emp.DateOfBirth, "Years"),
+                        ProbationDt = FormatDate(emp.ProbationDt, _employeeSettings.DateFormat),
+                        Probation = emp.IsProbation == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
+                        LastEntity = emp.LastEntity,
+                        CurrentStatus = emp.CurrentStatus,
+                        EmpStatus = emp.EmpStatus.ToString(),
+                        IsSave = emp.IsSave,
+                        EmpFileNumber = emp.EmpFileNumber,
+                        DailyRateTypeId = emp.DailyRateTypeId,
+                        PayrollMode = emp.PayrollMode,
+                        ResignationReason = res.Reason,
+                        ResignationDate = res.ResignationDate.ToString(),
+                        RelievingDate = res.RelievingDate.ToString()
+                    }
+                )
+                join addr in _context.HrEmpAddresses on emp.EmpId equals addr.EmpId into addrGroup
+                from addr in addrGroup.DefaultIfEmpty()
+                join pers in _context.HrEmpPersonals on emp.EmpId equals pers.EmpId into persGroup
+                from pers in persGroup.DefaultIfEmpty()
+                join rep in _context.HrEmpReportings on emp.EmpId equals rep.EmpId into repGroup
+                from rep in repGroup.DefaultIfEmpty()
+                join highView in _context.HighLevelViewTables on emp.LastEntity equals highView.LastEntityId into highViewGroup
+                from highView in highViewGroup.DefaultIfEmpty()
+                join img in _context.HrEmpImages on emp.EmpId equals img.EmpId into imgGroup
+                from img in imgGroup.DefaultIfEmpty()
+                join currStatus in _context.EmployeeCurrentStatuses on emp.CurrentStatus equals currStatus.Status into currStatusGroup
+                from currStatus in currStatusGroup.DefaultIfEmpty()
+                join empStatusSettings in _context.HrEmpStatusSettings on Convert.ToInt32(emp.EmpStatus) equals empStatusSettings.StatusId into empStatusGroup
+                from empStatusSettings in empStatusGroup.DefaultIfEmpty()
+                join reason in _context.ReasonMasters on Convert.ToInt32(emp.ResignationReason) equals reason.ReasonId into reasonGroup
+                from reason in reasonGroup.DefaultIfEmpty()
+                join country in _context.AdmCountryMasters on pers.Nationality equals country.CountryId into countryGroup
+                from country in countryGroup.DefaultIfEmpty()
+                select new EmployeeResultDto
+                {
+                    EmpId = emp.EmpId,
+                    ImageUrl = img.ImageUrl,
+                    EmpCode = emp.EmpCode,
+                    Name = emp.Name,
+                    JoinDate = emp.JoinDate,
+                    DataDate = emp.DataDate,
+                    EmpStatusDesc = currStatus.StatusDesc,
+                    EmpStatus = empStatusSettings.StatusDesc,
+                    Gender = GetGender(emp.Gender).ToString(),
+                    SeperationStatus = emp.SeperationStatus,
+                    OfficialEmail = addr.OfficialEmail,
+                    PersonalEmail = addr.PersonalEmail,
+                    Phone = addr.Phone,
+                    MaritalStatus = GetMaritalStatus(pers.MaritalStatus).ToString(),
+                    Age = emp.Age,
+                    ProbationDt = emp.ProbationDt,
+                    LevelOneDescription = highView.LevelOneDescription,
+                    LevelTwoDescription = highView.LevelTwoDescription,
+                    ProbationStatus = emp.Probation.ToString(),
+                    Nationality = country.Nationality,
+                    IsSave = emp.IsSave,
+                    EmpFileNumber = emp.EmpFileNumber,
+                    CurrentStatus = emp.CurrentStatus
+                }).ToListAsync();
+
+            // **Apply Pagination**
+            var totalRecords = finalQuery.Count();
+            var paginatedResult = finalQuery
+                .OrderBy(x => x.EmpCode) // Sorting logic
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new PaginatedResult<EmployeeResultDto>
+            {
+                TotalRecords = totalRecords,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Records = paginatedResult
+            };
+        }
+        public async Task<(List<int> StatusList, List<int> FilteredStatuses)> GetStatusValuesAsync(string empStatus)
+        {
+            var statusList = empStatus?.Split(',')
+                                      .Select(s => int.Parse(s.Trim()))
+                                      .ToList() ?? new List<int>();
+
+            var filteredStatuses = await _context.HrEmpStatusSettings
+                                                .Where(s => !s.IsResignation == false)
+                                                .Select(s => s.StatusId)
+                                                .ToListAsync();
+
+
+            return (statusList, filteredStatuses);
+        }
 
         public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
-            // Parse and process the status list
+            //Parse and process the status list
             var statusList = empStatus?.Split(',')
                                        .Select(s => int.Parse(s.Trim()))
                                        .ToList();
@@ -521,122 +589,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             var result = statusList?.Where(item => filteredStatuses.Contains(item)).ToList();
 
+            return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
 
-
-            var finalQuery = await (
-    from emp in (
-        from emp in _context.HrEmpMasters
-        join res in _context.Resignations
-               .Where(r =>
-r.CurrentRequest == 1 &&
-!new[] { "D", "R" }.Contains(r.ApprovalStatus) &&
-r.ApprovalStatus == (empSystemStatus == currentStatusDesc ? "P" : "A") &&
-r.RejoinStatus == "P")
-        on emp.EmpId equals res.EmpId into resGroup
-        from res in resGroup.DefaultIfEmpty()
-        where
-            (durationFrom == null || durationTo == null ||
-             emp.JoinDt >= durationFrom && emp.JoinDt <= durationTo ||
-             emp.ProbationDt >= durationFrom && emp.ProbationDt <= durationTo ||
-             emp.RelievingDate >= durationFrom && emp.RelievingDate <= durationTo)
-            && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) ||
-                empSystemStatus.Equals(byte.MinValue.ToString()) ||
-                empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
-            && result.Contains(emp.EmpStatus.GetValueOrDefault())
-            && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
-            && (probationStatus == 2 && emp.IsProbation == true ||
-                probationStatus == 3 && emp.IsProbation == false ||
-                probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
-            && emp.IsDelete.Equals(false)
-        select new
-        {
-            EmpId = emp.EmpId,
-            EmpCode = emp.EmpCode,
-            Name = $"{emp.FirstName} {emp.MiddleName} {emp.LastName}",
-            GuardiansName = emp.GuardiansName,
-            DateOfBirth = FormatDate(emp.DateOfBirth, _employeeSettings.DateFormat),
-            JoinDate = emp.JoinDt.ToString(),
-            DataDate = emp.JoinDt.ToString(),
-            SeperationStatus = emp.SeperationStatus,
-            Gender = emp.Gender,
-            WorkingStatus = emp.SeperationStatus == (int)SeparationStatus.Live ? nameof(SeparationStatus.Live) : nameof(SeparationStatus.Resigned),
-            Age = CalculateAge(emp.DateOfBirth, ageFormat),
-            ProbationDt = FormatDate(emp.ProbationDt, _employeeSettings.DateFormat),
-            Probation = emp.IsProbation == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-            LastEntity = emp.LastEntity,
-            CurrentStatus = emp.CurrentStatus,
-            EmpStatus = emp.EmpStatus.ToString(),
-            IsSave = emp.IsSave,
-            EmpFileNumber = emp.EmpFileNumber,
-            DailyRateTypeId = emp.DailyRateTypeId,
-            PayrollMode = emp.PayrollMode,
-            ResignationReason = res.Reason,
-            ResignationDate = res.ResignationDate.ToString(),
-            RelievingDate = res.RelievingDate.ToString()
-        }
-    )
-    join addr in _context.HrEmpAddresses on emp.EmpId equals addr.EmpId into addrGroup
-    from addr in addrGroup.DefaultIfEmpty()
-    join pers in _context.HrEmpPersonals on emp.EmpId equals pers.EmpId into persGroup
-    from pers in persGroup.DefaultIfEmpty()
-    join rep in _context.HrEmpReportings on emp.EmpId equals rep.EmpId into repGroup
-    from rep in repGroup.DefaultIfEmpty()
-    join highView in _context.HighLevelViewTables on emp.LastEntity equals highView.LastEntityId into highViewGroup
-    from highView in highViewGroup.DefaultIfEmpty()
-    join img in _context.HrEmpImages on emp.EmpId equals img.EmpId into imgGroup
-    from img in imgGroup.DefaultIfEmpty()
-    join currStatus in _context.EmployeeCurrentStatuses on emp.CurrentStatus equals currStatus.Status into currStatusGroup
-    from currStatus in currStatusGroup.DefaultIfEmpty()
-    join empStatusSettings in _context.HrEmpStatusSettings on Convert.ToInt32(emp.EmpStatus) equals empStatusSettings.StatusId into empStatusGroup
-    from empStatusSettings in empStatusGroup.DefaultIfEmpty()
-    join reason in _context.ReasonMasters on Convert.ToInt32(emp.ResignationReason) equals reason.ReasonId into reasonGroup
-    from reason in reasonGroup.DefaultIfEmpty()
-    join country in _context.AdmCountryMasters on pers.Nationality equals country.CountryId into countryGroup
-    from country in countryGroup.DefaultIfEmpty()
-    select new EmployeeResultDto
-    {
-        EmpId = emp.EmpId,
-        ImageUrl = img.ImageUrl,
-        EmpCode = emp.EmpCode,
-        Name = emp.Name,
-        JoinDate = emp.JoinDate.ToString(),
-        DataDate = emp.DataDate.ToString(),
-        EmpStatusDesc = currStatus.StatusDesc.ToString(),
-        EmpStatus = empStatusSettings.StatusDesc,
-        Gender = GetGender(emp.Gender).ToString(),
-
-        SeperationStatus = emp.SeperationStatus,
-        OfficialEmail = addr.OfficialEmail,
-        PersonalEmail = addr.PersonalEmail,
-        Phone = addr.Phone,
-        MaritalStatus = pers.MaritalStatus,
-        Age = emp.Age,
-        ProbationDt = emp.ProbationDt.ToString(),
-        LevelOneDescription = highView.LevelOneDescription,
-        LevelTwoDescription = highView.LevelTwoDescription,
-        ProbationStatus = emp.Probation.ToString(),
-        Nationality = country.Nationality,
-        IsSave = emp.IsSave,
-        EmpFileNumber = emp.EmpFileNumber,
-        CurrentStatus = emp.CurrentStatus
-    }).ToListAsync();
-
-
-            // Pagination
-            var totalRecords = finalQuery.Count();
-            var paginatedResult = finalQuery
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
         }
 
 
@@ -664,124 +619,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
 
-            var finalQuery = await (
-    from emp in (
-        from emp in _context.HrEmpMasters
-        join res in _context.Resignations
-               .Where(r =>
-r.CurrentRequest == 1 &&
-!new[] { "D", "R" }.Contains(r.ApprovalStatus) &&
-r.ApprovalStatus == (empSystemStatus == currentStatusDesc ? "P" : "A") &&
-r.RejoinStatus == "P")
-        on emp.EmpId equals res.EmpId into resGroup
-        from res in resGroup.DefaultIfEmpty()
-        where
-            (durationFrom == null || durationTo == null ||
-             emp.JoinDt >= durationFrom && emp.JoinDt <= durationTo ||
-             emp.ProbationDt >= durationFrom && emp.ProbationDt <= durationTo ||
-             emp.RelievingDate >= durationFrom && emp.RelievingDate <= durationTo)
-            && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) ||
-                empSystemStatus.Equals(byte.MinValue.ToString()) ||
-                empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
-            && result.Contains(emp.EmpStatus.GetValueOrDefault())
-            && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
-            && (probationStatus == 2 && emp.IsProbation == true ||
-                probationStatus == 3 && emp.IsProbation == false ||
-                probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
-            && emp.IsDelete.Equals(false)
-        select new
-        {
-            EmpId = emp.EmpId,
-            EmpCode = emp.EmpCode,
-            Name = $"{emp.FirstName} {emp.MiddleName} {emp.LastName}",
-            GuardiansName = emp.GuardiansName,
-            DateOfBirth = FormatDate(emp.DateOfBirth, _employeeSettings.DateFormat),
-            JoinDate = emp.JoinDt.ToString(),
-            DataDate = emp.JoinDt.ToString(),
-            SeperationStatus = emp.SeperationStatus,
-            Gender = emp.Gender,
-            WorkingStatus = emp.SeperationStatus == (int)SeparationStatus.Live ? nameof(SeparationStatus.Live) : nameof(SeparationStatus.Resigned),
-            Age = CalculateAge(emp.DateOfBirth, ageFormat),
-            ProbationDt = FormatDate(emp.ProbationDt, _employeeSettings.DateFormat),
-            Probation = emp.IsProbation == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-            LastEntity = emp.LastEntity,
-            CurrentStatus = emp.CurrentStatus,
-            EmpStatus = emp.EmpStatus.ToString(),
-            IsSave = emp.IsSave,
-            EmpFileNumber = emp.EmpFileNumber,
-            DailyRateTypeId = emp.DailyRateTypeId,
-            PayrollMode = emp.PayrollMode,
-            ResignationReason = res.Reason,
-            ResignationDate = res.ResignationDate.ToString(),
-            RelievingDate = res.RelievingDate.ToString()
-        }
-    )
-    join addr in _context.HrEmpAddresses on emp.EmpId equals addr.EmpId into addrGroup
-    from addr in addrGroup.DefaultIfEmpty()
-    join pers in _context.HrEmpPersonals on emp.EmpId equals pers.EmpId into persGroup
-    from pers in persGroup.DefaultIfEmpty()
-    join rep in _context.HrEmpReportings on emp.EmpId equals rep.EmpId into repGroup
-    from rep in repGroup.DefaultIfEmpty()
-    join highView in _context.HighLevelViewTables on emp.LastEntity equals highView.LastEntityId into highViewGroup
-    from highView in highViewGroup.DefaultIfEmpty()
-    join img in _context.HrEmpImages on emp.EmpId equals img.EmpId into imgGroup
-    from img in imgGroup.DefaultIfEmpty()
-    join currStatus in _context.EmployeeCurrentStatuses on emp.CurrentStatus equals currStatus.Status into currStatusGroup
-    from currStatus in currStatusGroup.DefaultIfEmpty()
-    join empStatusSettings in _context.HrEmpStatusSettings on Convert.ToInt32(emp.EmpStatus) equals empStatusSettings.StatusId into empStatusGroup
-    from empStatusSettings in empStatusGroup.DefaultIfEmpty()
-    join reason in _context.ReasonMasters on Convert.ToInt32(emp.ResignationReason) equals reason.ReasonId into reasonGroup
-    from reason in reasonGroup.DefaultIfEmpty()
-    join country in _context.AdmCountryMasters on pers.Nationality equals country.CountryId into countryGroup
-    from country in countryGroup.DefaultIfEmpty()
-    select new EmployeeResultDto
-    {
-        EmpId = emp.EmpId,
-        ImageUrl = img.ImageUrl,
-        EmpCode = emp.EmpCode,
-        Name = emp.Name,
-        JoinDate = emp.JoinDate.ToString(),
-        DataDate = emp.DataDate.ToString(),
-        EmpStatusDesc = currStatus.StatusDesc.ToString(),
-        EmpStatus = empStatusSettings.StatusDesc,
-        Gender = GetGender(emp.Gender).ToString(),
-        SeperationStatus = emp.SeperationStatus,
-        OfficialEmail = addr.OfficialEmail,
-        PersonalEmail = addr.PersonalEmail,
-        Phone = addr.Phone,
-        MaritalStatus = pers.MaritalStatus,
-        Age = emp.Age,
-        ProbationDt = emp.ProbationDt.ToString(),
-        LevelOneDescription = highView.LevelOneDescription,
-        LevelTwoDescription = highView.LevelTwoDescription,
-        ProbationStatus = emp.Probation.ToString(),
-        Nationality = country.Nationality,
-        IsSave = emp.IsSave,
-        EmpFileNumber = emp.EmpFileNumber,
-        CurrentStatus = emp.CurrentStatus
-    }).ToListAsync();
-
-
-            // Pagination
-            var totalRecords = finalQuery.Count();
-            var paginatedResult = finalQuery
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
+            return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
 
         }
-
-
-
         public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatThreeLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
 DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
@@ -804,120 +645,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
 
 
-            var finalQuery = await (
-    from emp in (
-        from emp in _context.HrEmpMasters
-        join res in _context.Resignations
-               .Where(r =>
-r.CurrentRequest == 1 &&
-!new[] { "D", "R" }.Contains(r.ApprovalStatus) &&
-r.ApprovalStatus == (empSystemStatus == currentStatusDesc ? "P" : "A") &&
-r.RejoinStatus == "P")
-        on emp.EmpId equals res.EmpId into resGroup
-        from res in resGroup.DefaultIfEmpty()
-        where
-            (durationFrom == null || durationTo == null ||
-             emp.JoinDt >= durationFrom && emp.JoinDt <= durationTo ||
-             emp.ProbationDt >= durationFrom && emp.ProbationDt <= durationTo ||
-             emp.RelievingDate >= durationFrom && emp.RelievingDate <= durationTo)
-            && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) ||
-                empSystemStatus.Equals(byte.MinValue.ToString()) ||
-                empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
-            && result.Contains(emp.EmpStatus.GetValueOrDefault())
-            && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
-            && (probationStatus == 2 && emp.IsProbation == true ||
-                probationStatus == 3 && emp.IsProbation == false ||
-                probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
-            && emp.IsDelete.Equals(false)
-        select new
-        {
-            EmpId = emp.EmpId,
-            EmpCode = emp.EmpCode,
-            Name = $"{emp.FirstName} {emp.MiddleName} {emp.LastName}",
-            GuardiansName = emp.GuardiansName,
-            DateOfBirth = FormatDate(emp.DateOfBirth, _employeeSettings.DateFormat),
-            JoinDate = emp.JoinDt.ToString(),
-            DataDate = emp.JoinDt.ToString(),
-            SeperationStatus = emp.SeperationStatus,
-            Gender = emp.Gender,
-            WorkingStatus = emp.SeperationStatus == (int)SeparationStatus.Live ? nameof(SeparationStatus.Live) : nameof(SeparationStatus.Resigned),
-            Age = CalculateAge(emp.DateOfBirth, ageFormat),
-            ProbationDt = FormatDate(emp.ProbationDt, _employeeSettings.DateFormat),
-            Probation = emp.IsProbation == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-            LastEntity = emp.LastEntity,
-            CurrentStatus = emp.CurrentStatus,
-            EmpStatus = emp.EmpStatus.ToString(),
-            IsSave = emp.IsSave,
-            EmpFileNumber = emp.EmpFileNumber,
-            DailyRateTypeId = emp.DailyRateTypeId,
-            PayrollMode = emp.PayrollMode,
-            ResignationReason = res.Reason,
-            ResignationDate = res.ResignationDate.ToString(),
-            RelievingDate = res.RelievingDate.ToString()
-        }
-    )
-    join addr in _context.HrEmpAddresses on emp.EmpId equals addr.EmpId into addrGroup
-    from addr in addrGroup.DefaultIfEmpty()
-    join pers in _context.HrEmpPersonals on emp.EmpId equals pers.EmpId into persGroup
-    from pers in persGroup.DefaultIfEmpty()
-    join rep in _context.HrEmpReportings on emp.EmpId equals rep.EmpId into repGroup
-    from rep in repGroup.DefaultIfEmpty()
-    join highView in _context.HighLevelViewTables on emp.LastEntity equals highView.LastEntityId into highViewGroup
-    from highView in highViewGroup.DefaultIfEmpty()
-    join img in _context.HrEmpImages on emp.EmpId equals img.EmpId into imgGroup
-    from img in imgGroup.DefaultIfEmpty()
-    join currStatus in _context.EmployeeCurrentStatuses on emp.CurrentStatus equals currStatus.Status into currStatusGroup
-    from currStatus in currStatusGroup.DefaultIfEmpty()
-    join empStatusSettings in _context.HrEmpStatusSettings on Convert.ToInt32(emp.EmpStatus) equals empStatusSettings.StatusId into empStatusGroup
-    from empStatusSettings in empStatusGroup.DefaultIfEmpty()
-    join reason in _context.ReasonMasters on Convert.ToInt32(emp.ResignationReason) equals reason.ReasonId into reasonGroup
-    from reason in reasonGroup.DefaultIfEmpty()
-    join country in _context.AdmCountryMasters on pers.Nationality equals country.CountryId into countryGroup
-    from country in countryGroup.DefaultIfEmpty()
-    select new EmployeeResultDto
-    {
-        EmpId = emp.EmpId,
-        ImageUrl = img.ImageUrl,
-        EmpCode = emp.EmpCode,
-        Name = emp.Name,
-        JoinDate = emp.JoinDate.ToString(),
-        DataDate = emp.DataDate.ToString(),
-        EmpStatusDesc = currStatus.StatusDesc.ToString(),
-        EmpStatus = empStatusSettings.StatusDesc,
-        Gender = GetGender(emp.Gender).ToString(),
-
-        SeperationStatus = emp.SeperationStatus,
-        OfficialEmail = addr.OfficialEmail,
-        PersonalEmail = addr.PersonalEmail,
-        Phone = addr.Phone,
-        MaritalStatus = pers.MaritalStatus,
-        Age = emp.Age,
-        ProbationDt = emp.ProbationDt.ToString(),
-        LevelOneDescription = highView.LevelOneDescription,
-        LevelTwoDescription = highView.LevelTwoDescription,
-        ProbationStatus = emp.Probation.ToString(),
-        Nationality = country.Nationality,
-        IsSave = emp.IsSave,
-        EmpFileNumber = emp.EmpFileNumber,
-        CurrentStatus = emp.CurrentStatus
-    }).ToListAsync();
+            return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
 
 
-            // Pagination
-            var totalRecords = finalQuery.Count();
-            var paginatedResult = finalQuery
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
         }
 
         public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatFourLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
@@ -931,7 +662,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
               join docField in _context.HrmsDocumentField00s on docDetail.DocFields equals Convert.ToInt32(docField.DocFieldId) into docFieldGroup
               from docField in docFieldGroup.DefaultIfEmpty()
               join doc in _context.HrmsDocument00s on docField.DocId equals Convert.ToInt32(doc.DocId)
-              where (doc.DocType == 5 || doc.DocType == 3) && docApp.Status != "D"
+              where (doc.DocType == 5 || doc.DocType == 3) && docApp.Status != ApprovalStatus.Deleted.ToString()
               select new
               {
                   emp.EmpId,
@@ -1225,577 +956,199 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         }
 
+        private async Task<PaginatedResult<EmployeeResultDto>> GetPaginatedNotExistLinkSelectEmployeeDataAsync(
+    DateTime? durationFrom, DateTime? durationTo, string empStatus, List<string>? empIdList,
+    int pageNumber, int pageSize, string? ageFormat)
+        {
+            var statusList = empStatus.Split(',').Select(s => int.Parse(s.Trim())).ToList();
+            var filteredStatuses = await _context.HrEmpStatusSettings
+                .Where(s => s.IsResignation != true)
+                .Select(s => s.StatusId)
+                .ToListAsync();
+
+            var result = statusList.Where(item => filteredStatuses.Contains(item)).ToList();
+            HashSet<int> empIdSet = empIdList.Select(int.Parse).ToHashSet();
+
+            var query = await (from a in _context.HrEmpMasters
+                               where empIdSet.Contains(a.EmpId) && a.IsDelete == false &&
+                                     (durationFrom == null || durationTo == null ||
+                                     a.JoinDt >= durationFrom && a.JoinDt <= durationTo ||
+                                     a.ProbationDt >= durationFrom && a.ProbationDt <= durationTo ||
+                                     a.RelievingDate >= durationFrom && a.RelievingDate <= durationTo)
+                               join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into addrGroup
+                               from b in addrGroup.DefaultIfEmpty()
+                               join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into persGroup
+                               from c in persGroup.DefaultIfEmpty()
+                               join rep in _context.HrEmpReportings on a.EmpId equals rep.EmpId into repGroup
+                               from rep in repGroup.DefaultIfEmpty()
+                               join repDet in _context.EmployeeDetails on rep.ReprotToWhome equals repDet.EmpId into repDetGroup
+                               from repDet in repDetGroup.DefaultIfEmpty()
+                               join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into highViewGroup
+                               from f in highViewGroup.DefaultIfEmpty()
+                               join img in _context.HrEmpImages on a.EmpId equals img.EmpId into imgGroup
+                               from img in imgGroup.DefaultIfEmpty()
+                               join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status into currStatusGroup
+                               from j in currStatusGroup.DefaultIfEmpty()
+                               join s in _context.HrEmpStatusSettings on a.EmpStatus equals s.StatusId into empStatusGroup
+                               from s in empStatusGroup.DefaultIfEmpty()
+                               join t in _context.Resignations.Where(x => x.CurrentRequest == 1 &&
+                                           !new[] { ApprovalStatus.Deleted.ToString(), ApprovalStatus.Rejceted.ToString() }.Contains(x.ApprovalStatus))
+                                   on a.EmpId equals t.EmpId into tempResignations
+                               from t in tempResignations.DefaultIfEmpty()
+                               join reason in _context.ReasonMasters.Where(r => r.Type == _employeeSettings.ReasonType)
+                                   on Convert.ToInt32(t.Reason) equals reason.ReasonId into reasonGroup
+                               from rm in reasonGroup.DefaultIfEmpty()
+                               join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into countryGroup
+                               from cm in countryGroup.DefaultIfEmpty()
+                               join religion in _context.AdmReligionMasters on c.Religion equals religion.ReligionId into religionGroup
+                               from religion in religionGroup.DefaultIfEmpty()
+                               where result.Contains(a.EmpStatus.GetValueOrDefault())
+                               select new EmployeeResultDto
+                               {
+                                   EmpId = a.EmpId,
+                                   EmpCode = a.EmpCode,
+                                   Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
+                                   GuardiansName = a.GuardiansName,
+                                   DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),
+                                   JoinDate = a.JoinDt.ToString(),
+                                   WeddingDate = c.WeddingDate,
+                                   DataDate = a.JoinDt.ToString(),
+                                   StatusDesc = j.StatusDesc,
+                                   EmpStatusDesc = s.StatusDesc,
+                                   Gender = GetGender(a.Gender).ToString(),
+                                   ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
+                                   RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
+                                   SeperationStatus = a.SeperationStatus,
+                                   OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
+                                   PersonalEmail = b.PersonalEmail,
+                                   Phone = b.Phone,
+                                   MaritalStatus = GetMaritalStatus(c.MaritalStatus).ToString(),
+                                   Age = CalculateAge(a.DateOfBirth, ageFormat),
+                                   ProbationDt = a.ProbationDt.ToString(),
+                                   LevelOneDescription = f.LevelOneDescription,
+                                   LevelTwoDescription = f.LevelTwoDescription,
+                                   LevelThreeDescription = f.LevelThreeDescription,
+                                   ResignationReason = rm.Description,
+                                   ResignationType = t.ResignationType,
+                                   ProbationStatus = a.IsProbation.ToString(),
+                                   Nationality = cm.CountryName,
+                                   IsSave = a.IsSave,
+                                   EmpFileNumber = a.EmpFileNumber,
+                                   CurrentStatus = a.CurrentStatus
+                               }).ToListAsync();
+
+            var totalRecords = query.Count();
+            var paginatedResult = query.OrderBy(x => x.EmpCode)
+                                              .Skip((pageNumber - 1) * pageSize)
+                                              .Take(pageSize)
+                                              .ToList();
+
+            return new PaginatedResult<EmployeeResultDto>
+            {
+                TotalRecords = totalRecords,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Records = paginatedResult
+            };
+        }
 
 
 
         private async Task<PaginatedResult<EmployeeResultDto>> InforFormatOneOrZeroNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
         {
-            var statusList = EmpStatus.Split(',').Select(s => int.Parse(s.Trim())).ToList();
-
-            var filteredStatuses = await _context.HrEmpStatusSettings
-         .Where(s => s.IsResignation != true)
-         .Select(s => s.StatusId)
-         .ToListAsync();
-
-
-            var result = statusList
-                                .Where(item => filteredStatuses.Contains(item))
-                                .ToList();
-            HashSet<int> empIdSet = empIdList.Select(int.Parse).ToHashSet();
-            var finalQuery = await (
-            from a in _context.HrEmpMasters
-            where
-                   empIdSet.Contains(a.EmpId) &&
-                  a.IsDelete == false
-                  && (durationFrom == null || durationTo == null ||
-                      a.JoinDt >= durationFrom && a.JoinDt <= durationTo ||
-                      a.ProbationDt >= durationFrom && a.ProbationDt <= durationTo ||
-                      a.RelievingDate >= durationFrom && a.RelievingDate <= durationTo)
-            join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into addrGroup
-            from b in addrGroup.DefaultIfEmpty()
-            join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into persGroup
-            from c in persGroup.DefaultIfEmpty()
-            join rep in _context.HrEmpReportings on a.EmpId equals rep.EmpId into repGroup
-            from rep in repGroup.DefaultIfEmpty()
-            join repDet in _context.EmployeeDetails on rep.ReprotToWhome equals repDet.EmpId into repDetGroup
-            from repDet in repDetGroup.DefaultIfEmpty()
-            join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into highViewGroup
-            from f in highViewGroup.DefaultIfEmpty()
-            join img in _context.HrEmpImages on a.EmpId equals img.EmpId into imgGroup
-            from img in imgGroup.DefaultIfEmpty()
-            join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status into currStatusGroup
-            from j in currStatusGroup.DefaultIfEmpty()
-            join s in _context.HrEmpStatusSettings on a.EmpStatus equals s.StatusId into empStatusGroup
-            from s in empStatusGroup.DefaultIfEmpty()
-            join t in _context.Resignations.Where(x => x.CurrentRequest == 1 && !new[] { "D", "R" }.Contains(x.ApprovalStatus)) on a.EmpId equals t.EmpId into tempResignations
-            from t in tempResignations.DefaultIfEmpty()
-            join reason in _context.ReasonMasters.Where(r => r.Type == _employeeSettings.ReasonType) on Convert.ToInt32(t.Reason) equals reason.ReasonId into reasonGroup
-            from rm in reasonGroup.DefaultIfEmpty()
-            join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into countryGroup
-            from cm in countryGroup.DefaultIfEmpty()
-            join religion in _context.AdmReligionMasters on c.Religion equals religion.ReligionId into religionGroup
-            from religion in religionGroup.DefaultIfEmpty()
-            where result.Contains(a.EmpStatus.GetValueOrDefault())
-
-            select new EmployeeResultDto
-            {
-                EmpId = a.EmpId,
-                EmpCode = a.EmpCode,
-                Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
-                GuardiansName = a.GuardiansName,
-                DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),
-                JoinDate = a.JoinDt.ToString(),
-                WeddingDate = c.WeddingDate,
-
-                //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
-
-                DataDate = a.JoinDt.ToString(),
-
-                StatusDesc = j.StatusDesc,
-                EmpStatusDesc = s.StatusDesc,
-                Gender = GetGender(a.Gender).ToString(),
-
-                //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
-                ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
-                RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
-                SeperationStatus = a.SeperationStatus,
-                OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
-                PersonalEmail = b.PersonalEmail,
-                Phone = b.Phone,
-                MaritalStatus = c.MaritalStatus == "S" ? "Single" :
-                                      c.MaritalStatus == "M" ? "Married" :
-                                      c.MaritalStatus == "W" ? "Widowed" :
-                                      c.MaritalStatus == "X" ? "Separated" :
-                                      c.MaritalStatus == "D" ? "Divorcee" :
-                                      _employeeSettings.NotAvailable,
-                Age = CalculateAge(a.DateOfBirth, ageFormat),
-                ProbationDt = a.ProbationDt.ToString(),
-                LevelOneDescription = f.LevelOneDescription,
-                LevelTwoDescription = f.LevelTwoDescription,
-                LevelThreeDescription = f.LevelThreeDescription,
-                LevelFourDescription = f.LevelFourDescription,
-                LevelFiveDescription = f.LevelFiveDescription,
-                LevelSixDescription = f.LevelSixDescription,
-                LevelSevenDescription = f.LevelSevenDescription,
-                LevelEightDescription = f.LevelEightDescription,
-                LevelNineDescription = f.LevelNineDescription,
-                LevelTenDescription = f.LevelTenDescription,
-                LevelElevenDescription = f.LevelElevenDescription,
-                ResignationReason = rm.Description,
-                ResignationType = t.ResignationType,// a.ResignationType.ToString(),
-                ProbationStatus = a.IsProbation.ToString(),//  == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-
-                Nationality = cm.CountryName,
-                IsSave = a.IsSave,
-                EmpFileNumber = a.EmpFileNumber,
-                CurrentStatus = a.CurrentStatus,
-
-
-            }).ToListAsync();
-
-            var totalRecords = finalQuery.Count();
-            var paginatedResult = finalQuery
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            // Return paginated result
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
         }
 
         private async Task<PaginatedResult<EmployeeResultDto>> InforFormatTwoNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
         {
-            var statusList = EmpStatus.Split(',').Select(s => int.Parse(s.Trim())).ToList();
-
-            var filteredStatuses = await _context.HrEmpStatusSettings
-         .Where(s => s.IsResignation != true)
-         .Select(s => s.StatusId)
-         .ToListAsync();
-
-
-            var result = statusList
-                                .Where(item => filteredStatuses.Contains(item))
-                                .ToList();
-            HashSet<int> empIdSet = empIdList.Select(int.Parse).ToHashSet();
-            var finalQuery = await (
-            from a in _context.HrEmpMasters
-            where
-                   empIdSet.Contains(a.EmpId) &&
-                  a.IsDelete == false
-                  && (durationFrom == null || durationTo == null ||
-                      a.JoinDt >= durationFrom && a.JoinDt <= durationTo ||
-                      a.ProbationDt >= durationFrom && a.ProbationDt <= durationTo ||
-                      a.RelievingDate >= durationFrom && a.RelievingDate <= durationTo)
-            join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into addrGroup
-            from b in addrGroup.DefaultIfEmpty()
-            join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into persGroup
-            from c in persGroup.DefaultIfEmpty()
-            join rep in _context.HrEmpReportings on a.EmpId equals rep.EmpId into repGroup
-            from rep in repGroup.DefaultIfEmpty()
-            join repDet in _context.EmployeeDetails on rep.ReprotToWhome equals repDet.EmpId into repDetGroup
-            from repDet in repDetGroup.DefaultIfEmpty()
-            join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into highViewGroup
-            from f in highViewGroup.DefaultIfEmpty()
-            join img in _context.HrEmpImages on a.EmpId equals img.EmpId into imgGroup
-            from img in imgGroup.DefaultIfEmpty()
-            join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status into currStatusGroup
-            from j in currStatusGroup.DefaultIfEmpty()
-            join s in _context.HrEmpStatusSettings on a.EmpStatus equals s.StatusId into empStatusGroup
-            from s in empStatusGroup.DefaultIfEmpty()
-            join t in _context.Resignations.Where(x => x.CurrentRequest == 1 && !new[] { "D", "R" }.Contains(x.ApprovalStatus)) on a.EmpId equals t.EmpId into tempResignations
-            from t in tempResignations.DefaultIfEmpty()
-            join reason in _context.ReasonMasters.Where(r => r.Type == _employeeSettings.ReasonType) on Convert.ToInt32(t.Reason) equals reason.ReasonId into reasonGroup
-            from rm in reasonGroup.DefaultIfEmpty()
-            join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into countryGroup
-            from cm in countryGroup.DefaultIfEmpty()
-            join religion in _context.AdmReligionMasters on c.Religion equals religion.ReligionId into religionGroup
-            from religion in religionGroup.DefaultIfEmpty()
-            where result.Contains(a.EmpStatus.GetValueOrDefault())
-
-            select new EmployeeResultDto
-            {
-                EmpId = a.EmpId,
-                EmpCode = a.EmpCode,
-                Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
-                GuardiansName = a.GuardiansName,
-                DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),
-                JoinDate = a.JoinDt.ToString(),
-                WeddingDate = c.WeddingDate,
-
-                //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
-
-                DataDate = a.JoinDt.ToString(),
-
-                StatusDesc = j.StatusDesc,
-                EmpStatusDesc = s.StatusDesc,
-                Gender = GetGender(a.Gender).ToString(),
-                //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
-                ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
-                RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
-                SeperationStatus = a.SeperationStatus,
-                OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
-                PersonalEmail = b.PersonalEmail,
-                Phone = b.Phone,
-                MaritalStatus = c.MaritalStatus == "S" ? "Single" :
-                                      c.MaritalStatus == "M" ? "Married" :
-                                      c.MaritalStatus == "W" ? "Widowed" :
-                                      c.MaritalStatus == "X" ? "Separated" :
-                                      c.MaritalStatus == "D" ? "Divorcee" :
-                                      _employeeSettings.NotAvailable,
-                Age = CalculateAge(a.DateOfBirth, ageFormat),
-                ProbationDt = a.ProbationDt.ToString(),
-                LevelOneDescription = f.LevelOneDescription,
-                LevelTwoDescription = f.LevelTwoDescription,
-                LevelThreeDescription = f.LevelThreeDescription,
-                LevelFourDescription = f.LevelFourDescription,
-                LevelFiveDescription = f.LevelFiveDescription,
-                LevelSixDescription = f.LevelSixDescription,
-                LevelSevenDescription = f.LevelSevenDescription,
-                LevelEightDescription = f.LevelEightDescription,
-                LevelNineDescription = f.LevelNineDescription,
-                LevelTenDescription = f.LevelTenDescription,
-                LevelElevenDescription = f.LevelElevenDescription,
-                ResignationReason = rm.Description,
-                ResignationType = t.ResignationType,// a.ResignationType.ToString(),
-                ProbationStatus = a.IsProbation.ToString(),//  == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-
-                Nationality = cm.CountryName,
-                IsSave = a.IsSave,
-                EmpFileNumber = a.EmpFileNumber,
-                CurrentStatus = a.CurrentStatus,
-
-
-            }).ToListAsync();
-
-            var totalRecords = finalQuery.Count();
-            var paginatedResult = finalQuery
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            // Return paginated result
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
         }
 
         private async Task<PaginatedResult<EmployeeResultDto>> InforFormatThreeNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
         {
-            var statusList = EmpStatus.Split(',').Select(s => int.Parse(s.Trim())).ToList();
-
-            var filteredStatuses = await _context.HrEmpStatusSettings
-         .Where(s => s.IsResignation != true)
-         .Select(s => s.StatusId)
-         .ToListAsync();
-
-
-            var result = statusList
-                                .Where(item => filteredStatuses.Contains(item))
-                                .ToList();
-            HashSet<int> empIdSet = empIdList.Select(int.Parse).ToHashSet();
-            var finalQuery = await (
-            from a in _context.HrEmpMasters
-            where
-                   empIdSet.Contains(a.EmpId) &&
-                  a.IsDelete == false
-                  && (durationFrom == null || durationTo == null ||
-                      a.JoinDt >= durationFrom && a.JoinDt <= durationTo ||
-                      a.ProbationDt >= durationFrom && a.ProbationDt <= durationTo ||
-                      a.RelievingDate >= durationFrom && a.RelievingDate <= durationTo)
-            join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into addrGroup
-            from b in addrGroup.DefaultIfEmpty()
-            join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into persGroup
-            from c in persGroup.DefaultIfEmpty()
-            join rep in _context.HrEmpReportings on a.EmpId equals rep.EmpId into repGroup
-            from rep in repGroup.DefaultIfEmpty()
-            join repDet in _context.EmployeeDetails on rep.ReprotToWhome equals repDet.EmpId into repDetGroup
-            from repDet in repDetGroup.DefaultIfEmpty()
-            join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into highViewGroup
-            from f in highViewGroup.DefaultIfEmpty()
-            join img in _context.HrEmpImages on a.EmpId equals img.EmpId into imgGroup
-            from img in imgGroup.DefaultIfEmpty()
-            join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status into currStatusGroup
-            from j in currStatusGroup.DefaultIfEmpty()
-            join s in _context.HrEmpStatusSettings on a.EmpStatus equals s.StatusId into empStatusGroup
-            from s in empStatusGroup.DefaultIfEmpty()
-            join t in _context.Resignations.Where(x => x.CurrentRequest == 1 && !new[] { "D", "R" }.Contains(x.ApprovalStatus)) on a.EmpId equals t.EmpId into tempResignations
-            from t in tempResignations.DefaultIfEmpty()
-            join reason in _context.ReasonMasters.Where(r => r.Type == _employeeSettings.ReasonType) on Convert.ToInt32(t.Reason) equals reason.ReasonId into reasonGroup
-            from rm in reasonGroup.DefaultIfEmpty()
-            join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into countryGroup
-            from cm in countryGroup.DefaultIfEmpty()
-            join religion in _context.AdmReligionMasters on c.Religion equals religion.ReligionId into religionGroup
-            from religion in religionGroup.DefaultIfEmpty()
-            where result.Contains(a.EmpStatus.GetValueOrDefault())
-
-            select new EmployeeResultDto
-            {
-                EmpId = a.EmpId,
-                EmpCode = a.EmpCode,
-                Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
-                GuardiansName = a.GuardiansName,
-                DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),
-                JoinDate = a.JoinDt.ToString(),
-                WeddingDate = c.WeddingDate,
-
-                //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
-
-                DataDate = a.JoinDt.ToString(),
-
-                StatusDesc = j.StatusDesc,
-                EmpStatusDesc = s.StatusDesc,
-                Gender = GetGender(a.Gender).ToString(),
-                //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
-                ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
-                RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
-                SeperationStatus = a.SeperationStatus,
-                OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
-                PersonalEmail = b.PersonalEmail,
-                Phone = b.Phone,
-                MaritalStatus = c.MaritalStatus == "S" ? "Single" :
-                                      c.MaritalStatus == "M" ? "Married" :
-                                      c.MaritalStatus == "W" ? "Widowed" :
-                                      c.MaritalStatus == "X" ? "Separated" :
-                                      c.MaritalStatus == "D" ? "Divorcee" :
-                                      _employeeSettings.NotAvailable,
-                Age = CalculateAge(a.DateOfBirth, ageFormat),
-                ProbationDt = a.ProbationDt.ToString(),
-                LevelOneDescription = f.LevelOneDescription,
-                LevelTwoDescription = f.LevelTwoDescription,
-                LevelThreeDescription = f.LevelThreeDescription,
-                LevelFourDescription = f.LevelFourDescription,
-                LevelFiveDescription = f.LevelFiveDescription,
-                LevelSixDescription = f.LevelSixDescription,
-                LevelSevenDescription = f.LevelSevenDescription,
-                LevelEightDescription = f.LevelEightDescription,
-                LevelNineDescription = f.LevelNineDescription,
-                LevelTenDescription = f.LevelTenDescription,
-                LevelElevenDescription = f.LevelElevenDescription,
-                ResignationReason = rm.Description,
-                ResignationType = t.ResignationType,// a.ResignationType.ToString(),
-                ProbationStatus = a.IsProbation.ToString(),//  == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-
-                Nationality = cm.CountryName,
-                IsSave = a.IsSave,
-                EmpFileNumber = a.EmpFileNumber,
-                CurrentStatus = a.CurrentStatus,
-
-
-            }).ToListAsync();
-
-            var totalRecords = finalQuery.Count();
-            var paginatedResult = finalQuery
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            // Return paginated result
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
         }
 
         private async Task<PaginatedResult<EmployeeResultDto>> InforFormatFourNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
         {
-            var statusList = EmpStatus.Split(',').Select(s => int.Parse(s.Trim())).ToList();
-
-            var filteredStatuses = await _context.HrEmpStatusSettings
-         .Where(s => s.IsResignation != true)
-         .Select(s => s.StatusId)
-         .ToListAsync();
-
-
-            var result = statusList
-                                .Where(item => filteredStatuses.Contains(item))
-                                .ToList();
-            HashSet<int> empIdSet = empIdList.Select(int.Parse).ToHashSet();
-            var finalQuery = await (
-            from a in _context.HrEmpMasters
-            where
-                   empIdSet.Contains(a.EmpId) &&
-                  a.IsDelete == false
-                  && (durationFrom == null || durationTo == null ||
-                      a.JoinDt >= durationFrom && a.JoinDt <= durationTo ||
-                      a.ProbationDt >= durationFrom && a.ProbationDt <= durationTo ||
-                      a.RelievingDate >= durationFrom && a.RelievingDate <= durationTo)
-            join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into addrGroup
-            from b in addrGroup.DefaultIfEmpty()
-            join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into persGroup
-            from c in persGroup.DefaultIfEmpty()
-            join rep in _context.HrEmpReportings on a.EmpId equals rep.EmpId into repGroup
-            from rep in repGroup.DefaultIfEmpty()
-            join repDet in _context.EmployeeDetails on rep.ReprotToWhome equals repDet.EmpId into repDetGroup
-            from repDet in repDetGroup.DefaultIfEmpty()
-            join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into highViewGroup
-            from f in highViewGroup.DefaultIfEmpty()
-            join img in _context.HrEmpImages on a.EmpId equals img.EmpId into imgGroup
-            from img in imgGroup.DefaultIfEmpty()
-            join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status into currStatusGroup
-            from j in currStatusGroup.DefaultIfEmpty()
-            join s in _context.HrEmpStatusSettings on a.EmpStatus equals s.StatusId into empStatusGroup
-            from s in empStatusGroup.DefaultIfEmpty()
-            join t in _context.Resignations.Where(x => x.CurrentRequest == 1 && !new[] { "D", "R" }.Contains(x.ApprovalStatus)) on a.EmpId equals t.EmpId into tempResignations
-            from t in tempResignations.DefaultIfEmpty()
-            join reason in _context.ReasonMasters.Where(r => r.Type == _employeeSettings.ReasonType) on Convert.ToInt32(t.Reason) equals reason.ReasonId into reasonGroup
-            from rm in reasonGroup.DefaultIfEmpty()
-            join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into countryGroup
-            from cm in countryGroup.DefaultIfEmpty()
-            join religion in _context.AdmReligionMasters on c.Religion equals religion.ReligionId into religionGroup
-            from religion in religionGroup.DefaultIfEmpty()
-            where result.Contains(a.EmpStatus.GetValueOrDefault())
-
-            select new EmployeeResultDto
-            {
-                EmpId = a.EmpId,
-                EmpCode = a.EmpCode,
-                Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
-                GuardiansName = a.GuardiansName,
-                DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),
-                JoinDate = a.JoinDt.ToString(),
-                WeddingDate = c.WeddingDate,
-
-                //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
-
-                DataDate = a.JoinDt.ToString(),
-
-                StatusDesc = j.StatusDesc,
-                EmpStatusDesc = s.StatusDesc,
-                Gender = GetGender(a.Gender).ToString(),
-                //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
-                ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
-                RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
-                SeperationStatus = a.SeperationStatus,
-                OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
-                PersonalEmail = b.PersonalEmail,
-                Phone = b.Phone,
-                MaritalStatus = c.MaritalStatus == "S" ? "Single" :
-                                      c.MaritalStatus == "M" ? "Married" :
-                                      c.MaritalStatus == "W" ? "Widowed" :
-                                      c.MaritalStatus == "X" ? "Separated" :
-                                      c.MaritalStatus == "D" ? "Divorcee" :
-                                      _employeeSettings.NotAvailable,
-                Age = CalculateAge(a.DateOfBirth, ageFormat),
-                ProbationDt = a.ProbationDt.ToString(),
-                LevelOneDescription = f.LevelOneDescription,
-                LevelTwoDescription = f.LevelTwoDescription,
-                LevelThreeDescription = f.LevelThreeDescription,
-                LevelFourDescription = f.LevelFourDescription,
-                LevelFiveDescription = f.LevelFiveDescription,
-                LevelSixDescription = f.LevelSixDescription,
-                LevelSevenDescription = f.LevelSevenDescription,
-                LevelEightDescription = f.LevelEightDescription,
-                LevelNineDescription = f.LevelNineDescription,
-                LevelTenDescription = f.LevelTenDescription,
-                LevelElevenDescription = f.LevelElevenDescription,
-                ResignationReason = rm.Description,
-                ResignationType = t.ResignationType,// a.ResignationType.ToString(),
-                ProbationStatus = a.IsProbation.ToString(),//  == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-
-                Nationality = cm.CountryName,
-                IsSave = a.IsSave,
-                EmpFileNumber = a.EmpFileNumber,
-                CurrentStatus = a.CurrentStatus,
-
-
-            }).ToListAsync();
-
-            var totalRecords = finalQuery.Count();
-            var paginatedResult = finalQuery
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            // Return paginated result
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
         }
-
+        public async Task<List<EmployeeResultDto>> GetEmployeeResultEmpIdZeroEmployeeExistsAsync(string systemStatus, string currentStatusDesc, string ageFormat)
+        {
+            return await (
+                from a in _context.HrEmpMasters
+                join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into tempAddress
+                from b in tempAddress.DefaultIfEmpty()
+                join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into tempPersonal
+                from c in tempPersonal.DefaultIfEmpty()
+                join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into tempHighLevel
+                from f in tempHighLevel.DefaultIfEmpty()
+                join i in _context.HrEmpImages on a.EmpId equals i.EmpId into tempImages
+                from i in tempImages.DefaultIfEmpty()
+                join t in _context.Resignations
+                    .Where(x => x.CurrentRequest == 1 && !new[] { ApprovalStatus.Deleted.ToString(), ApprovalStatus.Rejceted.ToString() }.Contains(x.ApprovalStatus))
+                    on a.EmpId equals t.EmpId into tempResignations
+                from t in tempResignations.DefaultIfEmpty()
+                join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status
+                join s in _context.HrEmpStatusSettings on a.EmpStatus equals s.StatusId
+                join reason in _context.ReasonMasters
+                    .Where(r => r.Type == _employeeSettings.ReasonType)
+                    on Convert.ToInt32(t.Reason) equals reason.ReasonId into reasonGroup
+                from rm in reasonGroup.DefaultIfEmpty()
+                join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into tempCountry
+                from cm in tempCountry.DefaultIfEmpty()
+                where a.CurrentStatus == Convert.ToInt32(systemStatus)
+                   || systemStatus == "0"
+                   || systemStatus == currentStatusDesc && t.RelievingDate >= DateTime.UtcNow
+                orderby a.EmpCode
+                select new EmployeeResultDto
+                {
+                    EmpId = a.EmpId,
+                    ImageUrl = i.ImageUrl,
+                    EmpCode = a.EmpCode,
+                    Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
+                    GuardiansName = a.GuardiansName,
+                    DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),
+                    JoinDate = a.JoinDt.ToString(),
+                    WeddingDate = c.WeddingDate,
+                    DataDate = a.JoinDt.ToString(),
+                    StatusDesc = j.StatusDesc,
+                    EmpStatusDesc = s.StatusDesc,
+                    Gender = GetGender(a.Gender).ToString(),
+                    ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
+                    RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
+                    SeperationStatus = a.SeperationStatus,
+                    OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
+                    PersonalEmail = b.PersonalEmail,
+                    Phone = b.Phone,
+                    MaritalStatus = GetMaritalStatus(c.MaritalStatus).ToString(),
+                    Age = CalculateAge(a.DateOfBirth, ageFormat),
+                    ProbationDt = a.ProbationDt.ToString(),
+                    LevelOneDescription = f.LevelOneDescription,
+                    LevelTwoDescription = f.LevelTwoDescription,
+                    LevelThreeDescription = f.LevelThreeDescription,
+                    LevelFourDescription = f.LevelFourDescription,
+                    LevelFiveDescription = f.LevelFiveDescription,
+                    LevelSixDescription = f.LevelSixDescription,
+                    LevelSevenDescription = f.LevelSevenDescription,
+                    LevelEightDescription = f.LevelEightDescription,
+                    LevelNineDescription = f.LevelNineDescription,
+                    LevelTenDescription = f.LevelTenDescription,
+                    LevelElevenDescription = f.LevelElevenDescription,
+                    ResignationReason = rm.Description,
+                    ResignationType = t.ResignationType,
+                    ProbationStatus = a.IsProbation.ToString(),
+                    Nationality = cm.CountryName,
+                    IsSave = a.IsSave,
+                    EmpFileNumber = a.EmpFileNumber,
+                    CurrentStatus = a.CurrentStatus,
+                }).ToListAsync();
+        }
 
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatZeroOrOneEmpIdZeroEmployeeExists(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
 
-            var resultThreeInfoFormat = await (
-                     from a in _context.HrEmpMasters
-                     join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into tempAddress
-                     from b in tempAddress.DefaultIfEmpty()
-                     join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into tempPersonal
-                     from c in tempPersonal.DefaultIfEmpty()
-                     join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into tempHighLevel
-                     from f in tempHighLevel.DefaultIfEmpty()
-                     join i in _context.HrEmpImages on a.EmpId equals i.EmpId into tempImages
-                     from i in tempImages.DefaultIfEmpty()
-                     join t in _context.Resignations.Where(x => x.CurrentRequest == 1 && !new[] { "D", "R" }.Contains(x.ApprovalStatus)) on a.EmpId equals t.EmpId into tempResignations
-                     from t in tempResignations.DefaultIfEmpty()
-                     join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status
-                     join s in _context.HrEmpStatusSettings on a.EmpStatus equals s.StatusId
-                     join reason in _context.ReasonMasters.Where(r => r.Type == _employeeSettings.ReasonType) on Convert.ToInt32(t.Reason) equals reason.ReasonId into reasonGroup
-                     from rm in reasonGroup.DefaultIfEmpty()
-                     join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into tempCountry
-                     from cm in tempCountry.DefaultIfEmpty()
-                     where a.CurrentStatus == Convert.ToInt32(systemStatus) || systemStatus == "0" || systemStatus == currentStatusDesc && t.RelievingDate >= DateTime.UtcNow
-                     orderby a.EmpCode
-                     select new EmployeeResultDto
-                     {
-                         EmpId = a.EmpId,
-                         ImageUrl = i.ImageUrl,
-                         EmpCode = a.EmpCode,
-                         Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
-
-                         GuardiansName = a.GuardiansName,
-                         DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),
-                         JoinDate = a.JoinDt.ToString(),
-                         WeddingDate = c.WeddingDate,
-
-                         //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
-
-                         DataDate = a.JoinDt.ToString(),
-
-                         StatusDesc = j.StatusDesc,
-                         EmpStatusDesc = s.StatusDesc,
-                         Gender = GetGender(a.Gender).ToString(),
-                         //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
-                         ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                         //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
-                         RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
-                         SeperationStatus = a.SeperationStatus,
-                         OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
-                         PersonalEmail = b.PersonalEmail,
-                         Phone = b.Phone,
-                         MaritalStatus = c.MaritalStatus == "S" ? "Single" :
-                                      c.MaritalStatus == "M" ? "Married" :
-                                      c.MaritalStatus == "W" ? "Widowed" :
-                                      c.MaritalStatus == "X" ? "Separated" :
-                                      c.MaritalStatus == "D" ? "Divorcee" :
-                                      _employeeSettings.NotAvailable,
-                         Age = CalculateAge(a.DateOfBirth, ageFormat),
-                         ProbationDt = a.ProbationDt.ToString(),
-                         LevelOneDescription = f.LevelOneDescription,
-                         LevelTwoDescription = f.LevelTwoDescription,
-                         LevelThreeDescription = f.LevelThreeDescription,
-                         LevelFourDescription = f.LevelFourDescription,
-                         LevelFiveDescription = f.LevelFiveDescription,
-                         LevelSixDescription = f.LevelSixDescription,
-                         LevelSevenDescription = f.LevelSevenDescription,
-                         LevelEightDescription = f.LevelEightDescription,
-                         LevelNineDescription = f.LevelNineDescription,
-                         LevelTenDescription = f.LevelTenDescription,
-                         LevelElevenDescription = f.LevelElevenDescription,
-                         ResignationReason = rm.Description,
-                         ResignationType = t.ResignationType,// a.ResignationType.ToString(),
-                         ProbationStatus = a.IsProbation.ToString(),//  == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-
-                         Nationality = cm.CountryName,
-                         IsSave = a.IsSave,
-                         EmpFileNumber = a.EmpFileNumber,
-                         CurrentStatus = a.CurrentStatus,
-                     }).ToListAsync();
+            var resultThreeInfoFormat = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
             var totalRecords = resultThreeInfoFormat.Count();
             var paginatedResult = resultThreeInfoFormat
                 .OrderBy(x => x.EmpCode)
@@ -1816,81 +1169,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatTwoEmpIdZeroEmployeeExists(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
 
-            var resultThreeInfoFormat = await (
-                     from a in _context.HrEmpMasters
-                     join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into tempAddress
-                     from b in tempAddress.DefaultIfEmpty()
-                     join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into tempPersonal
-                     from c in tempPersonal.DefaultIfEmpty()
-                     join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into tempHighLevel
-                     from f in tempHighLevel.DefaultIfEmpty()
-                     join i in _context.HrEmpImages on a.EmpId equals i.EmpId into tempImages
-                     from i in tempImages.DefaultIfEmpty()
-                     join t in _context.Resignations.Where(x => x.CurrentRequest == 1 && !new[] { "D", "R" }.Contains(x.ApprovalStatus)) on a.EmpId equals t.EmpId into tempResignations
-                     from t in tempResignations.DefaultIfEmpty()
-                     join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status
-                     join s in _context.HrEmpStatusSettings on a.EmpStatus equals s.StatusId
-                     join reason in _context.ReasonMasters.Where(r => r.Type == _employeeSettings.ReasonType) on Convert.ToInt32(t.Reason) equals reason.ReasonId into reasonGroup
-                     from rm in reasonGroup.DefaultIfEmpty()
-                     join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into tempCountry
-                     from cm in tempCountry.DefaultIfEmpty()
-                     where a.CurrentStatus == Convert.ToInt32(systemStatus) || systemStatus == "0" || systemStatus == currentStatusDesc && t.RelievingDate >= DateTime.UtcNow
-                     orderby a.EmpCode
-                     select new EmployeeResultDto
-                     {
-                         EmpId = a.EmpId,
-                         ImageUrl = i.ImageUrl,
-                         EmpCode = a.EmpCode,
-                         Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
-
-                         GuardiansName = a.GuardiansName,
-                         DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),
-                         JoinDate = a.JoinDt.ToString(),
-                         WeddingDate = c.WeddingDate,
-
-                         //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
-
-                         DataDate = a.JoinDt.ToString(),
-
-                         StatusDesc = j.StatusDesc,
-                         EmpStatusDesc = s.StatusDesc,
-                         Gender = GetGender(a.Gender).ToString(),
-                         //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
-                         ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                         //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
-                         RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
-                         SeperationStatus = a.SeperationStatus,
-                         OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
-                         PersonalEmail = b.PersonalEmail,
-                         Phone = b.Phone,
-                         MaritalStatus = c.MaritalStatus == "S" ? "Single" :
-                                      c.MaritalStatus == "M" ? "Married" :
-                                      c.MaritalStatus == "W" ? "Widowed" :
-                                      c.MaritalStatus == "X" ? "Separated" :
-                                      c.MaritalStatus == "D" ? "Divorcee" :
-                                      _employeeSettings.NotAvailable,
-                         Age = CalculateAge(a.DateOfBirth, ageFormat),
-                         ProbationDt = a.ProbationDt.ToString(),
-                         LevelOneDescription = f.LevelOneDescription,
-                         LevelTwoDescription = f.LevelTwoDescription,
-                         LevelThreeDescription = f.LevelThreeDescription,
-                         LevelFourDescription = f.LevelFourDescription,
-                         LevelFiveDescription = f.LevelFiveDescription,
-                         LevelSixDescription = f.LevelSixDescription,
-                         LevelSevenDescription = f.LevelSevenDescription,
-                         LevelEightDescription = f.LevelEightDescription,
-                         LevelNineDescription = f.LevelNineDescription,
-                         LevelTenDescription = f.LevelTenDescription,
-                         LevelElevenDescription = f.LevelElevenDescription,
-                         ResignationReason = rm.Description,
-                         ResignationType = t.ResignationType,// a.ResignationType.ToString(),
-                         ProbationStatus = a.IsProbation.ToString(),//  == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-
-                         Nationality = cm.CountryName,
-                         IsSave = a.IsSave,
-                         EmpFileNumber = a.EmpFileNumber,
-                         CurrentStatus = a.CurrentStatus,
-                     }).ToListAsync();
+            var resultThreeInfoFormat = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
             var totalRecords = resultThreeInfoFormat.Count();
             var paginatedResult = resultThreeInfoFormat
                 .OrderBy(x => x.EmpCode)
@@ -1911,81 +1190,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatThreeEmpIdZeroEmployeeExists(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
 
-            var resultThreeInfoFormat = await (
-                     from a in _context.HrEmpMasters
-                     join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into tempAddress
-                     from b in tempAddress.DefaultIfEmpty()
-                     join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into tempPersonal
-                     from c in tempPersonal.DefaultIfEmpty()
-                     join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into tempHighLevel
-                     from f in tempHighLevel.DefaultIfEmpty()
-                     join i in _context.HrEmpImages on a.EmpId equals i.EmpId into tempImages
-                     from i in tempImages.DefaultIfEmpty()
-                     join t in _context.Resignations.Where(x => x.CurrentRequest == 1 && !new[] { "D", "R" }.Contains(x.ApprovalStatus)) on a.EmpId equals t.EmpId into tempResignations
-                     from t in tempResignations.DefaultIfEmpty()
-                     join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status
-                     join s in _context.HrEmpStatusSettings on a.EmpStatus equals s.StatusId
-                     join reason in _context.ReasonMasters.Where(r => r.Type == _employeeSettings.ReasonType) on Convert.ToInt32(t.Reason) equals reason.ReasonId into reasonGroup
-                     from rm in reasonGroup.DefaultIfEmpty()
-                     join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into tempCountry
-                     from cm in tempCountry.DefaultIfEmpty()
-                     where a.CurrentStatus == Convert.ToInt32(systemStatus) || systemStatus == "0" || systemStatus == currentStatusDesc && t.RelievingDate >= DateTime.UtcNow
-                     orderby a.EmpCode
-                     select new EmployeeResultDto
-                     {
-                         EmpId = a.EmpId,
-                         ImageUrl = i.ImageUrl,
-                         EmpCode = a.EmpCode,
-                         Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
-
-                         GuardiansName = a.GuardiansName,
-                         DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),
-                         JoinDate = a.JoinDt.ToString(),
-                         WeddingDate = c.WeddingDate,
-
-                         //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
-
-                         DataDate = a.JoinDt.ToString(),
-
-                         StatusDesc = j.StatusDesc,
-                         EmpStatusDesc = s.StatusDesc,
-                         Gender = GetGender(a.Gender).ToString(),
-                         //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
-                         ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                         //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
-                         RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
-                         SeperationStatus = a.SeperationStatus,
-                         OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
-                         PersonalEmail = b.PersonalEmail,
-                         Phone = b.Phone,
-                         MaritalStatus = c.MaritalStatus == "S" ? "Single" :
-                                      c.MaritalStatus == "M" ? "Married" :
-                                      c.MaritalStatus == "W" ? "Widowed" :
-                                      c.MaritalStatus == "X" ? "Separated" :
-                                      c.MaritalStatus == "D" ? "Divorcee" :
-                                      _employeeSettings.NotAvailable,
-                         Age = CalculateAge(a.DateOfBirth, ageFormat),
-                         ProbationDt = a.ProbationDt.ToString(),
-                         LevelOneDescription = f.LevelOneDescription,
-                         LevelTwoDescription = f.LevelTwoDescription,
-                         LevelThreeDescription = f.LevelThreeDescription,
-                         LevelFourDescription = f.LevelFourDescription,
-                         LevelFiveDescription = f.LevelFiveDescription,
-                         LevelSixDescription = f.LevelSixDescription,
-                         LevelSevenDescription = f.LevelSevenDescription,
-                         LevelEightDescription = f.LevelEightDescription,
-                         LevelNineDescription = f.LevelNineDescription,
-                         LevelTenDescription = f.LevelTenDescription,
-                         LevelElevenDescription = f.LevelElevenDescription,
-                         ResignationReason = rm.Description,
-                         ResignationType = t.ResignationType,// a.ResignationType.ToString(),
-                         ProbationStatus = a.IsProbation.ToString(),//  == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-
-                         Nationality = cm.CountryName,
-                         IsSave = a.IsSave,
-                         EmpFileNumber = a.EmpFileNumber,
-                         CurrentStatus = a.CurrentStatus,
-                     }).ToListAsync();
+            var resultThreeInfoFormat = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
             var totalRecords = resultThreeInfoFormat.Count();
             var paginatedResult = resultThreeInfoFormat
                 .OrderBy(x => x.EmpCode)
@@ -2006,81 +1211,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatFourEmpIdZeroEmployeeExists(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
 
-            var resultThreeInfoFormat = await (
-                     from a in _context.HrEmpMasters
-                     join b in _context.HrEmpAddresses on a.EmpId equals b.EmpId into tempAddress
-                     from b in tempAddress.DefaultIfEmpty()
-                     join c in _context.HrEmpPersonals on a.EmpId equals c.EmpId into tempPersonal
-                     from c in tempPersonal.DefaultIfEmpty()
-                     join f in _context.HighLevelViewTables on a.LastEntity equals f.LastEntityId into tempHighLevel
-                     from f in tempHighLevel.DefaultIfEmpty()
-                     join i in _context.HrEmpImages on a.EmpId equals i.EmpId into tempImages
-                     from i in tempImages.DefaultIfEmpty()
-                     join t in _context.Resignations.Where(x => x.CurrentRequest == 1 && !new[] { "D", "R" }.Contains(x.ApprovalStatus)) on a.EmpId equals t.EmpId into tempResignations
-                     from t in tempResignations.DefaultIfEmpty()
-                     join j in _context.EmployeeCurrentStatuses on a.CurrentStatus equals j.Status
-                     join s in _context.HrEmpStatusSettings on a.EmpStatus equals s.StatusId
-                     join reason in _context.ReasonMasters.Where(r => r.Type == _employeeSettings.ReasonType) on Convert.ToInt32(t.Reason) equals reason.ReasonId into reasonGroup
-                     from rm in reasonGroup.DefaultIfEmpty()
-                     join cm in _context.AdmCountryMasters on c.Nationality equals cm.CountryId into tempCountry
-                     from cm in tempCountry.DefaultIfEmpty()
-                     where a.CurrentStatus == Convert.ToInt32(systemStatus) || systemStatus == "0" || systemStatus == currentStatusDesc && t.RelievingDate >= DateTime.UtcNow
-                     orderby a.EmpCode
-                     select new EmployeeResultDto
-                     {
-                         EmpId = a.EmpId,
-                         ImageUrl = i.ImageUrl,
-                         EmpCode = a.EmpCode,
-                         Name = $"{a.FirstName} {a.MiddleName} {a.LastName}",
-
-                         GuardiansName = a.GuardiansName,
-                         DateOfBirth = FormatDate(a.DateOfBirth, _employeeSettings.DateFormat),
-                         JoinDate = a.JoinDt.ToString(),
-                         WeddingDate = c.WeddingDate,
-
-                         //WeddingDate = c?.WeddingDate.ToString(_employeeSettings.DateFormat),
-
-                         DataDate = a.JoinDt.ToString(),
-
-                         StatusDesc = j.StatusDesc,
-                         EmpStatusDesc = s.StatusDesc,
-                         Gender = GetGender(a.Gender).ToString(),
-                         //Resignation_Date = a?.ResignationDate.ToString(_employeeSettings.DateFormat),
-                         ResignationDate = FormatDate(t.ResignationDate, _employeeSettings.DateFormat),
-                         //RelievingDate = a?.RelievingDate.ToString(_employeeSettings.DateFormat),
-                         RelievingDate = FormatDate(a.RelievingDate, _employeeSettings.DateFormat),
-                         SeperationStatus = a.SeperationStatus,
-                         OfficialEmail = b.OfficialEmail ?? _employeeSettings.NotAvailable,
-                         PersonalEmail = b.PersonalEmail,
-                         Phone = b.Phone,
-                         MaritalStatus = c.MaritalStatus == "S" ? "Single" :
-                                      c.MaritalStatus == "M" ? "Married" :
-                                      c.MaritalStatus == "W" ? "Widowed" :
-                                      c.MaritalStatus == "X" ? "Separated" :
-                                      c.MaritalStatus == "D" ? "Divorcee" :
-                                      _employeeSettings.NotAvailable,
-                         Age = CalculateAge(a.DateOfBirth, ageFormat),
-                         ProbationDt = a.ProbationDt.ToString(),
-                         LevelOneDescription = f.LevelOneDescription,
-                         LevelTwoDescription = f.LevelTwoDescription,
-                         LevelThreeDescription = f.LevelThreeDescription,
-                         LevelFourDescription = f.LevelFourDescription,
-                         LevelFiveDescription = f.LevelFiveDescription,
-                         LevelSixDescription = f.LevelSixDescription,
-                         LevelSevenDescription = f.LevelSevenDescription,
-                         LevelEightDescription = f.LevelEightDescription,
-                         LevelNineDescription = f.LevelNineDescription,
-                         LevelTenDescription = f.LevelTenDescription,
-                         LevelElevenDescription = f.LevelElevenDescription,
-                         ResignationReason = rm.Description,
-                         ResignationType = t.ResignationType,// a.ResignationType.ToString(),
-                         ProbationStatus = a.IsProbation.ToString(),//  == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
-
-                         Nationality = cm.CountryName,
-                         IsSave = a.IsSave,
-                         EmpFileNumber = a.EmpFileNumber,
-                         CurrentStatus = a.CurrentStatus,
-                     }).ToListAsync();
+            var resultThreeInfoFormat = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
             var totalRecords = resultThreeInfoFormat.Count();
             var paginatedResult = resultThreeInfoFormat
                 .OrderBy(x => x.EmpCode)
@@ -2461,9 +1592,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 "X" => MaritalStatus.Separated,
                 "D" => MaritalStatus.Divorcee,
                 "U" => MaritalStatus.Unknown,
+                null or _ => MaritalStatus.Unknown // Handle null or any unexpected values
             };
         }
-
 
         public static string FormatDate(DateTime? date, string format)
         {
@@ -2563,7 +1694,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 from c in countryGroup2.DefaultIfEmpty()
                 join d in _context.CommunicationAdditionalRequestWorkFlowstatuses
                     on a.AddrId equals d.RequestId
-                where a.EmpId == employeeId && d.ApprovalStatus == "P"
+                where a.EmpId == employeeId && d.ApprovalStatus == ApprovalStatus.Pending.ToString()
                 select new AddressDto
                 {
                     AddrID = a.AddrId,
@@ -2697,7 +1828,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var apprlResults = await (
                 from a in _context.HrEmpQualificationApprls
                 join c in _context.QualificationRequestWorkFlowstatuses on a.QlfId equals c.RequestId
-                where a.EmpId == employeeId && c.ApprovalStatus == "P"
+                where a.EmpId == employeeId && c.ApprovalStatus == ApprovalStatus.Pending.ToString()
                 select new QualificationTableDto
                 {
                     Qlficationid = a.QlfId,
@@ -2757,7 +1888,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 .ToList();
 
             var attachments = await _context.QualificationAttachments
-                .Where(a => a.EmpId == employeeId && a.DocStatus == "A")
+                .Where(a => a.EmpId == employeeId && a.DocStatus == ApprovalStatus.Approved.ToString())
                 .Select(a => new QualificationFileDto
                 {
                     QualAttachId = a.QualAttachId,
@@ -2781,7 +1912,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 from a in _context.HrEmpTechnicalApprls
                 join b in _context.SkillSetRequestWorkFlowstatuses
                     on a.TechId equals b.RequestId
-                where a.EmpId == employeeId && b.ApprovalStatus == "P"
+                where a.EmpId == employeeId && b.ApprovalStatus == ApprovalStatus.Pending.ToString()
                 select new SkillSetDto
                 {
                     Tech_id = a.TechId,
@@ -2794,7 +1925,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     Year = a.Year ?? _employeeSettings.NotAvailable,
                     Mark_Per = a.MarkPer ?? _employeeSettings.NotAvailable,
                     langSkills = a.LangSkills ?? _employeeSettings.NotAvailable,
-                    Status = "P"
+                    Status = ApprovalStatus.Pending.ToString()
                 };
 
             var technicalResultsQuery =
@@ -2972,7 +2103,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 from bDetail in consultantDetails.DefaultIfEmpty()
                                 join c in _context.EmployeeDetails on a.RefEmpId equals c.EmpId into employeeDetails
                                 from cDetail in employeeDetails.DefaultIfEmpty()
-                                where a.EmpId == employeeId && a.Status != "D" // Filtering is applied only to HrEmpreferences
+                                where a.EmpId == employeeId && a.Status != ApprovalStatus.Deleted.ToString() // Filtering is applied only to HrEmpreferences
                                 select new ReferenceDto
                                 {
                                     RefID = a.RefId,
@@ -3051,7 +2182,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 join d in _context.ProfessionalRequestWorkFlowstatuses on a.ProfId equals d.RequestId into workflowGroup
                 from d in workflowGroup.DefaultIfEmpty()
                 where a.EmpId == employeeId &&
-                      (d.ApprovalStatus == "P" ||
+                      (d.ApprovalStatus == ApprovalStatus.Pending.ToString() ||
                        _context.HrEmpProfdtlsApprls.Any(x => x.ProfId == a.ProfId && x.EmpId == employeeId) ||
                        a.ApprlId == null)
                 select new
@@ -3071,7 +2202,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     CurrencyId = c.CurrencyId,
                     Currency = c.Currency,
                     a.Ctc,
-                    Status = d != null && d.ApprovalStatus == "P" ? d.ApprovalStatus : _employeeSettings.EmployeeStatus
+                    Status = d != null && d.ApprovalStatus == ApprovalStatus.Pending.ToString() ? d.ApprovalStatus : _employeeSettings.EmployeeStatus
                 }
             ).AsNoTracking().ToListAsync();
 
@@ -3456,54 +2587,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 throw;
             }
         }
-
-
-
-
-        //public async Task<HrEmpProfdtlsApprlDto> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
-        //{
-        //    var existingEntity = await _context.HrEmpProfdtlsApprls
-        //        .FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId &&
-        //                                  e.JoinDt.HasValue && e.JoinDt.Value.Date == profdtlsApprlDto.JoinDt &&
-        //                                  e.LeavingDt.HasValue && e.LeavingDt.Value.Date == profdtlsApprlDto.LeavingDt);
-        //    if (existingEntity != null)
-        //    {
-        //        return _mapper.Map<HrEmpProfdtlsApprlDto>(profdtlsApprlDto);
-        //    }
-
-        //    using var transaction = await _context.Database.BeginTransactionAsync();
-        //    try
-        //    {
-        //        bool isWorkflowNeeded = await IsWorkflowNeeded();
-        //        var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
-
-        //        if (isWorkflowNeeded)
-        //        {
-        //            string? codeId = await GenerateRequestId(profdtlsApprlDto.EmpId);
-        //            if (codeId != null)
-        //            {
-        //                hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
-        //                await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
-        //                await UpdateCodeGeneration(codeId);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
-        //            await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
-        //        }
-
-        //        await _context.SaveChangesAsync();
-        //        await transaction.CommitAsync();
-        //        return _mapper.Map<HrEmpProfdtlsApprlDto>(profdtlsApprlDto);
-        //    }
-        //    catch
-        //    {
-        //        await transaction.RollbackAsync();
-        //        throw;
-        //    }
-        //}
-
         public async Task<bool> IsWorkflowNeeded()
         {
             return await _context.CompanyParameters
@@ -3614,73 +2697,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                           }).AsNoTracking().ToListAsync();
         }
 
-
-
-
-        //public async Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID)
-        //{
-        //    List<HrEmpProfdtlsApprlDto> result = new();
-
-        //    if (updateType == "Pending")
-        //    {
-        //        result = await (from a in _context.HrEmpProfdtlsApprls
-        //                        join b in _context.CurrencyMasters
-        //                        on a.CurrencyId equals b.CurrencyId into currencyGroup
-        //                        from b in currencyGroup.DefaultIfEmpty()
-        //                        where a.ProfId == detailID && a.EmpId == empID
-        //                        select new HrEmpProfdtlsApprlDto
-        //                        {
-        //                            ProfId = a.ProfId,
-        //                            EmpId = a.EmpId,
-        //                            CompName = a.CompName,
-        //                            Designation = a.Designation,
-        //                            CompAddress = a.CompAddress,
-        //                            Pbno = a.Pbno,
-        //                            ContactPer = a.ContactPer,
-        //                            ContactNo = a.ContactNo,
-        //                            JobDesc = a.JobDesc,
-        //                            JoinDt = a.JoinDt,
-        //                            LeavingDt = a.LeavingDt,
-        //                            LeaveReason = a.LeaveReason,
-        //                            Ctc = a.Ctc,
-        //                            CurrencyId = b.CurrencyId,
-        //                        }).ToListAsync();
-        //    }
-        //    else if (updateType == "Approved")
-        //    {
-        //        result = await (from a in _context.HrEmpProfdtls
-        //                        join b in _context.CurrencyMasters
-        //                        on a.CurrencyId equals b.CurrencyId into currencyGroup
-        //                        from b in currencyGroup.DefaultIfEmpty()
-        //                        where a.ProfId == detailID && a.EmpId == empID
-        //                        select new HrEmpProfdtlsApprlDto
-        //                        {
-        //                            ProfId = a.ProfId,
-        //                            EmpId = a.EmpId,
-        //                            CompName = a.CompName,
-        //                            Designation = a.Designation,
-        //                            CompAddress = a.CompAddress,
-        //                            Pbno = a.Pbno,
-        //                            ContactPer = a.ContactPer,
-        //                            ContactNo = a.ContactNo,
-        //                            JobDesc = a.JobDesc,
-        //                            JoinDt = a.JoinDt,
-        //                            LeavingDt = a.LeavingDt,
-        //                            LeaveReason = a.LeaveReason,
-        //                            Ctc = a.Ctc,
-        //                            CurrencyId = b.CurrencyId,
-        //                        }).ToListAsync();
-        //    }
-
-        //    return result;
-        //}
-
-        public Task<PersonalDetailsHistoryDto> InsertOrUpdatePersonalData(PersonalDetailsHistoryDto persnldtlsApprlDto)
-        {
-            throw new NotImplementedException();
-        }
-
-
         public async Task<List<AllDocumentsDto>> DocumentsAsync(int employeeId, List<string> excludedDocTypes)
         {
 
@@ -3722,7 +2738,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                         where t1.EmpId == employeeId
                                                 && t1.Status == _employeeSettings.EmployeeStatus
                                                 && !excludedDocTypes.Contains(t5.DocType)
-                                                && t3.DocDescription != "IsActive"
+                                                && t3.DocDescription != _employeeSettings.Active// "IsActive"
 
                                         select new DocumentsDto
                                         {
@@ -3758,7 +2774,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                  where !(
                                      from e in _context.HrmsEmpdocuments00s
                                      join f in _context.HrmsEmpdocuments01s on e.DetailId equals f.DetailId
-                                     where e.EmpId == employeeId && e.Status != "R" && e.Status != "D" && e.DocId == a.DocId
+                                     //where e.EmpId == employeeId && e.Status != "R" && e.Status != "D" && e.DocId == a.DocId
+                                     where e.EmpId == employeeId && e.Status != ApprovalStatus.Rejceted.ToString() && e.Status != ApprovalStatus.Deleted.ToString() && e.DocId == a.DocId
                                      select e.DocId
                                  ).Any()
                                  && (!excludedDocTypes.Contains(b.DocType) ||
@@ -3789,9 +2806,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                           from t7 in countryJoin.DefaultIfEmpty()
                                           join t8 in _context.ReasonMasters on t2.DocValues equals t8.ReasonId.ToString() into reasonJoin
                                           from t8 in reasonJoin.DefaultIfEmpty()
+                                              //where t1.EmpId == employeeId &&
+                                              //      !_context.HrmsEmpdocumentsApproved00s.Any(ap => ap.DetailId == t1.DetailId && ap.EmpId == employeeId && ap.Status == "A") &&
+                                              //      t1.Status == "P" && t3.DocDescription != "IsActive" && !excludedDocTypes.Contains(t5.DocType)
+
                                           where t1.EmpId == employeeId &&
-                                                !_context.HrmsEmpdocumentsApproved00s.Any(ap => ap.DetailId == t1.DetailId && ap.EmpId == employeeId && ap.Status == "A") &&
-                                                t1.Status == "P" && t3.DocDescription != "IsActive" && !excludedDocTypes.Contains(t5.DocType)
+                                       !_context.HrmsEmpdocumentsApproved00s.Any(ap => ap.DetailId == t1.DetailId && ap.EmpId == employeeId && ap.Status == ApprovalStatus.Approved.ToString()) &&
+                                       t1.Status == ApprovalStatus.Pending.ToString() && t3.DocDescription != _employeeSettings.Active && !excludedDocTypes.Contains(t5.DocType)
                                           select new DocumentsDto
                                           {
                                               DetailID = t1.DetailId,
@@ -4732,7 +3753,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var Vehicle = await GetAuditInformation(employeeIDs, "COMPANYVEHICLE", "Company Vehicle").AsNoTracking().ToListAsync();
             var ProbationNoticePeriod = await GetAuditInformation(employeeIDs, "PROBATIONNOTICEPERIOD", "Probation Notice Period").AsNoTracking().ToListAsync();
             var IsProbation = await GetAuditInformation(employeeIDs, "ISPROBATION", "Is Probation").AsNoTracking().ToListAsync();
-            var ProbationStartDate = await GetAuditInformation(employeeIDs, "PROBATIONENDDATE", "Probation Start Date").AsNoTracking().ToListAsync();
+            var ProbationStartDate = await GetAuditInformation(employeeIDs, _employeeSettings.ProbationEndDate, "Probation Start Date").AsNoTracking().ToListAsync();
             var MealAllowanceDeduction = await GetAuditInformation(employeeIDs, "MEALALLOWANCEDEDUCTION", "Meal Allowance Deduction").AsNoTracking().ToListAsync();
 
 
@@ -4983,34 +4004,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 .SelectMany(s => SplitStrings_XML(s.LinkId, default)
                     .Select(item => new { Item = item, s.LinkLevel }))
                 .ToList(); // Apply in-memory processing
-
-            //               if (query2.Any())
-            //               {
-            //                   var result = query2.ToList();
-            //               }
-            //               else
-            //               {
-            //                   var query3 = await (from a in _context.Geotagging00s
-            //                                       join b in _context.Geotagging00As on a.GeoCompId equals b.GeoCompId
-            //                                       join c in _context.HrmValueTypes on new { Value = a.Geotype, Type = "GeoSpacingType" } equals new { c.Value, c.Type }
-            //                                       join d in _context.HrmValueTypes on new { Value = b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { d.Value, d.Type }
-            //                                       select new
-            //                                       {
-            //                                           a.GeoCompId,
-            //                                           a.LevelId,
-            //                                           a.Geotype,
-            //                                           GeotypeCode = c.Code,
-            //                                           GeotypeDescription = c.Description,
-            //                                           b.GeoCriteria,
-            //                                           GeoCriteriaCode = d.Code,
-            //                                           GeoCriteriaDescription = d.Description,
-            //                                           Latitude = b.Latitude ?? "",
-            //                                           Longitude = b.Longitude ?? "",
-            //                                           Radius = b.Radius ?? "",
-            //                                           a.LiveTracking,
-            //                                           LocationId = (int?)b.LocationId ?? -1
-            //                                       }).ToListAsync();
-            // Step 2: Recursive CTE equivalent for employee hierarchy
             var cteOrg = new HashSet<int>(); // Optimized lookup
             var queue = new Queue<int>();
 
@@ -5156,7 +4149,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 var existingSkill = await _context.EmployeeLanguageSkills
                     .FirstOrDefaultAsync(e => e.EmpId == langSkills.EmpID
                                 && e.LanguageId == skill.LanguageId
-                                && e.Status != "D");
+                                && e.Status != ApprovalStatus.Deleted.ToString());
 
                 if (existingSkill == null)
                 {
@@ -5324,7 +4317,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         EmpId = empRewardsDto.EmpId,
                         AchievementId = achievementId,
                         RewardType = rewardTypeId,
-                        Status = "A",
+                        Status = ApprovalStatus.Approved.ToString(),
                         Reason = empRewardsDto.Reason,
                         RewardDate = DateTime.UtcNow,
                         Amount = empRewardsDto.Amount
@@ -5409,9 +4402,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                              EmpStatus = a.EmpStatus,
                                              CurrentStatus = j.Status,
                                              StatusDesc = j.StatusDesc,
-                                             //ReviewDt = a.ReviewDt.HasValue ? a.ReviewDt.Value.ToString("dd/MM/yyyy") : null,
-                                             //WeddingDate = c.WeddingDate.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : null,
-                                             //ProbationDt = a.ProbationDt.HasValue ? a.ProbationDt.Value.ToString("dd/MM/yyyy") : null,
                                              ReviewDt = FormatDate(a.ReviewDt, _employeeSettings.DateFormat),//.Value.ToString("dd/MM/yyyy") : null,
                                              WeddingDate = FormatDate(c.WeddingDate, _employeeSettings.DateFormat),//.HasValue ? c.WeddingDate.Value.ToString("dd/MM/yyyy") : null,
                                              ProbationDt = FormatDate(a.ProbationDt, _employeeSettings.DateFormat),
@@ -5439,7 +4429,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                              Phone = b.Phone,
                                              HomeCountryPhone = b.HomeCountryPhone,
                                              Gender = c.Gender,
-                                             MaritalStatus = c.MaritalStatus,
+                                             MaritalStatus = GetMaritalStatus(c.MaritalStatus).ToString(),
                                              ReprotToWhome = r.ReprotToWhome,
                                              EffectDate = r.EffectDate.HasValue ? r.EffectDate.Value.ToString("dd/MM/yyyy") : null,
                                              RoleId = h.RoleId,
@@ -5534,7 +4524,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                               a => a.TransferBatchId,
                               b => b.TransferBatchId,
                               (a, b) => new { a, b })
-                        .Where(joined => new[] { "A", "P" }.Contains(joined.b.ApprovalStatus)
+                        .Where(joined => new[] { ApprovalStatus.Approved.ToString(), ApprovalStatus.Pending.ToString() }.Contains(joined.b.ApprovalStatus)
                                          && joined.a.EmpId == employeeDetailsDto.EmpId)
                         .OrderByDescending(joined => joined.a.ToDate)
                         .Skip(1) // Exclude the most recent record
@@ -5616,12 +4606,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             var property = entityLevel.GetType().GetProperty(propertyName);
                             return property != null ? (int)property.GetValue(entityLevel) : 0;
                         }
-
-                        //int branchId = GetLevelId(branchMapId);
-                        //int deptId = GetLevelId(depMapId);
-                        //int bandId = GetLevelId(bandMapId);
-                        //int gradeLevelId = GetLevelId(gradeId);
-                        //int desigId = GetLevelId(designationMapId);
                         employeeDetailsDto.BranchId = GetLevelId(branchMapId);
                         employeeDetailsDto.DepId = GetLevelId(depMapId);
                         employeeDetailsDto.BandId = GetLevelId(bandMapId);
@@ -5634,9 +4618,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         }
                         var OldLastEntity = await _context.HrEmpMasters.Where(e => e.EmpId == employeeDetailsDto.EmpId).Select(e => e.LastEntity).FirstOrDefaultAsync();
 
-                        //var employee = _mapper.Map<HrEmpMaster>(employeeDetailsDto);
-
-                        //_context.HrEmpMasters.Update(employee);
 
                         var employee = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == employeeDetailsDto.EmpId);
 
@@ -5646,7 +4627,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                             _mapper.Map(employeeDetailsDto, employee);
                             _context.HrEmpMasters.Update(employee);
-                            //await _context.SaveChangesAsync();
+
                         }
 
 
@@ -5774,35 +4755,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                              }).ToList();
 
 
-
-
-                        //var cteLatestTransferTransition = _context.TransferTransition00s
-                        //    .Where(t => t.EmployeeId == employeeDetailsDto.EmpId
-                        //               && !new[] { "R", "D" }.Contains(t.BatchApprovalStatus)
-                        //               && (t.EmpApprovalStatus ?? "A") != "R")
-                        //    .AsEnumerable() // Switch to client-side evaluation
-                        //    .GroupBy(t => new { t.EmployeeId, t.EntityOrder }) // Group by EmployeeID and EntityOrder
-                        //    .SelectMany(g => g
-                        //        .OrderByDescending(t => t.ToDate) // Order by ToDate descending
-                        //        .ThenByDescending(t => t.EntityOrder) // If ToDate is the same, order by EntityOrder
-                        //        .Select((t, index) => new { t, Rank = index + 1 }) // Assign rank
-                        //        .Where(x => x.Rank == 1)) // Only select rank 1
-                        //    .Select(t => new
-                        //    {
-                        //        t.t.TransferTransId,
-                        //        t.t.EntityOrder,
-                        //        t.t.ActionId,
-                        //        t.t.EmployeeId,
-                        //        t.t.OldEntityId,
-                        //        t.t.OldEntityDescription,
-                        //        t.t.NewEntityId,
-                        //        t.t.NewEntityDescription,
-                        //        t.t.ToDate,
-                        //        t.t.BatchApprovalStatus,
-                        //        t.t.EmpApprovalStatus
-                        //    })
-                        //    .ToList();
-
                         var cteLatestTransferTransition = _context.TransferTransition00s
                                  .Where(t => t.EmployeeId == employeeDetailsDto.EmpId
                                             && !new[] { ApprovalStatus.Rejceted.ToString(), ApprovalStatus.Deleted.ToString() }.Contains(t.BatchApprovalStatus)
@@ -5920,36 +4872,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             //await _context.SaveChangesAsync();
                         }
 
-                        //var userMastersToUpdate = from user in _context.AdmUserMasters
-                        //                          join relation in _context.HrEmployeeUserRelations on user.UserId equals relation.UserId
-                        //                          join emp in _context.HrEmpMasters on relation.EmpId equals emp.EmpId
-                        //                          where relation.EmpId == employeeDetailsDto.EmpId
-                        //                          select user;
 
-                        //foreach (var user in userMastersToUpdate)
-                        //{
-                        //    user.EntryDate = DateTime.UtcNow;// employeeDetailsDto.EntryDate;
-                        //    user.Email = employeeDetailsDto.EmailId;
-                        //    user.NeedApp = true;// employeeDetailsDto.PersonalDetailsDto;
-                        //    //await _context.SaveChangesAsync();
-                        //}
-
-
-
-                        //var roleMasterToUpdate = from urm in _context.AdmUserRoleMasters
-                        //                         join eur in _context.HrEmployeeUserRelations on urm.UserId equals eur.UserId
-                        //                         join em in _context.HrEmpMasters on eur.EmpId equals em.EmpId
-                        //                         where eur.EmpId == employeeDetailsDto.EmpId
-                        //                         select new { urm, em };
-
-                        //foreach (var record in roleMasterToUpdate)
-                        //{
-                        //    record.urm.InstId = employeeDetailsDto.InstId;
-                        //    record.urm.RoleId = employeeDetailsDto.UserRole;
-                        //    //record.urm.Acess = 1;
-                        //    record.urm.Acess = (int)ProbationStatus.PROBATION;
-
-                        //}
                         #region Lulu Client Customized Code
 
 
@@ -5993,10 +4916,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                         #endregion
 
-                        //var latestRecord = _context.CompanyConveyanceHistories.Where(c => c.EmployeeId == employeeDetailsDto.EmpID)
-                        //                    .OrderByDescending(c => c.EntryDate)
-                        //                    .Select(c => new { c.Id, c.ToDate })
-                        //                    .FirstOrDefault();
+
 
                         var latestRecord = _context.CompanyConveyanceHistories
                             .Where(c => c.EmployeeId == employeeDetailsDto.EmpId)
@@ -6190,20 +5110,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                                 if (surveyExists)
                                 {
-                                    //var probationRecord = (from pr in _context.ProbationRating00s
-                                    //                       join pr2 in _context.ProbationRating02s
-                                    //                       on pr.ProbRateId equals pr2.ProbRateId into prGroup
-                                    //                       from pr2 in prGroup.DefaultIfEmpty()
-                                    //                       where pr.ApprovalStatus == ApprovalStatus.Pending.ToString()
-                                    //                             && pr.EmpId == employeeDetailsDto.EmpId
-                                    //                             && (pr.CurrentRecord ?? 0) == 1
-                                    //                             && pr2.NextRemarkDate != null
-                                    //                       orderby pr.ProbRateId
-                                    //                       select new
-                                    //                       {
-                                    //                           ProbRateID = pr.ProbRateId,
-                                    //                           UpdatedProbDate = pr2.NextRemarkDate
-                                    //                       }).FirstOrDefault();
+
                                     var probationRecord = (from pr in _context.ProbationRating00s
                                                            join pr2 in _context.ProbationRating02s
                                                            on pr.ProbRateId equals pr2.ProbRateId into prGroup
@@ -6371,368 +5278,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return value;
 
         }
-
-        //public async Task<EmployeeDetailsUpdateDto> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto, int lastEntity)
-        //{
-        //    int entityChange = 1;
-        //    bool existsEmployee = await _context.HrEmpMasters.Where(emp => emp.EmpCode.Trim() == employeeDetailsDto.EmpCode.Trim()
-        //         && (emp.IsDelete) == false
-        //         && emp.EmpId != employeeDetailsDto.EmpId).AnyAsync();//---Correct
-        //    if (existsEmployee)
-        //    {
-        //        return new EmployeeDetailsUpdateDto();
-        //    }
-        //    bool IsEntityChange = await _context.HrEmpMasters.Where(e => e.EmpId == employeeDetailsDto.EmpId).Select(e => e.LastEntity).FirstOrDefaultAsync() != lastEntity;
-        //    if (IsEntityChange)
-        //    {
-
-        //    }
-        //    bool checkTransferHistory = await (from a in _context.TransferDetails00s
-        //                                       join b in _context.TransferDetails on a.TransferBatchId equals b.TransferBatchId
-        //                                       where new[] { "A", "P" }.Contains(b.ApprovalStatus)
-        //                                       && a.EmpId == employeeDetailsDto.EmpId
-        //                                       select a).AnyAsync();//---Correct
-        //    if (checkTransferHistory)
-        //    {
-
-        //        var existsTransfer = await (from a in _context.TransferDetails00s
-        //                                    join b in _context.TransferDetails on a.TransferBatchId equals b.TransferBatchId
-        //                                    where new[] { "A", "P" }.Contains(b.ApprovalStatus)
-        //                                 && a.EmpId == employeeDetailsDto.EmpId
-        //                                    && entityChange == 1
-        //                                    select a).AnyAsync();
-
-        //        if (existsTransfer)
-        //        {
-        //            // Get the ranked list separately before the main query
-        //            //var rankedRecords = await _context.TransferDetails00s
-        //            //    .Where(x => x.EmpId == employeeDetailsDto.EmpId)
-        //            //    .OrderByDescending(x => x.ToDate)
-        //            //    .Select((x, index) => new { x.EmpId, x.ToDate, x.LastEntity, x.OldLastEntity, Rank = index + 1 })
-        //            //    .ToListAsync(); // Ensure this runs asynchronously first
-
-        //            //// Filter the ranked list where Rank > 1
-        //            //var tempTransferHistory = rankedRecords
-        //            //    .Where(r => r.Rank > 1)
-        //            //    .Select(r => new
-        //            //    {
-        //            //        r.EmpId,
-        //            //        r.ToDate,
-        //            //        r.LastEntity,
-        //            //        r.OldLastEntity
-        //            //    })
-        //            //    .ToList();
-
-
-        //            //var existsInTemp = tempTransferHistory
-        //            //                    .Any(t => t.EmpId == employeeDetailsDto.EmpId && t.LastEntity == lastEntity);
-
-        //            //if (existsInTemp)
-        //            //{
-        //            //    //errorId = 0;
-        //            //    //errorMessage = "ExistTransfer";
-        //            //    //return;
-        //            //}
-        //        }
-
-
-
-
-
-        //    }
-        //    if (1 > 0)
-        //    {
-        //        //// Get SortOrder
-        //        var sortOrder = _context.LicensedCompanyDetails.Select(x => x.EntityLimit).FirstOrDefault();
-
-        //        // // Get mapping values
-        //        var mappings = await _context.Categorymasters
-        //            .Join(_context.HrmValueTypes,
-        //                  cat => cat.CatTrxTypeId,
-        //                  val => val.Value,
-        //                  (cat, val) => new { cat, val })
-        //            .Where(x => x.val.Type == "CatTrxType" &&
-        //                        new[] { "BRANCH", "DEPT", "BAND", "GRADE", "DESIG", "COMPANY" }
-        //                        .Contains(x.val.Code))
-        //            .GroupBy(x => x.val.Code)
-        //            .Select(g => new
-        //            {
-        //                Code = g.Key,
-        //                SortOrder = g.Max(x => x.cat.SortOrder)
-        //            })
-        //            .ToListAsync();
-
-        //        // // Extract values
-        //        int branchMapId = mappings.FirstOrDefault(m => m.Code == "BRANCH")?.SortOrder ?? 0;
-        //        int depMapId = mappings.FirstOrDefault(m => m.Code == "DEPT")?.SortOrder ?? 0;
-        //        int bandMapId = mappings.FirstOrDefault(m => m.Code == "BAND")?.SortOrder ?? 0;
-        //        int designationMapId = mappings.FirstOrDefault(m => m.Code == "DESIG")?.SortOrder ?? 0;
-        //        int countryMapId = mappings.FirstOrDefault(m => m.Code == "COMPANY")?.SortOrder ?? 0;
-        //        int gradeId = mappings.FirstOrDefault(m => m.Code == "GRADE")?.SortOrder ?? 0;
-
-
-
-        //        // Check if SortOrder is 11 before proceeding
-        //        if (sortOrder == 11)
-        //        {
-
-
-        //            var entityLevel = await _context.HighLevelViewTables
-        //                .Where(e => e.LastEntityId == lastEntity)
-        //                .Select(e => new
-        //                {
-        //                    e.LastEntityId,
-        //                    e.LevelOneId,
-        //                    e.LevelTwoId,
-        //                    e.LevelThreeId,
-        //                    e.LevelFourId,
-        //                    e.LevelFiveId,
-        //                    e.LevelSixId,
-        //                    e.LevelSevenId,
-        //                    e.LevelEightId,
-        //                    e.LevelNineId,
-        //                    e.LevelTenId,
-        //                    e.LevelElevenId
-        //                })
-        //                .FirstOrDefaultAsync();
-
-        //            if (entityLevel != null)
-        //            {
-        //                int GetLevelId(int mapId)
-        //                {
-        //                    var propertyName = $"Level{mapId}Id";
-        //                    var property = entityLevel.GetType().GetProperty(propertyName);
-        //                    return property != null ? (int)property.GetValue(entityLevel) : 0;
-        //                }
-
-        //                int branchId = GetLevelId(branchMapId);
-        //                int deptId = GetLevelId(depMapId);
-        //                int bandId = GetLevelId(bandMapId);
-        //                int gradeLevelId = GetLevelId(gradeId);
-        //                int desigId = GetLevelId(designationMapId);
-
-        //                if (employeeDetailsDto.FirstEntryDate == null)
-        //                {
-        //                    employeeDetailsDto.FirstEntryDate = employeeDetailsDto.JoinDt;
-        //                }
-        //                var oldEntity = await _context.HrEmpMasters.Where(e => e.EmpId == employeeDetailsDto.EmpId).Select(e => e.LastEntity).FirstOrDefaultAsync();
-
-        //                var employee = _mapper.Map<HrEmpMaster>(employeeDetailsDto);
-
-        //                //_context.HrEmpMasters.Update(employee);
-
-
-        //                var empData = (from a in _context.HrEmpMasters
-        //                               join b in _context.HighLevelViewTables on a.LastEntity equals b.LastEntityId
-        //                               where a.EmpId == employeeDetailsDto.EmpId
-        //                               select new { EmpMaster = a, HighLevel = b })
-        //                         .FirstOrDefault();
-
-        //                if (empData != null)
-        //                {
-        //                    var levels = new List<int?>
-        //                    {
-        //                        empData.HighLevel.LevelOneId, empData.HighLevel.LevelTwoId, empData.HighLevel.LevelThreeId,
-        //                        empData.HighLevel.LevelFourId, empData.HighLevel.LevelFiveId, empData.HighLevel.LevelSixId,
-        //                        empData.HighLevel.LevelSevenId, empData.HighLevel.LevelEightId, empData.HighLevel.LevelNineId,
-        //                        empData.HighLevel.LevelTenId, empData.HighLevel.LevelElevenId, empData.HighLevel.LevelTwelveId
-        //                    };
-
-        //                    empData.EmpMaster.EmpEntity = string.Join(",", levels.Where(x => x.HasValue && x != 0));
-        //                    empData.EmpMaster.EmpFirstEntity = empData.HighLevel.LevelOneId?.ToString();
-
-
-        //                }
-
-        //                var cteOldEntity = GetEmployeeLevels(employeeDetailsDto.EmpId, oldEntity).Result;
-        //                var cteNewEntity = GetEmployeeLevels(employeeDetailsDto.EmpId, lastEntity).Result;
-
-        //                var levelNumbers = Enumerable.Range(1, 12); // Equivalent to CROSS JOIN VALUES(1-12)
-
-        //                var cteTransferEntityWise =
-        //                    (from a in cteNewEntity
-        //                     join b in cteOldEntity on a.EmpId equals b.EmpId
-        //                     from v in levelNumbers // CROSS JOIN equivalent
-        //                     join cm in _context.Categorymasters on v equals cm.SortOrder
-        //                     where
-        //                        (v == 1 && a.LevelOneDescription != b.LevelOneDescription) ||
-        //                        (v == 2 && a.LevelTwoDescription != b.LevelTwoDescription) ||
-        //                        (v == 3 && a.LevelThreeDescription != b.LevelThreeDescription) ||
-        //                        (v == 4 && a.LevelFourDescription != b.LevelFourDescription) ||
-        //                        (v == 5 && a.LevelFiveDescription != b.LevelFiveDescription) ||
-        //                        (v == 6 && a.LevelSixDescription != b.LevelSixDescription) ||
-        //                        (v == 7 && a.LevelSevenDescription != b.LevelSevenDescription) ||
-        //                        (v == 8 && a.LevelEightDescription != b.LevelEightDescription) ||
-        //                        (v == 9 && a.LevelNineDescription != b.LevelNineDescription) ||
-        //                        (v == 10 && a.LevelTenDescription != b.LevelTenDescription) ||
-        //                        (v == 11 && a.LevelElevenDescription != b.LevelElevenDescription) ||
-        //                        (v == 12 && a.LevelTwelveDescription != b.LevelTwelveDescription)
-        //                     select new
-        //                     {
-        //                         a.EmpId,
-        //                         Entity = cm.Description,
-        //                         EntityOrder = cm.SortOrder,
-        //                         OldID = v switch
-        //                         {
-        //                             1 => b.LevelOneId,
-        //                             2 => b.LevelTwoId,
-        //                             3 => b.LevelThreeId,
-        //                             4 => b.LevelFourId,
-        //                             5 => b.LevelFiveId,
-        //                             6 => b.LevelSixId,
-        //                             7 => b.LevelSevenId,
-        //                             8 => b.LevelEightId,
-        //                             9 => b.LevelNineId,
-        //                             10 => b.LevelTenId,
-        //                             11 => b.LevelElevenId,
-        //                             12 => b.LevelTwelveId,
-        //                             _ => null
-        //                         },
-        //                         DescriptionOld = v switch
-        //                         {
-        //                             1 => b.LevelOneDescription,
-        //                             2 => b.LevelTwoDescription,
-        //                             3 => b.LevelThreeDescription,
-        //                             4 => b.LevelFourDescription,
-        //                             5 => b.LevelFiveDescription,
-        //                             6 => b.LevelSixDescription,
-        //                             7 => b.LevelSevenDescription,
-        //                             8 => b.LevelEightDescription,
-        //                             9 => b.LevelNineDescription,
-        //                             10 => b.LevelTenDescription,
-        //                             11 => b.LevelElevenDescription,
-        //                             12 => b.LevelTwelveDescription,
-        //                             _ => null
-        //                         },
-        //                         NewEID = v switch
-        //                         {
-        //                             1 => a.LevelOneId,
-        //                             2 => a.LevelTwoId,
-        //                             3 => a.LevelThreeId,
-        //                             4 => a.LevelFourId,
-        //                             5 => a.LevelFiveId,
-        //                             6 => a.LevelSixId,
-        //                             7 => a.LevelSevenId,
-        //                             8 => a.LevelEightId,
-        //                             9 => a.LevelNineId,
-        //                             10 => a.LevelTenId,
-        //                             11 => a.LevelElevenId,
-        //                             12 => a.LevelTwelveId,
-        //                             _ => null
-        //                         },
-        //                         DescriptionNew = v switch
-        //                         {
-        //                             1 => a.LevelOneDescription,
-        //                             2 => a.LevelTwoDescription,
-        //                             3 => a.LevelThreeDescription,
-        //                             4 => a.LevelFourDescription,
-        //                             5 => a.LevelFiveDescription,
-        //                             6 => a.LevelSixDescription,
-        //                             7 => a.LevelSevenDescription,
-        //                             8 => a.LevelEightDescription,
-        //                             9 => a.LevelNineDescription,
-        //                             10 => a.LevelTenDescription,
-        //                             11 => a.LevelElevenDescription,
-        //                             12 => a.LevelTwelveDescription,
-        //                             _ => null
-        //                         },
-        //                         a.FromDate,
-        //                         a.ToDate,
-        //                         SortOrder = v,
-        //                         IsExist = 0
-        //                     }).ToList();
-
-
-
-
-
-        //                var latestTransferTransitions = _context.TransferTransition00s
-        //                .Where(t => t.EmployeeId == employeeDetailsDto.EmpId
-        //                            && !new[] { "R", "D" }.Contains(t.BatchApprovalStatus)
-        //                            && (t.EmpApprovalStatus ?? "A") != "R")
-        //                .GroupBy(t => new { t.EmployeeId, t.EntityOrder }) // Partition by EmployeeID, EntityOrder
-        //                .Select(g => g.OrderByDescending(t => t.ToDate).First()).AsEnumerable()
-        //                .Select(t => new
-        //                {
-        //                    t.TransferTransId,
-        //                    t.EntityOrder,
-        //                    t.ActionId,
-        //                    t.EmployeeId,
-        //                    t.OldEntityId,
-        //                    t.OldEntityDescription,
-        //                    t.NewEntityId,
-        //                    t.NewEntityDescription,
-        //                    t.ToDate,
-        //                    t.BatchApprovalStatus,
-        //                    t.EmpApprovalStatus
-
-        //                })
-        //                .ToList();
-
-
-
-
-
-        //                //----------------Error in below join query -----------------------
-
-        //                //var updates = from a in _context.TransferTransition00s
-        //                //              join b in latestTransferTransitions
-        //                //                  on a.TransferTransId equals b.TransferTransId
-        //                //              join c in cteTransferEntityWise
-        //                //                  on new { EmpId = b.EmployeeId, EntityOrder = b.EntityOrder }
-        //                //                  equals new { EmpId = c.EmpId, EntityOrder = c.EntityOrder }
-        //                //              select new { a, c };
-
-
-
-        //                //foreach (var record in updates)
-        //                //{
-        //                //    record.a.NewEntityId = record.c.NewEID;
-        //                //    record.a.NewEntityDescription = record.c.DescriptionNew;
-        //                //}
-
-
-        //                var existingRecord = _context.HrEmpAddresses
-        //.FirstOrDefault(e => e.EmpId == employeeDetailsDto.EmpId);
-
-        //                if (existingRecord != null)
-        //                {
-        //                    // Update existing record
-        //                    existingRecord.InstId = employeeDetailsDto.InstId;
-        //                    existingRecord.OfficialEmail = employeeDetailsDto.EmailId;
-        //                    existingRecord.PersonalEmail = employeeDetailsDto.PersonalEmail;
-        //                    existingRecord.Phone = employeeDetailsDto.Phone;
-        //                    existingRecord.HomeCountryPhone = employeeDetailsDto.HomeCountryPhone;
-        //                    existingRecord.EntryBy = employeeDetailsDto.EntryBy;
-        //                    existingRecord.EntryDt = DateTime.UtcNow;
-
-        //                    _context.HrEmpAddresses.Update(existingRecord);
-        //                }
-        //                else
-        //                {
-        //                    // Insert new record
-        //                    var newRecord = new HrEmpAddress
-        //                    {
-        //                        InstId = employeeDetailsDto.InstId,
-        //                        OfficialEmail = employeeDetailsDto.EmailId,
-        //                        PersonalEmail = employeeDetailsDto.PersonalEmail,
-        //                        Phone = employeeDetailsDto.Phone,
-        //                        HomeCountryPhone = employeeDetailsDto.HomeCountryPhone,
-        //                        EntryBy = employeeDetailsDto.EntryBy,
-        //                        EntryDt = DateTime.UtcNow,
-        //                    };
-        //                    await _context.HrEmpAddresses.AddAsync(existingRecord);
-
-
-        //                }
-        //                _context.SaveChanges();
-        //            }
-
-
-        //        }
-        //    }
-        //    return new EmployeeDetailsUpdateDto();
-        //}
         private async Task<List<HighLevelTableDto>> GetEmployeeLevels(int empId, int? entityId)
         {
             var employeeLevel = await _context.HighLevelViewTables
@@ -6824,7 +5369,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             else
             {
                 certification.EntryDate = DateTime.UtcNow;
-                certification.Status = "A";
+                certification.Status = ApprovalStatus.Approved.ToString();// "A";
                 _context.EmployeeCertifications.Add(certification);
                 result = "1";
             }
@@ -6888,7 +5433,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 DurFrm = skillset.DurationFrom,
                 DurTo = skillset.DurationTo,
                 MarkPer = skillset.Rating,
-                Status = "A",
+                Status = ApprovalStatus.Approved.ToString(),// "A",
                 FlowStatus = "E",
                 EntryBy = skillset.Entry_By,
                 EntryDt = skillset.EntryDt,
@@ -6946,104 +5491,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return "Successfully Saved";
         }
-
-        public async Task<string> UploadEmployeeDocuments(List<IFormFile> files, QualificationAttachmentDto attachmentDto)
-        {
-            if (files == null || !files.Any())
-            {
-                return "No files provided for upload.";
-            }
-
-            string webRootPath = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            string uploadPath = Path.Combine(webRootPath, "EmpAttachment", "EmpQualification");
-
-            if (!Directory.Exists(uploadPath))
-            {
-                Directory.CreateDirectory(uploadPath);
-            }
-
-            List<QualificationAttachment> documentList = new List<QualificationAttachment>();
-            List<string> fileNames = new List<string>();
-            List<string> errors = new List<string>();
-
-            foreach (var file in files)
-            {
-                if (file == null || file.Length == 0)
-                {
-                    continue;
-                }
-
-                string fileExtension = Path.GetExtension(file.FileName);
-                string fileType = file.ContentType;
-                string uniqueFileName = $"{Path.GetFileNameWithoutExtension(file.FileName)}_{DateTime.UtcNow:yyyyMMddHHmmssFFF}{Path.GetExtension(file.FileName)}";
-                string filePath = Path.Combine(uploadPath, uniqueFileName);
-
-                try
-                {
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await file.CopyToAsync(stream);
-                    }
-
-                    fileNames.Add(uniqueFileName);
-
-                    documentList.Add(new QualificationAttachment
-                    {
-                        EmpId = attachmentDto.EmployeeId,
-                        QualFileName = uniqueFileName,
-                        FilePath = filePath,
-                        FileType = fileType,
-                        EntryBy = attachmentDto.EntryBy,
-                        EntryDate = DateTime.UtcNow,
-                        DocStatus = _employeeSettings.EmployeeStatus,
-                        QualificationId = attachmentDto.QualificationId
-                    });
-                }
-                catch (Exception ex)
-                {
-                    errors.Add($"Error uploading file {file.FileName}: {ex.Message}");
-                }
-            }
-
-            if (documentList.Any())
-            {
-                await _context.QualificationAttachments.AddRangeAsync(documentList);
-                await _context.SaveChangesAsync();
-
-                attachmentDto.FileNames = fileNames;
-            }
-
-            if (errors.Any())
-            {
-                return $"Some files failed to upload: {string.Join("; ", errors)}";
-            }
-
-            return documentList.Any() ? "Files uploaded and saved successfully." : "No valid files were uploaded.";
-        }
-
-        //public async Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, QualificationAttachmentDto attachmentDto)
-        //{
-        //    var result = await _repository.UploadOrUpdateDocuments(
-        //        files,
-        //        "EmpAttachment/EmpQualification",
-        //        (file, filePath) => new QualificationAttachment
-        //        {
-        //            EmpId = attachmentDto.EmployeeId,
-        //            QualFileName = Path.GetFileName(filePath),
-        //            FilePath = filePath,
-        //            FileType = file.ContentType,
-        //            EntryBy = attachmentDto.EntryBy,
-        //            EntryDate = DateTime.UtcNow,
-        //            UpdatedBy = attachmentDto.EntryBy,
-        //            UpdatedDate = DateTime.UtcNow,
-        //            DocStatus = "A",
-        //            QualificationId = attachmentDto.QualificationId
-        //        },
-        //        entity => ((QualificationAttachment)(object)entity).EmpId
-        //    );
-
-        //    return result.Message;
-        //}
         public async Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, string filePath, QualificationAttachmentDto attachmentDto)
         {
             var result = await _repository.UploadOrUpdateDocuments(
@@ -7059,7 +5506,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     EntryDate = DateTime.UtcNow,
                     UpdatedBy = attachmentDto.EntryBy,
                     UpdatedDate = DateTime.UtcNow,
-                    DocStatus = "A",
+                    DocStatus = ApprovalStatus.Approved.ToString(),// "A",
                     QualificationId = attachmentDto.QualificationId
                 },
                 entity => ((QualificationAttachment)(object)entity).EmpId
@@ -7463,7 +5910,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         public async Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID)
         {
             var reasons = await _context.ReasonMasters
-                .Where(a => a.Value == varAssestTypeID && a.Status != "D")
+                .Where(a => a.Value == varAssestTypeID && a.Status != ApprovalStatus.Deleted.ToString())
                 .OrderBy(a => a.Description)
                 .Select(a => new
                 {
@@ -7481,8 +5928,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         {
             var assetCategories = await _context.AssetcategoryCodes
                 .Where(a => a.Code == CommonName
-                    && a.Status != "D"
-                    && a.Status != "A")
+                    && a.Status != ApprovalStatus.Deleted.ToString()
+                    && a.Status != ApprovalStatus.Approved.ToString())
                 .OrderBy(a => a.Description)
                 .Select(a => new
                 {
@@ -7500,90 +5947,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
 
-        //public async Task<string> AssetEdit(AssetEditDto assetEdits)
-        //{
-        //    using (var transaction = await _context.Database.BeginTransactionAsync()) // Start Transaction
-        //    {
-        //        // Check if the asset is already assigned and not returned
-        //        var existingAssignment = await _context.EmployeesAssetsAssigns
-        //            .FirstOrDefaultAsync(ea => ea.AssetNo == assetEdits.AssetNo &&
-        //                                       ea.AssignId != assetEdits.varAssestID &&
-        //                                       (ea.ReturnDate == null || ea.ReturnDate >= assetEdits.ReceiveDate));
 
-        //        if (existingAssignment != null)
-        //        {
-        //            return "2"; // Asset is already assigned and not available
-        //        }
-
-        //        // Update asset category status to 'P' for previous assignment
-        //        var assetCategory = await _context.AssetcategoryCodes
-        //            .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo);
-        //        if (assetCategory != null)
-        //        {
-        //            var previousAssignment = await _context.EmployeesAssetsAssigns
-        //                .FirstOrDefaultAsync(ea => ea.AssignId == assetEdits.varAssestID);
-
-        //            if (previousAssignment != null)
-        //            {
-
-        //                assetCategory.Status = "P";
-        //            }
-        //        }
-
-
-        //        var assetToUpdate = await _context.EmployeesAssetsAssigns
-        //            .FirstOrDefaultAsync(a => a.AssignId == assetEdits.varAssestID);
-        //        if (assetToUpdate != null)
-        //        {
-        //            assetToUpdate.AssetGroup = assetEdits.AssetGroup;
-        //            assetToUpdate.Asset = assetEdits.varAssestName;
-        //            assetToUpdate.AssetNo = assetEdits.AssetNo;
-        //            assetToUpdate.AssetModel = assetEdits.AssetModel;
-        //            assetToUpdate.Monitor = assetEdits.Monitor;
-        //            assetToUpdate.InWarranty = assetEdits.InWarranty;
-        //            assetToUpdate.OutOfWarranty = assetEdits.OutOfWarranty;
-        //            assetToUpdate.Status = assetEdits.varAssignAsetStatus;
-        //            assetToUpdate.ReceivedDate = assetEdits.ReceiveDate;
-        //            assetToUpdate.ExpiryDate = assetEdits.ExpiryDate;
-        //            assetToUpdate.ReturnDate = assetEdits.ReturnDate;
-        //            assetToUpdate.Remarks = assetEdits.Remarks;
-        //            await _context.SaveChangesAsync();
-        //        }
-
-        //        // Update AssetcategoryCode status to 'A' for the current asset
-        //        var updatedCategory = await _context.AssetcategoryCodes
-        //            .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo);
-        //        if (updatedCategory != null)
-        //        {
-        //            updatedCategory.Status = "A";
-        //            await _context.SaveChangesAsync();
-        //        }
-
-        //        var returnedCategory = await _context.AssetcategoryCodes
-        //            .FirstOrDefaultAsync(a => a.Code == assetEdits.AssetNo && assetEdits.ReturnDate != null);
-        //        if (returnedCategory != null)
-        //        {
-        //            returnedCategory.Status = "P";
-        //            await _context.SaveChangesAsync();
-        //        }
-
-        //        var assetRequestHistory = new AssetRequestHistory
-        //        {
-        //            RequestId = assetEdits.varAssestID,
-        //            AssetEntryBy = assetEdits.EntryBy,
-        //            EntryDate = DateTime.UtcNow,
-        //            StatusType = 2,
-        //            AssetEmpId = assetEdits.varEmpID
-        //        };
-
-        //        _context.AssetRequestHistories.Add(assetRequestHistory);
-        //        await _context.SaveChangesAsync();
-
-        //        await transaction.CommitAsync();
-
-        //        return "1";
-        //    }
-        //}
 
         public async Task<string> AssetEdit(AssetEditDto assetEdits)
         {
@@ -7654,7 +6018,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     // Update AssetCategoryCode Status
                     if (assetCategory != null)
                     {
-                        assetCategory.Status = assetEdits.ReturnDate != null ? "P" : "A";
+                        assetCategory.Status = assetEdits.ReturnDate != null ? ApprovalStatus.Pending.ToString() : ApprovalStatus.Approved.ToString();
                     }
 
                     // Add Asset Request History
@@ -7938,33 +6302,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 _context.SaveChanges();
 
             }
-            //if(SetEmpDocumentDetails.WorkFlowNeed == "Yes")
-            //    {
-
-            //    var newDocument = new HrmsEmpdocuments00
-            //        {
-            //        DocId = SetEmpDocumentDetails.DocumentID,
-            //        EmpId = (SetEmpDocumentDetails.ProxyID > 0) ? (SetEmpDocumentDetails.ProxyID == SetEmpDocumentDetails.EmpID ? SetEmpDocumentDetails.EmpID : SetEmpDocumentDetails.ProxyID) : SetEmpDocumentDetails.EmpID,
-            //        RequestId = RequestSequence,
-            //        TransactionType = "Document",
-            //        Status = SetEmpDocumentDetails.WorkFlowNeed == "Yes" ? "p" : "A",
-            //        FlowStatus = SetEmpDocumentDetails.WorkFlowNeed == "Yes" ? SetEmpDocumentDetails.FlowStatus : "E",
-            //        ProxyId = (SetEmpDocumentDetails.ProxyID > 0) ? (SetEmpDocumentDetails.ProxyID == SetEmpDocumentDetails.EmpID ? 0 : SetEmpDocumentDetails.EmpID) : SetEmpDocumentDetails.ProxyID,
-            //        EntryBy = SetEmpDocumentDetails.EntryBy,
-            //        EntryDate = DateTime.UtcNow,
-            //        FinalApprovalDate = SetEmpDocumentDetails.WorkFlowNeed == "No" ? DateTime.UtcNow : (DateTime?)null
-            //        };
-            //    _context.HrmsEmpdocuments00s.Add (newDocument);
-            //    _context.SaveChanges ( );
-
-            //    int newDetailId = newDocument.DetailId;
-
-
-            //    }
-            //else
-            //    {
-
-            //    }
 
             if (workFlowNeed == _employeeSettings.Yes)
             {
@@ -8139,8 +6476,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                 _context.SaveChanges();
             }
-
-
             string errorID = _context.HrmsEmpdocuments00s
                 .OrderByDescending(d => d.DetailId)
                 .Select(d => d.DetailId.ToString())
@@ -8148,16 +6483,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return errorID;
 
-
         }
-
-        //public Task<string> GetBankType (int employeeId)
-        //    {
-        //    throw new NotImplementedException ( );
-        //    }
-
-
-
         public async Task<string?> UpdatePersonalDetails(PersonalDetailsUpdateDto personalDetailsDto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -8266,7 +6592,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             //return new PersonalDetailsHistoryDto();
         }
 
-
         public async Task<List<FillDocumentTypeDto>> FillDocumentType(int EmpID)
         {
             return await (from a in _context.HrmsDocument00s
@@ -8325,8 +6650,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                           }).AsNoTracking().ToListAsync();
 
         }
-
-
         public async Task<string> InsertDocumentsFieldDetails(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -8387,7 +6710,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 else
                 {
                     var insertRecords = tmpDocFileUpList
-                         .Where (b => b.DocFieldText != null)
+                         .Where(b => b.DocFieldText != null)
                         .Select(b => new HrmsEmpdocuments01
                         {
                             DetailId = b.DetailID,
@@ -8639,7 +6962,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 }
 
                 if (Status == _employeeSettings.StatusP || Status == _employeeSettings.Status02 || Status == _employeeSettings.Status06)
-                    {
+                {
                     var existingDocs = _context.HrmsEmpdocuments02s.Where(d => d.DetailId == DetailID);
                     _context.HrmsEmpdocuments02s.RemoveRange(existingDocs);
 
@@ -8712,155 +7035,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 return $"Error: {ex.Message}";
             }
         }
-        //public async Task<string?> InsertLetterTypeRequest(LetterInsertUpdateDto dto)
-        //{
-        //    if (dto.Mode == "CheckLetterTypeRequest")
-        //    {
-        //        bool exists = await _context.AssignedLetterTypes
-        //            .Where(a => a.LetterTypeId == dto.LetterTypeID
-        //                        && a.LetterSubType == dto.LetterSubTypeID
-        //                        && a.EmpId == dto.MasterID
-        //                        && !new[] { "R", "RE" }.Contains(a.ApprovalStatus ?? "C")
-        //                        && a.IsLiability == null
-        //                        && a.Active == true)
-        //            .AnyAsync();
 
-        //        return exists ? "-1" : "0";
-        //    }
-
-        //    if (dto.Mode == "InsertLetterTypeRequest")
-        //    {
-        //        var transactionId = await _context.TransactionMasters
-        //            .Where(a => a.TransactionType == "LetterConfig")
-        //            .Select(a => a.TransactionId)
-        //            .FirstOrDefaultAsync();
-
-        //        if (!_context.AssignedLetterTypes.Any(x => x.LetterReqId == dto.MasterID))
-        //        {
-        //            var sequenceData = await _context.AdmCodegenerationmasters
-        //                .Where(x => x.TypeId == transactionId)
-        //                .Select(x => new { x.CodeId, x.LastSequence, x.NumberFormat, x.CurrentCodeValue, x.Code })
-        //                .FirstOrDefaultAsync();
-
-        //            if (sequenceData == null) return "0";
-
-        //            using var transaction = await _context.Database.BeginTransactionAsync();
-        //            try
-        //            {
-        //                var assignedLetter = new AssignedLetterType
-        //                {
-        //                    RequestCode = sequenceData.LastSequence,
-        //                    LetterTypeId = dto.LetterTypeID,
-        //                    Remark = dto.LetterType,
-        //                    ApprovalStatus = "P",
-        //                    FlowStatus = "P",
-        //                    Active = true,
-        //                    EmpId = dto.EmpID,
-        //                    TemplateStyle = dto.FileName == "DirectPosting" ? dto.TemplateStyle : "",
-        //                    UploadFileName = dto.FileName == "DirectPosting" && !string.IsNullOrEmpty(dto.EmployeeList) ? dto.EmployeeList : "",
-        //                    IsLetterAttached = dto.FileName == "DirectPosting" && !string.IsNullOrEmpty(dto.EmployeeList),
-        //                    CreatedBy = dto.UserID,
-        //                    CreatedDate = DateTime.UtcNow,
-        //                    LetterSubType = dto.LetterSubTypeID,
-        //                    IsProxy = dto.FileName == "Proxy" ? 1 : 0,
-        //                    Language = dto.Language,
-        //                    IssueDate = dto.IssueDate
-        //                };
-
-        //                await _context.AssignedLetterTypes.AddAsync(assignedLetter);
-        //                await _context.SaveChangesAsync();
-        //                var letterReqIdAfterInsert = Convert.ToInt32(assignedLetter.LetterReqId);
-
-        //                if (dto.LetterTypeID == 4)
-        //                {
-        //                    var salaryConfirmation = new SalaryConfirmationLetterType
-        //                    {
-        //                        LetterReqId = letterReqIdAfterInsert,
-        //                        BankName = dto.BankName,
-        //                        BranchName = dto.BranchName,
-        //                        AccountNo = dto.AccountNo,
-        //                        IdentificationCode = dto.IdentificationCode,
-        //                        Location = dto.Location
-        //                    };
-        //                    await _context.SalaryConfirmationLetterTypes.AddAsync(salaryConfirmation);
-        //                }
-
-        //               // sequenceData = sequenceData + 1;
-        //                string finalSequence = $"{sequenceData.Code}{sequenceData.NumberFormat.Substring(0, Math.Max(0, sequenceData.NumberFormat.Length - sequenceData.CurrentCodeValue.ToString().Length))}{sequenceData.CurrentCodeValue}";
-
-        //                var codeRecord = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(x => x.CodeId == sequenceData.CodeId);
-        //                if (codeRecord != null)
-        //                {
-        //                    codeRecord.LastSequence = finalSequence;
-        //                    codeRecord.CurrentCodeValue = sequenceData.CurrentCodeValue;
-        //                }
-
-        //                if (dto.FileName == "DirectPosting")
-        //                {
-        //                    var letterWorkflowStatus = new LetterWorkflowStatus
-        //                    {
-        //                        RequestId = letterReqIdAfterInsert,
-        //                        ShowStatus = true,
-        //                        ApprovalStatus = "RE",
-        //                        Rule = 1,
-        //                        HierarchyType = true,
-        //                        Approver = dto.UserID,
-        //                        ApprovalRemarks = dto.LetterType,
-        //                        EntryBy = dto.UserID,
-        //                        EntryDt = DateTime.UtcNow,
-        //                        RuleOrder = 1,
-        //                        UpdatedDt = DateTime.UtcNow
-        //                    };
-        //                    await _context.LetterWorkflowStatuses.AddAsync(letterWorkflowStatus);
-
-        //                    var assignedLetterTypeRecord = await _context.AssignedLetterTypes.FirstOrDefaultAsync(x => x.LetterReqId == letterReqIdAfterInsert);
-        //                    if (assignedLetterTypeRecord != null)
-        //                    {
-        //                        assignedLetterTypeRecord.ApprovalStatus = "RE";
-        //                        assignedLetterTypeRecord.FlowStatus = "E";
-        //                        assignedLetterTypeRecord.ReleaseDate = DateTime.UtcNow;
-        //                        assignedLetterTypeRecord.IsDirectPosting = 1;
-        //                        assignedLetterTypeRecord.FinalApprovalDate = DateTime.UtcNow;
-        //                        assignedLetterTypeRecord.FinalApproverId = dto.UserID;
-        //                    }
-        //                }
-
-        //                await _context.SaveChangesAsync();
-        //                await transaction.CommitAsync();
-        //            }
-        //            catch
-        //            {
-        //                await transaction.RollbackAsync();
-        //                throw;
-        //            }
-        //        }
-        //        else
-        //        {
-
-        //        }
-        //    }
-        //    else if (dto.Mode == "uploadreqLetter")
-        //    {
-        //        var record = await _context.AssignedLetterTypes.FirstOrDefaultAsync(x => x.LetterReqId == dto.MasterID);
-        //        if (record != null)
-        //        {
-        //            record.UploadFileName = dto.FileName;
-        //            record.IsLetterAttached = true;
-        //            await _context.SaveChangesAsync();
-        //        }
-        //    }
-
-        //    return "0";
-        //}
-
-
-        //public async Task<string?> InsertLetterTypeRequest(List<IFormFile> files, LetterInsertUpdateDto dto)
         public async Task<string?> InsertLetterTypeRequest(LetterInsertUpdateDto dto)
         {
-
-
-
-
             if (dto.Mode == "CheckLetterTypeRequest")
             {
                 var varRowCount = await (from a in _context.AssignedLetterTypes
@@ -9174,8 +7351,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             }
 
-
-
             else if (dto.Mode == "CheckLetterSubType")
             {
                 var varReturn = await _context.LetterMaster01s.Where(lm => lm.LetterTypeId == dto.LetterTypeID && lm.LetterSubName == dto.LetterSubType && lm.IsActive == true).CountAsync();
@@ -9253,22 +7428,27 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         /// <param name="files"></param>
         /// <param name="masterID(need to pass the PK id against which the filename is storing in database)"></param>
         /// <returns></returns>
-        public async Task<bool> DirectUploadLetter(List<IFormFile> files, int masterID)
+        public async Task<string> DirectUploadLetter(List<IFormFile> files, string filePath, int masterID)
         {
-
-            var (uploadedFiles, errors) = await UploadFilesAsync(files, "DirectUploadLetters");
-            if (!uploadedFiles.Any())
-                return false; // No files uploaded, return early
-
             var record = await _context.AssignedLetterTypes.FirstOrDefaultAsync(x => x.LetterReqId == masterID);
-
             if (record == null)
-                return false; // No matching record found, return early
+                return "Record not found."; // Return an appropriate message
 
-            record.UploadFileName = uploadedFiles[0];
-            record.IsLetterAttached = true;
+            var result = await _assignedLetterTypeRepository.UploadOrUpdateDocuments(
+                files,
+                "DirectUploadLetters",
+                (file, filePath) =>
+                {
+                    // Update only the required fields
+                    record.UploadFileName = Path.GetFileName(filePath);
+                    record.IsLetterAttached = true;
+                    return record; // Return the modified record
+                },
+                entity => ((AssignedLetterType)(object)entity).LetterReqId
+            );
 
-            return await _context.SaveChangesAsync() > 0;
+            return result.Message;
+
         }
 
 
@@ -9420,7 +7600,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         }
                     }
 
-                    if (input.InfoCode.ToUpper() == "PROBATIONENDDATE")
+                    if (input.InfoCode.ToUpper() == _employeeSettings.ProbationEndDate)
                     {
                         foreach (var survey in surveyRelations.Where(sr => sr.EmpId == input.EmpID))
                         {
@@ -9431,7 +7611,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             }
                         }
                     }
-                    if (input.InfoCode.ToUpper() == "COMPANYACCOMODATION")
+                    if (input.InfoCode.ToUpper() == _employeeSettings.CompanyAccomodation)// "COMPANYACCOMODATION"
                     {
                         var hraLatestRecords = await _context.HraHistories.Where(h => _context.HraHistories
                                                       .Where(inner => inner.EmployeeId == h.EmployeeId)
@@ -9446,7 +7626,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         }
 
                         var hraNewRecords = inputs
-                                            .Where(input => input.InfoCode.ToUpper() == "COMPANYACCOMODATION")
+                                            .Where(input => input.InfoCode.ToUpper() == _employeeSettings.CompanyAccomodation)
                                             .Select(input => new HraHistory
                                             {
                                                 EmployeeId = input.EmpID,
@@ -9749,7 +7929,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             };
         }
 
-        #region LoadCompanyDetails()
+
 
         public async Task<object> GetLevelAsync(int level)
         {
@@ -9873,5 +8053,4 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
     }
 
-    #endregion
 }

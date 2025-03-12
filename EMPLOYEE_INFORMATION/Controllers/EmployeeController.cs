@@ -501,19 +501,19 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(empskilll);
         }
 
-        [HttpPost("uploadDocument")]
-        public async Task<IActionResult> UploadQualificationDocument(List<IFormFile> files, [FromForm] QualificationAttachmentDto skillset)
-        {
-            if (files == null || files.Count == 0)
-                return BadRequest("No files uploaded.");
+        //[HttpPost("uploadDocument")]
+        //public async Task<IActionResult> UploadQualificationDocument(List<IFormFile> files, [FromForm] QualificationAttachmentDto skillset)
+        //{
+        //    if (files == null || files.Count == 0)
+        //        return BadRequest("No files uploaded.");
 
-            var result = await _employeeInformation.UploadEmployeeDocumentsAsync(files, skillset);
+        //    var result = await _employeeInformation.UploadEmployeeDocumentsAsync(files, skillset);
 
-            if (string.IsNullOrEmpty(result))
-                return StatusCode(500, "Error while uploading files.");
+        //    if (string.IsNullOrEmpty(result))
+        //        return StatusCode(500, "Error while uploading files.");
 
-            return Ok(new { message = "Files uploaded successfully", result });
-        }
+        //    return Ok(new { message = "Files uploaded successfully", result });
+        //}
 
         [HttpPost]
         public async Task<IActionResult> InsertQualification([FromBody] QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
@@ -699,12 +699,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return new JsonResult(employeeType);
         }
         [HttpPost]
-        public async Task<IActionResult> DirectUploadLetter(List<IFormFile> files, int masterID)
+        public async Task<IActionResult> DirectUploadLetter([FromForm] List<IFormFile> files, string filepath, int masterID)
         {
             if (files == null || files.Count == 0)
                 return BadRequest("No files uploaded.");
-            var result = await _employeeInformation.DirectUploadLetter(files, masterID);
-            if (result == false)
+            var result = await _employeeInformation.DirectUploadLetter(files, filepath, masterID);
+            if (result == "")
                 return StatusCode(500, "Error while uploading files.");
             return Ok(new { message = "Files uploaded successfully", result });
         }
