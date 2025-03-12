@@ -90,6 +90,8 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? LinkLevel16 { get; set; }
         public string? LinkLevel17 { get; set; }
         public int? LinkLevel1 { get; set; }
+        public string Status06 { get; set; }
+
 
 
         }
