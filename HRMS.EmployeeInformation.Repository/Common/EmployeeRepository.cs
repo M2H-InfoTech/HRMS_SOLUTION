@@ -8373,7 +8373,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                             on new { DetailID = b.DetailID, DocFields = b.DocFieldID }
                                             equals new { DetailID = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 } into joined
                                         from a in joined.DefaultIfEmpty()
-                                        where a == null
+                                        where a == null && b.DocFieldText != null
                                         select new HrmsEmpdocuments01
                                         {
                                             DetailId = b.DetailID,
@@ -8387,6 +8387,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 else
                 {
                     var insertRecords = tmpDocFileUpList
+                         .Where (b => b.DocFieldText != null)
                         .Select(b => new HrmsEmpdocuments01
                         {
                             DetailId = b.DetailID,
@@ -8637,8 +8638,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     await transaction.CommitAsync();
                 }
 
-                if (Status == _employeeSettings.StatusP || Status == _employeeSettings.Status02)
-                {
+                if (Status == _employeeSettings.StatusP || Status == _employeeSettings.Status02 || Status == _employeeSettings.Status06)
+                    {
                     var existingDocs = _context.HrmsEmpdocuments02s.Where(d => d.DetailId == DetailID);
                     _context.HrmsEmpdocuments02s.RemoveRange(existingDocs);
 
