@@ -24,7 +24,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<LetterDto>> LetterAsync(int employeeId);
         Task<List<ReferenceDto>> ReferenceAsync(int employeeId);
         Task<List<ProfessionalDto>> ProfessionalAsync(int employeeId);
-        Task<List<AssetDto>> AsseAsynct();
+        Task<List<AssetDto>> AsseAsync();
         Task<List<AssetDetailsDto>> AssetDetailsAsync(int employeeId);
         Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdownProfessionalAsync();
         Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto);

@@ -96,7 +96,8 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string ProbationEndDate { get; set; }
         public string? CompanyAccomodation { get; set; }
 
-
+        public string? empSystemStatus { get; set; }
+        public string? SeqGen { get; set; }
     }
 
 }
