@@ -335,10 +335,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.UpdatePersonalDetails(personalDetailsDto);
         }
-        public async Task<string> UploadEmployeeDocumentsAsync(List<IFormFile> files, QualificationAttachmentDto skillset)
-        {
-            return await _employeeRepository.UploadEmployeeDocuments(files, skillset);
-        }
+        //public async Task<string> UploadEmployeeDocumentsAsync(List<IFormFile> files, QualificationAttachmentDto skillset)
+        //{
+        //    return await _employeeRepository.UploadEmployeeDocuments(files, skillset);
+        //}
 
         public async Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
         {
@@ -419,10 +419,15 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.GetLevelAsync(level);
         }
 
-        public async Task<bool> DirectUploadLetter(List<IFormFile> files, int masterID)
+        //public async Task<bool> DirectUploadLetter(List<IFormFile> files, int masterID)
+        //{
+        //    return await _employeeRepository.DirectUploadLetter(files, masterID);
+        //}
+        public async Task<string> DirectUploadLetter(List<IFormFile> files, string filePath, int masterID)
         {
-            return await _employeeRepository.DirectUploadLetter(files, masterID);
+            return await _employeeRepository.DirectUploadLetter(files, filePath, masterID);
         }
+
 
         public async Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, string filePath, QualificationAttachmentDto attachmentDto)
         {
