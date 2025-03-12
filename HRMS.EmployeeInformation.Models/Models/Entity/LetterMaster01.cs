@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace EMPLOYEE_INFORMATION.Models;
+﻿namespace EMPLOYEE_INFORMATION.Models;
 
 public partial class LetterMaster01
 {

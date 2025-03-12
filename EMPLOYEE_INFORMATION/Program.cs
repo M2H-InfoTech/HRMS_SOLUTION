@@ -47,7 +47,7 @@ internal class Program
         builder.Services.Configure<EmployeeSettings>(builder.Configuration.GetSection("EmployeeSettings"));
         builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<EmployeeSettings>>().Value);
         builder.Services.AddAutoMapper(typeof(EmployeeMapper));
-
+        builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

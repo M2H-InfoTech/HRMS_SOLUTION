@@ -47,6 +47,7 @@ namespace EMPLOYEE_INFORMATION.Services.Mapping
             CreateMap<HrEmpTechnicalApprl, SaveSkillSetDto>().ReverseMap();
             CreateMap<EmployeeParametersDto, EmployeeDetailsUpdateDto>().ReverseMap();
             CreateMap<HrEmpMaster, EmployeeDetailsUpdateDto>().ReverseMap();
+            CreateMap<LetterMaster01, LetterMaster01Dto>().ReverseMap();
         }
     }
 }

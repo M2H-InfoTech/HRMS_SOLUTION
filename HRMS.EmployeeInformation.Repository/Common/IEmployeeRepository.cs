@@ -121,10 +121,20 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string?> GetLastSequence(string codeId);
         Task UpdateCodeGeneration(string codeId);
 
-        Task<string?> InsertLetterTypeRequest(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos);
+        //Task<string?> InsertLetterTypeRequest(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos);
+        Task<string?> InsertLetterTypeRequest(LetterInsertUpdateDto LetterInsertUpdateDtos);
         Task<object> EditEmployeeCommonInformation(string? empIds, int? employeeid);
 
         Task<string?> EditInformationAsync(List<TmpEmpInformation> inputs);
         Task<object> GetInformationDescriptionAsync(int infoId);
+        Task<object> GetLetterTypeAsync();
+        Task<object> LetterSignatureAuthorityAsync();
+        Task<LoadCompanyDetailsResultDto> LoadCompanyDetailsAsync(LoadCompanyDetailsRequestDto loadCompanyDetailsRequestDto);
+        Task<object> GetLevelAsync(int level);
+
+        Task<bool> DirectUploadLetter(List<IFormFile> files, int masterID);
+        Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, string filePath, QualificationAttachmentDto attachmentDto);
+
+
     }
 }

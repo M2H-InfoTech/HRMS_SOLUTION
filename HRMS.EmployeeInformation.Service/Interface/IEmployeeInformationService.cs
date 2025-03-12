@@ -114,11 +114,18 @@ namespace HRMS.EmployeeInformation.Service.Interface
 
         Task<string> InsertDocumentsFieldDetailsAsync(List<TmpDocFileUpDto> DocumentBankField, int DocumentID, int In_EntryBy);
         Task<string> SetEmpDocumentsAsync(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy);
-        Task<string?> InsertLetterTypeRequestAsync(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos);
+        //Task<string?> InsertLetterTypeRequestAsync(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos);
+        Task<string?> InsertLetterTypeRequestAsync(LetterInsertUpdateDto LetterInsertUpdateDtos);
         Task<object> EditEmployeeCommonInformationAsync(string? empIds, int? employeeid);
 
         Task<string?> EditInformationAsync(List<TmpEmpInformation> inputs);
         Task<object> GetInformationDescriptionAsync(int infoId);
+        Task<object> GetLetterTypeAsync();
+        Task<object> LetterSignatureAuthorityAsync();
+        Task<LoadCompanyDetailsResultDto> LoadCompanyDetailsAsync(LoadCompanyDetailsRequestDto loadCompanyDetailsRequestDto);
+        Task<object> GetLevelAsync(int level);
+        Task<bool> DirectUploadLetter(List<IFormFile> files, int masterID);
+        Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, string filePath, QualificationAttachmentDto attachmentDto);
     }
 
 }

@@ -31,15 +31,18 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _env;
         private readonly IRepositoryC _employeeRepositoryC;
+        private readonly IRepository<QualificationAttachment> _repository;
 
-        public EmployeeRepository(EmployeeDBContext dbContext, EmployeeSettings employeeSettings, IMemoryCache memoryCache, IMapper mapper, IWebHostEnvironment env, IRepositoryC employeeRepositoryC)
+
+        public EmployeeRepository(EmployeeDBContext dbContext, EmployeeSettings employeeSettings, IMemoryCache memoryCache, IMapper mapper, IWebHostEnvironment env, IRepositoryC employeeRepositoryC, IRepository<QualificationAttachment> repository)
         {
             _context = dbContext;
             _employeeSettings = employeeSettings;
             _memoryCache = memoryCache;
             _mapper = mapper;
             _env = env ?? throw new ArgumentNullException(nameof(env));
-            _employeeRepositoryC = employeeRepositoryC;
+            _repository = repository;
+
         }
         public async Task<string> GetDefaultCompanyParameter(int employeeId, string parameterCode, string type)
         {
@@ -3038,6 +3041,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         public async Task<List<ProfessionalDto>> ProfessionalAsync(int employeeId)
         {
+
             var query = await (
                 from a in _context.HrEmpProfdtls
                 join b in _context.HrEmpMasters on a.EmpId equals b.EmpId into empGroup
@@ -7017,6 +7021,53 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return documentList.Any() ? "Files uploaded and saved successfully." : "No valid files were uploaded.";
         }
 
+        //public async Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, QualificationAttachmentDto attachmentDto)
+        //{
+        //    var result = await _repository.UploadOrUpdateDocuments(
+        //        files,
+        //        "EmpAttachment/EmpQualification",
+        //        (file, filePath) => new QualificationAttachment
+        //        {
+        //            EmpId = attachmentDto.EmployeeId,
+        //            QualFileName = Path.GetFileName(filePath),
+        //            FilePath = filePath,
+        //            FileType = file.ContentType,
+        //            EntryBy = attachmentDto.EntryBy,
+        //            EntryDate = DateTime.UtcNow,
+        //            UpdatedBy = attachmentDto.EntryBy,
+        //            UpdatedDate = DateTime.UtcNow,
+        //            DocStatus = "A",
+        //            QualificationId = attachmentDto.QualificationId
+        //        },
+        //        entity => ((QualificationAttachment)(object)entity).EmpId
+        //    );
+
+        //    return result.Message;
+        //}
+        public async Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, string filePath, QualificationAttachmentDto attachmentDto)
+        {
+            var result = await _repository.UploadOrUpdateDocuments(
+                files,
+                filePath,
+                (file, filePath) => new QualificationAttachment
+                {
+                    EmpId = attachmentDto.EmployeeId,
+                    QualFileName = Path.GetFileName(filePath),
+                    FilePath = filePath,
+                    FileType = file.ContentType,
+                    EntryBy = attachmentDto.EntryBy,
+                    EntryDate = DateTime.UtcNow,
+                    UpdatedBy = attachmentDto.EntryBy,
+                    UpdatedDate = DateTime.UtcNow,
+                    DocStatus = "A",
+                    QualificationId = attachmentDto.QualificationId
+                },
+                entity => ((QualificationAttachment)(object)entity).EmpId
+            );
+
+            return result.Message;
+        }
+
         public int? GetEmployeeParametersettingsNew(int? employeeId, string code, string type)
         {
 
@@ -8802,7 +8853,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         //}
 
 
-        public async Task<string?> InsertLetterTypeRequest(List<IFormFile> files, LetterInsertUpdateDto dto)
+        //public async Task<string?> InsertLetterTypeRequest(List<IFormFile> files, LetterInsertUpdateDto dto)
+        public async Task<string?> InsertLetterTypeRequest(LetterInsertUpdateDto dto)
         {
 
 
@@ -9122,26 +9174,103 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             }
 
 
-            else if (dto.Mode == "uploadreqLetter")
-            {
-                var (uploadedFiles, errors) = await UploadFilesAsync(files, "DirectUploadLetters");
-                if (uploadedFiles.Any())
-                {
-                    var record = await _context.AssignedLetterTypes.FirstOrDefaultAsync(x => x.LetterReqId == dto.MasterID);
-                    if (record != null)
-                    {
-                        record.UploadFileName = uploadedFiles[0];
-                        record.IsLetterAttached = true;
-                        await _context.SaveChangesAsync();
-                    }
-                }
 
+            else if (dto.Mode == "CheckLetterSubType")
+            {
+                var varReturn = await _context.LetterMaster01s.Where(lm => lm.LetterTypeId == dto.LetterTypeID && lm.LetterSubName == dto.LetterSubType && lm.IsActive == true).CountAsync();
+                return varReturn.ToString();
+            }
+            else if (dto.Mode == "SubmitLetterSubType")
+            {
+                var existingLetter = await _context.LetterMaster01s
+                    .FirstOrDefaultAsync(l => l.ModuleSubId == dto.LetterSubTypeID);
+
+                if (existingLetter == null)
+                {
+                    var entity = new LetterMaster01
+                    {
+                        LetterSubName = dto.FileName,
+                        LetterTypeId = dto.LetterTypeID,
+                        IsEss = dto.IsEssApplicable,
+                        CreatedBy = dto.UserID,
+                        CreatedDate = DateTime.UtcNow,
+                        IsSelfApprove = dto.IsSelfApprove,
+                        ApproveText = dto.ApprovalText,
+                        RejectText = dto.RejectText,
+                        HideReject = dto.HideReject,
+                        WrkFlowRoleId = dto.WrkFlowRole,
+                        IsActive = dto.IsActive,
+                        AdjustImagePos = dto.AdjustImagePos,
+                        AppointmentLetter = dto.AppointmentLetter,
+
+                    };
+
+                    await _context.LetterMaster01s.AddAsync(entity);
+                    await _context.SaveChangesAsync(); // Save to generate the ID
+
+                    return entity.ModuleSubId.ToString(); // Return the newly inserted ID
+                }
+                else
+                {
+                    existingLetter.LetterSubName = dto.FileName;
+                    existingLetter.LetterTypeId = dto.LetterTypeID;
+                    existingLetter.IsEss = dto.IsEssApplicable;
+                    existingLetter.IsActive = dto.IsActive;
+                    existingLetter.ModifiedBy = dto.UserID;
+                    existingLetter.ModifiedDate = DateTime.UtcNow;
+                    existingLetter.IsSelfApprove = dto.IsSelfApprove;
+                    existingLetter.ApproveText = dto.ApprovalText;
+                    existingLetter.RejectText = dto.RejectText;
+                    existingLetter.HideReject = dto.HideReject;
+                    existingLetter.WrkFlowRoleId = dto.WrkFlowRole;
+                    existingLetter.AdjustImagePos = dto.AdjustImagePos;
+                    existingLetter.AppointmentLetter = dto.AppointmentLetter;
+
+                    await _context.SaveChangesAsync();
+
+                    return existingLetter.ModuleSubId.ToString(); // Return the updated ID
+                }
             }
 
+            else if (dto.Mode == "UploadbackgroundImage")
+            {
+                var existingLetter = await _context.LetterMaster01s
+                    .FirstOrDefaultAsync(l => l.ModuleSubId == dto.LetterSubTypeID);
+                if (existingLetter != null)
+                {
+                    existingLetter.BackgroundImage = dto.FileName;
+                    await _context.SaveChangesAsync();
+                }
+            }
             return "0";
 
             //return await Task.FromResult(GetSequence(0, transactionId, "", 0));
         }
+        /// <summary>
+        /// Letter Direct Posting. Image upload
+        /// </summary>
+        /// <param name="files"></param>
+        /// <param name="masterID(need to pass the PK id against which the filename is storing in database)"></param>
+        /// <returns></returns>
+        public async Task<bool> DirectUploadLetter(List<IFormFile> files, int masterID)
+        {
+
+            var (uploadedFiles, errors) = await UploadFilesAsync(files, "DirectUploadLetters");
+            if (!uploadedFiles.Any())
+                return false; // No files uploaded, return early
+
+            var record = await _context.AssignedLetterTypes.FirstOrDefaultAsync(x => x.LetterReqId == masterID);
+
+            if (record == null)
+                return false; // No matching record found, return early
+
+            record.UploadFileName = uploadedFiles[0];
+            record.IsLetterAttached = true;
+
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+
         private async Task<(List<string> uploadedFiles, List<string> errors)> UploadFilesAsync(List<IFormFile> files, string subDirectory)
         {
             if (files == null || !files.Any())
@@ -9244,270 +9373,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             // Trim leading/trailing spaces and replace multiple spaces with a single space
             return string.Join(" ", cleaned.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
         }
-
-        //    public async Task<string?> UpdateEmployeeInfo1(List<TmpEmpInformation> inputs)
-        //    {
-        //        try
-        //        {
-
-        //            var empIds = inputs.Select(i => i.EmpID).Distinct().ToList();
-        //            var userMasters = await _context.HrEmpMasters
-        //                .Where(e => empIds.Contains(e.EmpId))
-        //                .ToListAsync();
-
-        //            var personalInfos = await _context.HrEmpPersonals
-        //                .Where(p => empIds.Contains(p.EmpId))
-        //                .ToListAsync();
-
-        //            var addressInfos = await _context.HrEmpAddresses
-        //                .Where(a => empIds.Contains(a.EmpId))
-        //                .ToListAsync();
-
-        //            var userRelations = await _context.HrEmployeeUserRelations
-        //                .Where(r => empIds.Contains(r.EmpId))
-        //                .ToListAsync();
-
-        //            var userIds = userRelations.Select(r => r.UserId).ToList();
-        //            var users = await _context.AdmUserMasters
-        //                .Where(u => userIds.Contains(u.UserId))
-        //                .ToListAsync();
-
-        //            var surveyRelations = await _context.SurveyRelations
-        //.Where(sr => empIds.Contains(sr.EmpId))
-        //.ToListAsync();
-        //            List<EditInfoHistory> editHistoryRecords = new List<EditInfoHistory>();
-
-        //            foreach (var input in inputs)
-        //            {
-        //                var userMaster = userMasters.FirstOrDefault(e => e.EmpId == input.EmpID);
-        //                if (userMasters != null)
-        //                {
-        //                    switch (input.InfoCode.ToUpper())
-        //                    {
-        //                        case "EMPCODE":
-        //                            userMaster.EmpCode = input.Value;
-        //                            break;
-        //                        case "FIRSTNAME":
-        //                            userMaster.FirstName = input.Value;
-        //                            break;
-        //                        case "MIDDLENAME":
-        //                            userMaster.MiddleName = input.Value;
-        //                            break;
-        //                        case "LASTNAME":
-        //                            userMaster.LastName = input.Value;
-        //                            break;
-        //                        case "GUARDIANSNAME":
-        //                            userMaster.GuardiansName = input.Value;
-        //                            break;
-        //                        case "GENDER":
-        //                            userMaster.Gender = input.Value;
-        //                            break;
-        //                        case "EMPDOB":
-        //                            userMaster.DateOfBirth = Convert.ToDateTime(input.Value);
-        //                            break;
-        //                        case "NATIONALID":
-        //                            userMaster.NationalIdNo = input.Value;
-        //                            break;
-        //                        case "PASSPORTID":
-        //                            userMaster.PassportNo = input.Value;
-        //                            break;
-        //                        case "JOINDATE":
-        //                            userMaster.JoinDt = Convert.ToDateTime(input.Value);
-        //                            break;
-        //                        case "REVIEWDATE":
-        //                            userMaster.ReviewDt = Convert.ToDateTime(input.Value);
-        //                            break;
-        //                        case "GRATUITYDATE":
-        //                            userMaster.GratuityStrtDate = Convert.ToDateTime(input.Value);
-        //                            break;
-        //                        case "FIRSTENTRYDATE":
-        //                            userMaster.FirstEntryDate = Convert.ToDateTime(input.Value);
-        //                            break;
-        //                        case "NOTICEPERIOD":
-        //                            userMaster.NoticePeriod = Convert.ToInt32(input.Value);
-        //                            break;
-        //                        case "COMPANYACCOMODATION":
-        //                            userMaster.Ishra = Convert.ToBoolean(input.Value);
-        //                            break;
-        //                        case "EXPATRIATE":
-        //                            userMaster.IsExpat = Convert.ToInt32(input.Value);
-        //                            break;
-        //                        case "CASUALHOLYDAY":
-        //                            userMaster.PublicHoliday = Convert.ToBoolean(input.Value);
-        //                            break;
-        //                        case "COMPANYCONVEYANCE":
-        //                            userMaster.CompanyConveyance = Convert.ToBoolean(input.Value);
-        //                            break;
-        //                        case "COMPANYVEHICLE":
-        //                            userMaster.CompanyVehicle = Convert.ToBoolean(input.Value);
-        //                            break;
-        //                        case "ISPROBATION":
-        //                            userMaster.IsProbation = Convert.ToBoolean(input.Value);
-        //                            break;
-        //                        case "PROBATIONENDDATE":
-        //                            userMaster.ProbationDt = Convert.ToDateTime(input.Value);
-        //                            break;
-        //                        case "PROBATIONNOTICEPERIOD":
-        //                            userMaster.ProbationNoticePeriod = Convert.ToInt32(input.Value);
-        //                            break;
-        //                        case "MEALALLOWANCEDEDUCTION":
-        //                            userMaster.MealAllowanceDeduct = Convert.ToBoolean(input.Value);
-        //                            break;
-        //                    }
-        //                }
-
-        //                var personalInfo = personalInfos.FirstOrDefault(p => p.EmpId == input.EmpID);
-        //                if (personalInfo != null)
-        //                {
-        //                    switch (input.InfoCode.ToUpper())
-        //                    {
-        //                        case "GENDER":
-        //                            personalInfo.Gender = input.Value;
-        //                            break;
-        //                        case "EMPCOUNTRY":
-        //                            personalInfo.Country = int.TryParse(input.Value, out int country) ? country : personalInfo.Country;
-        //                            break;
-        //                        case "NATIONALITY":
-        //                            personalInfo.Nationality = int.TryParse(input.Value, out int nationality) ? nationality : personalInfo.Nationality;
-        //                            break;
-        //                        case "COUNTRYOFBIRTH":
-        //                            personalInfo.CountryOfBirth = Convert.ToInt32(input.Value);
-        //                            break;
-        //                        case "EMPLOYEE_TYPE":
-        //                            personalInfo.EmployeeType = input.Value == "1" ? "D" : input.Value == "2" ? "H" : personalInfo.EmployeeType;
-        //                            break;
-        //                        case "MARITAL":
-        //                            personalInfo.MaritalStatus = input.Value;
-        //                            break;
-        //                        case "BLOODGROUP":
-        //                            var bloodGroup = await _context.HrmValueTypes
-        //                                .Where(v => v.Type == "BloodGroup" && v.Value == Convert.ToInt32(input.Value))
-        //                                .Select(v => v.Code)
-        //                                .FirstOrDefaultAsync();
-        //                            personalInfo.BloodGrp = bloodGroup ?? personalInfo.BloodGrp;
-        //                            break;
-        //                        case "WEDDING_DATE":
-        //                            personalInfo.WeddingDate = Convert.ToDateTime(input.Value);
-        //                            break;
-        //                        case "RELIGION":
-        //                            personalInfo.Religion = Convert.ToInt32(input.Value);
-        //                            break;
-        //                        case "HEIGHT":
-        //                            personalInfo.Height = input.Value;
-        //                            break;
-        //                        case "WEIGHT":
-        //                            personalInfo.Weight = input.Value;
-        //                            break;
-        //                        case "IDENTIFICATION":
-        //                            personalInfo.IdentMark = input.Value;
-        //                            break;
-        //                    }
-        //                }
-
-        //                var addressInfo = addressInfos.FirstOrDefault(a => a.EmpId == input.EmpID);
-        //                if (addressInfo != null)
-        //                {
-        //                    switch (input.InfoCode.ToUpper())
-        //                    {
-
-        //                        case "COMPANYMAIL":
-        //                            addressInfo.OfficialEmail = input.Value;
-        //                            break;
-        //                        case "PERSONALMAIL":
-        //                            addressInfo.PersonalEmail = input.Value;
-        //                            break;
-        //                        case "PERSONALMOBILE":
-        //                            addressInfo.Mobile = input.Value;
-        //                            break;
-        //                        case "OFFICIALMOBILE":
-        //                            addressInfo.Phone = input.Value;
-        //                            break;
-        //                        case "HOMECOUNTRYPHONENO":
-        //                            addressInfo.HomeCountryPhone = input.Value;
-        //                            break;
-        //                    }
-        //                }
-
-        //                var userRelation = userRelations.FirstOrDefault(r => r.EmpId == input.EmpID);
-        //                if (userRelation != null)
-        //                {
-        //                    var user = users.FirstOrDefault(u => u.UserId == userRelation.UserId);
-        //                    if (user != null)
-        //                    {
-        //                        switch (input.InfoCode.ToUpper())
-        //                        {
-        //                            case "COMPANYMAIL":
-        //                                user.Email = input.Value;
-        //                                break;
-        //                            case "EMPCODE":
-        //                                user.UserName = input.Value;
-        //                                break;
-        //                            case "APPNEEDED":
-        //                                user.NeedApp = Convert.ToBoolean(input.Value);
-        //                                break;
-        //                        }
-
-        //                    }
-        //                }
-        //                var hraLatestRecords = await _context.HraHistories
-        //                   .Where(h => _context.HraHistories
-        //                       .Where(inner => inner.EmployeeId == h.EmployeeId)
-        //                       .OrderByDescending(inner => inner.Id)
-        //                       .Select(inner => inner.Id)
-        //                       .FirstOrDefault() == h.Id)
-        //                   .ToListAsync();
-
-        //                foreach (var hra in hraLatestRecords)
-        //                {
-        //                    hra.ToDate = DateTime.UtcNow;
-        //                }
-
-        //                var hraNewRecords = inputs
-        //                    .Where(input => input.InfoCode.ToUpper() == "HRA")
-        //                    .Select(input => new HraHistory
-        //                    {
-        //                        EmployeeId = input.EmpID,
-        //                        IsHra = Convert.ToBoolean(input.Value),
-        //                        FromDate = DateTime.UtcNow,
-        //                        ToDate = null,
-        //                        Remarks = "",
-        //                        Entryby = input.UserId
-        //                    })
-        //                    .ToList();
-
-        //                await _context.HraHistories.AddRangeAsync(hraNewRecords);
-
-
-
-        //                editHistoryRecords.Add(new EditInfoHistory
-        //                {
-        //                    EmpId = input.EmpID,
-        //                    InfoCode = input.InfoCode,
-        //                    InfoId = input.InfoID,
-        //                    Info01Id = input.Info01ID,
-        //                    Value = input.Value,
-        //                    UpdatedBy = input.UserId,
-        //                    UpdatedDate = DateTime.UtcNow
-        //                });
-        //            }
-
-        //            if (editHistoryRecords.Any())
-        //            {
-        //                await _context.EditInfoHistories.AddRangeAsync(editHistoryRecords);
-        //            }
-
-
-        //            int result = await _context.SaveChangesAsync();
-        //            return result > 0 ? "Updated" : "Falied";
-
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Console.WriteLine($"Error updating employee info: {ex.Message}");
-        //            return "Falied";
-        //        }
-        //    }
-
         public async Task<string?> EditInformationAsync(List<TmpEmpInformation> inputs)
         {
             try
@@ -9809,10 +9674,203 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                      e.Description
                  }).ToListAsync();
         }
+
+        public async Task<object> GetLetterTypeAsync()
+        {
+            return await _context.LetterMaster00s.Where(x => x.Active == true).Select(x => new { x.LetterTypeId, x.LetterTypeName }).ToListAsync();
+        }
+
+        public async Task<object> LetterSignatureAuthorityAsync()
+        {
+            return await _context.Categorymasterparameters
+               .Select(x => new
+               {
+                   x.ParameterId,
+                   x.ParamDescription
+               }).ToListAsync();
+        }
+
+
+        public async Task<LoadCompanyDetailsResultDto> LoadCompanyDetailsAsync(LoadCompanyDetailsRequestDto loadCompanyDetailsRequestDto)
+        {
+            DateTime? offsetDateApp = null;
+
+            // Fetch TransactionID
+            var transactionTask = _context.TransactionMasters
+                .Where(t => t.TransactionType == loadCompanyDetailsRequestDto.Code)
+                .Select(t => (int?)t.TransactionId)
+                .FirstOrDefaultAsync();
+
+            // Check Access Rights
+            var accessTask = _context.TabAccessRights
+                .AnyAsync(a => _context.TabMasters
+                    .Any(t => t.Code == "SelfAssgnShft" && t.TabId == a.TabId) &&
+                    a.RoleId == loadCompanyDetailsRequestDto.FirstEntityId);
+
+            // Fetch Link Level
+            var linkSelectTask = _context.SpecialAccessRights
+                .Where(s => s.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
+                .Select(s => s.LinkLevel)
+                .FirstOrDefaultAsync();
+
+            var entityAccessTask = _context.EntityAccessRights02s
+                .Where(e => e.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
+                .OrderBy(e => e.LinkLevel)
+                .Select(e => e.LinkLevel)
+                .FirstOrDefaultAsync();
+
+            // Fetch High-Level Data
+            var highLevelDataTask = _context.HighLevelViewTables
+                .AsNoTracking()
+                .Select(h => new HighLevelTableDto
+                {
+                    LevelOneId = h.LevelOneId,
+                    LevelOneDescription = h.LevelOneDescription,
+                    LevelTwoId = h.LevelTwoId,
+                    LevelTwoDescription = h.LevelTwoDescription + "(" + h.LevelOneDescription + ")",
+                    LevelThreeId = h.LevelThreeId,
+                    LevelThreeDescription = h.LevelThreeDescription + "(" + h.LevelOneDescription + "-" + h.LevelTwoDescription + ")",
+                    LevelFourId = h.LevelFourId,
+                    LevelFourDescription = h.LevelFourDescription + "(" + h.LevelThreeDescription + ")"
+                })
+                .ToListAsync();
+
+            // Run all tasks in parallel
+            await Task.WhenAll(transactionTask, accessTask, linkSelectTask, entityAccessTask, highLevelDataTask);
+
+            // Get results
+            int linkSelect = await linkSelectTask ?? await entityAccessTask ?? 13;
+
+            return new LoadCompanyDetailsResultDto
+            {
+                HighLevelData = await highLevelDataTask,
+                LinkSelect = linkSelect
+            };
+        }
+
+        #region LoadCompanyDetails()
+
+        public async Task<object> GetLevelAsync(int level)
+        {
+            var query = _context.HighLevelViewTables.AsQueryable();
+
+            switch (level)
+            {
+                case 1:
+                    return await query.Select(h => new
+                    {
+                        LevelOneId = h.LevelOneId,
+                        LevelOneDescription = h.LevelOneDescription
+                    }).Distinct().ToListAsync();
+
+                case 2:
+                    return await query
+                        .Select(h => new
+                        {
+                            LevelTwoId = h.LevelTwoId,
+                            LevelTwoDescription = $"{h.LevelTwoDescription}({h.LevelOneDescription})"
+                        }).Distinct().ToListAsync();
+
+                case 3:
+                    return await query
+                        .Select(h => new
+                        {
+                            LevelThreeId = h.LevelThreeId,
+                            LevelThreeDescription = $"{h.LevelThreeDescription}({h.LevelOneDescription}-{h.LevelTwoDescription})"
+                        }).Distinct().ToListAsync();
+
+                case 4:
+                    return await query
+                        .Select(h => new
+                        {
+                            LevelFourId = h.LevelFourId,
+                            LevelFourDescription = $"{h.LevelFourDescription}({h.LevelThreeDescription})"
+                        }).Distinct().ToListAsync();
+                case 5:
+                    return await query
+                        .Select(h => new
+                        {
+                            LevelFiveId = h.LevelFiveId,
+                            LevelFiveDescription = $"{h.LevelFiveDescription}({h.LevelThreeDescription}-{h.LevelFourDescription})"
+                        }).Distinct().ToListAsync();
+                case 6:
+                    return await query
+                        .Select(h => new
+                        {
+                            LevelSixId = h.LevelSixId,
+                            LevelFiveDescription = $"{h.LevelSixDescription}({h.LevelFourDescription}-{h.LevelFiveDescription})"
+                        }).Distinct().ToListAsync();
+                case 7:
+                    return await query
+                        .Select(h => new
+                        {
+                            LevelSevenId = h.LevelSevenId,
+                            LevelSevenDescription = $"{h.LevelSevenDescription}({h.LevelThreeDescription}-{h.LevelSixDescription})"
+                        }).Distinct().ToListAsync();
+                case 8:
+                    return await query
+                        .Select(h => new
+                        {
+                            LevelEightId = h.LevelEightId,
+                            LevelEightDescription = $"{h.LevelEightDescription}({h.LevelThreeDescription}-{h.LevelSevenDescription})"
+                        }).Distinct().ToListAsync();
+                case 9:
+                    return await query
+                        .Select(h => new
+                        {
+                            LevelNineId = h.LevelNineId,
+                            LevelNineDescription = $"{h.LevelNineDescription}({h.LevelSevenDescription}-{h.LevelEightDescription})"
+                        }).Distinct().ToListAsync();
+                case 10:
+                    return await query
+                        .Select(h => new
+                        {
+                            LevelTenId = h.LevelTenId,
+                            LevelTenDescription = $"{h.LevelTenDescription}({h.LevelEightDescription}-{h.LevelNineDescription})"
+                        }).Distinct().ToListAsync();
+                case 11:
+                    return await query
+                        .Select(h => new
+                        {
+                            LevelElevenId = h.LevelElevenId,
+                            LevelElevenDescription = $"{h.LevelElevenDescription}({h.LevelNineDescription}-{h.LevelTenDescription})"
+                        }).Distinct().ToListAsync();
+
+                default:
+                    return new List<object>();
+            }
+        }
+
+        public async Task<int?> InsertOrUpdateLetterAsync(LetterMaster01Dto letter)
+        {
+            var existingLetter = await _context.LetterMaster01s
+                .FirstOrDefaultAsync(l => l.ModuleSubId == letter.LetterTypeId);
+
+            if (existingLetter == null)
+            {
+                var entity = _mapper.Map<LetterMaster01>(letter);
+                await _context.LetterMaster01s.AddAsync(entity);
+            }
+            else
+            {
+                // Update Existing Record
+                existingLetter.LetterSubName = letter.LetterSubName;
+                existingLetter.LetterTypeId = letter.LetterTypeId;
+                existingLetter.IsEss = letter.IsEss;
+                existingLetter.ModifiedBy = letter.ModifiedBy;
+                existingLetter.ModifiedDate = DateTime.UtcNow;
+                existingLetter.IsSelfApprove = letter.IsSelfApprove;
+                existingLetter.ApproveText = letter.ApproveText;
+                existingLetter.RejectText = letter.RejectText;
+                existingLetter.HideReject = letter.HideReject;
+                existingLetter.WrkFlowRoleId = letter.WrkFlowRoleId;
+            }
+
+            await _context.SaveChangesAsync();
+            return letter.LetterTypeId; // Return the ID of the inserted/updated record
+        }
+
     }
 
+    #endregion
 }
-
-
-
-

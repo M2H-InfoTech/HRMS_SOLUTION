@@ -377,9 +377,13 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.SetEmpDocuments(DocumentBankField, DetailID, Status, In_EntryBy);
         }
 
-        public async Task<string?> InsertLetterTypeRequestAsync(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos)
+        //public async Task<string?> InsertLetterTypeRequestAsync(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos)
+        //{
+        //    return await _employeeRepository.InsertLetterTypeRequest(files, LetterInsertUpdateDtos);
+        //}
+        public async Task<string?> InsertLetterTypeRequestAsync(LetterInsertUpdateDto LetterInsertUpdateDtos)
         {
-            return await _employeeRepository.InsertLetterTypeRequest(files, LetterInsertUpdateDtos);
+            return await _employeeRepository.InsertLetterTypeRequest(LetterInsertUpdateDtos);
         }
         public async Task<object> EditEmployeeCommonInformationAsync(string? empIds, int? employeeid)
         {
@@ -393,6 +397,36 @@ namespace HRMS.EmployeeInformation.Service.Service
         public async Task<object> GetInformationDescriptionAsync(int infoId)
         {
             return await _employeeRepository.GetInformationDescriptionAsync(infoId);
+        }
+
+        public async Task<object> GetLetterTypeAsync()
+        {
+            return await _employeeRepository.GetLetterTypeAsync();
+        }
+
+        public async Task<object> LetterSignatureAuthorityAsync()
+        {
+            return await _employeeRepository.LetterSignatureAuthorityAsync();
+        }
+
+        public async Task<LoadCompanyDetailsResultDto> LoadCompanyDetailsAsync(LoadCompanyDetailsRequestDto loadCompanyDetailsRequestDto)
+        {
+            return await _employeeRepository.LoadCompanyDetailsAsync(loadCompanyDetailsRequestDto);
+        }
+
+        public async Task<object> GetLevelAsync(int level)
+        {
+            return await _employeeRepository.GetLevelAsync(level);
+        }
+
+        public async Task<bool> DirectUploadLetter(List<IFormFile> files, int masterID)
+        {
+            return await _employeeRepository.DirectUploadLetter(files, masterID);
+        }
+
+        public async Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, string filePath, QualificationAttachmentDto attachmentDto)
+        {
+            return await _employeeRepository.UploadOrUpdateEmployeeDocuments(files, filePath, attachmentDto);
         }
     }
 }

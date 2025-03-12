@@ -650,9 +650,9 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(SetEmpDocuments);
         }
         [HttpPost]
-        public async Task<IActionResult> InsertLetterTypeRequest(List<IFormFile> files, LetterInsertUpdateDto LetterInsertUpdateDtos)
+        public async Task<IActionResult> InsertLetterTypeRequest([FromBody] LetterInsertUpdateDto LetterInsertUpdateDtos)
         {
-            var InsertLetterTypeRequest = await _employeeInformation.InsertLetterTypeRequestAsync(files, LetterInsertUpdateDtos);
+            var InsertLetterTypeRequest = await _employeeInformation.InsertLetterTypeRequestAsync(LetterInsertUpdateDtos);
             return new JsonResult(InsertLetterTypeRequest);
         }
         [HttpGet]
@@ -673,6 +673,46 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             var employeeType = await _employeeInformation.GetInformationDescriptionAsync(infoId);
             return new JsonResult(employeeType);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetLetterTypes()
+        {
+            var employeeType = await _employeeInformation.GetLetterTypeAsync();
+            return new JsonResult(employeeType);
+        }
+        [HttpGet]
+        public async Task<IActionResult> LetterSignatureAuthority()
+        {
+            var employeeType = await _employeeInformation.LetterSignatureAuthorityAsync();
+            return new JsonResult(employeeType);
+        }
+        [HttpPost]
+        public async Task<IActionResult> LoadCompanyDetailsAsync(LoadCompanyDetailsRequestDto loadCompanyDetailsRequestDto)
+        {
+            var employeeType = await _employeeInformation.LoadCompanyDetailsAsync(loadCompanyDetailsRequestDto);
+            return new JsonResult(employeeType);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetLevelAsync(int level)
+        {
+            var employeeType = await _employeeInformation.GetLevelAsync(level);
+            return new JsonResult(employeeType);
+        }
+        [HttpPost]
+        public async Task<IActionResult> DirectUploadLetter(List<IFormFile> files, int masterID)
+        {
+            if (files == null || files.Count == 0)
+                return BadRequest("No files uploaded.");
+            var result = await _employeeInformation.DirectUploadLetter(files, masterID);
+            if (result == false)
+                return StatusCode(500, "Error while uploading files.");
+            return Ok(new { message = "Files uploaded successfully", result });
+        }
+        [HttpPost]
+        public async Task<IActionResult> UploadOrUpdateEmployeeDocuments([FromForm] List<IFormFile> files, string filePath, [FromForm] QualificationAttachmentDto attachmentDto)
+        {
+            var result = await _employeeInformation.UploadOrUpdateEmployeeDocuments(files, filePath, attachmentDto);
+            return Ok(result);
         }
     }
 }
