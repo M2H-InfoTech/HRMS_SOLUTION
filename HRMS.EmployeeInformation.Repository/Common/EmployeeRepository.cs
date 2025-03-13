@@ -2014,7 +2014,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 join c in _context.LetterMaster00s on b.LetterTypeId equals c.LetterTypeId
                                 where a.EmpId == employeeId &&
                                       c.LetterCode == "WRNG" &&
-                                      (a.ApprovalStatus == "RE" || a.ApprovalStatus == _employeeSettings.EmployeeStatus)
+                                      (a.ApprovalStatus == _employeeSettings.Re || a.ApprovalStatus == _employeeSettings.EmployeeStatus)
                                 orderby b.LetterSubName, a.ReleaseDate
                                 select new DisciplinaryActionsDto
                                 {
@@ -2025,7 +2025,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     IsLetterAttached = Convert.ToInt32(a.IsLetterAttached),
                                     ReleaseDate = a.ReleaseDate == null ? _employeeSettings.NotAvailable : a.ReleaseDate.Value.ToString(_employeeSettings.DateFormat),
                                     LetterReqID = Convert.ToInt32(a.LetterReqId),
-                                    ApprovalStatus = "E",
+                                    ApprovalStatus = _employeeSettings.E,
                                     UploadFileName = a.UploadFileName,
                                     IssueDate = a.IssueDate == null ? _employeeSettings.NotAvailable : a.IssueDate.Value.ToString(_employeeSettings.DateFormat),
                                     Template = string.IsNullOrEmpty(a.TemplateStyle) ? 0 : 1
@@ -2045,7 +2045,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             var query1 = from a in _context.AssignedLetterTypes
                          join b in _context.LetterMaster01s on a.LetterSubType equals b.ModuleSubId
                          join c in _context.LetterMaster00s on b.LetterTypeId equals c.LetterTypeId
-                         where (a.ApprovalStatus == _employeeSettings.EmployeeStatus || a.ApprovalStatus == "RE")
+                         where (a.ApprovalStatus == _employeeSettings.EmployeeStatus || a.ApprovalStatus == _employeeSettings.Re)
                                && a.EmpId == employeeId
                                && (b.AppointmentLetter ?? 0) == 0
                          group a by new { a.LetterReqId, b.LetterSubName, a.EmpId, a.ReleaseDate, b.AppointmentLetter } into grouped
@@ -2107,7 +2107,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 select new ReferenceDto
                                 {
                                     RefID = a.RefId,
-                                    RefTypedet = a.RefType == "I" ? "Internal" : a.RefType == "E" ? "External" : null,
+                                    RefTypedet = a.RefType == "I" ? "Internal" : a.RefType == _employeeSettings.E ? "External" : null,
                                     RefType = a.RefType,
                                     RefMethoddet = a.RefMethod == "C" ? "Consultant" :
                                                    a.RefMethod == "O" ? "Others" :
@@ -2806,9 +2806,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                           from t7 in countryJoin.DefaultIfEmpty()
                                           join t8 in _context.ReasonMasters on t2.DocValues equals t8.ReasonId.ToString() into reasonJoin
                                           from t8 in reasonJoin.DefaultIfEmpty()
-                                              //where t1.EmpId == employeeId &&
-                                              //      !_context.HrmsEmpdocumentsApproved00s.Any(ap => ap.DetailId == t1.DetailId && ap.EmpId == employeeId && ap.Status == "A") &&
-                                              //      t1.Status == "P" && t3.DocDescription != "IsActive" && !excludedDocTypes.Contains(t5.DocType)
 
                                           where t1.EmpId == employeeId &&
                                        !_context.HrmsEmpdocumentsApproved00s.Any(ap => ap.DetailId == t1.DetailId && ap.EmpId == employeeId && ap.Status == ApprovalStatus.Approved.ToString()) &&
@@ -2937,7 +2934,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                     Join_Dt = hem.JoinDt,
                                     selectStatus = ts.SelectStatus,
                                     AttDate = ts.AttDate.HasValue ? ts.AttDate.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
-                                    IsAttended = ts.Status == "N" ? "NE" : "A"
+                                    IsAttended = ts.Status == "N" ? "NE" : ApprovalStatus.Approved.ToString()// "A"
                                 }).AsNoTracking().ToListAsync();
 
             return result;
@@ -4163,7 +4160,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         Speak = skill.Speak,
                         Comprehend = skill.Comprehend,
                         MotherTongue = skill.MotherTongue,
-                        Status = "A"
+                        Status = ApprovalStatus.Approved.ToString()// "A"
                     });
                 }
                 else
@@ -5434,7 +5431,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 DurTo = skillset.DurationTo,
                 MarkPer = skillset.Rating,
                 Status = ApprovalStatus.Approved.ToString(),// "A",
-                FlowStatus = "E",
+                FlowStatus = _employeeSettings.E,
                 EntryBy = skillset.Entry_By,
                 EntryDt = skillset.EntryDt,
                 InstName = skillset.Inst_Name,
@@ -5736,7 +5733,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                     Class = Qualification.Class,
                     Subjects = Qualification.Subjects,
                     Status = ApprovalStatus.Approved.ToString(),// "A",
-                    FlowStatus = "E",
+                    FlowStatus = _employeeSettings.E,
                     EntryBy = (int)Qualification.Entryby,
                     EntryDt = (DateTime)Qualification.EntryDate,
                     RequestId = null,
@@ -7031,7 +7028,11 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 return $"Error: {ex.Message}";
             }
         }
-
+        /// <summary>
+        /// Code commented below is the code which having lot of await _context.SaveChangesAsync();. This is a optimized version. so commented for the sake of restore if need in future
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         public async Task<string?> InsertLetterTypeRequest(LetterInsertUpdateDto dto)
         {
             if (dto.Mode == "CheckLetterTypeRequest")
@@ -7043,8 +7044,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                          where a.LetterTypeId == dto.LetterTypeID
                                                && a.LetterSubType == dto.LetterSubTypeID
                                                && a.EmpId == dto.MasterID
-                                               && (b.ApprovalStatus ?? "C") != "A"
-                                               && !new[] { "R", "RE" }.Contains(a.ApprovalStatus ?? "C")
+                                               && (b.ApprovalStatus ?? "C") != ApprovalStatus.Approved.ToString()
+                                               && !new[] { ApprovalStatus.Rejceted.ToString(), _employeeSettings.Re }.Contains(a.ApprovalStatus ?? "C")
                                                && a.IsLiability == null
                                                && a.Active == true
                                          select a).CountAsync();
@@ -7070,13 +7071,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 RequestCode = sequenceData.LastSequence,
                                 LetterTypeId = dto.LetterTypeID,
                                 Remark = dto.LetterType,
-                                ApprovalStatus = "P",
-                                FlowStatus = "P",
+                                ApprovalStatus = ApprovalStatus.Pending.ToString(),
+                                FlowStatus = ApprovalStatus.Pending.ToString(),
                                 Active = true,
                                 EmpId = dto.EmpID,
-                                TemplateStyle = dto.FileName == "DirectPosting" ? dto.TemplateStyle : "",
-                                UploadFileName = (dto.FileName == "DirectPosting" && !string.IsNullOrEmpty(dto.EmployeeList)) ? dto.EmployeeList : "",
-                                IsLetterAttached = (dto.FileName == "DirectPosting" && !string.IsNullOrEmpty(dto.EmployeeList)) ? true : false,
+                                TemplateStyle = dto.FileName == _employeeSettings.DirectPosting ? dto.TemplateStyle : "",
+                                UploadFileName = (dto.FileName == _employeeSettings.DirectPosting && !string.IsNullOrEmpty(dto.EmployeeList)) ? dto.EmployeeList : "",
+                                IsLetterAttached = (dto.FileName == _employeeSettings.DirectPosting && !string.IsNullOrEmpty(dto.EmployeeList)) ? true : false,
                                 CreatedBy = dto.UserID,
                                 CreatedDate = DateTime.UtcNow,
                                 LetterSubType = dto.LetterSubTypeID,
@@ -7087,7 +7088,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
                             await _context.AssignedLetterTypes.AddAsync(assignedLetter);
                             await _context.SaveChangesAsync();
-
                             int varReturn = (int)assignedLetter.LetterReqId;
 
                             if (dto.LetterTypeID == 4)
@@ -7103,52 +7103,43 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 };
 
                                 await _context.SalaryConfirmationLetterTypes.AddAsync(salaryConfirmation);
-                                //await _context.SaveChangesAsync();
                             }
-                            var maxCodeValue = _context.AdmCodegenerationmasters.Where(c => c.CodeId == sequenceData.CodeId).Max(c => (int?)c.CurrentCodeValue) ?? 0;
-                            var recordToUpdate = _context.AdmCodegenerationmasters
-                                .FirstOrDefault(c => c.CodeId == sequenceData.CodeId);
+
+                            var maxCodeValue = _context.AdmCodegenerationmasters
+                                .Where(c => c.CodeId == sequenceData.CodeId)
+                                .Max(c => (int?)c.CurrentCodeValue) ?? 0;
+
+                            var recordToUpdate = _context.AdmCodegenerationmasters.FirstOrDefault(c => c.CodeId == sequenceData.CodeId);
                             if (recordToUpdate != null)
                             {
                                 recordToUpdate.CurrentCodeValue = maxCodeValue + 1;
-                                //_context.SaveChanges();
                             }
+
                             var record = _context.AdmCodegenerationmasters
-                        .Where(x => x.CodeId == sequenceData.CodeId)
-                        .Select(x => new
-                        {
-                            x.NumberFormat,
-                            x.CurrentCodeValue,
-                            x.Code
-                        })
-                        .FirstOrDefault();
+                                .Where(x => x.CodeId == sequenceData.CodeId)
+                                .Select(x => new { x.NumberFormat, x.CurrentCodeValue, x.Code })
+                                .FirstOrDefault();
 
                             if (record != null)
                             {
-                                // Correctly calculate length
                                 int length = record.NumberFormat.Length - record.CurrentCodeValue.ToString().Length;
-
-                                // Ensure length is valid before substring operation
                                 string seq = length > 0 ? record.NumberFormat.Substring(0, length) : "";
+                                string finalSequence = $"{record.Code}{seq}{record.CurrentCodeValue}";
 
-                                // Construct the final sequence
-                                string finalSequence = $"{record.Code}{seq}{record.CurrentCodeValue}"; // "LETTER-0000007"
-
-                                // Update the record
                                 var updateRecord = _context.AdmCodegenerationmasters.FirstOrDefault(x => x.CodeId == sequenceData.CodeId);
                                 if (updateRecord != null)
                                 {
                                     updateRecord.LastSequence = finalSequence;
-                                    // _context.SaveChanges(); // Commit changes to DB
                                 }
                             }
-                            if (dto.FileName == "DirectPosting")
+
+                            if (dto.FileName == _employeeSettings.DirectPosting)
                             {
                                 var letterWorkflowStatus = new LetterWorkflowStatus
                                 {
                                     RequestId = varReturn,
                                     ShowStatus = true,
-                                    ApprovalStatus = "RE",
+                                    ApprovalStatus = _employeeSettings.Re,
                                     Rule = 1,
                                     HierarchyType = true,
                                     Approver = dto.UserID,
@@ -7160,26 +7151,27 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 };
 
                                 await _context.LetterWorkflowStatuses.AddAsync(letterWorkflowStatus);
-                                var assignedLetterTypeRecord = _context.AssignedLetterTypes.Where(x => x.LetterReqId == varReturn &&
-                                                      (x.ApprovalStatus != "RE" || x.FlowStatus != "E" ||
-                                                       x.ReleaseDate == null || x.ReleaseDate != DateTime.UtcNow ||
-                                                       x.IsDirectPosting != 1 || x.FinalApprovalDate == null ||
-                                                       x.FinalApprovalDate != DateTime.UtcNow || x.FinalApproverId != dto.EmpID)).FirstOrDefault();
+
+                                var assignedLetterTypeRecord = _context.AssignedLetterTypes
+                                    .FirstOrDefault(x => x.LetterReqId == varReturn &&
+                                        (x.ApprovalStatus != _employeeSettings.Re || x.FlowStatus != _employeeSettings.E ||
+                                         x.ReleaseDate == null || x.ReleaseDate != DateTime.UtcNow ||
+                                         x.IsDirectPosting != 1 || x.FinalApprovalDate == null ||
+                                         x.FinalApprovalDate != DateTime.UtcNow || x.FinalApproverId != dto.EmpID));
 
                                 if (assignedLetterTypeRecord != null)
                                 {
-                                    assignedLetterTypeRecord.ApprovalStatus = "RE";
-                                    assignedLetterTypeRecord.FlowStatus = "E";
+                                    assignedLetterTypeRecord.ApprovalStatus = _employeeSettings.Re;
+                                    assignedLetterTypeRecord.FlowStatus = _employeeSettings.E;
                                     assignedLetterTypeRecord.ReleaseDate = DateTime.UtcNow;
                                     assignedLetterTypeRecord.IsDirectPosting = 1;
                                     assignedLetterTypeRecord.FinalApprovalDate = DateTime.UtcNow;
                                     assignedLetterTypeRecord.FinalApproverId = dto.UserID;
-
-                                    await _context.SaveChangesAsync();
                                 }
+
                                 var emailNotificationsVarReturn = await (from a in _context.LetterWorkflowStatuses
                                                                          join b in _context.AssignedLetterTypes
-                                                                             on (int)a.RequestId equals b.LetterReqId
+                                                                         on (int)a.RequestId equals b.LetterReqId
                                                                          where b.LetterReqId == varReturn
                                                                          select new EmailNotification
                                                                          {
@@ -7199,37 +7191,10 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                 if (emailNotificationsVarReturn.Any())
                                 {
                                     _context.EmailNotifications.AddRange(emailNotificationsVarReturn);
-                                    _context.SaveChanges();
-                                }
-                            }
-                            else
-                            {
-                                int? specialWorkFlowID = await _context.SpecialWorkFlows.Where(sw => sw.MainType == Convert.ToInt32(dto.FileType)
-                                                    && sw.TransactionId == transactionId).Select(sw => (int?)sw.MainType).FirstOrDefaultAsync();
-                                if (specialWorkFlowID.HasValue)
-                                {
-
-                                    //var resultc= _employeeRepositoryC.(LetterInsertUpdateDtos.EmpID, "LetterConfig",)
-                                    //context.WorkFlowActivityFlow(
-                                    //    emp_id: varEmpID,
-                                    //    TransactionType: "LetterConfig",
-                                    //    requestId: varReturn,
-                                    //    SpecialWorkFlowID: specialWorkFlowID.Value,
-                                    //    EntryBy: varUserID
-                                    //);
-                                }
-                                else
-                                {
-                                    //context.WorkFlowActivityFlow(
-                                    //    emp_id: varEmpID,
-                                    //    TransactionType: "LetterConfig",
-                                    //    requestId: varReturn,
-                                    //    EntryBy: varUserID
-                                    //);
                                 }
                             }
 
-
+                            await _context.SaveChangesAsync(); // Single call at the end
                             await transaction.CommitAsync();
                         }
                         catch (Exception ex)
@@ -7238,6 +7203,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             throw;
                         }
                     }
+
 
                 }
                 else
@@ -7270,7 +7236,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         // record.ModifiedBy = varUserID;
                         // record.ModifiedDate = DateTime.UtcNow;
 
-                        _context.SaveChanges();
+                        await _context.SaveChangesAsync();
 
                         // Get the identity value (if needed)
                         var varReturnedLetterReqId = recordt.LetterReqId;
@@ -7300,7 +7266,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                         {
 
                             _context.SalaryConfirmationLetterTypes.RemoveRange(letterToUpdate);
-                            _context.SaveChanges();
+                            // _context.SaveChanges();
                         }
                         else if (result.letrtypeold != dto.LetterTypeID && dto.LetterTypeID == 4)
                         {
@@ -7333,11 +7299,40 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                             }
                             else
                             {
-                                //if (result.Essold != dto.MasterID)
-                                //{
+                                if (result.Essold != Essupdatd)
+                                {
+                                    var requestToDelete = await _context.EmailNotifications.FirstOrDefaultAsync(l => l.RequestId == dto.MasterID);
+                                    _context.EmailNotifications.RemoveRange(requestToDelete);
+                                    await _context.SaveChangesAsync();
 
-                                //    await _context.SaveChangesAsync();
-                                //}
+                                    var emailNotifications = from a in _context.LetterWorkflowStatuses
+                                                             join b in _context.AssignedLetterTypes on Convert.ToInt64(a.RequestId) equals b.LetterReqId
+                                                             join lm in _context.LetterMaster01s on new { b.LetterTypeId, LetterSubType = b.LetterSubType ?? 0 }
+                                                             equals new { lm.LetterTypeId, LetterSubType = lm.ModuleSubId }
+                                                                into lmJoin
+                                                             from lm in lmJoin.DefaultIfEmpty()
+                                                             join hr in _context.HrEmployeeUserRelations
+                                                                 on b.CreatedBy equals hr.UserId into hrJoin
+                                                             from hr in hrJoin.DefaultIfEmpty()
+                                                             where b.LetterReqId == dto.MasterID
+                                                             select new EmailNotification
+                                                             {
+                                                                 InstdId = 1,
+                                                                 RequestId = (int?)b.LetterReqId,
+                                                                 RequestIdCode = b.RequestCode,
+                                                                 RequesterEmpId = lm != null && lm.IsEss == true ? b.EmpId : (hr != null ? hr.EmpId : null),
+                                                                 ReceiverEmpId = a.Approver,
+                                                                 TriggerDate = DateTime.UtcNow,
+                                                                 TransactionId = transactionId,
+                                                                 ShowStatus = Convert.ToInt32(a.ShowStatus),
+                                                                 RequesterDate = DateTime.UtcNow,
+                                                                 NotificationMessage = "Has Submitted A Letter Request For Approval",
+                                                                 MailType = ApprovalStatus.Approved.ToString()// "A"
+                                                             };
+
+                                    _context.EmailNotifications.AddRange(emailNotifications);
+                                    _context.SaveChanges();
+                                }
                             }
                         }
 
@@ -7418,6 +7413,422 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             //return await Task.FromResult(GetSequence(0, transactionId, "", 0));
         }
+
+        //public async Task<string?> InsertLetterTypeRequest(LetterInsertUpdateDto dto)
+        //{
+        //    if (dto.Mode == "CheckLetterTypeRequest")
+        //    {
+        //        var varRowCount = await (from a in _context.AssignedLetterTypes
+        //                                 join b in _context.AssignedLetterTypes
+        //                                 on (int)a.LetterReqId equals b.LiabilityReqId into bGroup
+        //                                 from b in bGroup.DefaultIfEmpty()
+        //                                 where a.LetterTypeId == dto.LetterTypeID
+        //                                       && a.LetterSubType == dto.LetterSubTypeID
+        //                                       && a.EmpId == dto.MasterID
+        //                                       && (b.ApprovalStatus ?? "C") != "A"
+        //                                       && !new[] { "R", _employeeSettings.Re }.Contains(a.ApprovalStatus ?? "C")
+        //                                       && a.IsLiability == null
+        //                                       && a.Active == true
+        //                                 select a).CountAsync();
+
+        //        var varReturn = varRowCount > 0 ? "-1" : _employeeSettings.empSystemStatus;
+        //    }
+        //    else if (dto.Mode == "InsertLetterTypeRequest")
+        //    {
+        //        var transactionId = await _context.TransactionMasters
+        //       .Where(a => a.TransactionType == "LetterConfig")
+        //       .Select(a => a.TransactionId)
+        //       .FirstOrDefaultAsync();
+        //        if (!_context.AssignedLetterTypes.Any(x => x.LetterReqId == dto.MasterID))
+        //        {
+
+        //            var sequenceData = await _context.AdmCodegenerationmasters.Where(x => x.TypeId == transactionId).Select(x => new { x.CodeId, x.LastSequence }).FirstOrDefaultAsync();
+        //            using (var transaction = await _context.Database.BeginTransactionAsync())
+        //            {
+        //                try
+        //                {
+        //                    var assignedLetter = new AssignedLetterType
+        //                    {
+        //                        RequestCode = sequenceData.LastSequence,
+        //                        LetterTypeId = dto.LetterTypeID,
+        //                        Remark = dto.LetterType,
+        //                        ApprovalStatus = ApprovalStatus.Pending.ToString(),// "P",
+        //                        FlowStatus = ApprovalStatus.Pending.ToString(),// "P",
+        //                        Active = true,
+        //                        EmpId = dto.EmpID,
+        //                        TemplateStyle = dto.FileName == _employeeSettings.DirectPosting ? dto.TemplateStyle : "",
+        //                        UploadFileName = (dto.FileName == _employeeSettings.DirectPosting && !string.IsNullOrEmpty(dto.EmployeeList)) ? dto.EmployeeList : "",
+        //                        IsLetterAttached = (dto.FileName == _employeeSettings.DirectPosting && !string.IsNullOrEmpty(dto.EmployeeList)) ? true : false,
+        //                        CreatedBy = dto.UserID,
+        //                        CreatedDate = DateTime.UtcNow,
+        //                        LetterSubType = dto.LetterSubTypeID,
+        //                        IsProxy = dto.FileName == "Proxy" ? 1 : 0,
+        //                        Language = dto.Language,
+        //                        IssueDate = dto.IssueDate
+        //                    };
+
+        //                    await _context.AssignedLetterTypes.AddAsync(assignedLetter);
+        //                    await _context.SaveChangesAsync();
+
+        //                    int varReturn = (int)assignedLetter.LetterReqId;
+
+        //                    if (dto.LetterTypeID == 4)
+        //                    {
+        //                        var salaryConfirmation = new SalaryConfirmationLetterType
+        //                        {
+        //                            LetterReqId = varReturn,
+        //                            BankName = dto.BankName,
+        //                            BranchName = dto.BranchName,
+        //                            AccountNo = dto.AccountNo,
+        //                            IdentificationCode = dto.IdentificationCode,
+        //                            Location = dto.Location
+        //                        };
+
+        //                        await _context.SalaryConfirmationLetterTypes.AddAsync(salaryConfirmation);
+        //                        //await _context.SaveChangesAsync();
+        //                    }
+        //                    var maxCodeValue = _context.AdmCodegenerationmasters.Where(c => c.CodeId == sequenceData.CodeId).Max(c => (int?)c.CurrentCodeValue) ?? 0;
+        //                    var recordToUpdate = _context.AdmCodegenerationmasters
+        //                        .FirstOrDefault(c => c.CodeId == sequenceData.CodeId);
+        //                    if (recordToUpdate != null)
+        //                    {
+        //                        recordToUpdate.CurrentCodeValue = maxCodeValue + 1;
+        //                        //await _context.SaveChangesAsync();
+        //                    }
+        //                    var record = _context.AdmCodegenerationmasters
+        //                .Where(x => x.CodeId == sequenceData.CodeId)
+        //                .Select(x => new
+        //                {
+        //                    x.NumberFormat,
+        //                    x.CurrentCodeValue,
+        //                    x.Code
+        //                })
+        //                .FirstOrDefault();
+
+        //                    if (record != null)
+        //                    {
+        //                        // Correctly calculate length
+        //                        int length = record.NumberFormat.Length - record.CurrentCodeValue.ToString().Length;
+
+        //                        // Ensure length is valid before substring operation
+        //                        string seq = length > 0 ? record.NumberFormat.Substring(0, length) : "";
+
+        //                        // Construct the final sequence
+        //                        string finalSequence = $"{record.Code}{seq}{record.CurrentCodeValue}"; // "LETTER-0000007"
+
+        //                        // Update the record
+        //                        var updateRecord = _context.AdmCodegenerationmasters.FirstOrDefault(x => x.CodeId == sequenceData.CodeId);
+        //                        if (updateRecord != null)
+        //                        {
+        //                            updateRecord.LastSequence = finalSequence;
+        //                            await _context.SaveChangesAsync(); // Commit changes to DB
+        //                        }
+        //                    }
+        //                    if (dto.FileName == _employeeSettings.DirectPosting)
+        //                    {
+        //                        var letterWorkflowStatus = new LetterWorkflowStatus
+        //                        {
+        //                            RequestId = varReturn,
+        //                            ShowStatus = true,
+        //                            ApprovalStatus = _employeeSettings.Re,
+        //                            Rule = 1,
+        //                            HierarchyType = true,
+        //                            Approver = dto.UserID,
+        //                            ApprovalRemarks = dto.LetterType,
+        //                            EntryBy = dto.UserID,
+        //                            EntryDt = DateTime.UtcNow,
+        //                            RuleOrder = 1,
+        //                            UpdatedDt = DateTime.UtcNow,
+        //                        };
+
+        //                        await _context.LetterWorkflowStatuses.AddAsync(letterWorkflowStatus);
+        //                        var assignedLetterTypeRecord = _context.AssignedLetterTypes.Where(x => x.LetterReqId == varReturn &&
+        //                                              (x.ApprovalStatus != _employeeSettings.Re || x.FlowStatus != _employeeSettings.E ||
+        //                                               x.ReleaseDate == null || x.ReleaseDate != DateTime.UtcNow ||
+        //                                               x.IsDirectPosting != 1 || x.FinalApprovalDate == null ||
+        //                                               x.FinalApprovalDate != DateTime.UtcNow || x.FinalApproverId != dto.EmpID)).FirstOrDefault();
+
+        //                        if (assignedLetterTypeRecord != null)
+        //                        {
+        //                            assignedLetterTypeRecord.ApprovalStatus = _employeeSettings.Re;
+        //                            assignedLetterTypeRecord.FlowStatus = _employeeSettings.E;
+        //                            assignedLetterTypeRecord.ReleaseDate = DateTime.UtcNow;
+        //                            assignedLetterTypeRecord.IsDirectPosting = 1;
+        //                            assignedLetterTypeRecord.FinalApprovalDate = DateTime.UtcNow;
+        //                            assignedLetterTypeRecord.FinalApproverId = dto.UserID;
+
+        //                            await _context.SaveChangesAsync();
+        //                        }
+        //                        var emailNotificationsVarReturn = await (from a in _context.LetterWorkflowStatuses
+        //                                                                 join b in _context.AssignedLetterTypes
+        //                                                                     on (int)a.RequestId equals b.LetterReqId
+        //                                                                 where b.LetterReqId == varReturn
+        //                                                                 select new EmailNotification
+        //                                                                 {
+        //                                                                     InstdId = 1,
+        //                                                                     RequestId = (int?)b.LetterReqId,
+        //                                                                     RequestIdCode = b.RequestCode,
+        //                                                                     RequesterEmpId = a.Approver,
+        //                                                                     ReceiverEmpId = b.EmpId,
+        //                                                                     TriggerDate = DateTime.UtcNow,
+        //                                                                     TransactionId = transactionId,
+        //                                                                     ShowStatus = Convert.ToInt32(a.ShowStatus),
+        //                                                                     RequesterDate = DateTime.UtcNow,
+        //                                                                     NotificationMessage = "Has Released a Letter",
+        //                                                                     MailType = "N"
+        //                                                                 }).ToListAsync();
+
+        //                        if (emailNotificationsVarReturn.Any())
+        //                        {
+        //                            _context.EmailNotifications.AddRange(emailNotificationsVarReturn);
+        //                            await _context.SaveChangesAsync();
+        //                        }
+        //                    }
+        //                    else
+        //                    {
+        //                        int? specialWorkFlowID = await _context.SpecialWorkFlows.Where(sw => sw.MainType == Convert.ToInt32(dto.FileType)
+        //                                            && sw.TransactionId == transactionId).Select(sw => (int?)sw.MainType).FirstOrDefaultAsync();
+        //                        if (specialWorkFlowID.HasValue)
+        //                        {
+
+        //                            //var resultc= _employeeRepositoryC.(LetterInsertUpdateDtos.EmpID, "LetterConfig",)
+        //                            //context.WorkFlowActivityFlow(
+        //                            //    emp_id: varEmpID,
+        //                            //    TransactionType: "LetterConfig",
+        //                            //    requestId: varReturn,
+        //                            //    SpecialWorkFlowID: specialWorkFlowID.Value,
+        //                            //    EntryBy: varUserID
+        //                            //);
+        //                        }
+        //                        else
+        //                        {
+        //                            //context.WorkFlowActivityFlow(
+        //                            //    emp_id: varEmpID,
+        //                            //    TransactionType: "LetterConfig",
+        //                            //    requestId: varReturn,
+        //                            //    EntryBy: varUserID
+        //                            //);
+        //                        }
+        //                    }
+
+
+        //                    await transaction.CommitAsync();
+        //                }
+        //                catch (Exception ex)
+        //                {
+        //                    await transaction.RollbackAsync();
+        //                    throw;
+        //                }
+        //            }
+
+        //        }
+        //        else
+        //        {
+        //            var result = await (from a in _context.AssignedLetterTypes
+        //                                join lm1 in _context.LetterMaster01s
+        //                                on a.LetterSubType equals lm1.ModuleSubId into lmGroup
+        //                                from lm1 in lmGroup.DefaultIfEmpty()
+        //                                where a.LetterReqId == dto.MasterID
+        //                                select new
+        //                                {
+        //                                    letrtypeold = a.LetterTypeId,
+        //                                    empidold = a.EmpId,
+        //                                    Essold = lm1 != null ? lm1.IsEss : (bool?)null
+        //                                }).FirstOrDefaultAsync();
+
+
+        //            var recordt = await _context.AssignedLetterTypes
+        //                .FirstOrDefaultAsync(a => a.LetterReqId == dto.MasterID);
+
+        //            if (recordt != null)
+        //            {
+        //                recordt.LetterTypeId = dto.LetterTypeID;// varLetterTypeID;
+        //                recordt.LetterSubType = dto.LetterSubTypeID;// varFileType;
+        //                recordt.Remark = dto.LetterType;// varLetterType;
+        //                recordt.Language = dto.Language;// varLanguage;
+        //                recordt.EmpId = dto.EmpID;// varEmpID;
+
+        //                // Uncomment if these fields are needed
+        //                // record.ModifiedBy = varUserID;
+        //                // record.ModifiedDate = DateTime.UtcNow;
+
+        //                await _context.SaveChangesAsync();
+
+        //                // Get the identity value (if needed)
+        //                var varReturnedLetterReqId = recordt.LetterReqId;
+
+        //                var Essupdatd = await (from a in _context.AssignedLetterTypes
+        //                                       join lm1 in _context.LetterMaster01s
+        //                                       on a.LetterSubType equals lm1.ModuleSubId
+        //                                       where a.LetterReqId == dto.MasterID
+        //                                       select lm1.IsEss).FirstOrDefaultAsync();
+
+        //                var letterToUpdate = _context.SalaryConfirmationLetterTypes.FirstOrDefault(l => l.LetterReqId == dto.MasterID);
+        //                if (result.letrtypeold == dto.LetterTypeID && result.letrtypeold == 4)
+        //                {
+
+        //                    if (letterToUpdate != null)
+        //                    {
+        //                        letterToUpdate.BankName = dto.BankName;
+        //                        letterToUpdate.BranchName = dto.BranchName;
+        //                        letterToUpdate.AccountNo = dto.AccountNo;
+        //                        letterToUpdate.IdentificationCode = dto.IdentificationCode;
+        //                        letterToUpdate.Location = dto.Location;
+        //                        // letter.LetterSubType = varFileType; // Uncomment if needed
+        //                        await _context.SaveChangesAsync();
+        //                    }
+        //                }
+        //                else if (result.letrtypeold != dto.LetterTypeID && result.letrtypeold == 4)
+        //                {
+
+        //                    _context.SalaryConfirmationLetterTypes.RemoveRange(letterToUpdate);
+        //                    // _context.SaveChanges();
+        //                }
+        //                else if (result.letrtypeold != dto.LetterTypeID && dto.LetterTypeID == 4)
+        //                {
+        //                    var salaryConfirmationLetter = new SalaryConfirmationLetterType
+        //                    {
+        //                        LetterReqId = (int)varReturnedLetterReqId,
+        //                        BankName = dto.BankName,
+        //                        BranchName = dto.BranchName,
+        //                        AccountNo = dto.AccountNo,
+        //                        IdentificationCode = dto.IdentificationCode,
+        //                        Location = dto.Location,
+        //                    };
+
+        //                    await _context.SalaryConfirmationLetterTypes.AddAsync(salaryConfirmationLetter);
+        //                    await _context.SaveChangesAsync();
+        //                }
+        //                if (dto.FileName == "Proxy")
+        //                {
+        //                    if (result.empidold != dto.LetterTypeID)
+        //                    {
+        //                        var letterWorkFlowToDelete = await _context.LetterWorkflowStatuses.FirstOrDefaultAsync(l => l.RequestId == dto.MasterID);
+        //                        var emailNotificationToDelete = await _context.LetterWorkflowStatuses.FirstOrDefaultAsync(l => l.RequestId == dto.MasterID);
+        //                        _context.LetterWorkflowStatuses.RemoveRange(letterWorkFlowToDelete);
+        //                        _context.LetterWorkflowStatuses.RemoveRange(emailNotificationToDelete);
+        //                        bool existsWorkFlow = _context.SpecialWorkFlows.Any(swf => swf.MainType == dto.LetterSubTypeID && swf.TransactionId == dto.MasterID);
+        //                        if (existsWorkFlow)
+        //                        {
+
+        //                        }
+        //                    }
+        //                    else
+        //                    {
+        //                        if (result.Essold != Essupdatd)
+        //                        {
+        //                            var requestToDelete = await _context.EmailNotifications.FirstOrDefaultAsync(l => l.RequestId == dto.MasterID);
+        //                            _context.EmailNotifications.RemoveRange(requestToDelete);
+        //                            await _context.SaveChangesAsync();
+
+        //                            var emailNotifications = from a in _context.LetterWorkflowStatuses
+        //                                                     join b in _context.AssignedLetterTypes on Convert.ToInt64(a.RequestId) equals b.LetterReqId
+        //                                                     join lm in _context.LetterMaster01s on new { b.LetterTypeId, LetterSubType = b.LetterSubType ?? 0 }
+        //                                                     equals new { lm.LetterTypeId, LetterSubType = lm.ModuleSubId }
+        //                                                        into lmJoin
+        //                                                     from lm in lmJoin.DefaultIfEmpty()
+        //                                                     join hr in _context.HrEmployeeUserRelations
+        //                                                         on b.CreatedBy equals hr.UserId into hrJoin
+        //                                                     from hr in hrJoin.DefaultIfEmpty()
+        //                                                     where b.LetterReqId == dto.MasterID
+        //                                                     select new EmailNotification
+        //                                                     {
+        //                                                         InstdId = 1,
+        //                                                         RequestId = (int?)b.LetterReqId,
+        //                                                         RequestIdCode = b.RequestCode,
+        //                                                         RequesterEmpId = lm != null && lm.IsEss == true ? b.EmpId : (hr != null ? hr.EmpId : null),
+        //                                                         ReceiverEmpId = a.Approver,
+        //                                                         TriggerDate = DateTime.UtcNow,
+        //                                                         TransactionId = transactionId,
+        //                                                         ShowStatus = Convert.ToInt32(a.ShowStatus),
+        //                                                         RequesterDate = DateTime.UtcNow,
+        //                                                         NotificationMessage = "Has Submitted A Letter Request For Approval",
+        //                                                         MailType = ApprovalStatus.Approved.ToString()// "A"
+        //                                                     };
+
+        //                            _context.EmailNotifications.AddRange(emailNotifications);
+        //                            _context.SaveChanges();
+        //                        }
+        //                    }
+        //                }
+
+        //            }
+
+        //        }
+
+        //    }
+
+        //    else if (dto.Mode == "CheckLetterSubType")
+        //    {
+        //        var varReturn = await _context.LetterMaster01s.Where(lm => lm.LetterTypeId == dto.LetterTypeID && lm.LetterSubName == dto.LetterSubType && lm.IsActive == true).CountAsync();
+        //        return varReturn.ToString();
+        //    }
+        //    else if (dto.Mode == "SubmitLetterSubType")
+        //    {
+        //        var existingLetter = await _context.LetterMaster01s
+        //            .FirstOrDefaultAsync(l => l.ModuleSubId == dto.LetterSubTypeID);
+
+        //        if (existingLetter == null)
+        //        {
+        //            var entity = new LetterMaster01
+        //            {
+        //                LetterSubName = dto.FileName,
+        //                LetterTypeId = dto.LetterTypeID,
+        //                IsEss = dto.IsEssApplicable,
+        //                CreatedBy = dto.UserID,
+        //                CreatedDate = DateTime.UtcNow,
+        //                IsSelfApprove = dto.IsSelfApprove,
+        //                ApproveText = dto.ApprovalText,
+        //                RejectText = dto.RejectText,
+        //                HideReject = dto.HideReject,
+        //                WrkFlowRoleId = dto.WrkFlowRole,
+        //                IsActive = dto.IsActive,
+        //                AdjustImagePos = dto.AdjustImagePos,
+        //                AppointmentLetter = dto.AppointmentLetter,
+
+        //            };
+
+        //            await _context.LetterMaster01s.AddAsync(entity);
+        //            await _context.SaveChangesAsync(); // Save to generate the ID
+
+        //            return entity.ModuleSubId.ToString(); // Return the newly inserted ID
+        //        }
+        //        else
+        //        {
+        //            existingLetter.LetterSubName = dto.FileName;
+        //            existingLetter.LetterTypeId = dto.LetterTypeID;
+        //            existingLetter.IsEss = dto.IsEssApplicable;
+        //            existingLetter.IsActive = dto.IsActive;
+        //            existingLetter.ModifiedBy = dto.UserID;
+        //            existingLetter.ModifiedDate = DateTime.UtcNow;
+        //            existingLetter.IsSelfApprove = dto.IsSelfApprove;
+        //            existingLetter.ApproveText = dto.ApprovalText;
+        //            existingLetter.RejectText = dto.RejectText;
+        //            existingLetter.HideReject = dto.HideReject;
+        //            existingLetter.WrkFlowRoleId = dto.WrkFlowRole;
+        //            existingLetter.AdjustImagePos = dto.AdjustImagePos;
+        //            existingLetter.AppointmentLetter = dto.AppointmentLetter;
+
+        //            await _context.SaveChangesAsync();
+
+        //            return existingLetter.ModuleSubId.ToString(); // Return the updated ID
+        //        }
+        //    }
+
+        //    else if (dto.Mode == "UploadbackgroundImage")
+        //    {
+        //        var existingLetter = await _context.LetterMaster01s
+        //            .FirstOrDefaultAsync(l => l.ModuleSubId == dto.LetterSubTypeID);
+        //        if (existingLetter != null)
+        //        {
+        //            existingLetter.BackgroundImage = dto.FileName;
+        //            await _context.SaveChangesAsync();
+        //        }
+        //    }
+        //    return _employeeSettings.empSystemStatus;
+
+        //    //return await Task.FromResult(GetSequence(0, transactionId, "", 0));
+        //}
         /// <summary>
         /// Letter Direct Posting. Image upload
         /// </summary>
@@ -7445,55 +7856,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return result.Message;
 
-        }
-
-
-        private async Task<(List<string> uploadedFiles, List<string> errors)> UploadFilesAsync(List<IFormFile> files, string subDirectory)
-        {
-            if (files == null || !files.Any())
-            {
-                return (new List<string>(), new List<string> { "No files provided for upload." });
-            }
-
-            string webRootPath = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            string uploadPath = Path.Combine(webRootPath, subDirectory);
-
-            if (!Directory.Exists(uploadPath))
-            {
-                Directory.CreateDirectory(uploadPath);
-            }
-
-            List<string> uploadedFiles = new List<string>();
-            List<string> errors = new List<string>();
-
-            foreach (var file in files)
-            {
-                if (file == null || file.Length == 0)
-                {
-                    continue;
-                }
-
-                string fileExtension = Path.GetExtension(file.FileName);
-                string fileType = file.ContentType;
-                string uniqueFileName = $"{Path.GetFileNameWithoutExtension(file.FileName)}_{DateTime.UtcNow:yyyyMMddHHmmssFFF}{fileExtension}";
-                string filePath = Path.Combine(uploadPath, uniqueFileName);
-
-                try
-                {
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await file.CopyToAsync(stream);
-                    }
-
-                    uploadedFiles.Add(uniqueFileName);
-                }
-                catch (Exception ex)
-                {
-                    errors.Add($"Error uploading file {file.FileName}: {ex.Message}");
-                }
-            }
-
-            return (uploadedFiles, errors);
         }
         public async Task<object> EditEmployeeCommonInformation(string? empIds, int? employeeid)
         {
@@ -7535,20 +7897,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 InfoData = infoData,
                 EmployeeDetails = employeeDetails
             };
-        }
-        public static string TrimSpace(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return string.Empty;
-
-            // Define unwanted characters including backslash
-            char[] unwantedChars = { '\n', '\r', '\t', '\u00A0', '\\' };
-
-            // Replace unwanted characters with a space
-            string cleaned = new string(value.Where(c => !unwantedChars.Contains(c)).ToArray());
-
-            // Trim leading/trailing spaces and replace multiple spaces with a single space
-            return string.Join(" ", cleaned.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
         }
         public async Task<string?> EditInformationAsync(List<TmpEmpInformation> inputs)
         {
@@ -7866,37 +8214,36 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                    x.ParamDescription
                }).ToListAsync();
         }
-
         public async Task<LoadCompanyDetailsResultDto> LoadCompanyDetailsAsync(LoadCompanyDetailsRequestDto loadCompanyDetailsRequestDto)
         {
             DateTime? offsetDateApp = null;
 
             // Fetch TransactionID
-            var transactionTask = _context.TransactionMasters
+            int? transactionId = await _context.TransactionMasters
                 .Where(t => t.TransactionType == loadCompanyDetailsRequestDto.Code)
                 .Select(t => (int?)t.TransactionId)
                 .FirstOrDefaultAsync();
 
             // Check Access Rights
-            var accessTask = _context.TabAccessRights
+            bool hasAccess = await _context.TabAccessRights
                 .AnyAsync(a => _context.TabMasters
                     .Any(t => t.Code == "SelfAssgnShft" && t.TabId == a.TabId) &&
                     a.RoleId == loadCompanyDetailsRequestDto.FirstEntityId);
 
             // Fetch Link Level
-            var linkSelectTask = _context.SpecialAccessRights
+            int? linkSelect = await _context.SpecialAccessRights
                 .Where(s => s.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
                 .Select(s => s.LinkLevel)
                 .FirstOrDefaultAsync();
 
-            var entityAccessTask = _context.EntityAccessRights02s
+            int? entityAccess = await _context.EntityAccessRights02s
                 .Where(e => e.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
                 .OrderBy(e => e.LinkLevel)
                 .Select(e => e.LinkLevel)
                 .FirstOrDefaultAsync();
 
             // Fetch High-Level Data
-            var highLevelDataTask = _context.HighLevelViewTables
+            var highLevelData = await _context.HighLevelViewTables
                 .AsNoTracking()
                 .Select(h => new HighLevelTableDto
                 {
@@ -7911,16 +8258,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 })
                 .ToListAsync();
 
-            // Run all tasks in parallel
-            await Task.WhenAll(transactionTask, accessTask, linkSelectTask, entityAccessTask, highLevelDataTask);
-
-            // Get results
-            int linkSelect = await linkSelectTask ?? await entityAccessTask ?? 13;
+            // Determine final link selection
+            int finalLinkSelect = linkSelect ?? entityAccess ?? 13;
 
             return new LoadCompanyDetailsResultDto
             {
-                HighLevelData = await highLevelDataTask,
-                LinkSelect = linkSelect
+                HighLevelData = highLevelData,
+                LinkSelect = finalLinkSelect
             };
         }
         public async Task<object> GetLevelAsync(int level)
