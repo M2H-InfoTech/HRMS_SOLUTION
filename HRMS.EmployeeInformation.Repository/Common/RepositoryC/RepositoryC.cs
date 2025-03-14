@@ -5,6 +5,7 @@ using EMPLOYEE_INFORMATION.Models.Entity;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Models;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MPLOYEE_INFORMATION.DTO.DTOs;
@@ -1320,7 +1321,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
             return result;
 
             }
-        public async Task<string> UpdateEmpDocumentDetails (int DetailID, string Status, int EntryBy)
+        public async Task<string> UpdateEmpDocumentDetails ([FromBody] object documentDetails,int DetailID, string Status, int EntryBy)
             {            
 
             //try

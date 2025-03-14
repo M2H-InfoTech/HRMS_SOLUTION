@@ -79,9 +79,9 @@ namespace HRMS.EmployeeInformation.Service.ServiceC
             {
             return await _repositoryC.DocumentOfGetFolderName (DocumentID);
             }
-        public async Task<string> UpdateEmpDocumentDetailsAsync (int DetailID, string Status, int EntryBy)
+        public async Task<string> UpdateEmpDocumentDetailsAsync (object documentDetails, int DetailID, string Status, int EntryBy)
             {
-            return await _repositoryC.UpdateEmpDocumentDetails (DetailID, Status, EntryBy);
+            return await _repositoryC.UpdateEmpDocumentDetails (documentDetails,DetailID, Status, EntryBy);
             }
         public async Task<VisaDetailsRestultDto> GetEmployeeVisaDetails (int EmpId)
             {
