@@ -21,7 +21,7 @@ namespace HRMS.EmployeeInformation.Service.InterfaceC
         Task<List<GetCountryNameDto>> DocumentFieldOfGetCountryName ( );
         Task<object> DocumentFieldOfGetBankTypeEdit ( );
         Task<List<DocumentGetFolderNameDto>> DocumentOfGetFolderName (int DocumentID);
-        Task<string> UpdateEmpDocumentDetailsAsync (object documentDetails, int detailID, string status, int entryBy);
+        Task<string> UpdateEmpDocumentDetailsAsync (int detailID, string status, int entryBy);
         Task<VisaDetailsRestultDto> GetEmployeeVisaDetails (int EmpId);
 
 
