@@ -95,10 +95,10 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<object> GetLevelAsync(int level);
         Task<string> DirectUploadLetter(List<IFormFile> files, string filePath, int masterID);
         Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, string filePath, QualificationAttachmentDto attachmentDto);
-
         Task<string?> CheckLetterTypeRequest(int? LetterTypeId, int? LetterSubType, int? MasterId);
         Task<string> DeleteDesciplinaryLetter(string? masterId);
         Task<object> GetAllLetterType();
+        Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID);
     }
 
 }

@@ -443,5 +443,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetAllLetterType();
         }
+
+        public Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID)
+        {
+            return _employeeRepository.GetLetterSubTypeByIdAsync(LetterSubTypeID);
+        }
     }
 }
