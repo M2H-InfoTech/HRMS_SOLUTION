@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.VisualBasic;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 
@@ -6042,9 +6043,13 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 }
             }
         }
+       
         public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
         {
             List<object> result = new List<object>();
+
+            // Get the date format from EmployeeSettings
+            string dateFormat = _employeeSettings.DateFormat ?? "dd/MM/yyyy";
 
             if (varSelectedTypeID == 0)
             {
@@ -6061,12 +6066,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                               e.AssetModel,
                                               e.Monitor,
                                               r.Description,
-                                              InWarranty = e.InWarranty.HasValue ? e.InWarranty.Value.ToString("dd/MM/yyyy") : null,
-                                              OutOfWarranty = e.OutOfWarranty.HasValue ? e.OutOfWarranty.Value.ToString("dd/MM/yyyy") : null,
-                                              ReceivedDate = e.ReceivedDate.HasValue ? e.ReceivedDate.Value.ToString("dd/MM/yyyy") : null,
+                                              InWarranty = e.InWarranty.HasValue ? e.InWarranty.Value.ToString(dateFormat) : null,
+                                              OutOfWarranty = e.OutOfWarranty.HasValue ? e.OutOfWarranty.Value.ToString(dateFormat) : null,
+                                              ReceivedDate = e.ReceivedDate.HasValue ? e.ReceivedDate.Value.ToString(dateFormat) : null,
                                               e.Status,
-                                              ExpiryDate = e.ExpiryDate.HasValue ? e.ExpiryDate.Value.ToString("dd/MM/yyyy") : null,
-                                              ReturnDate = e.ReturnDate.HasValue ? e.ReturnDate.Value.ToString("dd/MM/yyyy") : null,
+                                              ExpiryDate = e.ExpiryDate.HasValue ? e.ExpiryDate.Value.ToString(dateFormat) : null,
+                                              ReturnDate = e.ReturnDate.HasValue ? e.ReturnDate.Value.ToString(dateFormat) : null,
                                               e.Remarks
                                           }).FirstOrDefaultAsync();
 
@@ -6090,12 +6095,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                    e.AssetModel,
                                                    e.Monitor,
                                                    r.Description,
-                                                   InWarranty = e.InWarranty.HasValue ? e.InWarranty.Value.ToString("dd/MM/yyyy") : null,
-                                                   OutOfWarranty = e.OutOfWarranty.HasValue ? e.OutOfWarranty.Value.ToString("dd/MM/yyyy") : null,
-                                                   ReceivedDate = e.ReceivedDate.HasValue ? e.ReceivedDate.Value.ToString("dd/MM/yyyy") : null,
+                                                   InWarranty = e.InWarranty.HasValue ? e.InWarranty.Value.ToString(dateFormat) : null,
+                                                   OutOfWarranty = e.OutOfWarranty.HasValue ? e.OutOfWarranty.Value.ToString(dateFormat) : null,
+                                                   ReceivedDate = e.ReceivedDate.HasValue ? e.ReceivedDate.Value.ToString(dateFormat) : null,
                                                    e.Status,
-                                                   ExpiryDate = e.ExpiryDate.HasValue ? e.ExpiryDate.Value.ToString("dd/MM/yyyy") : null,
-                                                   ReturnDate = e.ReturnDate.HasValue ? e.ReturnDate.Value.ToString("dd/MM/yyyy") : null,
+                                                   ExpiryDate = e.ExpiryDate.HasValue ? e.ExpiryDate.Value.ToString(dateFormat) : null,
+                                                   ReturnDate = e.ReturnDate.HasValue ? e.ReturnDate.Value.ToString(dateFormat) : null,
                                                    e.Remarks
                                                }).FirstOrDefaultAsync();
 
@@ -6125,12 +6130,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                         a.AssetModel,
                                                         a.Monitor,
                                                         c.Description,
-                                                        InWarranty = a.InWarranty.HasValue ? a.InWarranty.Value.ToString("dd/MM/yyyy") : null,
-                                                        OutOfWarranty = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString("dd/MM/yyyy") : null,
-                                                        ReceivedDate = a.ReceivedDate.HasValue ? a.ReceivedDate.Value.ToString("dd/MM/yyyy") : null,
+                                                        InWarranty = a.InWarranty.HasValue ? a.InWarranty.Value.ToString(dateFormat) : null,
+                                                        OutOfWarranty = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString(dateFormat) : null,
+                                                        ReceivedDate = a.ReceivedDate.HasValue ? a.ReceivedDate.Value.ToString(dateFormat) : null,
                                                         a.Status,
-                                                        ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString("dd/MM/yyyy") : null,
-                                                        ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString("dd/MM/yyyy") : null,
+                                                        ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString(dateFormat) : null,
+                                                        ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString(dateFormat) : null,
                                                         a.Remarks,
                                                         EmplinkID = b.EmplinkId ?? 0,
                                                         FieldDescription = e.FieldDescription,
@@ -6154,7 +6159,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result;
         }
 
-        
 
         public async Task<string> AssetDelete(int varEmpID, int varAssestID)
         {
