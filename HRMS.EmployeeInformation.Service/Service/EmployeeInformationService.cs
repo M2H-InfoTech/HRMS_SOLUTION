@@ -418,11 +418,6 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetLevelAsync(level);
         }
-
-        //public async Task<bool> DirectUploadLetter(List<IFormFile> files, int masterID)
-        //{
-        //    return await _employeeRepository.DirectUploadLetter(files, masterID);
-        //}
         public async Task<string> DirectUploadLetter(List<IFormFile> files, string filePath, int masterID)
         {
             return await _employeeRepository.DirectUploadLetter(files, filePath, masterID);
@@ -432,6 +427,21 @@ namespace HRMS.EmployeeInformation.Service.Service
         public async Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, string filePath, QualificationAttachmentDto attachmentDto)
         {
             return await _employeeRepository.UploadOrUpdateEmployeeDocuments(files, filePath, attachmentDto);
+        }
+
+        public async Task<string?> CheckLetterTypeRequest(int? LetterTypeId, int? LetterSubType, int? MasterId)
+        {
+            return await _employeeRepository.CheckLetterTypeRequest(LetterTypeId, LetterSubType, MasterId);
+        }
+
+        public async Task<string> DeleteDesciplinaryLetter(string? masterId)
+        {
+            return await _employeeRepository.DeleteDesciplinaryLetter(masterId);
+        }
+
+        public async Task<object> GetAllLetterType()
+        {
+            return await _employeeRepository.GetAllLetterType();
         }
     }
 }

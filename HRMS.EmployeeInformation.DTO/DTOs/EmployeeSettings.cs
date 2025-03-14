@@ -101,6 +101,7 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? DirectPosting { get; set; }
         public string? Re { get; set; }
         public string? E { get; set; }
+        public string? LetterConfig { get; set; }
     }
 
 }
