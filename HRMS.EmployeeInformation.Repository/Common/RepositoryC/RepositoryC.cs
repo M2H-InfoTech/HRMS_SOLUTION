@@ -1320,15 +1320,11 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
             return result;
 
             }
-        public async Task<string> UpdateEmpDocumentDetails (object documentDetails, int DetailID, string Status, int EntryBy)
-            {
-            if (documentDetails == null || string.IsNullOrEmpty (Status) || DetailID <= 0)
-                {
-                return "Invalid input data";
-                }
+        public async Task<string> UpdateEmpDocumentDetails (int DetailID, string Status, int EntryBy)
+            {            
 
-            try
-                {
+            //try
+            //    {
                 var utcNow = DateTime.UtcNow;
 
                 if (Status == "Pending")
@@ -1360,12 +1356,12 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
                         }
                     }
 
-                return "Success";
-                }
-            catch (Exception ex)
-                {
-                return $"Error: {ex.Message}";
-                }
+                return DetailID.ToString();
+            //    }
+            //catch (Exception ex)
+            //    {
+            //    return $"Error: {ex.Message}";
+            //    }
             }
 
         public async Task<VisaDetailsRestultDto> GetEmployeeVisaDetails (int EmpId)
