@@ -138,9 +138,9 @@ namespace EMPLOYEE_INFORMATION.Controllers
             }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateEmpDocumentDetails (int DetailID, string Status, int EntryBy) // insertion on edit of document tab
+        public async Task<IActionResult> UpdateEmpDocumentDetails ([FromBody] object documentDetails,int DetailID, string Status, int EntryBy) // insertion on edit of document tab
             {
-            var result = await _employeeInformationC.UpdateEmpDocumentDetailsAsync (DetailID, Status, EntryBy);
+            var result = await _employeeInformationC.UpdateEmpDocumentDetailsAsync (documentDetails,DetailID, Status, EntryBy);
 
             if (string.IsNullOrEmpty (result))
                 {

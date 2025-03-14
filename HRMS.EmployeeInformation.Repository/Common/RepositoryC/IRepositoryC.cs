@@ -1,4 +1,5 @@
 ﻿using HRMS.EmployeeInformation.DTO.DTOs;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
 {
@@ -21,7 +22,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC
         Task<List<GetCountryNameDto>> DocumentFieldOfGetCountryName();
         Task<object> DocumentFieldOfGetBankTypeEdit();
         Task<List<DocumentGetFolderNameDto>> DocumentOfGetFolderName(int DocumentID);
-        Task<string> UpdateEmpDocumentDetails(int DetailID, string Status, int EntryBy);
+        Task<string> UpdateEmpDocumentDetails([FromBody] object documentDetails,int DetailID, string Status, int EntryBy);
         Task<VisaDetailsRestultDto> GetEmployeeVisaDetails(int EmpId);
 
     }
