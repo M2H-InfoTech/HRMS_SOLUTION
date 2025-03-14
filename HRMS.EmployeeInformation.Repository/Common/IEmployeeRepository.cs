@@ -102,5 +102,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string?> CheckLetterTypeRequest(int? LetterTypeId, int? LetterSubType, int? MasterId);
         Task<string> DeleteDesciplinaryLetter(string? masterId);
         Task<object> GetAllLetterType();
+        Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID);
     }
 }

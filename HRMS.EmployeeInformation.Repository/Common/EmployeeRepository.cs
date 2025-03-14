@@ -8036,6 +8036,32 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                               lm1.CreatedDate
                           }).ToListAsync();
         }
+        public async Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID)
+        {
+            return await _context.LetterMaster01s
+                        .Where(l => l.ModuleSubId == LetterSubTypeID && l.IsActive == true)
+                        .Select(l => new LetterMaster01Dto
+                        {
+                            ModuleSubId = l.ModuleSubId,
+                            LetterSubName = l.LetterSubName,
+                            LetterTypeId = l.LetterTypeId,
+                            IsEss = l.IsEss,
+                            CreatedBy = l.CreatedBy,
+                            CreatedDate = l.CreatedDate,
+                            IsActive = l.IsActive,
+                            ModifiedBy = l.ModifiedBy,
+                            ModifiedDate = l.ModifiedDate,
+                            BackGroundImage = l.BackgroundImage,
+                            IsSelfApprove = l.IsSelfApprove,
+                            ApproveText = l.ApproveText ?? string.Empty,
+                            RejectText = l.RejectText ?? string.Empty,
+                            HideReject = l.HideReject ?? 0,
+                            WrkFlowRoleId = l.WrkFlowRoleId ?? 0,
+                            AdjustImagePos = l.AdjustImagePos ?? 0,
+                            AppointmentLetter = l.AppointmentLetter ?? 0
+                        }).FirstAsync();
+        }
+
     }
 
 }
