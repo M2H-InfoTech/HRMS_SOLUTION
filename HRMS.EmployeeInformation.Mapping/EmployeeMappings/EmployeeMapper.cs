@@ -18,8 +18,7 @@ namespace EMPLOYEE_INFORMATION.Services.Mapping
             CreateMap<HrEmpProfdtlsApprl, HrEmpProfdtlsApprlDto>().ReverseMap();
             CreateMap<HrEmpProfdtlsApprl, HrEmpProfdtl>().ReverseMap();
             CreateMap<HrEmpreference, ReferenceSaveDto>().ReverseMap();
-            CreateMap<PersonalDetailsHistoryDto, PersonalDetailsHistory>().ReverseMap();
-            CreateMap<HrEmpMaster, EmployeeParametersDto>().ReverseMap();
+            CreateMap<PersonalDetailsHistoryDto, PersonalDetailsHistory>().ReverseMap(); ;
             // Convert DateTime to String (for DTO)
             //.ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.DateOfBirth.HasValue ? src.DateOfBirth.Value.ToString("yyyy-MM-dd") : null))
             //.ForMember(dest => dest.JoinDt, opt => opt.MapFrom(src => src.JoinDt.HasValue ? src.JoinDt.Value.ToString("yyyy-MM-dd") : null))
@@ -45,7 +44,6 @@ namespace EMPLOYEE_INFORMATION.Services.Mapping
 
             CreateMap<EmployeeCertification, CertificationSaveDto>().ReverseMap();
             CreateMap<HrEmpTechnicalApprl, SaveSkillSetDto>().ReverseMap();
-            CreateMap<EmployeeParametersDto, EmployeeDetailsUpdateDto>().ReverseMap();
             CreateMap<HrEmpMaster, EmployeeDetailsUpdateDto>().ReverseMap();
             CreateMap<LetterMaster01, LetterMaster01Dto>().ReverseMap();
         }

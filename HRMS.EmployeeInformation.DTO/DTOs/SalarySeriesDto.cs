@@ -19,11 +19,5 @@
         public string? PayPeriod { get; set; }
         public string? Remarks { get; set; }
     }
-    public class PayComponentPivotDto
-    {
-        public int PayRequestId01 { get; set; }
-        public Dictionary<string, decimal> PayCodeAmounts { get; set; } = new Dictionary<string, decimal>();
-    }
-
 
 }
