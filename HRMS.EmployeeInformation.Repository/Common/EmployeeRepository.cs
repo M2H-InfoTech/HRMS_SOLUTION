@@ -6043,7 +6043,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 }
             }
         }
-       
+
+   
         public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
         {
             List<object> result = new List<object>();
@@ -6139,7 +6140,9 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                         a.Remarks,
                                                         EmplinkID = b.EmplinkId ?? 0,
                                                         FieldDescription = e.FieldDescription,
-                                                        FieldValues = d.FieldValues,
+                                                        FieldValues = f.IsDate == 1 && d.FieldValues != null
+                                                                        ? DateTime.Parse(d.FieldValues).ToString(dateFormat)
+                                                                        : d.FieldValues,
                                                         DataType = f.DataType,
                                                         DataTypeID = f.DataTypeId,
                                                         f.IsDate,
@@ -6148,17 +6151,70 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                         ReasonFieldID = d.ReasonFieldId,
                                                         CategoryFieldID = e.CategoryFieldId,
                                                         c.ReasonId
-                                                    }).FirstOrDefaultAsync();
+                                                    }).ToListAsync();
 
-                if (assetDetailsWithFields != null)
+                if (assetDetailsWithFields.Any())
                 {
-                    result.Add(assetDetailsWithFields);
+                    var groupedResult = assetDetailsWithFields
+                        .GroupBy(x => new
+                        {
+                            x.AssignId,
+                            x.EmpId,
+                            x.AssetGroup,
+                            x.Asset,
+                            x.AssetNo,
+                            x.AssetModel,
+                            x.Monitor,
+                            x.Description,
+                            x.InWarranty,
+                            x.OutOfWarranty,
+                            x.ReceivedDate,
+                            x.Status,
+                            x.ExpiryDate,
+                            x.ReturnDate,
+                            x.Remarks,
+                            x.EmplinkID,
+                            x.ReasonId
+                        })
+                        .Select(g => new
+                        {
+                            g.Key.AssignId,
+                            g.Key.EmpId,
+                            g.Key.AssetGroup,
+                            g.Key.Asset,
+                            g.Key.AssetNo,
+                            g.Key.AssetModel,
+                            g.Key.Monitor,
+                            g.Key.Description,
+                            g.Key.InWarranty,
+                            g.Key.OutOfWarranty,
+                            g.Key.ReceivedDate,
+                            g.Key.Status,
+                            g.Key.ExpiryDate,
+                            g.Key.ReturnDate,
+                            g.Key.Remarks,
+                            g.Key.EmplinkID,
+                            g.Key.ReasonId,
+                            Fields = g.Select(f => new
+                            {
+                                f.FieldDescription,
+                                f.FieldValues,
+                                f.DataType,
+                                f.DataTypeID,
+                                f.IsDate,
+                                f.IsGeneralCategory,
+                                f.IsDropdown,
+                                f.ReasonFieldID,
+                                f.CategoryFieldID
+                            }).ToList()
+                        }).ToList();
+
+                    result.AddRange(groupedResult);
                 }
             }
 
             return result;
         }
-
 
         public async Task<string> AssetDelete(int varEmpID, int varAssestID)
         {
