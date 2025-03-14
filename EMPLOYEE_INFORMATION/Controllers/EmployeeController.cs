@@ -714,5 +714,23 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.UploadOrUpdateEmployeeDocuments(files, filePath, attachmentDto);
             return Ok(result);
         }
+        [HttpGet]
+        public async Task<IActionResult> CheckLetterTypeRequest(int? LetterTypeId, int? LetterSubType, int? MasterId)
+        {
+            var LetterTypeRequest = await _employeeInformation.CheckLetterTypeRequest(LetterTypeId, LetterSubType, MasterId);
+            return new JsonResult(LetterTypeRequest);
+        }
+        [HttpDelete]
+        public async Task<IActionResult> DeleteDesciplinaryLetter(string? masterId)
+        {
+            var LetterTypeRequest = await _employeeInformation.DeleteDesciplinaryLetter(masterId);
+            return new JsonResult(LetterTypeRequest);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAllLetterType()
+        {
+            var allLetterTypes = await _employeeInformation.GetAllLetterType();
+            return new JsonResult(allLetterTypes);
+        }
     }
 }
