@@ -6042,14 +6042,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 }
             }
         }
-
         public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
         {
             List<object> result = new List<object>();
 
             if (varSelectedTypeID == 0)
             {
-                // Query for the case where varSelectedTypeID is 0
                 var assetDetails = await (from e in _context.EmployeesAssetsAssigns
                                           join r in _context.ReasonMasters on e.Asset equals r.ReasonId.ToString()
                                           where e.AssignId == varAssestID
@@ -6063,12 +6061,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                               e.AssetModel,
                                               e.Monitor,
                                               r.Description,
-                                              InWarranty = e.InWarranty,
-                                              OutOfWarranty = e.OutOfWarranty,
-                                              ReceivedDate = e.ReceivedDate,
+                                              InWarranty = e.InWarranty.HasValue ? e.InWarranty.Value.ToString("dd/MM/yyyy") : null,
+                                              OutOfWarranty = e.OutOfWarranty.HasValue ? e.OutOfWarranty.Value.ToString("dd/MM/yyyy") : null,
+                                              ReceivedDate = e.ReceivedDate.HasValue ? e.ReceivedDate.Value.ToString("dd/MM/yyyy") : null,
                                               e.Status,
-                                              ExpiryDate = e.ExpiryDate,
-                                              ReturnDate = e.ReturnDate,
+                                              ExpiryDate = e.ExpiryDate.HasValue ? e.ExpiryDate.Value.ToString("dd/MM/yyyy") : null,
+                                              ReturnDate = e.ReturnDate.HasValue ? e.ReturnDate.Value.ToString("dd/MM/yyyy") : null,
                                               e.Remarks
                                           }).FirstOrDefaultAsync();
 
@@ -6079,36 +6077,63 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             }
             else
             {
-                var assetDetailsWithFields = await (from e in _context.EmployeesAssetsAssigns
-                                                    join r in _context.ReasonMasters on e.Asset equals r.ReasonId.ToString()
-                                                    join b in _context.GeneralCategories on e.AssetGroup equals b.Id.ToString() into categoryJoin
-                                                    from b in categoryJoin.DefaultIfEmpty()
-                                                    join d in _context.ReasonMasterFieldValues on r.ReasonId equals d.ReasonId into fieldValueJoin
+                var assetBasicDetails = await (from e in _context.EmployeesAssetsAssigns
+                                               join r in _context.ReasonMasters on e.Asset equals r.ReasonId.ToString()
+                                               where e.AssignId == varAssestID
+                                               select new
+                                               {
+                                                   e.AssignId,
+                                                   e.EmpId,
+                                                   e.AssetGroup,
+                                                   e.Asset,
+                                                   e.AssetNo,
+                                                   e.AssetModel,
+                                                   e.Monitor,
+                                                   r.Description,
+                                                   InWarranty = e.InWarranty.HasValue ? e.InWarranty.Value.ToString("dd/MM/yyyy") : null,
+                                                   OutOfWarranty = e.OutOfWarranty.HasValue ? e.OutOfWarranty.Value.ToString("dd/MM/yyyy") : null,
+                                                   ReceivedDate = e.ReceivedDate.HasValue ? e.ReceivedDate.Value.ToString("dd/MM/yyyy") : null,
+                                                   e.Status,
+                                                   ExpiryDate = e.ExpiryDate.HasValue ? e.ExpiryDate.Value.ToString("dd/MM/yyyy") : null,
+                                                   ReturnDate = e.ReturnDate.HasValue ? e.ReturnDate.Value.ToString("dd/MM/yyyy") : null,
+                                                   e.Remarks
+                                               }).FirstOrDefaultAsync();
+
+                if (assetBasicDetails != null)
+                {
+                    result.Add(assetBasicDetails);
+                }
+
+                var assetDetailsWithFields = await (from a in _context.EmployeesAssetsAssigns
+                                                    join b in _context.GeneralCategories on a.AssetGroup equals b.Id.ToString()
+                                                    join c in _context.ReasonMasters on a.Asset equals c.ReasonId.ToString() into reasonJoin
+                                                    from c in reasonJoin.DefaultIfEmpty()
+                                                    join d in _context.ReasonMasterFieldValues on c.ReasonId equals d.ReasonId into fieldValueJoin
                                                     from d in fieldValueJoin.DefaultIfEmpty()
-                                                    join g in _context.GeneralCategoryFields on d.CategoryFieldId equals g.CategoryFieldId into fieldJoin
-                                                    from g in fieldJoin.DefaultIfEmpty()
-                                                    join f in _context.HrmsDatatypes on g.DataTypeId equals f.DataTypeId into dataTypeJoin
+                                                    join e in _context.GeneralCategoryFields on d.CategoryFieldId equals e.CategoryFieldId into fieldJoin
+                                                    from e in fieldJoin.DefaultIfEmpty()
+                                                    join f in _context.HrmsDatatypes on e.DataTypeId equals f.DataTypeId into dataTypeJoin
                                                     from f in dataTypeJoin.DefaultIfEmpty()
-                                                    where e.AssignId == varAssestID
+                                                    where a.AssignId == varAssestID
                                                     select new
                                                     {
-                                                        e.AssignId,
-                                                        e.EmpId,
-                                                        e.AssetGroup,
-                                                        e.Asset,
-                                                        e.AssetNo,
-                                                        e.AssetModel,
-                                                        e.Monitor,
-                                                        AssetDescription = r.Description,
-                                                        InWarranty = e.InWarranty,
-                                                        OutOfWarranty = e.OutOfWarranty,
-                                                        ReceivedDate = e.ReceivedDate,
-                                                        e.Status,
-                                                        ExpiryDate = e.ExpiryDate,
-                                                        ReturnDate = e.ReturnDate,
-                                                        e.Remarks,
+                                                        a.AssignId,
+                                                        a.EmpId,
+                                                        a.AssetGroup,
+                                                        a.Asset,
+                                                        a.AssetNo,
+                                                        a.AssetModel,
+                                                        a.Monitor,
+                                                        c.Description,
+                                                        InWarranty = a.InWarranty.HasValue ? a.InWarranty.Value.ToString("dd/MM/yyyy") : null,
+                                                        OutOfWarranty = a.OutOfWarranty.HasValue ? a.OutOfWarranty.Value.ToString("dd/MM/yyyy") : null,
+                                                        ReceivedDate = a.ReceivedDate.HasValue ? a.ReceivedDate.Value.ToString("dd/MM/yyyy") : null,
+                                                        a.Status,
+                                                        ExpiryDate = a.ExpiryDate.HasValue ? a.ExpiryDate.Value.ToString("dd/MM/yyyy") : null,
+                                                        ReturnDate = a.ReturnDate.HasValue ? a.ReturnDate.Value.ToString("dd/MM/yyyy") : null,
+                                                        a.Remarks,
                                                         EmplinkID = b.EmplinkId ?? 0,
-                                                        FieldDescription = g.FieldDescription,
+                                                        FieldDescription = e.FieldDescription,
                                                         FieldValues = d.FieldValues,
                                                         DataType = f.DataType,
                                                         DataTypeID = f.DataTypeId,
@@ -6116,9 +6141,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                                                         f.IsGeneralCategory,
                                                         f.IsDropdown,
                                                         ReasonFieldID = d.ReasonFieldId,
-                                                        // CategoryFieldID = e.ca,
-                                                        ReasonDescription = r.Description,
-                                                        r.ReasonId
+                                                        CategoryFieldID = e.CategoryFieldId,
+                                                        c.ReasonId
                                                     }).FirstOrDefaultAsync();
 
                 if (assetDetailsWithFields != null)
@@ -6129,6 +6153,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return result;
         }
+
+        
 
         public async Task<string> AssetDelete(int varEmpID, int varAssestID)
         {
