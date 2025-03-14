@@ -24,16 +24,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             _employeeInformation = employeeInformation;
             _tokenService = tokenService;
             _employeeSettings = employeeSettings.Value;
-
-
-
-
         }
         [HttpGet]
         public string Index()
         {
             var token = _tokenService.GenerateToken("2311427", "Admin");
-
             return token;
         }
         [HttpPost]
@@ -46,7 +41,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> GetActiveStatus(int employeeId, string parameterCode, string type)
         {
             var activeStatus = await _employeeInformation.EmployeeStatusAsync(employeeId, parameterCode, type);
-            return new JsonResult(activeStatus);
+            return Ok(activeStatus);
         }
         [HttpGet]
         public async Task<IActionResult> GetProbationStatus()
@@ -60,20 +55,20 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> LanguageSkill(int employeeId)
         {
             var languagedata = await _employeeInformation.LanguageSkillAsync(employeeId);
-            return new JsonResult(languagedata);
+            return Ok(languagedata);
         }
 
         [HttpGet]
         public async Task<IActionResult> Communication(int employeeId)
         {
             var Communicationdata = await _employeeInformation.CommunicationAsync(employeeId);
-            return new JsonResult(Communicationdata);
+            return Ok(Communicationdata);
         }
         [HttpGet]
         public async Task<IActionResult> CommunicationExtra(int employeeId)
         {
             var CommunicationExtra = await _employeeInformation.CommunicationExtraAsync(employeeId);
-            return new JsonResult(CommunicationExtra);
+            return Ok(CommunicationExtra);
         }
 
         [HttpGet]
@@ -81,35 +76,35 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> CommunicationEmergency(int employeeId)
         {
             var CommunicationEmergency = await _employeeInformation.CommunicationEmergencyAsync(employeeId);
-            return new JsonResult(CommunicationEmergency);
+            return Ok(CommunicationEmergency);
         }
 
         [HttpGet]
         public async Task<IActionResult> HobbiesData(int employeeId)
         {
             var VisaDetailsReport = await _employeeInformation.HobbiesDataAsync(employeeId);
-            return new JsonResult(VisaDetailsReport);
+            return Ok(VisaDetailsReport);
         }
 
         [HttpGet]
         public async Task<IActionResult> RewardAndRecognition(int employeeId)
         {
             var RewardAndRecognitionData = await _employeeInformation.RewardAndRecognitionAsync(employeeId);
-            return new JsonResult(RewardAndRecognitionData);
+            return Ok(RewardAndRecognitionData);
         }
 
         [HttpGet]
         public async Task<IActionResult> Qualification(int employeeId)
         {
             var Qualification = await _employeeInformation.QualificationAsync(employeeId);
-            return new JsonResult(Qualification);
+            return Ok(Qualification);
         }
 
         [HttpGet]
         public async Task<IActionResult> SkillSet(int employeeId)
         {
             var SkillSetData = await _employeeInformation.SkillSetsAsync(employeeId);
-            return new JsonResult(SkillSetData);
+            return Ok(SkillSetData);
         }
 
         [HttpGet]
@@ -117,7 +112,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             List<string> excludedDocTypes = new List<string> { _employeeSettings.Documents01, _employeeSettings.Documents02, _employeeSettings.Documents03 };
             var DocumentsData = await _employeeInformation.DocumentsAsync(employeeId, excludedDocTypes);
-            return new JsonResult(DocumentsData);
+            return Ok(DocumentsData);
         }
         [HttpGet]
 
@@ -125,26 +120,26 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             List<string> excludedDocTypes = new List<string> { _employeeSettings.Documents04, _employeeSettings.Documents03, _employeeSettings.Documents05, _employeeSettings.Documents01 };
             var DocumentsData = await _employeeInformation.DocumentsAsync(employeeId, excludedDocTypes);
-            return new JsonResult(DocumentsData);
+            return Ok(DocumentsData);
         }
         [HttpGet]
         public async Task<IActionResult> Dependent(int employeeId)
         {
             var DependentData = await _employeeInformation.DependentAsync(employeeId);
-            return new JsonResult(DependentData);
+            return Ok(DependentData);
         }
         [HttpGet]
         public async Task<IActionResult> Certification(int employeeId)
         {
             var CertificationData = await _employeeInformation.CertificationAsync(employeeId);
-            return new JsonResult(CertificationData);
+            return Ok(CertificationData);
 
         }
         [HttpGet]
         public async Task<IActionResult> DisciplinaryActions(int employeeId)
         {
             var DisciplinaryActionsData = await _employeeInformation.DisciplinaryActionsAsync(employeeId);
-            return new JsonResult(DisciplinaryActionsData);
+            return Ok(DisciplinaryActionsData);
 
         }
 
@@ -152,7 +147,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> Letter(int employeeId)
         {
             var LetterData = await _employeeInformation.LetterAsync(employeeId);
-            return new JsonResult(LetterData);
+            return Ok(LetterData);
 
         }
 
@@ -160,7 +155,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> Reference(int employeeId)
         {
             var ReferenceData = await _employeeInformation.ReferenceAsync(employeeId);
-            return new JsonResult(ReferenceData);
+            return Ok(ReferenceData);
 
         }
 
@@ -168,7 +163,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> Professional(int employeeId)
         {
             var ProfessionalData = await _employeeInformation.ProfessionalAsync(employeeId);
-            return new JsonResult(ProfessionalData);
+            return Ok(ProfessionalData);
 
         }
 
@@ -176,7 +171,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> Asset()
         {
             var AssetData = await _employeeInformation.AssetAsync();
-            return new JsonResult(AssetData);
+            return Ok(AssetData);
 
         }
 
@@ -184,14 +179,14 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> AssetDetails(int employeeId)
         {
             var AssetDetailslData = await _employeeInformation.AssetDetailsAsync(employeeId);
-            return new JsonResult(AssetDetailslData);
+            return Ok(AssetDetailslData);
 
         }
         [HttpGet]
         public async Task<IActionResult> CurrencyDropdown_Professional()
         {
             var CurrencyDropdown_Professional = await _employeeInformation.CurrencyDropdownProfessionalAsync();
-            return new JsonResult(CurrencyDropdown_Professional);
+            return Ok(CurrencyDropdown_Professional);
 
         }
 
@@ -212,76 +207,76 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> GetProfessionalDataById(string updateType, int detailID, int empID)
         {
             var ProfessionalData = await _employeeInformation.GetProfessionalByIdAsync(updateType, detailID, empID);
-            return new JsonResult(ProfessionalData);
+            return Ok(ProfessionalData);
         }
         [HttpGet]
         public async Task<IActionResult> GetPersonalDetailsById(int employeeId)
         {
             var personalDetails = await _employeeInformation.GetPersonalDetailsByIdAsync(employeeId);
-            return new JsonResult(personalDetails);
+            return Ok(personalDetails);
         }
 
         [HttpGet]
         public async Task<IActionResult> Training(int employeeId)
         {
             var Training = await _employeeInformation.TrainingAsync(employeeId);
-            return new JsonResult(Training);
+            return Ok(Training);
         }
         [HttpGet]
         public async Task<IActionResult> CareerHistory(int employeeId)
         {
             var CareerDetails = await _employeeInformation.CareerHistoryAsync(employeeId);
-            return new JsonResult(CareerDetails);
+            return Ok(CareerDetails);
         }
         [HttpGet]
         public async Task<IActionResult> BiometricDetails(int employeeId)
         {
             var BioDetails = await _employeeInformation.BiometricDetailsAsync(employeeId);
-            return new JsonResult(BioDetails);
+            return Ok(BioDetails);
         }
         [HttpGet]
         public async Task<IActionResult> AuditInformation(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
         {
             var BioDetails = await _employeeInformation.AuditInformationAsync(employeeIDs, empId, roleId, infotype, infoDesc, datefrom, dateto);
-            return new JsonResult(BioDetails);
+            return Ok(BioDetails);
         }
 
         [HttpGet]
         public async Task<IActionResult> AccessDetails(int employeeId)
         {
             var AccessDetails = await _employeeInformation.AccessDetailsAsync(employeeId);
-            return new JsonResult(AccessDetails);
+            return Ok(AccessDetails);
         }
         [HttpGet]
         public async Task<IActionResult> Fill_ModulesWorkFlow(int entityID, int linkId)
         {
             var fill_ModulesWorkFlow = await _employeeInformation.FillModulesWorkFlowAsync(entityID, linkId);
-            return new JsonResult(fill_ModulesWorkFlow);
+            return Ok(fill_ModulesWorkFlow);
         }
         [HttpGet]
         public async Task<IActionResult> Fill_WorkFlowMaster(int emp_Id, int roleId)
         {
             var fill_WorkFlowMaster = await _employeeInformation.FillWorkFlowMasterAsync(emp_Id, roleId);
-            return new JsonResult(fill_WorkFlowMaster);
+            return Ok(fill_WorkFlowMaster);
         }
         [HttpGet]
         public async Task<IActionResult> BindWorkFlowMasterEmp(int linkId, int linkLevel)
         {
             var bindWorkFlowMasterEmp = await _employeeInformation.BindWorkFlowMasterEmpAsync(linkId, linkLevel);
-            return new JsonResult(bindWorkFlowMasterEmp);
+            return Ok(bindWorkFlowMasterEmp);
         }
 
         [HttpGet]
         public async Task<IActionResult> TransferAndPromotion(int employeeId)
         {
             var TransferAndPromotion = await _employeeInformation.TransferAndPromotionAsync(employeeId);
-            return new JsonResult(TransferAndPromotion);
+            return Ok(TransferAndPromotion);
         }
         [HttpGet]
         public async Task<IActionResult> SalarySeries(int employeeId, string status)
         {
             var SalarySeries = await _employeeInformation.SalarySeriesAsync(employeeId, status);
-            return new JsonResult(SalarySeries);
+            return Ok(SalarySeries);
         }
 
 
@@ -290,96 +285,96 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> GetRejoinReport(int employeeId)
         {
             var getRejoinReport = await _employeeInformation.GetRejoinReportAsync(employeeId);
-            return new JsonResult(getRejoinReport);
+            return Ok(getRejoinReport);
         }
         [HttpGet]
         public async Task<IActionResult> GetEmpReportingReport(int employeeId)
         {
             var getEmpReportingReport = await _employeeInformation.GetEmpReportingReportAsync(employeeId);
-            return new JsonResult(getEmpReportingReport);
+            return Ok(getEmpReportingReport);
         }
         [HttpGet]
         public async Task<IActionResult> GetEmpWorkFlowRoleDetails(int linkId, int linkLevel)
         {
             var getEmpWorkFlowRoleDetails = await _employeeInformation.GetEmpWorkFlowRoleDetailsAsync(linkId, linkLevel);
-            return new JsonResult(getEmpWorkFlowRoleDetails);
+            return Ok(getEmpWorkFlowRoleDetails);
         }
 
         [HttpGet]
         public async Task<IActionResult> FillEmpWorkFlowRole(int entityID)
         {
             var fillEmpWorkFlowRole = await _employeeInformation.FillEmpWorkFlowRoleAsync(entityID);
-            return new JsonResult(fillEmpWorkFlowRole);
+            return Ok(fillEmpWorkFlowRole);
         }
         [HttpGet]
         public async Task<IActionResult> EmployeeType(int employeeId)
         {
             var employeeType = await _employeeInformation.EmployeeTypeAsync(employeeId);
-            return new JsonResult(employeeType);
+            return Ok(employeeType);
         }
         [HttpGet]
         public async Task<IActionResult> GeoSpacingTypeAndCriteria(string type)
         {
             var GeoSpacingType = await _employeeInformation.GeoSpacingTypeAndCriteriaAsync(type);
-            return new JsonResult(GeoSpacingType);
+            return Ok(GeoSpacingType);
         }
         [HttpGet]
         public async Task<IActionResult> GetGeoSpacing(int employeeid)
         {
             var GetGeoSpacing = await _employeeInformation.GetGeoSpacingAsync(employeeid);
-            return new JsonResult(GetGeoSpacing);
+            return Ok(GetGeoSpacing);
         }
         [HttpGet]
         public async Task<IActionResult> HraDetails(int employeeId)
         {
             var HraDetails = await _employeeInformation.HraDetailsAsync(employeeId);
-            return new JsonResult(HraDetails);
+            return Ok(HraDetails);
         }
         [HttpGet]
         public async Task<IActionResult> FillEmployeesBasedOnwWorkflow(int firstEntityId, int secondEntityId)
         {
             var fillEmployeesBasedOnwWorkflow = await _employeeInformation.FillEmployeesBasedOnwWorkflowAsync(firstEntityId, secondEntityId);
-            return new JsonResult(fillEmployeesBasedOnwWorkflow);
+            return Ok(fillEmployeesBasedOnwWorkflow);
         }
         [HttpGet]
         public async Task<IActionResult> GetCountry()
         {
             var fillCountry = await _employeeInformation.GetCountryAsync();
-            return new JsonResult(fillCountry);
+            return Ok(fillCountry);
 
         }
         [HttpGet]
         public async Task<IActionResult> GetNationalities()
         {
             var fillNatinalities = await _employeeInformation.GetNationalitiesAsync();
-            return new JsonResult(fillNatinalities);
+            return Ok(fillNatinalities);
 
         }
         [HttpGet]
         public async Task<IActionResult> GetBloodGroup()
         {
             var getBloodGroup = await _employeeInformation.GetBloodGroupAsync();
-            return new JsonResult(getBloodGroup);
+            return Ok(getBloodGroup);
 
         }
         [HttpGet]
         public async Task<IActionResult> FillReligion()
         {
             var fillReligion = await _employeeInformation.FillReligionAsync();
-            return new JsonResult(fillReligion);
+            return Ok(fillReligion);
 
         }
         [HttpGet]
         public async Task<IActionResult> GetHrEmpDetailsAsync(int employeeId, int roleId)
         {
             var employeeDetails = await _employeeInformation.GetHrEmpDetailsAsync(employeeId, roleId);
-            return new JsonResult(employeeDetails);
+            return Ok(employeeDetails);
         }
         [HttpPost]
         public async Task<IActionResult> UpdateEmployeeDetails([FromBody] EmployeeDetailsUpdateDto employeeDetailsDto)
         {
             var employeeDetails = await _employeeInformation.UpdateEmployeeDetailsAsync(employeeDetailsDto);
-            return new JsonResult(employeeDetails);
+            return Ok(employeeDetails);
         }
         [HttpPost]
         public async Task<IActionResult> InsertOrUpdateLanguageSkills([FromBody] LanguageSkillsSaveDto langSkills)
@@ -397,14 +392,14 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> FillLanguageTypes()
         {
             var fillLanguageTypes = await _employeeInformation.FillLanguageTypesAsync();
-            return new JsonResult(fillLanguageTypes);
+            return Ok(fillLanguageTypes);
 
         }
         [HttpGet]
         public async Task<IActionResult> FillConsultant()
         {
             var fillConsultant = await _employeeInformation.FillConsultantAsync();
-            return new JsonResult(fillConsultant);
+            return Ok(fillConsultant);
 
         }
 
@@ -426,7 +421,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> FillRewardType()
         {
             var fillRewardType = await _employeeInformation.FillRewardTypeAsync();
-            return new JsonResult(fillRewardType);
+            return Ok(fillRewardType);
 
         }
 
@@ -446,7 +441,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> FillBankDetails(int empID)
         {
             var bankDetails = await _employeeInformation.FillBankDetailsAsync(empID);
-            return new JsonResult(bankDetails);
+            return Ok(bankDetails);
 
         }
 
@@ -454,7 +449,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> BankTypeEdit()
         {
             var BankType = await _employeeInformation.BankTypeEditAsync();
-            return new JsonResult(BankType);
+            return Ok(BankType);
         }
         [HttpPost]
         public async Task<IActionResult> UpdateEmployeeType([FromBody] EmployeeTypeDto EmployeeType)
@@ -473,7 +468,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> CertificationsDropdown(string description)
         {
             var certificationDropdown = await _employeeInformation.CertificationsDropdownAsync(description);
-            return new JsonResult(certificationDropdown);
+            return Ok(certificationDropdown);
         }
         [HttpPost]
         public async Task<IActionResult> InsertOrUpdateCertificates([FromBody] CertificationSaveDto certificates)
@@ -529,7 +524,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> FillCountry()
         {
             var fillCountry = await _employeeInformation.FillCountryAsync();
-            return new JsonResult(fillCountry);
+            return Ok(fillCountry);
 
         }
 
@@ -539,25 +534,25 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus)
         {
             var fillEmp = await _employeeInformation.FillEmployeeDropdownAsync(activeStatus, employeeStatus, probationStatus);
-            return new JsonResult(fillEmp);
+            return Ok(fillEmp);
         }
         [HttpGet]
         public async Task<IActionResult> AssetGroupDropdownEdit()
         {
             var assetgroup = await _employeeInformation.AssetGroupDropdownEditAsync();
-            return new JsonResult(assetgroup);
+            return Ok(assetgroup);
         }
         [HttpGet]
         public async Task<IActionResult> GetAssetDropdownEdit(int varAssestTypeID)
         {
             var assetdetails = await _employeeInformation.GetAssetDropdownEditAsync(varAssestTypeID);
-            return new JsonResult(assetdetails);
+            return Ok(assetdetails);
         }
         [HttpGet]
         public async Task<IActionResult> GetAssetDetailsEdit(string CommonName)
         {
             var assetdetailsno = await _employeeInformation.GetAssetDetailsEditAsync(CommonName);
-            return new JsonResult(assetdetailsno);
+            return Ok(assetdetailsno);
         }
 
         [HttpPost]
@@ -583,26 +578,26 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
         {
             var getassetedit = await _employeeInformation.GetAssetEditDatasAsync(varSelectedTypeID, varAssestID);
-            return new JsonResult(getassetedit);
+            return Ok(getassetedit);
         }
 
         [HttpDelete]
         public async Task<IActionResult> AssetDelete(int varEmpID, int varAssestID)
         {
             var getassetdelete = await _employeeInformation.AssetDeleteAsync(varEmpID, varAssestID);
-            return new JsonResult(getassetdelete);
+            return Ok(getassetdelete);
         }
         [HttpGet]
         public async Task<IActionResult> GetBankType(int employeeId)
         {
             var getBankType = await _employeeInformation.GetBankTypeAsync(employeeId);
-            return new JsonResult(getBankType);
+            return Ok(getBankType);
         }
         [HttpGet]
         public async Task<IActionResult> GetGeneralSubCategoryList(string remarks)
         {
             var getGeneralSubCategoryList = await _employeeInformation.GetGeneralSubCategoryListAsync(remarks);
-            return new JsonResult(getGeneralSubCategoryList);
+            return Ok(getGeneralSubCategoryList);
         }
         [HttpPost]
         public async Task<IActionResult> SetEmpDocumentDetails([FromBody] SetEmpDocumentDetailsDto SetEmpDocumentDetails)   // For Document and Bank Insertion
@@ -614,13 +609,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> FillDocumentType(int EmpID)    //dropdown in document add button
         {
             var FillDocumentType = await _employeeInformation.FillDocumentTypeAsync(EmpID);
-            return new JsonResult(FillDocumentType);
+            return Ok(FillDocumentType);
         }
         [HttpGet]
         public async Task<IActionResult> DocumentField(int DocumentID)   //textbox field name inside document add button
         {
             var DocumentField = await _employeeInformation.DocumentFieldAsync(DocumentID);
-            return new JsonResult(DocumentField);
+            return Ok(DocumentField);
         }
 
 
@@ -653,50 +648,50 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> InsertLetterTypeRequest([FromBody] LetterInsertUpdateDto LetterInsertUpdateDtos)
         {
             var InsertLetterTypeRequest = await _employeeInformation.InsertLetterTypeRequestAsync(LetterInsertUpdateDtos);
-            return new JsonResult(InsertLetterTypeRequest);
+            return Ok(InsertLetterTypeRequest);
         }
         [HttpGet]
         public async Task<IActionResult> EditEmployeeCommonInformationAsync(string? empIds, int? employeeid)
         {
             var employeeType = await _employeeInformation.EditEmployeeCommonInformationAsync(empIds, employeeid);
-            return new JsonResult(employeeType);
+            return Ok(employeeType);
         }
 
         [HttpPost]
         public async Task<IActionResult> UpdateEmployeeInfo(List<TmpEmpInformation> inputs)
         {
             var employeeType = await _employeeInformation.EditInformationAsync(inputs);
-            return new JsonResult(employeeType);
+            return Ok(employeeType);
         }
         [HttpGet]
         public async Task<IActionResult> GetInformationDescriptionAsync(int infoId)
         {
             var employeeType = await _employeeInformation.GetInformationDescriptionAsync(infoId);
-            return new JsonResult(employeeType);
+            return Ok(employeeType);
         }
         [HttpGet]
         public async Task<IActionResult> GetLetterTypes()
         {
             var employeeType = await _employeeInformation.GetLetterTypeAsync();
-            return new JsonResult(employeeType);
+            return Ok(employeeType);
         }
         [HttpGet]
         public async Task<IActionResult> LetterSignatureAuthority()
         {
             var employeeType = await _employeeInformation.LetterSignatureAuthorityAsync();
-            return new JsonResult(employeeType);
+            return Ok(employeeType);
         }
         [HttpPost]
         public async Task<IActionResult> LoadCompanyDetailsAsync(LoadCompanyDetailsRequestDto loadCompanyDetailsRequestDto)
         {
             var employeeType = await _employeeInformation.LoadCompanyDetailsAsync(loadCompanyDetailsRequestDto);
-            return new JsonResult(employeeType);
+            return Ok(employeeType);
         }
         [HttpGet]
         public async Task<IActionResult> GetLevelAsync(int level)
         {
             var employeeType = await _employeeInformation.GetLevelAsync(level);
-            return new JsonResult(employeeType);
+            return Ok(employeeType);
         }
         [HttpPost]
         public async Task<IActionResult> DirectUploadLetter([FromForm] List<IFormFile> files, string filepath, int masterID)
@@ -718,25 +713,25 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> CheckLetterTypeRequest(int? LetterTypeId, int? LetterSubType, int? MasterId)
         {
             var LetterTypeRequest = await _employeeInformation.CheckLetterTypeRequest(LetterTypeId, LetterSubType, MasterId);
-            return new JsonResult(LetterTypeRequest);
+            return Ok(LetterTypeRequest);
         }
         [HttpDelete]
         public async Task<IActionResult> DeleteDesciplinaryLetter(string? masterId)
         {
             var LetterTypeRequest = await _employeeInformation.DeleteDesciplinaryLetter(masterId);
-            return new JsonResult(LetterTypeRequest);
+            return Ok(LetterTypeRequest);
         }
         [HttpGet]
         public async Task<IActionResult> GetAllLetterType()
         {
             var allLetterTypes = await _employeeInformation.GetAllLetterType();
-            return new JsonResult(allLetterTypes);
+            return Ok(allLetterTypes);
         }
         [HttpGet]
         public async Task<IActionResult> GetLetterSubTypeByIdAsync(int LetterSubTypeID)
         {
             var letterType = await _employeeInformation.GetLetterSubTypeByIdAsync(LetterSubTypeID);
-            return new JsonResult(letterType);
+            return Ok(letterType);
         }
     }
 }

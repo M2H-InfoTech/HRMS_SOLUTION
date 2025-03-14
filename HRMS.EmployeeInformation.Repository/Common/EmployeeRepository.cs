@@ -15,7 +15,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.VisualBasic;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 
@@ -27,11 +26,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         //private IStringLocalizer _stringLocalizer;
         private readonly IMemoryCache _memoryCache;
         private readonly EmployeeSettings _employeeSettings;
-        private int paramDynVal;
-
         private readonly IMapper _mapper;
-        private readonly IWebHostEnvironment _env;
-        private readonly IRepositoryC _employeeRepositoryC;
         private readonly IRepository<QualificationAttachment> _repository;
         private readonly IRepository<AssignedLetterType> _assignedLetterTypeRepository;
 
@@ -42,7 +37,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             _employeeSettings = employeeSettings;
             _memoryCache = memoryCache;
             _mapper = mapper;
-            _env = env ?? throw new ArgumentNullException(nameof(env));
             _repository = repository;
             _assignedLetterTypeRepository = assignedLetterTypeRepository;
 
@@ -598,7 +592,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
         public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatTwoLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
 
 
@@ -625,7 +619,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         }
         public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatThreeLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
 
             var statusList = empStatus?.Split(',')
@@ -653,7 +647,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
         public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatFourLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
 
             var result = await (
@@ -958,8 +952,8 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
         }
 
         private async Task<PaginatedResult<EmployeeResultDto>> GetPaginatedNotExistLinkSelectEmployeeDataAsync(
-    DateTime? durationFrom, DateTime? durationTo, string empStatus, List<string>? empIdList,
-    int pageNumber, int pageSize, string? ageFormat)
+        DateTime? durationFrom, DateTime? durationTo, string empStatus, List<string>? empIdList,
+        int pageNumber, int pageSize, string? ageFormat)
         {
             var statusList = empStatus.Split(',').Select(s => int.Parse(s.Trim())).ToList();
             var filteredStatuses = await _context.HrEmpStatusSettings
@@ -1230,299 +1224,101 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             };
         }
 
+        //-----------------------------Start---------------------------------------------------------
+
+        private async Task<int?> GetLinkLevelByRoleId(int roleId)
+        {
+            int? linkLevel = await _context.SpecialAccessRights
+                .Where(s => s.RoleId == roleId)
+                .OrderBy(s => s.LinkLevel)
+                .Select(s => s.LinkLevel)
+                .FirstOrDefaultAsync();
+
+            return linkLevel ?? await _context.EntityAccessRights02s
+                .Where(e => e.RoleId == roleId)
+                .OrderBy(e => e.LinkLevel)
+                .Select(e => e.LinkLevel)
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task<List<LinkItemDto>> GetEntityAccessRights(int roleId, int? linkSelect)
+        {
+            var entityAccessRights = await _context.EntityAccessRights02s
+                .Where(s => s.RoleId == roleId && s.LinkLevel == linkSelect)
+                .ToListAsync();
+
+            return entityAccessRights
+                .Where(s => !string.IsNullOrEmpty(s.LinkId))
+                .SelectMany(s => SplitStrings_XML(s.LinkId, default), (s, item) => new LinkItemDto
+                {
+                    Item = item,
+                    LinkLevel = s.LinkLevel
+                })
+                .Where(f => !string.IsNullOrEmpty(f.Item))
+                .ToList();
+        }
+
+        private async Task<List<LinkItemDto>> GetEmployeeEntityLinks(int empId)
+        {
+            var empEntity = await _context.HrEmpMasters
+                .Where(h => h.EmpId == empId)
+                .Select(h => h.EmpEntity)
+                .FirstOrDefaultAsync();
+
+            return SplitStrings_XML(empEntity, ',')
+                .Select((item, index) => new LinkItemDto
+                {
+                    Item = item,
+                    LinkLevel = index + 2
+                })
+                .Where(c => !string.IsNullOrEmpty(c.Item))
+                .ToList();
+        }
+
+        private async Task<List<int>> GetFilteredEmployeeIds(List<LinkItemDto> applicableFinalNew, bool exists)
+        {
+            return await (from d in _context.HrEmpMasters
+                          where exists ||
+                                (from hlv in _context.HighLevelViewTables
+                                 join b in applicableFinalNew on hlv.LastEntityId equals d.LastEntity into joined
+                                 where d.IsDelete == false && joined.Any()
+                                 select d.EmpId).Contains(d.EmpId)
+                          select d.EmpId)
+                  .ToListAsync();
+        }
+        public async Task<List<int>> GetEmpIdsByRoleAndEntityAccess(int roleId, int empId, bool exists)
+        {
+            int? linkSelect = await GetLinkLevelByRoleId(roleId);
+            var entityAccessRights = await GetEntityAccessRights(roleId, linkSelect);
+            var empEntityLinks = await GetEmployeeEntityLinks(empId);
+            var applicableFinalNew = entityAccessRights.Concat(empEntityLinks).Distinct().ToList();
+            return await GetFilteredEmployeeIds(applicableFinalNew, exists);
+        }
+
+        //-----------------------------End---------------------------------------------------------
 
         public async Task<List<int>> InfoFormatZeroOrOneLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
-            int lnkLev = 0;
-            //int roleId = 3;
-            //int empId = 72;
-            //string empIDs = string.Empty;
-            int? linkSelect = await _context.SpecialAccessRights.Where(s => s.RoleId == roleId).Select(s => s.LinkLevel).FirstOrDefaultAsync();
-            if (linkSelect != null)
-            {
-                linkSelect = await _context.SpecialAccessRights
-                    .Where(e => e.RoleId == roleId)
-                    .OrderBy(e => e.LinkLevel)
-                    .Select(e => e.LinkLevel)
-                    .FirstOrDefaultAsync();//------------Have to get 0 in case roleId 3
-
-            }
-            else
-            {
-                linkSelect = await (from e in _context.EntityAccessRights02s
-                                    where e.RoleId == roleId
-                                    orderby e.LinkLevel
-                                    select e.LinkLevel).FirstOrDefaultAsync();
-            }
-            var ctnew = SplitStrings_XML(_context.HrEmpMasters
-                     .Where(h => h.EmpId == empId)
-                     .Select(h => h.EmpEntity).FirstOrDefault(), ',')
-             .Select((item, index) => new LinkItemDto
-             {
-                 Item = item,
-                 LinkLevel = index + 2
-             }).Where(c => !string.IsNullOrEmpty(c.Item));
-
-
-            //var entityAccessRights = _context.EntityAccessRights02s.Where(s => s.RoleId == roleId).ToList();
-
-            var entityAccessRights = await _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == linkSelect).ToListAsync();
-
-
-
-            var part1 = entityAccessRights
-            .Where(s => !string.IsNullOrEmpty(s.LinkId)) // Ensure LinkId is not null or empty
-            .SelectMany(
-            s => SplitStrings_XML(s.LinkId, default), // Split LinkId
-            (s, item) => new LinkItemDto
-            {
-                Item = item,
-                LinkLevel = entityAccessRights.FirstOrDefault().LinkLevel // LinkLevel as per SQL logic
-            })
-            .Where(f => !string.IsNullOrEmpty(f.Item)) // Exclude empty items
-            .ToList();
-
-
-
-            var part2 = ctnew
-                   .Where(ct => ct.LinkLevel >= lnkLev && !string.IsNullOrEmpty(ct.Item))
-                   .Select(ct => new LinkItemDto
-                   {
-                       Item = ct.Item,
-                       LinkLevel = ct.LinkLevel
-                   });
-
-            var applicableFinalNew = part1.Concat(part2).Distinct().ToList();
-
-            var empIDs = await (from d in _context.HrEmpMasters
-                                where exists ||
-                                      (from hlv in _context.HighLevelViewTables
-                                       join b in applicableFinalNew on hlv.LastEntityId equals d.LastEntity into joined
-                                       where d.IsDelete == false && joined.Any()
-                                       select d.EmpId).Contains(d.EmpId)
-                                select d.EmpId)
-                  .ToListAsync();
-            return empIDs;
+            return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
 
         public async Task<List<int>> InfoFormatTwoLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
-            int lnkLev = 0;
-            //int roleId = 3;
-            //int empId = 72;
-            //string empIDs = string.Empty;
-            int? linkSelect = await _context.SpecialAccessRights.Where(s => s.RoleId == roleId).Select(s => s.LinkLevel).FirstOrDefaultAsync();
-            if (linkSelect != null)
-            {
-                linkSelect = await _context.SpecialAccessRights
-                    .Where(e => e.RoleId == roleId)
-                    .OrderBy(e => e.LinkLevel)
-                    .Select(e => e.LinkLevel)
-                    .FirstOrDefaultAsync();//------------Have to get 0 in case roleId 3
-
-            }
-            else
-            {
-                linkSelect = await (from e in _context.EntityAccessRights02s
-                                    where e.RoleId == roleId
-                                    orderby e.LinkLevel
-                                    select e.LinkLevel).FirstOrDefaultAsync();
-            }
-            var ctnew = SplitStrings_XML(_context.HrEmpMasters
-                     .Where(h => h.EmpId == empId)
-                     .Select(h => h.EmpEntity).FirstOrDefault(), ',')
-             .Select((item, index) => new LinkItemDto
-             {
-                 Item = item,
-                 LinkLevel = index + 2
-             }).Where(c => !string.IsNullOrEmpty(c.Item));
-
-
-            //var entityAccessRights = _context.EntityAccessRights02s.Where(s => s.RoleId == roleId).ToList();
-
-            var entityAccessRights = await _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == linkSelect).ToListAsync();
-
-            var part1 = entityAccessRights
-                .Where(s => !string.IsNullOrEmpty(s.LinkId)) // Ensure LinkId is not null or empty
-                .SelectMany(
-                s => SplitStrings_XML(s.LinkId, default), // Split LinkId
-                (s, item) => new LinkItemDto
-                {
-                    Item = item,
-                    LinkLevel = entityAccessRights.FirstOrDefault().LinkLevel // LinkLevel as per SQL logic
-                })
-                .Where(f => !string.IsNullOrEmpty(f.Item)) // Exclude empty items
-                .ToList();
-
-
-
-            var part2 = ctnew
-                   .Where(ct => ct.LinkLevel >= lnkLev && !string.IsNullOrEmpty(ct.Item))
-                   .Select(ct => new LinkItemDto
-                   {
-                       Item = ct.Item,
-                       LinkLevel = ct.LinkLevel
-                   });
-
-            var applicableFinalNew = part1.Concat(part2).Distinct().ToList();
-
-            var empIDs = await (from d in _context.HrEmpMasters
-                                where exists ||
-                                      (from hlv in _context.HighLevelViewTables
-                                       join b in applicableFinalNew on hlv.LastEntityId equals d.LastEntity into joined
-                                       where d.IsDelete == false && joined.Any()
-                                       select d.EmpId).Contains(d.EmpId)
-                                select d.EmpId)
-                  .ToListAsync();
-            return empIDs;
+            return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
 
         public async Task<List<int>> InfoFormatThreeLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
-            int lnkLev = 0;
-            //int roleId = 3;
-            //int empId = 72;
-            //string empIDs = string.Empty;
-            int? linkSelect = await _context.SpecialAccessRights.Where(s => s.RoleId == roleId).Select(s => s.LinkLevel).FirstOrDefaultAsync();
-            if (linkSelect != null)
-            {
-                linkSelect = await _context.SpecialAccessRights
-                    .Where(e => e.RoleId == roleId)
-                    .OrderBy(e => e.LinkLevel)
-                    .Select(e => e.LinkLevel)
-                    .FirstOrDefaultAsync();//------------Have to get 0 in case roleId 3
-
-            }
-            else
-            {
-                linkSelect = await (from e in _context.EntityAccessRights02s
-                                    where e.RoleId == roleId
-                                    orderby e.LinkLevel
-                                    select e.LinkLevel).FirstOrDefaultAsync();
-            }
-            var ctnew = SplitStrings_XML(_context.HrEmpMasters
-                     .Where(h => h.EmpId == empId)
-                     .Select(h => h.EmpEntity).FirstOrDefault(), ',')
-             .Select((item, index) => new LinkItemDto
-             {
-                 Item = item,
-                 LinkLevel = index + 2
-             }).Where(c => !string.IsNullOrEmpty(c.Item));
-
-
-            //var entityAccessRights = _context.EntityAccessRights02s.Where(s => s.RoleId == roleId).ToList();
-
-            var entityAccessRights = await _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == linkSelect).ToListAsync();
-
-            var part1 = entityAccessRights
-                .Where(s => !string.IsNullOrEmpty(s.LinkId)) // Ensure LinkId is not null or empty
-                .SelectMany(
-                s => SplitStrings_XML(s.LinkId, default), // Split LinkId
-                (s, item) => new LinkItemDto
-                {
-                    Item = item,
-                    LinkLevel = entityAccessRights.FirstOrDefault().LinkLevel // LinkLevel as per SQL logic
-                })
-                .Where(f => !string.IsNullOrEmpty(f.Item)) // Exclude empty items
-                .ToList();
-
-
-
-            var part2 = ctnew
-                   .Where(ct => ct.LinkLevel >= lnkLev && !string.IsNullOrEmpty(ct.Item))
-                   .Select(ct => new LinkItemDto
-                   {
-                       Item = ct.Item,
-                       LinkLevel = ct.LinkLevel
-                   });
-
-            var applicableFinalNew = part1.Concat(part2).Distinct().ToList();
-
-            var empIDs = await (from d in _context.HrEmpMasters
-                                where exists ||
-                                      (from hlv in _context.HighLevelViewTables
-                                       join b in applicableFinalNew on hlv.LastEntityId equals d.LastEntity into joined
-                                       where d.IsDelete == false && joined.Any()
-                                       select d.EmpId).Contains(d.EmpId)
-                                select d.EmpId)
-                  .ToListAsync();
-            return empIDs;
+            return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
 
         public async Task<List<int>> InfoFormatFourLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
-            int lnkLev = 0;
-            //int roleId = 3;
-            //int empId = 72;
-            //string empIDs = string.Empty;
-            int? linkSelect = await _context.SpecialAccessRights.Where(s => s.RoleId == roleId).Select(s => s.LinkLevel).FirstOrDefaultAsync();
-            if (linkSelect != null)
-            {
-                linkSelect = await _context.SpecialAccessRights
-                    .Where(e => e.RoleId == roleId)
-                    .OrderBy(e => e.LinkLevel)
-                    .Select(e => e.LinkLevel)
-                    .FirstOrDefaultAsync();//------------Have to get 0 in case roleId 3
-
-            }
-            else
-            {
-                linkSelect = await (from e in _context.EntityAccessRights02s
-                                    where e.RoleId == roleId
-                                    orderby e.LinkLevel
-                                    select e.LinkLevel).FirstOrDefaultAsync();
-            }
-            var ctnew = SplitStrings_XML(_context.HrEmpMasters
-                     .Where(h => h.EmpId == empId)
-                     .Select(h => h.EmpEntity).FirstOrDefault(), ',')
-             .Select((item, index) => new LinkItemDto
-             {
-                 Item = item,
-                 LinkLevel = index + 2
-             }).Where(c => !string.IsNullOrEmpty(c.Item));
-
-
-            //var entityAccessRights = _context.EntityAccessRights02s.Where(s => s.RoleId == roleId).ToList();
-
-            var entityAccessRights = await _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == linkSelect).ToListAsync();
-
-            var part1 = entityAccessRights
-                .Where(s => !string.IsNullOrEmpty(s.LinkId)) // Ensure LinkId is not null or empty
-                .SelectMany(
-                s => SplitStrings_XML(s.LinkId, default), // Split LinkId
-                (s, item) => new LinkItemDto
-                {
-                    Item = item,
-                    LinkLevel = entityAccessRights.FirstOrDefault().LinkLevel // LinkLevel as per SQL logic
-                })
-                .Where(f => !string.IsNullOrEmpty(f.Item)) // Exclude empty items
-                .ToList();
-
-
-
-            var part2 = ctnew
-                   .Where(ct => ct.LinkLevel >= lnkLev && !string.IsNullOrEmpty(ct.Item))
-                   .Select(ct => new LinkItemDto
-                   {
-                       Item = ct.Item,
-                       LinkLevel = ct.LinkLevel
-                   });
-
-            var applicableFinalNew = part1.Concat(part2).Distinct().ToList();
-
-            var empIDs = await (from d in _context.HrEmpMasters
-                                where exists ||
-                                      (from hlv in _context.HighLevelViewTables
-                                       join b in applicableFinalNew on hlv.LastEntityId equals d.LastEntity into joined
-                                       where d.IsDelete == false && joined.Any()
-                                       select d.EmpId).Contains(d.EmpId)
-                                select d.EmpId)
-                  .ToListAsync();
-            return empIDs;
+            return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
         public static IEnumerable<string> SplitStrings_XML(string list, char delimiter = ',')
         {
@@ -1998,12 +1794,12 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 .Where(ec => ec.EmpId == employeeId && ec.Status != ApprovalStatus.Deleted.ToString())
                 .Select(ec => new CertificationDto
                 {
-                    Emp_Id = ec.EmpId,
-                    CertificationID = ec.CertificationId,
-                    Certificate_Name = certNames.ContainsKey((int)ec.CertificationName) ? certNames[(int)ec.CertificationName] : null,
-                    Certificate_Field = certFields.ContainsKey((int)ec.CertificationField) ? certFields[(int)ec.CertificationField] : null,
-                    Issuing_Authority = issueAuths.ContainsKey((int)ec.IssuingAuthority) ? issueAuths[(int)ec.IssuingAuthority] : null,
-                    Year_Of_Completion = yearCompletions.ContainsKey((int)ec.YearofCompletion) ? yearCompletions[(int)ec.YearofCompletion] : null
+                    empId = ec.EmpId,
+                    certificationId = ec.CertificationId,
+                    certificateName = certNames.ContainsKey((int)ec.CertificationName) ? certNames[(int)ec.CertificationName] : null,
+                    certificateField = certFields.ContainsKey((int)ec.CertificationField) ? certFields[(int)ec.CertificationField] : null,
+                    issuingAuthority = issueAuths.ContainsKey((int)ec.IssuingAuthority) ? issueAuths[(int)ec.IssuingAuthority] : null,
+                    yearOfCompletion = yearCompletions.ContainsKey((int)ec.YearofCompletion) ? yearCompletions[(int)ec.YearofCompletion] : null
                 }).AsNoTracking().ToListAsync();
 
             return certifications;
@@ -2541,7 +2337,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return codeId?.ToString();
         }
-
 
         public async Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
         {
@@ -3189,8 +2984,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return employee; // Return empty object if no employee found
         }
 
-
-
         public async Task<List<Fill_ModulesWorkFlowDto>> FillModulesWorkFlowAsync(int entityID, int linkId)
         {
             var excludedTransactionIds = _context.ParamWorkFlow02s
@@ -3219,7 +3012,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return result;
         }
-
 
         public async Task<List<Fill_WorkFlowMasterDto>> FillWorkFlowMasterAsync(int emp_Id, int roleId)
         {
@@ -3316,9 +3108,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 })
                 .ToListAsync();
         }
-
-
-
 
         public Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmpAsync(int linkId, int linkLevel)
         {
@@ -3989,8 +3778,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             }
         }
 
-
-
         public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflowAsync(int firstEntityId, int secondEntityId)
         {
             // Step 1: Fetch data first, then apply SplitStrings_XML in memory
@@ -4113,8 +3900,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return nationalities.Cast<object>().ToList();
         }
 
-
-
         public async Task<List<object>> GetBloodGroup()
         {
             var bloodGroups = await _context.HrmValueTypes
@@ -4183,8 +3968,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
         }
 
-
-
         public async Task<List<object>> FillLanguageTypes()
         {
             var languageTypes = await _context.HrEmpLanguagemasters
@@ -4201,7 +3984,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return consultant.Cast<object>().ToList();
         }
-
 
         public async Task<string> InsertOrUpdateReference(ReferenceSaveDto Reference)
         {
@@ -5378,7 +5160,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return result;
         }
 
-
         public async Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType)
         {
             string ErrorID = _employeeSettings.empSystemStatus;
@@ -5578,61 +5359,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             return value;
 
         }
-
-
-        public int GetEmployeeParameterSettings(int employeeID, string drpType = "", string parameterCode = "", string parameterType = "")
-        {
-            int? dailyRate = (from a in _context.CompanyParameters02s
-                              join b in _context.CompanyParameters
-                                  on a.ParamId equals b.Id
-                              where a.EmpId == employeeID
-                                  && b.ParameterCode == parameterCode
-                                  && b.Type == parameterType
-                              select (int?)a.Value)
-                   .FirstOrDefault();
-
-            if (dailyRate == null || dailyRate == 0)
-            {
-                // Get EmpEntity value
-                string entity = _context.EmployeeDetails
-                    .Where(e => e.EmpId == employeeID)
-                    .Select(e => e.EmpEntity)
-                    .FirstOrDefault();
-
-                if (!string.IsNullOrEmpty(entity))
-                {
-                    var entityList = entity.Split(',').ToList(); // Convert to list for filtering
-
-                    dailyRate = (from a in _context.CompanyParameters01s
-                                 join b in _context.CompanyParameters on a.ParamId equals b.Id into pb
-                                 from b in pb.DefaultIfEmpty()
-                                 join c in _context.HrmValueTypes on new { Value = a.Value, Type = drpType }
-                                     equals new { Value = c.Value, Type = c.Type } into pc
-                                 from c in pc.DefaultIfEmpty()
-                                 where entityList.Contains(a.LinkId.ToString()) &&
-                                       b.ParameterCode == parameterCode &&
-                                       b.Type == parameterType
-                                 orderby a.LevelId descending
-                                 select (int?)c.Value)
-                                .FirstOrDefault();
-                }
-            }
-
-            if (dailyRate == null || dailyRate == 0)
-            {
-                dailyRate = (from a in _context.CompanyParameters
-                             join b in _context.HrmValueTypes
-                                 on new { Value = a.Value, Type = drpType }
-                                 equals new { Value = b.Value, Type = b.Type }
-                             where a.ParameterCode == parameterCode && a.Type == parameterType
-                             select (int?)b.Value)
-                            .FirstOrDefault();
-            }
-
-            return dailyRate ?? 0;
-        }
-
-
 
         public async Task<string> InsertQualification(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
         {
@@ -5841,9 +5567,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 Nationality = nationalityHtml
             };
         }
-
-
-
         public async Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus)
         {
             int activeStatusInt = int.TryParse(activeStatus, out int tempStatus) ? tempStatus : 0;
@@ -5878,8 +5601,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
 
             return query.Cast<object>().ToList();
         }
-
-
 
         public async Task<List<object>> AssetGroupDropdownEdit()
         {
@@ -6044,7 +5765,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
             }
         }
 
-   
         public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
         {
             List<object> result = new List<object>();
@@ -6284,11 +6004,6 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                 }
             }
         }
-
-        //public Task<string> GetBankType (int employeeId)
-        //    {
-        //    throw new NotImplementedException ( );
-        //    }
 
         public async Task<object> GetBankType(int employeeId)
         {
@@ -8092,6 +7807,7 @@ DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ag
                               lm1.CreatedDate
                           }).ToListAsync();
         }
+
         public async Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID)
         {
             return await _context.LetterMaster01s

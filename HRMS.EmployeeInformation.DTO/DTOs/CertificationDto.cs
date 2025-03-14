@@ -2,11 +2,11 @@
 {
     public class CertificationDto
     {
-        public int? Emp_Id { get; set; }
-        public int? CertificationID { get; set; }
-        public string? Certificate_Name { get; set; }
-        public string? Certificate_Field { get; set; }
-        public string? Issuing_Authority { get; set; }
-        public string? Year_Of_Completion { get; set; }
+        public int? empId { get; set; }
+        public int? certificationId { get; set; }
+        public string? certificateName { get; set; }
+        public string? certificateField { get; set; }
+        public string? issuingAuthority { get; set; }
+        public string? yearOfCompletion { get; set; }
     }
 }

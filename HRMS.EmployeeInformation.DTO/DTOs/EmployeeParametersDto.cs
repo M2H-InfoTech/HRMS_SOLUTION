@@ -134,7 +134,5 @@
 
         public DateTime? WeddingDate { get; set; }
 
-        public HrEmpAddressDto? hrEmpAddressDto { get; set; }
-        public PersonalDetailsDto? employeeResultDto { get; set; }
     }
 }
