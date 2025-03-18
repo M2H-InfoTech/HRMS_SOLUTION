@@ -20,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MPLOYEE_INFORMATION.DTO.DTOs;
+using Serilog;
 
 internal class Program
 {
@@ -99,9 +100,17 @@ internal class Program
         builder.Services.AddLocalization(optinos => optinos.ResourcesPath = "Resources");
 
         //builder.WebHost.UseUrls("http://localhost:80", "https://localhost:443");
+        Log.Logger = new LoggerConfiguration()
+       .MinimumLevel.Warning()  // Log only Warning and Error levels
+       .WriteTo.File("logs/app.log",
+           rollingInterval: RollingInterval.Day,
+           outputTemplate: "Method: {SourceContext} | Time: {Timestamp:MM/dd/yyyy HH:mm:ss} | Exception: {Exception} | Message: {Message}{NewLine}"
+       )
+       .CreateLogger();
 
-
-
+        // Apply Serilog as the logger
+        builder.Logging.ClearProviders();
+        builder.Logging.AddSerilog();
 
 
         var app = builder.Build();
@@ -126,7 +135,24 @@ internal class Program
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
+        //app.UseExceptionHandler(errorApp =>
+        //{
+        //    errorApp.Run(async context =>
+        //    {
+        //        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+        //        var ex = exceptionHandlerPathFeature?.Error;
 
+        //        if (ex is SqlException sqlEx)
+        //        {
+        //            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+        //            logger.LogError("Method: {MethodName} | Time: {Timestamp} | Error: {ErrorMessage}",
+        //                exceptionHandlerPathFeature.Path, DateTime.Now, sqlEx.Message);
+
+        //            //logger.LogError($"Login failed. Method: {exceptionHandlerPathFeature.Path}, Date & Time: {DateTime.Now}, Error: {sqlEx.Message}");
+        //        }
+        //    });
+        //});
         app.Run();
     }
 }

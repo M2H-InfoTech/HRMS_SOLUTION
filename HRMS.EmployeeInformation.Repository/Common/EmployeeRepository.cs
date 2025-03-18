@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 
@@ -27,17 +28,18 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private readonly IMemoryCache _memoryCache;
         private readonly EmployeeSettings _employeeSettings;
         private readonly IMapper _mapper;
-        private readonly IRepository<QualificationAttachment> _repository;
+        private readonly IRepository<QualificationAttachment> _qualificationAttachmentRepository;
         private readonly IRepository<AssignedLetterType> _assignedLetterTypeRepository;
-
-        public EmployeeRepository(EmployeeDBContext dbContext, EmployeeSettings employeeSettings, IMemoryCache memoryCache, IMapper mapper, IWebHostEnvironment env, IRepositoryC employeeRepositoryC, IRepository<QualificationAttachment> repository, IRepository<AssignedLetterType> assignedLetterTypeRepository)
+        private readonly ILogger<EmployeeRepository> _logger;
+        public EmployeeRepository(EmployeeDBContext dbContext, EmployeeSettings employeeSettings, IMemoryCache memoryCache, IMapper mapper, IWebHostEnvironment env, IRepositoryC employeeRepositoryC, IRepository<QualificationAttachment> qualificationAttachmentRepository, IRepository<AssignedLetterType> assignedLetterTypeRepository, ILogger<EmployeeRepository> logger)
         {
             _context = dbContext;
             _employeeSettings = employeeSettings;
             _memoryCache = memoryCache;
             _mapper = mapper;
-            _repository = repository;
+            _qualificationAttachmentRepository = qualificationAttachmentRepository;
             _assignedLetterTypeRepository = assignedLetterTypeRepository;
+            _logger = logger;
 
         }
         public async Task<string> GetDefaultCompanyParameter(int employeeId, string parameterCode, string type)
@@ -267,42 +269,53 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
         public async Task<PaginatedResult<EmployeeResultDto>> GetEmpData(EmployeeInformationParameters employeeInformationParameters)
         {
-
-            var infoFormat = await GetDefaultCompanyParameter(employeeInformationParameters.empId, _employeeSettings.CompanyParameterEmpInfoFormat, _employeeSettings.CompanyParameterType);
-            int format = Convert.ToInt32(infoFormat);
-
-            if (infoFormat != null)
+            try
             {
+                var infoFormat = await GetDefaultCompanyParameter(employeeInformationParameters.empId, _employeeSettings.CompanyParameterEmpInfoFormat, _employeeSettings.CompanyParameterType);
+                int format = Convert.ToInt32(infoFormat);
 
-                var linkLevelExists = IsLinkLevelExists(employeeInformationParameters.roleId);
-
-                var CurrentStatusDesc = (from ec in _context.EmployeeCurrentStatuses
-                                         where ec.StatusDesc == _employeeSettings.OnNotice
-                                         select ec.Status).FirstOrDefault();
-
-                string? ageFormat = await (from cp in _context.CompanyParameters
-                                           join vt in _context.HrmValueTypes on cp.Value equals vt.Value
-                                           where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
-                                           select vt.Code).FirstOrDefaultAsync();
-
-                bool existsEmployee = _context.HrEmpMasters.Any(emp => (emp.IsSave ?? 0) == 1);
-                return format switch
+                if (infoFormat != null)
                 {
-                    0 or 1 => await HandleFormatZeroOrOne(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-                    2 => await HandleFormatTwo(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-                    3 => await HandleFormatThree(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-                    4 => await HandleFormatFour(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-                    _ => throw new InvalidOperationException("Invalid format value.")
-                };
-                //});
+
+                    var linkLevelExists = IsLinkLevelExists(employeeInformationParameters.roleId);
+
+                    var CurrentStatusDesc = (from ec in _context.EmployeeCurrentStatuses
+                                             where ec.StatusDesc == _employeeSettings.OnNotice
+                                             select ec.Status).FirstOrDefault();
+
+                    string? ageFormat = await (from cp in _context.CompanyParameters
+                                               join vt in _context.HrmValueTypes on cp.Value equals vt.Value
+                                               where vt.Type == _employeeSettings.ValueType && cp.ParameterCode == _employeeSettings.ParameterCode
+                                               select vt.Code).FirstOrDefaultAsync();
+
+                    bool existsEmployee = _context.HrEmpMasters.Any(emp => (emp.IsSave ?? 0) == 1);
+                    return format switch
+                    {
+                        0 or 1 => await HandleFormatZeroOrOne(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
+                        2 => await HandleFormatTwo(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
+                        3 => await HandleFormatThree(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
+                        4 => await HandleFormatFour(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
+                        //_ => throw new InvalidOperationException("Invalid format value.")
+                    };
+
+                }
+                return new PaginatedResult<EmployeeResultDto>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("{Timestamp} | Method: {MethodName} | Exception: {ExceptionType}",
+                   DateTime.Now,
+                   nameof(GetEmpData),
+                   ex.GetType().Name);
+
+                return new PaginatedResult<EmployeeResultDto>();
 
             }
-            return new PaginatedResult<EmployeeResultDto>();
 
         }
         private async Task<PaginatedResult<EmployeeResultDto>> HandleFormatZeroOrOne(EmployeeInformationParameters employeeInformationParameters, bool linkLevelExists, string? ageFormat, int? currentStatusDesc, bool existsEmployee)
         {
-            if (!linkLevelExists)
+            if (linkLevelExists)
             {
                 return await InfoFormatOneOrZeroLinkLevelExist(
                     employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
@@ -317,7 +330,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
 
-                if (!existsEmployee)
+                if (existsEmployee)
                 {
                     return await InfoFormatZeroOrOneEmpIdZeroEmployeeExists(employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat, employeeInformationParameters.systemStatus, currentStatusDesc.ToString());
                 }
@@ -426,7 +439,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return new PaginatedResult<EmployeeResultDto>();
 
         }
-        public async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc, List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
+        private async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc, List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
         {
             var finalQuery = await (
                 from emp in (
@@ -542,29 +555,17 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 Records = paginatedResult
             };
         }
-        public async Task<(List<int> StatusList, List<int> FilteredStatuses)> GetStatusValuesAsync(string empStatus)
-        {
-            var statusList = empStatus?.Split(',')
-                                      .Select(s => int.Parse(s.Trim()))
-                                      .ToList() ?? new List<int>();
 
-            var filteredStatuses = await _context.HrEmpStatusSettings
-                                                .Where(s => !s.IsResignation == false)
-                                                .Select(s => s.StatusId)
-                                                .ToListAsync();
-
-
-            return (statusList, filteredStatuses);
-        }
-        public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
             //Parse and process the status list
 
             var statusSet = ParseStatusList(empStatus);
 
-            // Fetch required status lists
-            var filteredStatuses = await GetFilteredStatusSetAsync();
-            var excludedStatuses = await GetExcludedStatusSetAsync(statusSet);
+            var filteredStatuses = await GetStatusSetAsync(false);
+            var excludedStatuses = await GetStatusSetAsync(true, statusSet);
+
+
 
             // Filter results
             var result = statusSet.Where(filteredStatuses.Contains).ToList();
@@ -573,19 +574,11 @@ namespace HRMS.EmployeeInformation.Repository.Common
         currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
 
         }
-        private async Task<HashSet<int>> GetFilteredStatusSetAsync()
+        private async Task<HashSet<int>> GetStatusSetAsync(bool isResignation, HashSet<int>? excludedSet = null)
         {
             return (await _context.HrEmpStatusSettings
-                                  .Where(s => s.IsResignation.Equals(false))
-                                  .Select(s => s.StatusId)
-                                  .ToListAsync())
-                                  .ToHashSet();
-        }
-
-        public async Task<HashSet<int>> GetExcludedStatusSetAsync(HashSet<int> statusSet)
-        {
-            return (await _context.HrEmpStatusSettings
-                                  .Where(s => s.IsResignation.Equals(true) && (statusSet == null || !statusSet.Contains(s.StatusId)))
+                                  .Where(s => s.IsResignation == isResignation &&
+                                              (excludedSet == null || !excludedSet.Contains(s.StatusId)))
                                   .Select(s => s.StatusId)
                                   .ToListAsync())
                                   .ToHashSet();
@@ -599,19 +592,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
                            .Select(s => int.Parse(s.Trim()))
                            .ToHashSet();
         }
-
-
-
-        public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatTwoLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
+        private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatTwoLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
         DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
 
             var statusSet = ParseStatusList(empStatus);
-
-            // Fetch required status lists
-            var filteredStatuses = await GetFilteredStatusSetAsync();
-            var excludedStatuses = await GetExcludedStatusSetAsync(statusSet);
-
+            var filteredStatuses = await GetStatusSetAsync(false);
+            var excludedStatuses = await GetStatusSetAsync(true, statusSet);
             // Filter results
             var result = statusSet.Where(filteredStatuses.Contains).ToList();
 
@@ -620,15 +607,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
         currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
 
         }
-        public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatThreeLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
+        private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatThreeLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
         DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
 
             var statusSet = ParseStatusList(empStatus);
-
-            // Fetch required status lists
-            var filteredStatuses = await GetFilteredStatusSetAsync();
-            var excludedStatuses = await GetExcludedStatusSetAsync(statusSet);
+            var filteredStatuses = await GetStatusSetAsync(false);
+            var excludedStatuses = await GetStatusSetAsync(true, statusSet);
 
             // Filter results
             var result = statusSet.Where(filteredStatuses.Contains).ToList();
@@ -639,7 +624,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
         }
-        public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatFourLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
+        private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatFourLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
         DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
 
@@ -693,26 +678,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
 
+            var statusSet = ParseStatusList(empStatus);
+            var filteredStatuses = await GetStatusSetAsync(false);
+            var excludedStatuses = await GetStatusSetAsync(true, statusSet);
 
-
-
-
-            var statusList = empStatus.Split(',').Select(s => int.Parse(s.Trim())).ToList();
-
-            var filteredStatuses = await _context.HrEmpStatusSettings
-                                .Where(s => s.IsResignation != true)
-                                .Select(s => s.StatusId)
-                                .ToListAsync();
-
-            var excludedStatuses = await _context.HrEmpStatusSettings
-                                .Where(s => s.IsResignation == true && !statusList.Contains(s.StatusId))
-                                .Select(s => s.StatusId)
-                                .ToListAsync();
-
-            var result12 = statusList
+            var result12 = statusSet
                                 .Where(item => filteredStatuses.Contains(item))
                                 .ToList();
-
 
 
             var cteEmployeeDetails = await (
@@ -721,15 +693,15 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 on emp.EmpId equals res.EmpId into resGroup
                 from res in resGroup.DefaultIfEmpty()
                 where
-(durationFrom == null || durationTo == null || emp.JoinDt >= durationFrom && emp.JoinDt <= durationTo || durationFrom == null || durationTo == null || emp.ProbationDt >= durationFrom && emp.ProbationDt <= durationTo || durationFrom == null || durationTo == null || emp.RelievingDate >= durationFrom && emp.RelievingDate <= durationTo)
-                        && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) || empSystemStatus == _employeeSettings.empSystemStatus
-                        || empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
-                        && result12.Contains(emp.EmpStatus.GetValueOrDefault())
-                        && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
-                        && (probationStatus == 2 && emp.IsProbation == true ||
-                            probationStatus == 3 && emp.IsProbation == false ||
-                            probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
-                        && emp.IsDelete == false
+                (durationFrom == null || durationTo == null || emp.JoinDt >= durationFrom && emp.JoinDt <= durationTo || durationFrom == null || durationTo == null || emp.ProbationDt >= durationFrom && emp.ProbationDt <= durationTo || durationFrom == null || durationTo == null || emp.RelievingDate >= durationFrom && emp.RelievingDate <= durationTo)
+                                        && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) || empSystemStatus == _employeeSettings.empSystemStatus
+                                        || empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
+                                        && result12.Contains(emp.EmpStatus.GetValueOrDefault())
+                                        && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
+                                        && (probationStatus == 2 && emp.IsProbation == true ||
+                                            probationStatus == 3 && emp.IsProbation == false ||
+                                            probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
+                                        && emp.IsDelete == false
                 select new
                 {
                     emp.EmpId,
@@ -947,13 +919,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
         DateTime? durationFrom, DateTime? durationTo, string empStatus, List<string>? empIdList,
         int pageNumber, int pageSize, string? ageFormat)
         {
-            var statusList = empStatus.Split(',').Select(s => int.Parse(s.Trim())).ToList();
-            var filteredStatuses = await _context.HrEmpStatusSettings
-                .Where(s => s.IsResignation != true)
-                .Select(s => s.StatusId)
-                .ToListAsync();
 
-            var result = statusList.Where(item => filteredStatuses.Contains(item)).ToList();
+
+            var statusSet = ParseStatusList(empStatus);
+            var filteredStatuses = await GetStatusSetAsync(false);
+
+
+
+            var result = statusSet.Where(item => filteredStatuses.Contains(item)).ToList();
             HashSet<int> empIdSet = empIdList.Select(int.Parse).ToHashSet();
 
             var query = await (from a in _context.HrEmpMasters
@@ -1054,7 +1027,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
         }
-        public async Task<List<EmployeeResultDto>> GetEmployeeResultEmpIdZeroEmployeeExistsAsync(string systemStatus, string currentStatusDesc, string ageFormat)
+        private async Task<List<EmployeeResultDto>> GetEmployeeResultEmpIdZeroEmployeeExistsAsync(string systemStatus, string currentStatusDesc, string ageFormat)
         {
             return await (
                 from a in _context.HrEmpMasters
@@ -1125,7 +1098,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     CurrentStatus = a.CurrentStatus,
                 }).ToListAsync();
         }
-
         private async Task<PaginatedResult<EmployeeResultDto>> GetPaginatedEmployeeResultAsync(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
             var employeeResults = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
@@ -1231,27 +1203,27 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
 
         //-----------------------------End---------------------------------------------------------
-        public async Task<List<int>> InfoFormatZeroOrOneLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
+        private async Task<List<int>> InfoFormatZeroOrOneLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
             return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
-        public async Task<List<int>> InfoFormatTwoLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
+        private async Task<List<int>> InfoFormatTwoLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
             return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
-        public async Task<List<int>> InfoFormatThreeLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
+        private async Task<List<int>> InfoFormatThreeLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
             return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
-        public async Task<List<int>> InfoFormatFourLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
+        private async Task<List<int>> InfoFormatFourLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
             return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
-        public static IEnumerable<string> SplitStrings_XML(string list, char delimiter = ',')
+        private static IEnumerable<string> SplitStrings_XML(string list, char delimiter = ',')
         {
             if (string.IsNullOrWhiteSpace(list))
                 return Enumerable.Empty<string>();
@@ -1261,7 +1233,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                        .Select(item => item.Trim()) // Trim whitespace from each item
                        .Where(item => !string.IsNullOrEmpty(item)); // Exclude empty items
         }
-        public static string CalculateAge(DateTime? givenDate, string ageFormat)
+        private static string CalculateAge(DateTime? givenDate, string ageFormat)
         {
             if (!givenDate.HasValue)
                 return "dd/MM/yyyy";
@@ -1299,7 +1271,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 _ => $"{years} years"
             };
         }
-        public static Gender GetGender(string genderCode)
+        private static Gender GetGender(string genderCode)
         {
             return genderCode switch
             {
@@ -1309,7 +1281,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 null or _ => Gender.UnKnown
             };
         }
-        public static MaritalStatus GetMaritalStatus(string genderCode)
+        private static MaritalStatus GetMaritalStatus(string genderCode)
         {
             return genderCode switch
             {
@@ -1322,7 +1294,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 null or _ => MaritalStatus.Unknown // Handle null or any unexpected values
             };
         }
-        public static string FormatDate(DateTime? date, string format)
+        private static string FormatDate(DateTime? date, string format)
         {
             return date.HasValue ? date.Value.ToString(format) : string.Empty; // Or any other default value
         }
@@ -2120,7 +2092,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-        public string GetSequence(int employeeId, int mainMasterId, string entity = "", int firstEntity = 0)
+        private string GetSequence(int employeeId, int mainMasterId, string entity = "", int firstEntity = 0)
         {
             string sequence = null;
             int? codeId = null;
@@ -5153,7 +5125,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
         public async Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, string filePath, QualificationAttachmentDto attachmentDto)
         {
-            var result = await _repository.UploadOrUpdateDocuments(
+            var result = await _qualificationAttachmentRepository.UploadOrUpdateDocuments(
                 files,
                 filePath,
                 (file, filePath) => new QualificationAttachment
@@ -6701,13 +6673,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 return $"Error: {ex.Message}";
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="LetterTypeId(LetterTypeID)"></param>
-        /// <param name="LetterSubType(LetterSubType)"></param>
-        /// <param name="MasterId(EmpID)"></param>
-        /// <returns></returns>
         public async Task<string?> CheckLetterTypeRequest(int? LetterTypeId, int? LetterSubType, int? MasterId)
         {
             var varRowCount = await (from a in _context.AssignedLetterTypes
@@ -7091,11 +7056,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             //return await Task.FromResult(GetSequence(0, transactionId, "", 0));
         }
-        /// Letter Direct Posting. Image upload
-        /// </summary>
-        /// <param name="files"></param>
-        /// <param name="masterID(need to pass the PK id against which the filename is storing in database)"></param>
-        /// <returns></returns>
         public async Task<string> DirectUploadLetter(List<IFormFile> files, string filePath, int masterID)
         {
             var record = await _context.AssignedLetterTypes.FirstOrDefaultAsync(x => x.LetterReqId == masterID);
