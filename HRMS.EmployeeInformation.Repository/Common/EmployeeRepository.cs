@@ -7044,7 +7044,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         RejectText = dto.RejectText,
                         HideReject = dto.HideReject,
                         WrkFlowRoleId = dto.WrkFlowRole,
-                        IsActive = dto.IsActive,
+                        IsActive = true,// dto.IsActive,
                         AdjustImagePos = dto.AdjustImagePos,
                         AppointmentLetter = dto.AppointmentLetter,
 
@@ -7060,7 +7060,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     existingLetter.LetterSubName = dto.FileName;
                     existingLetter.LetterTypeId = dto.LetterTypeID;
                     existingLetter.IsEss = dto.IsEssApplicable;
-                    existingLetter.IsActive = dto.IsActive;
+                    // existingLetter.IsActive = dto.IsActive;
                     existingLetter.ModifiedBy = dto.UserID;
                     existingLetter.ModifiedDate = DateTime.UtcNow;
                     existingLetter.IsSelfApprove = dto.IsSelfApprove;
