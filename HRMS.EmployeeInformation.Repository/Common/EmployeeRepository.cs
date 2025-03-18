@@ -295,7 +295,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         2 => await HandleFormatTwo(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
                         3 => await HandleFormatThree(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
                         4 => await HandleFormatFour(employeeInformationParameters, linkLevelExists, ageFormat, CurrentStatusDesc, existsEmployee),
-                        //_ => throw new InvalidOperationException("Invalid format value.")
+                        _ => throw new InvalidOperationException("Invalid format value.")
                     };
 
                 }
