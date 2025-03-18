@@ -17,7 +17,6 @@ namespace EMPLOYEE_INFORMATION.Controllers
         private readonly IEmployeeInformationService _employeeInformation;
         private readonly EmployeeSettings _employeeSettings;
 
-
         private readonly TokenService _tokenService;
         public EmployeeController(IEmployeeInformationService employeeInformation, TokenService tokenService, IOptions<EmployeeSettings> employeeSettings)
         {
@@ -26,10 +25,10 @@ namespace EMPLOYEE_INFORMATION.Controllers
             _employeeSettings = employeeSettings.Value;
         }
         [HttpGet]
-        public string Index()
+        public IActionResult Index()
         {
             var token = _tokenService.GenerateToken("2311427", "Admin");
-            return token;
+            return Ok(token);
         }
         [HttpPost]
         public async Task<IActionResult> GetEmployeeById(EmployeeInformationParameters employeeInformationParameters)
@@ -47,7 +46,6 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> GetProbationStatus()
         {
             var options = Enum.GetValues(typeof(ProbationStatus)).Cast<ProbationStatus>().Select(e => new { Id = (int)e, Name = e.ToString() });
-
             return await Task.FromResult(Ok(options));
         }
 
