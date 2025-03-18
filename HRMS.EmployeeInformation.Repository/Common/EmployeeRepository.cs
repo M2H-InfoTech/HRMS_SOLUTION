@@ -213,10 +213,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return defaultValue ?? string.Empty;
         }
+        //private bool IsLinkLevelExists(int? roleId)
+        //{
+        //    var exists = _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == _employeeSettings.LinkLevel).Select(x => x.LinkLevel).First();
+        //    return exists > byte.MinValue;
+        //}
         private bool IsLinkLevelExists(int? roleId)
         {
-            var exists = _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == _employeeSettings.LinkLevel).Select(x => x.LinkLevel).First();
-            return exists > byte.MinValue;
+            var exists = _context.EntityAccessRights02s
+                .Where(s => s.RoleId == roleId && s.LinkLevel == _employeeSettings.LinkLevel)
+                .Select(x => x.LinkLevel)
+                .FirstOrDefault(); // Returns default value if no data is found
+
+            return exists > byte.MinValue; // `exists` will be 0 if not found
         }
         public async Task<EmployeeStatusResultDto> EmployeeStatus(int employeeId, string parameterCode, string type)
         {
@@ -1184,14 +1193,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
         private async Task<List<int>> GetFilteredEmployeeIds(List<LinkItemDto> applicableFinalNew, bool exists)
         {
+
+
+            var applicableEntityIds = applicableFinalNew.Select(x => x.Item).ToList();
+
             return await (from d in _context.HrEmpMasters
                           where exists ||
-                                (from hlv in _context.HighLevelViewTables
-                                 join b in applicableFinalNew on hlv.LastEntityId equals d.LastEntity into joined
-                                 where d.IsDelete == false && joined.Any()
-                                 select d.EmpId).Contains(d.EmpId)
+                                (d.IsDelete == false &&
+                                _context.HighLevelViewTables
+                                  .Where(hlv => applicableEntityIds.Contains(hlv.LastEntityId.ToString()))
+                                  .Select(hlv => hlv.LastEntityId)
+                                  .Contains(d.LastEntity))
                           select d.EmpId)
-                  .ToListAsync();
+                               .ToListAsync();
+
+
         }
         public async Task<List<int>> GetEmpIdsByRoleAndEntityAccess(int roleId, int empId, bool exists)
         {
