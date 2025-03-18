@@ -6472,11 +6472,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         })
                         .ToList();
 
-                    var updateRecords = from a in _context.HrmsEmpdocuments01s
-                                        join b in tmpDocFileUpListConverted
-                                        on new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
-                                        equals new { DetailId = b.DetailID, DocFields = b.DocFieldID }
-                                        select new { a, b };
+                    var updateRecords = (from a in _context.HrmsEmpdocuments01s.AsEnumerable() // Force client-side processing
+                                         join b in tmpDocFileUpListConverted
+                                         on new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
+                                         equals new { DetailId = b.DetailID, DocFields = b.DocFieldID }
+                                         select new { a, b }).ToList();
+
 
                     foreach (var record in updateRecords)
                     {
@@ -6555,10 +6556,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         .ToList();
 
 
-                    var historyRecords = (from a in _context.HrmsEmpdocumentsApproved01s
+                    var historyRecords = (from a in _context.HrmsEmpdocumentsApproved01s.AsEnumerable() // Fetch records in memory
                                           join b in tmpDocFileUpListConverted
-                                          on new { a.DetailId, a.DocFields }
-                                          equals new { DetailId = b.DetailID, DocFields = b.DocFieldID }
+                                          on new { DetailId = (int)(a.DetailId ?? 0), DocFields = (int)(a.DocFields ?? 0) } // Explicit casting
+                                          equals new { DetailId = (int)b.DetailID, DocFields = (int)b.DocFieldID } // Explicit casting
                                           where a.DocValues != b.DocFieldText
                                           select new HrmsEmpdocumentsHistory01
                                           {
@@ -6568,6 +6569,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                               DocValues = b.DocFieldText,
                                               OldDocValues = a.DocValues
                                           }).ToList();
+
+
 
 
                     await _context.HrmsEmpdocumentsHistory01s.AddRangeAsync(historyRecords);
@@ -6600,11 +6603,11 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             DocFieldText = b.DocFieldText
                         })
                         .ToList();
-                    var updateRecords = from a in _context.HrmsEmpdocumentsApproved01s
-                                        join b in tmpDocFileUpListConverted01
-                                        on new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
-                                        equals new { DetailId = b.DetailID, DocFields = b.DocFieldID }
-                                        select new { a, b };
+                    var updateRecords = (from a in _context.HrmsEmpdocumentsApproved01s.AsEnumerable() // Force client-side evaluation
+                                         join b in tmpDocFileUpListConverted01
+                                         on new { DetailId = a.DetailId ?? 0, DocFields = a.DocFields ?? 0 }
+                                         equals new { DetailId = b.DetailID, DocFields = b.DocFieldID }
+                                         select new { a, b }).ToList();
 
 
                     foreach (var record in updateRecords)
