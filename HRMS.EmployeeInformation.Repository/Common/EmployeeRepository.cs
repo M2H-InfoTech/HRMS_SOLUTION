@@ -30,7 +30,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private readonly IRepository<QualificationAttachment> _repository;
         private readonly IRepository<AssignedLetterType> _assignedLetterTypeRepository;
 
-
         public EmployeeRepository(EmployeeDBContext dbContext, EmployeeSettings employeeSettings, IMemoryCache memoryCache, IMapper mapper, IWebHostEnvironment env, IRepositoryC employeeRepositoryC, IRepository<QualificationAttachment> repository, IRepository<AssignedLetterType> assignedLetterTypeRepository)
         {
             _context = dbContext;
@@ -212,7 +211,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return defaultValue ?? string.Empty;
         }
-
         private bool IsLinkLevelExists(int? roleId)
         {
             var exists = _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == _employeeSettings.LinkLevel).Select(x => x.LinkLevel).First();
@@ -267,7 +265,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             };
             return await Task.FromResult(result);
         }
-
         public async Task<PaginatedResult<EmployeeResultDto>> GetEmpData(EmployeeInformationParameters employeeInformationParameters)
         {
 
@@ -305,7 +302,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
         private async Task<PaginatedResult<EmployeeResultDto>> HandleFormatZeroOrOne(EmployeeInformationParameters employeeInformationParameters, bool linkLevelExists, string? ageFormat, int? currentStatusDesc, bool existsEmployee)
         {
-            if (linkLevelExists)
+            if (!linkLevelExists)
             {
                 return await InfoFormatOneOrZeroLinkLevelExist(
                     employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
@@ -320,7 +317,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
 
-                if (existsEmployee)
+                if (!existsEmployee)
                 {
                     return await InfoFormatZeroOrOneEmpIdZeroEmployeeExists(employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat, employeeInformationParameters.systemStatus, currentStatusDesc.ToString());
                 }
@@ -332,7 +329,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return new PaginatedResult<EmployeeResultDto>();
         }
-
         private async Task<PaginatedResult<EmployeeResultDto>> HandleFormatTwo(EmployeeInformationParameters employeeInformationParameters, bool linkLevelExists, string? ageFormat, int? currentStatusDesc, bool existsEmployee)
         {
             if (linkLevelExists)
@@ -365,8 +361,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
             return new PaginatedResult<EmployeeResultDto>();
         }
-
-
         private async Task<PaginatedResult<EmployeeResultDto>> HandleFormatThree(EmployeeInformationParameters employeeInformationParameters, bool linkLevelExists, string? ageFormat, int? currentStatusDesc, bool existsEmployee)
         {
             if (linkLevelExists)
@@ -400,8 +394,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
             return new PaginatedResult<EmployeeResultDto>();
         }
-
-
         private async Task<PaginatedResult<EmployeeResultDto>> HandleFormatFour(EmployeeInformationParameters employeeInformationParameters, bool linkLevelExists, string? ageFormat, int? currentStatusDesc, bool existsEmployee)
         {
             if (linkLevelExists)
@@ -434,7 +426,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return new PaginatedResult<EmployeeResultDto>();
 
         }
-        public async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc, List<int> result, List<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
+        public async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc, List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
         {
             var finalQuery = await (
                 from emp in (
@@ -564,29 +556,48 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return (statusList, filteredStatuses);
         }
-
         public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
             //Parse and process the status list
-            var statusList = empStatus?.Split(',')
-                                       .Select(s => int.Parse(s.Trim()))
-                                       .ToList();
 
-            var filteredStatuses = await _context.HrEmpStatusSettings
-                                                 .Where(s => s.IsResignation.Equals(false))
-                                                 .Select(s => s.StatusId)
-                                                 .ToListAsync();
+            var statusSet = ParseStatusList(empStatus);
 
-            var excludedStatuses = await _context.HrEmpStatusSettings
-                                                 .Where(s => s.IsResignation.Equals(true) && !statusList.Contains(s.StatusId))
-                                                 .Select(s => s.StatusId)
-                                                 .ToListAsync();
+            // Fetch required status lists
+            var filteredStatuses = await GetFilteredStatusSetAsync();
+            var excludedStatuses = await GetExcludedStatusSetAsync(statusSet);
 
-            var result = statusList?.Where(item => filteredStatuses.Contains(item)).ToList();
+            // Filter results
+            var result = statusSet.Where(filteredStatuses.Contains).ToList();
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
         currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
 
+        }
+        private async Task<HashSet<int>> GetFilteredStatusSetAsync()
+        {
+            return (await _context.HrEmpStatusSettings
+                                  .Where(s => s.IsResignation.Equals(false))
+                                  .Select(s => s.StatusId)
+                                  .ToListAsync())
+                                  .ToHashSet();
+        }
+
+        public async Task<HashSet<int>> GetExcludedStatusSetAsync(HashSet<int> statusSet)
+        {
+            return (await _context.HrEmpStatusSettings
+                                  .Where(s => s.IsResignation.Equals(true) && (statusSet == null || !statusSet.Contains(s.StatusId)))
+                                  .Select(s => s.StatusId)
+                                  .ToListAsync())
+                                  .ToHashSet();
+        }
+
+        private HashSet<int> ParseStatusList(string? empStatus)
+        {
+            return string.IsNullOrWhiteSpace(empStatus)
+                ? new HashSet<int>()
+                : empStatus.Split(',')
+                           .Select(s => int.Parse(s.Trim()))
+                           .ToHashSet();
         }
 
 
@@ -595,23 +606,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
         DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
 
+            var statusSet = ParseStatusList(empStatus);
 
-            var statusList = empStatus?.Split(',')
-                                      .Select(s => int.Parse(s.Trim()))
-                                      .ToList();
+            // Fetch required status lists
+            var filteredStatuses = await GetFilteredStatusSetAsync();
+            var excludedStatuses = await GetExcludedStatusSetAsync(statusSet);
 
-            var filteredStatuses = await _context.HrEmpStatusSettings
-                                                 .Where(s => s.IsResignation.Equals(false))
-                                                 .Select(s => s.StatusId)
-                                                 .ToListAsync();
-
-            var excludedStatuses = await _context.HrEmpStatusSettings
-                                                 .Where(s => s.IsResignation.Equals(true) && !statusList.Contains(s.StatusId))
-                                                 .Select(s => s.StatusId)
-                                                 .ToListAsync();
-
-            var result = statusList?.Where(item => filteredStatuses.Contains(item)).ToList();
-
+            // Filter results
+            var result = statusSet.Where(filteredStatuses.Contains).ToList();
 
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
@@ -622,22 +624,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
         DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
 
-            var statusList = empStatus?.Split(',')
-                         .Select(s => int.Parse(s.Trim()))
-                         .ToList();
+            var statusSet = ParseStatusList(empStatus);
 
-            var filteredStatuses = await _context.HrEmpStatusSettings
-                                                 .Where(s => s.IsResignation.Equals(false))
-                                                 .Select(s => s.StatusId)
-                                                 .ToListAsync();
+            // Fetch required status lists
+            var filteredStatuses = await GetFilteredStatusSetAsync();
+            var excludedStatuses = await GetExcludedStatusSetAsync(statusSet);
 
-            var excludedStatuses = await _context.HrEmpStatusSettings
-                                                 .Where(s => s.IsResignation.Equals(true) && !statusList.Contains(s.StatusId))
-                                                 .Select(s => s.StatusId)
-                                                 .ToListAsync();
-
-            var result = statusList?.Where(item => filteredStatuses.Contains(item)).ToList();
-
+            // Filter results
+            var result = statusSet.Where(filteredStatuses.Contains).ToList();
 
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
@@ -645,7 +639,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
         }
-
         public async Task<PaginatedResult<EmployeeResultDto>> InfoFormatFourLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
         DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
@@ -950,7 +943,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             };
 
         }
-
         private async Task<PaginatedResult<EmployeeResultDto>> GetPaginatedNotExistLinkSelectEmployeeDataAsync(
         DateTime? durationFrom, DateTime? durationTo, string empStatus, List<string>? empIdList,
         int pageNumber, int pageSize, string? ageFormat)
@@ -1046,24 +1038,18 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 Records = paginatedResult
             };
         }
-
-
-
         private async Task<PaginatedResult<EmployeeResultDto>> InforFormatOneOrZeroNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
         {
             return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
         }
-
         private async Task<PaginatedResult<EmployeeResultDto>> InforFormatTwoNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
         {
             return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
         }
-
         private async Task<PaginatedResult<EmployeeResultDto>> InforFormatThreeNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
         {
             return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
         }
-
         private async Task<PaginatedResult<EmployeeResultDto>> InforFormatFourNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
         {
             return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
@@ -1140,92 +1126,44 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 }).ToListAsync();
         }
 
+        private async Task<PaginatedResult<EmployeeResultDto>> GetPaginatedEmployeeResultAsync(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
+        {
+            var employeeResults = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
+            var totalRecords = employeeResults.Count();
+
+            var paginatedResult = employeeResults
+                .OrderBy(x => x.EmpCode)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new PaginatedResult<EmployeeResultDto>
+            {
+                TotalRecords = totalRecords,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Records = paginatedResult
+            };
+        }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatZeroOrOneEmpIdZeroEmployeeExists(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
 
-            var resultThreeInfoFormat = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
-            var totalRecords = resultThreeInfoFormat.Count();
-            var paginatedResult = resultThreeInfoFormat
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            // Return paginated result
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
+            return await GetPaginatedEmployeeResultAsync(pageNumber, pageSize, ageFormat, systemStatus, currentStatusDesc);
         }
-
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatTwoEmpIdZeroEmployeeExists(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
-
-            var resultThreeInfoFormat = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
-            var totalRecords = resultThreeInfoFormat.Count();
-            var paginatedResult = resultThreeInfoFormat
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            // Return paginated result
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
+            return await GetPaginatedEmployeeResultAsync(pageNumber, pageSize, ageFormat, systemStatus, currentStatusDesc);
         }
-
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatThreeEmpIdZeroEmployeeExists(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
-
-            var resultThreeInfoFormat = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
-            var totalRecords = resultThreeInfoFormat.Count();
-            var paginatedResult = resultThreeInfoFormat
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            // Return paginated result
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
+            return await GetPaginatedEmployeeResultAsync(pageNumber, pageSize, ageFormat, systemStatus, currentStatusDesc);
         }
-
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatFourEmpIdZeroEmployeeExists(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
+            return await GetPaginatedEmployeeResultAsync(pageNumber, pageSize, ageFormat, systemStatus, currentStatusDesc);
 
-            var resultThreeInfoFormat = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
-            var totalRecords = resultThreeInfoFormat.Count();
-            var paginatedResult = resultThreeInfoFormat
-                .OrderBy(x => x.EmpCode)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            // Return paginated result
-            return new PaginatedResult<EmployeeResultDto>
-            {
-                TotalRecords = totalRecords,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Records = paginatedResult
-            };
         }
-
         //-----------------------------Start---------------------------------------------------------
-
         private async Task<int?> GetLinkLevelByRoleId(int roleId)
         {
             int? linkLevel = await _context.SpecialAccessRights
@@ -1240,7 +1178,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Select(e => e.LinkLevel)
                 .FirstOrDefaultAsync();
         }
-
         private async Task<List<LinkItemDto>> GetEntityAccessRights(int roleId, int? linkSelect)
         {
             var entityAccessRights = await _context.EntityAccessRights02s
@@ -1257,7 +1194,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Where(f => !string.IsNullOrEmpty(f.Item))
                 .ToList();
         }
-
         private async Task<List<LinkItemDto>> GetEmployeeEntityLinks(int empId)
         {
             var empEntity = await _context.HrEmpMasters
@@ -1274,7 +1210,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Where(c => !string.IsNullOrEmpty(c.Item))
                 .ToList();
         }
-
         private async Task<List<int>> GetFilteredEmployeeIds(List<LinkItemDto> applicableFinalNew, bool exists)
         {
             return await (from d in _context.HrEmpMasters
@@ -1296,25 +1231,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
 
         //-----------------------------End---------------------------------------------------------
-
         public async Task<List<int>> InfoFormatZeroOrOneLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
             return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
-
         public async Task<List<int>> InfoFormatTwoLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
             return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
-
         public async Task<List<int>> InfoFormatThreeLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
             return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
-
         public async Task<List<int>> InfoFormatFourLinkLevelNotExistAndZeroEmpIds(int roleId, int empId, bool exists)
         {
 
@@ -1368,7 +1299,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 _ => $"{years} years"
             };
         }
-
         public static Gender GetGender(string genderCode)
         {
             return genderCode switch
@@ -1392,12 +1322,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 null or _ => MaritalStatus.Unknown // Handle null or any unexpected values
             };
         }
-
         public static string FormatDate(DateTime? date, string format)
         {
             return date.HasValue ? date.Value.ToString(format) : string.Empty; // Or any other default value
         }
-
         public async Task<List<LanguageSkillResultDto>> LanguageSkillAsync(int employeeId)
         {
             return await (from emp in _context.EmployeeLanguageSkills
@@ -1480,7 +1408,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 CommunicationTable1 = communicationApprTask
             };
         }
-
         public async Task<List<CommunicationExtraDto>> CommunicationExtraAsync(int employeeId)
         {
             var query1 = await (
@@ -1562,7 +1489,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                          }
             };
         }
-
         public async Task<List<CommunicationEmergencyDto>> CommunicationEmergencyAsync(int employeeId)
         {
             var result = await (from a in _context.HrEmpEmergaddresses
@@ -1587,7 +1513,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-
         public async Task<List<string>> HobbiesDataAsync(int employeeId)
         {
             return await (from a in _context.GeneralCategories
@@ -1598,7 +1523,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                      ).AsNoTracking().ToListAsync();
 
         }
-
         public async Task<List<RewardAndRecognitionDto>> RewardAndRecognitionsAsync(int employeeId)
         {
             return await (from a in _context.EmpRewards
@@ -1755,7 +1679,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return combinedResults;
         }
-
         public async Task<List<DependentDto>> DependentAsync(int employeeId)
         {
             var result = await (from a in _context.Dependent00s
@@ -1829,7 +1752,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                 }).AsNoTracking().ToListAsync();
             return result;
         }
-
         public async Task<List<LetterDto>> LetterAsync(int employeeId)
         {
             // Get the LetterJoinDate
@@ -1892,7 +1814,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             // Return the final result as a list of LetterDto
             return concatResult.ToList();
         }
-
         public async Task<List<ReferenceDto>> ReferenceAsync(int employeeId)
         {
             var result = await (from a in _context.HrEmpreferences
@@ -1922,7 +1843,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-
         private async Task<string> GetEmployeeExperienceLengthAsync(int empId, int expDays)
         {
             DateTime? joinDate = _context.EmployeeDetails
@@ -1966,7 +1886,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return $"{years}Y: {months}M: {days}D";
         }
-
         public async Task<List<ProfessionalDto>> ProfessionalAsync(int employeeId)
         {
 
@@ -2054,7 +1973,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-
         public async Task<List<AssetDto>> AsseAsync()
         {
             var result = await (
@@ -2067,7 +1985,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-
         public async Task<List<AssetDetailsDto>> AssetDetailsAsync(int employeeId)
         {
 
@@ -2337,7 +2254,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return codeId?.ToString();
         }
-
         public async Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
         {
             var existingEntity = await _context.HrEmpProfdtlsApprls
@@ -2391,7 +2307,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Select(x => x.b.Code)
                 .FirstOrDefaultAsync() == "Yes";
         }
-
         public async Task<string?> GenerateRequestId(int empId)
         {
             var transactionID = await _context.TransactionMasters
@@ -2401,7 +2316,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return GetSequence(empId, transactionID, "", 0);
         }
-
         public async Task<string?> GetLastSequence(string codeId)
         {
             return await _context.AdmCodegenerationmasters
@@ -2409,7 +2323,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Select(a => a.LastSequence)
                 .FirstOrDefaultAsync();
         }
-
         public async Task UpdateCodeGeneration(string codeId)
         {
             var codeGenEntity = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(c => c.CodeId == Convert.ToInt32(codeId));
@@ -2421,7 +2334,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 await _context.SaveChangesAsync();
             }
         }
-
         private async Task InsertProfessionalDetails(int empId)
         {
             var profdtlsApprlDto = await _context.HrEmpProfdtlsApprls
@@ -2460,7 +2372,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 employee.ModifiedDate = DateTime.UtcNow;
             }
         }
-
         public async Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID)
         {
             var query = (updateType == "Pending")
@@ -2492,7 +2403,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                               CurrencyId = b.CurrencyId,
                           }).AsNoTracking().ToListAsync();
         }
-
         public async Task<List<AllDocumentsDto>> DocumentsAsync(int employeeId, List<string> excludedDocTypes)
         {
 
@@ -2658,7 +2568,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
       };
 
         }
-
         public async Task<List<PersonalDetailsDto>> GetPersonalDetailsByIdAsync(int employeeid)
         {
             var enableWeddingDate = await GetDefaultCompanyParameter(employeeid, "ENABLEWEDDINGDATE", _employeeSettings.companyParameterCodesType);// "EMP1"
@@ -2706,7 +2615,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return employeeDetails;
         }
-
         public async Task<List<TrainingDto>> TrainingAsync(int employeeid)
         {
             var result = await (from hem in _context.HrEmpMasters
@@ -2735,7 +2643,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-
         public async Task<CareerHistoryResultDto> CareerHistoryAsync(int employeeId)
         {
             // Fetch previous experience data in a single query
@@ -2918,7 +2825,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 Table1 = finalResult
             };
         }
-
         public async Task<List<object>> BiometricDetailsAsync(int employeeId)
         {
             var result = await (from a in _context.BiometricsDtls
@@ -2936,7 +2842,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                 }).AsNoTracking().ToListAsync();
             return result.Cast<object>().ToList();
         }
-
         public async Task<object> AccessDetailsAsync(int employeeId)
         {
             var employee = await _context.HrEmpMasters
@@ -2983,7 +2888,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return employee; // Return empty object if no employee found
         }
-
         public async Task<List<Fill_ModulesWorkFlowDto>> FillModulesWorkFlowAsync(int entityID, int linkId)
         {
             var excludedTransactionIds = _context.ParamWorkFlow02s
@@ -3012,7 +2916,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-
         public async Task<List<Fill_WorkFlowMasterDto>> FillWorkFlowMasterAsync(int emp_Id, int roleId)
         {
             var transid = await _context.TransactionMasters
@@ -3108,7 +3011,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 })
                 .ToListAsync();
         }
-
         public Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmpAsync(int linkId, int linkLevel)
         {
 
@@ -3146,7 +3048,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
 
         }
-
         public async Task<List<GetRejoinReportDto>> GetRejoinReportAsync(int employeeId)
         {
             return await (from a in _context.Resignations
@@ -3171,7 +3072,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                               RejoinRemarks = a.RejoinRemarks
                           }).AsNoTracking().ToListAsync();
         }
-
         public async Task<List<TransferAndPromotionDto>> TransferAndPromotionAsync(int employeeId)
         {
             var result = await (from c in _context.PositionHistories
@@ -3251,7 +3151,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return query;
         }
-
         public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetailsAsync(int linkId, int linkLevel)
         {
             var query = (linkLevel == 13)
@@ -3389,7 +3288,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return result;
 
         }
-
         public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRoleAsync(int entityID)
         {
             return await (from b in _context.ParamRole00s
@@ -3473,7 +3371,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                        UpdatedDate = a.UpdatedDate
                    };
         }
-
         public async Task<List<AuditInformationDto>> AuditInformationAsync(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
         {
             infoDesc = string.IsNullOrEmpty(infoDesc) ? _employeeSettings.empSystemStatus : infoDesc;
@@ -3655,7 +3552,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return result;
 
         }
-
         public async Task<List<object>> EmployeeTypeAsync(int employeeid)
         {
             var result = await (from emp in _context.HrEmpPersonals
@@ -3671,7 +3567,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result.Cast<object>().ToList();
         }
-
         public async Task<List<object>> GeoSpacingTypeAndCriteriaAsync(string type)
         {
             var result = await _context.HrmValueTypes.Where(v => v.Type == type).Select(v => new { v.Value, v.Description }).AsNoTracking().ToListAsync();
@@ -3777,7 +3672,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 }
             }
         }
-
         public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmployeesBasedOnwWorkflowAsync(int firstEntityId, int secondEntityId)
         {
             // Step 1: Fetch data first, then apply SplitStrings_XML in memory
@@ -3899,7 +3793,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return nationalities.Cast<object>().ToList();
         }
-
         public async Task<List<object>> GetBloodGroup()
         {
             var bloodGroups = await _context.HrmValueTypes
@@ -3912,7 +3805,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return new List<object> { new { BloodGroups = bloodGroupsHtml } };
         }
-
         public async Task<List<object>> FillReligion()
         {
             var religions = await _context.AdmReligionMasters
@@ -3921,7 +3813,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return religions.Cast<object>().ToList(); // Ensure it returns List<object>
         }
-
         public async Task<string> InsertOrUpdateLanguageSkills(LanguageSkillsSaveDto langSkills)
         {
             bool isUpdated = false; // Track if any update happens
@@ -3967,7 +3858,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return isUpdated ? "Successfully Updated" : "Successfully Saved";
 
         }
-
         public async Task<List<object>> FillLanguageTypes()
         {
             var languageTypes = await _context.HrEmpLanguagemasters
@@ -3984,7 +3874,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return consultant.Cast<object>().ToList();
         }
-
         public async Task<string> InsertOrUpdateReference(ReferenceSaveDto Reference)
         {
             var existingEntity = await _context.HrEmpreferences
@@ -4038,7 +3927,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result; // Return the message
         }
-
         public async Task<List<object>> FillRewardType()
         {
             var rewardType = await _context.HrmValueTypes
@@ -4048,7 +3936,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return rewardType.Cast<object>().ToList();
         }
-
         public async Task<string> InsertOrUpdateEmpRewards(EmpRewardsSaveDto empRewardsDto)
         {
             bool isUpdated = false;
@@ -4123,7 +4010,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 return "An error occurred while processing the request.";
             }
         }
-
         public async Task<List<object>> FillBankDetails(int empID)
         {
             var documents = await (
@@ -4261,7 +4147,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 AccessId = accessId
             };
         }
-
         public async Task<string?> UpdateEmployeeDetails(EmployeeDetailsUpdateDto employeeDetailsDto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -4980,7 +4865,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 throw new Exception(ex.Message);
             }
         }
-
         public async Task<int?> GetEmployeeSchemeID(int? employeeId, string? code, string? type)
         {
 
@@ -5123,7 +5007,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                .ToListAsync();
 
         }
-
         public async Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates)
         {
             var existingCertification = await _context.EmployeeCertifications
@@ -5159,7 +5042,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-
         public async Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType)
         {
             string ErrorID = _employeeSettings.empSystemStatus;
@@ -5176,7 +5058,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return ErrorID;
         }
-
         public async Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -5293,7 +5174,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result.Message;
         }
-
         public int? GetEmployeeParametersettingsNew(int? employeeId, string code, string type)
         {
 
@@ -5359,7 +5239,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return value;
 
         }
-
         public async Task<string> InsertQualification(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
         {
             //throw new NotImplementedException ( );
@@ -5543,7 +5422,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var Error_Message = Qualifid.ToString();
             return Error_Message;
         }
-
         public async Task<object> FillCountry()
         {
             var countries = await _context.AdmCountryMasters
@@ -5601,7 +5479,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return query.Cast<object>().ToList();
         }
-
         public async Task<List<object>> AssetGroupDropdownEdit()
         {
             var groupId = await _context.CategoryGroups
@@ -5642,7 +5519,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return reasons.Cast<object>().ToList();
         }
-
         public async Task<List<object>> GetAssetDetailsEdit(string CommonName)
         {
             var assetCategories = await _context.AssetcategoryCodes
@@ -5764,7 +5640,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 }
             }
         }
-
         public async Task<List<object>> GetAssetEditDatas(int varSelectedTypeID, int varAssestID)
         {
             List<object> result = new List<object>();
@@ -5935,7 +5810,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-
         public async Task<string> AssetDelete(int varEmpID, int varAssestID)
         {
 
@@ -6004,7 +5878,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 }
             }
         }
-
         public async Task<object> GetBankType(int employeeId)
         {
             var result = await (from a in _context.HrmsDocument00s
@@ -6026,7 +5899,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result; // Returning as object (List of anonymous objects)
         }
-
         public async Task<object> GetGeneralSubCategoryList(string remarks)
         {
             var result = await (from a in _context.ReasonMasters
@@ -6040,7 +5912,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return result;
 
         }
-
         public async Task<string> SetEmpDocumentDetails(SetEmpDocumentDetailsDto SetEmpDocumentDetails)
         {
             var workFlowNeed = (from a in _context.CompanyParameters
@@ -6385,7 +6256,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
             //return new PersonalDetailsHistoryDto();
         }
-
         public async Task<List<FillDocumentTypeDto>> FillDocumentType(int EmpID)
         {
             return await (from a in _context.HrmsDocument00s
@@ -6691,7 +6561,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 return $"Error: {ex.Message}";
             }
         }
-
         public async Task<string> SetEmpDocuments(TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -6856,7 +6725,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return varRowCount > 0 ? "-1" : _employeeSettings.empSystemStatus;
         }
-
         public async Task<string?> InsertLetterTypeRequest(LetterInsertUpdateDto dto)
         {
 
@@ -7405,7 +7273,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 return "Failed";
             }
         }
-
         private void UpdateUserMaster(HrEmpMaster userMaster, TmpEmpInformation input)
         {
             switch (input.InfoCode.ToUpper())
@@ -7484,7 +7351,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     break;
             }
         }
-
         private void UpdatePersonalInfo(HrEmpPersonal personalInfo, TmpEmpInformation input)
         {
             switch (input.InfoCode.ToUpper())
@@ -7541,7 +7407,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     break;
             }
         }
-
         private void UpdateAddressInfo(HrEmpAddress addressInfo, TmpEmpInformation input)
         {
             switch (input.InfoCode.ToUpper())
@@ -7563,7 +7428,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     break;
             }
         }
-
         private void UpdateUser(AdmUserMaster user, TmpEmpInformation input)
         {
             switch (input.InfoCode.ToUpper())
@@ -7579,7 +7443,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     break;
             }
         }
-
         public async Task<object> GetInformationDescriptionAsync(int infoId)
         {
             return await _context.EditInfoMaster01s
@@ -7592,12 +7455,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
                      e.Description
                  }).ToListAsync();
         }
-
         public async Task<object> GetLetterTypeAsync()
         {
             return await _context.LetterMaster00s.Where(x => x.Active == true).Select(x => new { x.LetterTypeId, x.LetterTypeName }).ToListAsync();
         }
-
         public async Task<object> LetterSignatureAuthorityAsync()
         {
             return await _context.Categorymasterparameters
@@ -7646,8 +7507,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return "-1"; // No valid transaction ID found
         }
-
-
         public async Task<LoadCompanyDetailsResultDto> LoadCompanyDetailsAsync(LoadCompanyDetailsRequestDto loadCompanyDetailsRequestDto)
         {
             DateTime? offsetDateApp = null;
@@ -7791,7 +7650,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     return new List<object>();
             }
         }
-
         public async Task<object> GetAllLetterType()
         {
             return await (from lm1 in _context.LetterMaster01s
@@ -7810,7 +7668,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
                               lm1.CreatedDate
                           }).ToListAsync();
         }
-
         public async Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID)
         {
             return await _context.LetterMaster01s
@@ -7836,7 +7693,5 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             AppointmentLetter = l.AppointmentLetter ?? 0
                         }).FirstAsync();
         }
-
     }
-
 }
