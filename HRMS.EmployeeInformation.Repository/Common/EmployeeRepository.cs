@@ -48,7 +48,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             string? defaultValue = byte.MinValue.ToString();
             if (employeeId == 0)
             {
-                return null;// byte.MinValue.ToString();
+                return "0";// byte.MinValue.ToString();
             }
 
 
