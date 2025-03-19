@@ -1,0 +1,6 @@
+@OfficeKitCoreLeave_HostAddress = http://localhost:5278
+
+GET {{OfficeKitCoreLeave_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
