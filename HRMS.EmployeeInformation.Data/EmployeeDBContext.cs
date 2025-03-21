@@ -275,6 +275,10 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<EditInfoMaster00> EditInfoMaster00s { get; set; }
     public virtual DbSet<DesignationDetail> DesignationDetails { get; set; }
 
+    public virtual DbSet<AdmRoleMaster> AdmRoleMasters { get; set; }
+
+    public virtual DbSet<UserType> UserTypes { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4129,6 +4133,46 @@ public partial class EmployeeDBContext : DbContext
 
             entity.Property(e => e.Designation).IsUnicode(false);
             entity.Property(e => e.LinkId).HasColumnName("LinkID");
+        });
+        modelBuilder.Entity<AdmRoleMaster>(entity =>
+        {
+            entity.HasKey(e => e.RoleId);
+
+            entity.ToTable("ADM_RoleMaster");
+
+            entity.HasIndex(e => e.RoleId, "IX_RoleMaster").IsUnique();
+
+            entity.HasIndex(e => e.RoleName, "IX_RoleMaster_1").IsUnique();
+
+            entity.Property(e => e.RoleId).HasColumnName("Role_Id");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("active");
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.InstId).HasColumnName("Inst_Id");
+            entity.Property(e => e.RoleCode)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("Role_Code");
+            entity.Property(e => e.RoleName)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Role_Name");
+            entity.Property(e => e.TransferHravisible).HasColumnName("TransferHRAVisible");
+            entity.Property(e => e.Type)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<UserType>(entity =>
+        {
+            entity.ToTable("UserType");
+
+            entity.Property(e => e.Code)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.Description).IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

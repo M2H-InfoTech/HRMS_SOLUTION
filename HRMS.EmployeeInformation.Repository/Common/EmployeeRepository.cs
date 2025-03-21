@@ -448,6 +448,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return new PaginatedResult<EmployeeResultDto>();
 
         }
+
         private async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc, List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
         {
             var finalQuery = await (
@@ -467,15 +468,15 @@ namespace HRMS.EmployeeInformation.Repository.Common
                          emp.JoinDt >= durationFrom && emp.JoinDt <= durationTo ||
                          emp.ProbationDt >= durationFrom && emp.ProbationDt <= durationTo ||
                          emp.RelievingDate >= durationFrom && emp.RelievingDate <= durationTo)
-                        && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) ||
-                            empSystemStatus.Equals(byte.MinValue.ToString()) ||
-                            empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
-                        && result.Contains(emp.EmpStatus.GetValueOrDefault())
-                        && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
-                        && (probationStatus == 2 && emp.IsProbation == true ||
-                            probationStatus == 3 && emp.IsProbation == false ||
-                            probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
-                        && emp.IsDelete.Equals(false)
+                    && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) ||
+                        empSystemStatus.Equals(byte.MinValue.ToString()) ||
+                        empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
+                    && result.Contains(emp.EmpStatus.GetValueOrDefault())//-------------Error here
+                    && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
+                    && (probationStatus == 2 && emp.IsProbation == true ||
+                        probationStatus == 3 && emp.IsProbation == false ||
+                        probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
+                    && emp.IsDelete.Equals(false)
                     select new
                     {
                         EmpId = emp.EmpId,
@@ -564,6 +565,122 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 Records = paginatedResult
             };
         }
+        //private async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc, List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
+        //{
+        //    var finalQuery = await (
+        //        from emp in (
+        //            from emp in _context.HrEmpMasters
+        //            join res in _context.Resignations
+        //                   .Where(r => r.CurrentRequest == 1 &&
+        //                       !new[] { ApprovalStatus.Deleted.ToString(), ApprovalStatus.Rejceted.ToString() }
+        //                       .Contains(r.ApprovalStatus) &&
+        //                       r.ApprovalStatus == (empSystemStatus == currentStatusDesc ?
+        //                           ApprovalStatus.Pending.ToString() : ApprovalStatus.Approved.ToString()) &&
+        //                       r.RejoinStatus == ApprovalStatus.Pending.ToString())
+        //            on emp.EmpId equals res.EmpId into resGroup
+        //            from res in resGroup.DefaultIfEmpty()
+        //            where
+        //                (durationFrom == null || durationTo == null ||
+        //                 emp.JoinDt >= durationFrom && emp.JoinDt <= durationTo ||
+        //                 emp.ProbationDt >= durationFrom && emp.ProbationDt <= durationTo ||
+        //                 emp.RelievingDate >= durationFrom && emp.RelievingDate <= durationTo)
+        //                && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) ||
+        //                    empSystemStatus.Equals(byte.MinValue.ToString()) ||
+        //                    empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
+        //                && result.Contains(emp.EmpStatus.GetValueOrDefault())
+        //                && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
+        //                && (probationStatus == 2 && emp.IsProbation == true ||
+        //                    probationStatus == 3 && emp.IsProbation == false ||
+        //                    probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
+        //                && emp.IsDelete.Equals(false)
+        //            select new
+        //            {
+        //                EmpId = emp.EmpId,
+        //                EmpCode = emp.EmpCode,
+        //                Name = $"{emp.FirstName} {emp.MiddleName} {emp.LastName}",
+        //                GuardiansName = emp.GuardiansName,
+        //                DateOfBirth = FormatDate(emp.DateOfBirth, _employeeSettings.DateFormat),
+        //                JoinDate = emp.JoinDt.ToString(),
+        //                DataDate = emp.JoinDt.ToString(),
+        //                SeperationStatus = emp.SeperationStatus,
+        //                Gender = emp.Gender,
+        //                WorkingStatus = emp.SeperationStatus == (int)SeparationStatus.Live ? nameof(SeparationStatus.Live) : nameof(SeparationStatus.Resigned),
+        //                Age = CalculateAge(emp.DateOfBirth, "Years"),
+        //                ProbationDt = FormatDate(emp.ProbationDt, _employeeSettings.DateFormat),
+        //                Probation = emp.IsProbation == false ? ProbationStatus.CONFIRMED : ProbationStatus.PROBATION,
+        //                LastEntity = emp.LastEntity,
+        //                CurrentStatus = emp.CurrentStatus,
+        //                EmpStatus = emp.EmpStatus.ToString(),
+        //                IsSave = emp.IsSave,
+        //                EmpFileNumber = emp.EmpFileNumber,
+        //                DailyRateTypeId = emp.DailyRateTypeId,
+        //                PayrollMode = emp.PayrollMode,
+        //                ResignationReason = res.Reason,
+        //                ResignationDate = res.ResignationDate.ToString(),
+        //                RelievingDate = res.RelievingDate.ToString()
+        //            }
+        //        )
+        //        join addr in _context.HrEmpAddresses on emp.EmpId equals addr.EmpId into addrGroup
+        //        from addr in addrGroup.DefaultIfEmpty()
+        //        join pers in _context.HrEmpPersonals on emp.EmpId equals pers.EmpId into persGroup
+        //        from pers in persGroup.DefaultIfEmpty()
+        //        join rep in _context.HrEmpReportings on emp.EmpId equals rep.EmpId into repGroup
+        //        from rep in repGroup.DefaultIfEmpty()
+        //        join highView in _context.HighLevelViewTables on emp.LastEntity equals highView.LastEntityId into highViewGroup
+        //        from highView in highViewGroup.DefaultIfEmpty()
+        //        join img in _context.HrEmpImages on emp.EmpId equals img.EmpId into imgGroup
+        //        from img in imgGroup.DefaultIfEmpty()
+        //        join currStatus in _context.EmployeeCurrentStatuses on emp.CurrentStatus equals currStatus.Status into currStatusGroup
+        //        from currStatus in currStatusGroup.DefaultIfEmpty()
+        //        join empStatusSettings in _context.HrEmpStatusSettings on Convert.ToInt32(emp.EmpStatus) equals empStatusSettings.StatusId into empStatusGroup
+        //        from empStatusSettings in empStatusGroup.DefaultIfEmpty()
+        //        join reason in _context.ReasonMasters on Convert.ToInt32(emp.ResignationReason) equals reason.ReasonId into reasonGroup
+        //        from reason in reasonGroup.DefaultIfEmpty()
+        //        join country in _context.AdmCountryMasters on pers.Nationality equals country.CountryId into countryGroup
+        //        from country in countryGroup.DefaultIfEmpty()
+        //        select new EmployeeResultDto
+        //        {
+        //            EmpId = emp.EmpId,
+        //            ImageUrl = img.ImageUrl,
+        //            EmpCode = emp.EmpCode,
+        //            Name = emp.Name,
+        //            JoinDate = emp.JoinDate,
+        //            DataDate = emp.DataDate,
+        //            EmpStatusDesc = currStatus.StatusDesc,
+        //            EmpStatus = empStatusSettings.StatusDesc,
+        //            Gender = GetGender(emp.Gender).ToString(),
+        //            SeperationStatus = emp.SeperationStatus,
+        //            OfficialEmail = addr.OfficialEmail,
+        //            PersonalEmail = addr.PersonalEmail,
+        //            Phone = addr.Phone,
+        //            MaritalStatus = GetMaritalStatus(pers.MaritalStatus).ToString(),
+        //            Age = emp.Age,
+        //            ProbationDt = emp.ProbationDt,
+        //            LevelOneDescription = highView.LevelOneDescription,
+        //            LevelTwoDescription = highView.LevelTwoDescription,
+        //            ProbationStatus = emp.Probation.ToString(),
+        //            Nationality = country.Nationality,
+        //            IsSave = emp.IsSave,
+        //            EmpFileNumber = emp.EmpFileNumber,
+        //            CurrentStatus = emp.CurrentStatus
+        //        }).ToListAsync();
+
+        //    // **Apply Pagination**
+        //    var totalRecords = finalQuery.Count();
+        //    var paginatedResult = finalQuery
+        //        .OrderBy(x => x.EmpCode) // Sorting logic
+        //        .Skip((pageNumber - 1) * pageSize)
+        //        .Take(pageSize)
+        //        .ToList();
+
+        //    return new PaginatedResult<EmployeeResultDto>
+        //    {
+        //        TotalRecords = totalRecords,
+        //        PageNumber = pageNumber,
+        //        PageSize = pageSize,
+        //        Records = paginatedResult
+        //    };
+        //}
 
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
@@ -7669,5 +7786,49 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             AppointmentLetter = l.AppointmentLetter ?? 0
                         }).FirstAsync();
         }
+        private async Task<int> GetTransactionIdByTransactionType(string transactionType)
+        {
+            return await _context.TransactionMasters.Where(a => a.TransactionType == transactionType).Select(a => a.TransactionId).FirstOrDefaultAsync();
+        }
+        private async Task<bool> GetExistsRoleAsync(int roleId)
+        {
+            return await _context.AdmRoleMasters.AnyAsync(a => a.Type == "A" && a.RoleId == roleId);
+        }
+        public async Task<object> GetUserRoles(RoleDetailsDto RoleDetailsDtos)
+        {
+            // Fetch transactionId & roleId if required (not used in current logic)
+            var transactionId = await GetTransactionIdByTransactionType(RoleDetailsDtos.TransactionType);
+            var roleId = await GetLinkLevelByRoleId(RoleDetailsDtos.FirstEntityId);
+
+            // Check if role exists
+            bool roleExists = await GetExistsRoleAsync(RoleDetailsDtos.FirstEntityId);
+
+            // Build base query
+            var query = from a in _context.AdmRoleMasters
+                        join b in _context.UserTypes on a.UserTypeId equals b.Id into userTypeGroup
+                        from b in userTypeGroup.DefaultIfEmpty() // Left Join
+                        select new
+                        {
+                            RoleId = a.RoleId,
+                            RoleName = a.RoleName,
+                            RoleCode = a.RoleCode,
+                            UserType = b.Description ?? "NA",
+                            Type = a.Type,
+                            Code = b.Code
+                        };
+
+            // Apply additional conditions if role does not exist
+            if (!roleExists)
+            {
+                //query = query.Where(a => a.RoleId != null && a.RoleCode != "A"); // Adjust filter logic as needed
+                query = query.Where(a => a.Type != "A" && a.Code != "A"); // Adjust filter logic as needed
+            }
+
+            // Execute query asynchronously
+            var result = await query.ToListAsync();
+
+            return result;
+        }
+
     }
 }
