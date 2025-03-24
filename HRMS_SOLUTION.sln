@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRMS.EmployeeInformation.Re
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRMS.EmployeeInformation.Service", "HRMS.EmployeeInformation.Service\HRMS.EmployeeInformation.Service.csproj", "{2381155C-90D8-4344-BBE2-EE2C1FFC7366}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OfficeKitCoreLeave", "OfficeKitCoreLeave\OfficeKitCoreLeave.csproj", "{26725E69-879E-4FA9-AAB0-9EF6F3F80EE6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OFFICEKITCORELEAVE", "OfficeKitCoreLeave\OFFICEKITCORELEAVE.csproj", "{26725E69-879E-4FA9-AAB0-9EF6F3F80EE6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
