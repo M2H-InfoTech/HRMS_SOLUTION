@@ -737,5 +737,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var letterType = await _employeeInformation.GetLastEntityByEmployeeId(empId);
             return Ok(letterType);
         }
+        [HttpPost]
+        public async Task<IActionResult> GetUserRoles(RoleDetailsDto RoleDetailsDtos)
+        {
+            var employee = await _employeeInformation.GetUserRoles(RoleDetailsDtos);
+            return Ok(employee);
+        }
     }
 }

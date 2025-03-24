@@ -449,5 +449,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return _employeeRepository.GetLastEntity(empId);
         }
+
+        public Task<object> GetUserRoles(RoleDetailsDto RoleDetailsDtos)
+        {
+            return _employeeRepository.GetUserRoles(RoleDetailsDtos);
+        }
     }
 }

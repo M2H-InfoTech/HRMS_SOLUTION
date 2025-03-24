@@ -1201,13 +1201,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
         //-----------------------------Start---------------------------------------------------------
         private async Task<int?> GetLinkLevelByRoleId(int roleId)
         {
-            int? linkLevel = await _context.SpecialAccessRights
-                .Where(s => s.RoleId == roleId)
-                .OrderBy(s => s.LinkLevel)
-                .Select(s => s.LinkLevel)
-                .FirstOrDefaultAsync();
+            //int? linkLevel = await _context.SpecialAccessRights
+            //    .Where(s => s.RoleId == roleId)
+            //    .OrderBy(s => s.LinkLevel)
+            //    .Select(s => s.LinkLevel)
+            //    .FirstOrDefaultAsync();
 
-            return linkLevel ?? await _context.EntityAccessRights02s
+            return  await _context.EntityAccessRights02s
                 .Where(e => e.RoleId == roleId)
                 .OrderBy(e => e.LinkLevel)
                 .Select(e => e.LinkLevel)
@@ -4462,8 +4462,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                      12 => a.LevelTwelveDescription,
                                      _ => null
                                  },
-                                 a.FromDate,
-                                 a.ToDate,
+                                 //a.FromDate,
+                                 //a.ToDate,
                                  SortOrder = v,
                                  IsExist = 0
                              }).ToList();
@@ -5022,8 +5022,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                       LevelElevenDescription = h.LevelElevenDescription,
                                       LevelTwelveId = h.LevelTwelveId,
                                       LevelTwelveDescription = h.LevelTwelveDescription,
-                                      FromDate = (DateTime?)null,
-                                      ToDate = (DateTime?)null
+                                      //FromDate = (DateTime?)null,
+                                      //ToDate = (DateTime?)null
                                   }).ToListAsync();
             return employeeLevel;
         }
@@ -7573,20 +7573,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .FirstOrDefaultAsync();
 
             // Fetch High-Level Data
-            var highLevelData = await _context.HighLevelViewTables
-                .AsNoTracking()
-                .Select(h => new HighLevelTableDto
-                {
-                    LevelOneId = h.LevelOneId,
-                    LevelOneDescription = h.LevelOneDescription,
-                    LevelTwoId = h.LevelTwoId,
-                    LevelTwoDescription = h.LevelTwoDescription + "(" + h.LevelOneDescription + ")",
-                    LevelThreeId = h.LevelThreeId,
-                    LevelThreeDescription = h.LevelThreeDescription + "(" + h.LevelOneDescription + "-" + h.LevelTwoDescription + ")",
-                    LevelFourId = h.LevelFourId,
-                    LevelFourDescription = h.LevelFourDescription + "(" + h.LevelThreeDescription + ")"
-                })
-                .ToListAsync();
+            //var highLevelData = await _context.HighLevelViewTables
+            //    .AsNoTracking()
+            //    .Select(h => new HighLevelTableDto
+            //    {
+            //        LevelOneId = h.LevelOneId,
+            //        LevelOneDescription = h.LevelOneDescription,
+            //        LevelTwoId = h.LevelTwoId,
+            //        LevelTwoDescription = h.LevelTwoDescription + "(" + h.LevelOneDescription + ")",
+            //        LevelThreeId = h.LevelThreeId,
+            //        LevelThreeDescription = h.LevelThreeDescription + "(" + h.LevelOneDescription + "-" + h.LevelTwoDescription + ")",
+            //        LevelFourId = h.LevelFourId,
+            //        LevelFourDescription = h.LevelFourDescription + "(" + h.LevelThreeDescription + ")"
+            //    })
+            //    .ToListAsync();
+            var highLevelData = await GetAccessLevel();
 
             // Determine final link selection
             int finalLinkSelect = linkSelect ?? entityAccess ?? 13;
@@ -7596,6 +7597,51 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 HighLevelData = highLevelData,
                 LinkSelect = finalLinkSelect
             };
+        }
+        private async Task<List<HighLevelTableDto>> GetAccessLevel()
+        {
+            return await _context.HighLevelViewTables
+             .AsNoTracking()
+             .Select(h => new HighLevelTableDto
+             {
+                 LevelOneId = h.LevelOneId,
+                 LevelOneDescription = h.LevelOneDescription,
+
+                 LevelTwoId = h.LevelTwoId,
+                 LevelTwoDescription = h.LevelTwoDescription + " (" + h.LevelOneDescription + ")",
+
+                 LevelThreeId = h.LevelThreeId,
+                 LevelThreeDescription = h.LevelThreeDescription + " (" + h.LevelOneDescription + "-" + h.LevelTwoDescription + ")",
+
+                 LevelFourId = h.LevelFourId,
+                 LevelFourDescription = h.LevelFourDescription + " (" + h.LevelThreeDescription + ")",
+
+                 LevelFiveId = h.LevelFiveId,
+                 LevelFiveDescription = h.LevelFiveDescription + " (" + h.LevelThreeDescription + "-" + h.LevelFourDescription + ")",
+
+                 LevelSixId = h.LevelSixId,
+                 LevelSixDescription = h.LevelSixDescription + " (" + h.LevelFourDescription + "-" + h.LevelFiveDescription + ")",
+
+                 LevelSevenId = h.LevelSevenId,
+                 LevelSevenDescription = h.LevelSevenDescription + " (" + h.LevelThreeDescription + "-" + h.LevelSixDescription + ")",
+
+                 LevelEightId = h.LevelEightId,
+                 LevelEightDescription = h.LevelEightDescription + " (" + h.LevelThreeDescription + "-" + h.LevelSevenDescription + ")",
+
+                 LevelNineId = h.LevelNineId,
+                 LevelNineDescription = h.LevelNineDescription + " (" + h.LevelSevenDescription + "-" + h.LevelEightDescription + ")",
+
+                 LevelTenId = h.LevelTenId,
+                 LevelTenDescription = h.LevelTenDescription + " (" + h.LevelEightDescription + "-" + h.LevelNineDescription + ")",
+
+                 LevelElevenId = h.LevelElevenId,
+                 LevelElevenDescription = h.LevelElevenDescription + " (" + h.LevelNineDescription + "-" + h.LevelTenDescription + ")"
+
+
+
+
+             })
+             .ToListAsync();
         }
         public async Task<object> GetLevelAsync(int level)
         {
