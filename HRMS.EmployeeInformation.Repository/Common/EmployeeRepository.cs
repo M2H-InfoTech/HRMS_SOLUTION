@@ -574,17 +574,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     CurrentStatus = emp.CurrentStatus
                 };
 
-            // **Get total count before pagination**
-            var totalRecords = await finalQuery.CountAsync();
-            var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-            if (pageNumber > maxPages) pageNumber = maxPages;
-            if (pageNumber < 1) pageNumber = 1;
 
-            var paginatedResult = await finalQuery
-                .OrderBy(x => x.EmpCode)
+
+
+            var totalRecords = await finalQuery.CountAsync();
+            var paginatedResult = finalQuery
+                .OrderBy(x => x.EmpCode) // Sorting logic
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToList();
+
 
             return new PaginatedResult<EmployeeResultDto>
             {
@@ -939,16 +938,26 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
 
-            var totalRecords = resultFour.Count();
-            var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-            if (pageNumber > maxPages) pageNumber = maxPages;
-            if (pageNumber < 1) pageNumber = 1;
+            //var totalRecords = resultFour.Count();
+            //var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            //if (pageNumber > maxPages) pageNumber = maxPages;
+            //if (pageNumber < 1) pageNumber = 1;
 
+            //var paginatedResult = resultFour
+            //    .OrderBy(x => x.EmpCode)
+            //    .Skip((pageNumber - 1) * pageSize)
+            //    .Take(pageSize)
+            //    .ToList();
+
+
+            var totalRecords = resultFour.Count();
             var paginatedResult = resultFour
-                .OrderBy(x => x.EmpCode)
+                .OrderBy(x => x.EmpCode) // Sorting logic
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
+
+
 
             return new PaginatedResult<EmployeeResultDto>
             {
@@ -1048,16 +1057,26 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
 
-            var totalRecords = query.Count();
-            var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-            if (pageNumber > maxPages) pageNumber = maxPages;
-            if (pageNumber < 1) pageNumber = 1;
+            //var totalRecords = query.Count();
+            //var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            //if (pageNumber > maxPages) pageNumber = maxPages;
+            //if (pageNumber < 1) pageNumber = 1;
 
+            //var paginatedResult = query
+            //    .OrderBy(x => x.EmpCode)
+            //    .Skip((pageNumber - 1) * pageSize)
+            //    .Take(pageSize)
+            //    .ToList();
+
+
+            var totalRecords = query.Count();
             var paginatedResult = query
-                .OrderBy(x => x.EmpCode)
+                .OrderBy(x => x.EmpCode) // Sorting logic
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
+
+
 
             return new PaginatedResult<EmployeeResultDto>
             {
@@ -1161,16 +1180,24 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             var employeeResults = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
 
-            var totalRecords = employeeResults.Count();
-            var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-            if (pageNumber > maxPages) pageNumber = maxPages;
-            if (pageNumber < 1) pageNumber = 1;
+            //var totalRecords = employeeResults.Count();
+            //var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            //if (pageNumber > maxPages) pageNumber = maxPages;
+            //if (pageNumber < 1) pageNumber = 1;
 
+            //var paginatedResult = employeeResults
+            //    .OrderBy(x => x.EmpCode)
+            //    .Skip((pageNumber - 1) * pageSize)
+            //    .Take(pageSize)
+            //    .ToList();
+
+            var totalRecords = employeeResults.Count();
             var paginatedResult = employeeResults
-                .OrderBy(x => x.EmpCode)
+                .OrderBy(x => x.EmpCode) // Sorting logic
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
+
 
             return new PaginatedResult<EmployeeResultDto>
             {
@@ -1207,7 +1234,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             //    .Select(s => s.LinkLevel)
             //    .FirstOrDefaultAsync();
 
-            return  await _context.EntityAccessRights02s
+            return await _context.EntityAccessRights02s
                 .Where(e => e.RoleId == roleId)
                 .OrderBy(e => e.LinkLevel)
                 .Select(e => e.LinkLevel)
@@ -4033,7 +4060,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         EmpId = empRewardsDto.EmpId,
                         AchievementId = achievementId,
                         RewardType = rewardTypeId,
-                        Status = ApprovalStatus.Approved.ToString(),
+                        Status = _employeeSettings.EmployeeStatus,
                         Reason = empRewardsDto.Reason,
                         RewardDate = DateTime.UtcNow,
                         Amount = empRewardsDto.Amount
