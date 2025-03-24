@@ -7847,5 +7847,114 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return result;
         }
 
+
+        public async Task<object> GetUserRoles(int? firstEntityId, int? secondEntityId)
+        {
+            int empId = 269;
+            var transId = await GetTransactionIdByTransactionType("Role");
+            var workflowTransId = await _context.TransactionMasters
+                .Where(t => t.TransactionType == "W_Flow")
+                .Select(t => t.TransactionId)
+                .FirstOrDefaultAsync();
+
+            int? lnklev = await _context.SpecialAccessRights
+                .Where(s => s.RoleId == firstEntityId)
+                .Select(s => s.LinkLevel)
+                .FirstOrDefaultAsync();
+
+            bool hasAccess = await _context.EntityAccessRights02s
+                .AnyAsync(s => s.RoleId == firstEntityId && s.LinkLevel == 15);
+
+            if (hasAccess)
+            {
+                var roles = await _context.AdmRoleMasters.Join(_context.UserTypes, r => r.UserTypeId, u => u.Id,
+                    (r, u) => new
+                    {
+                        RoleId = r.RoleId,
+                        RoleName = r.RoleName,
+                        RoleCode = r.RoleCode,
+                        UserType = u.Description ?? "NA",
+                        Code = u.Code,
+                        Type = r.Type
+                    }).ToListAsync();
+
+                return roles.Where(a => a.Type != "A" && a.Code != "A").ToList();
+            }
+
+            var empEntity = await _context.HrEmpMasters
+                .Where(h => h.EmpId == secondEntityId)
+                .Select(h => h.EmpEntity)
+                .FirstOrDefaultAsync();
+
+            var empEntities = SplitStrings_XML(empEntity, ',')
+                .Select((item, index) => new { Item = item, LinkLevelSelf = index + 2 })
+                .Where(e => !string.IsNullOrEmpty(e.Item));
+
+            var applicableFinal = await _context.EntityAccessRights02s
+                .Where(s => s.RoleId == firstEntityId)
+                .SelectMany(s => SplitStrings_XML(s.LinkId, default),
+                    (s, item) => new { Item = item, LinkLevel = s.LinkLevel })
+                .ToListAsync();
+
+            if (lnklev > 0)
+            {
+                //applicableFinal.AddRange(empEntities
+                //    .Where(e => e.LinkLevelSelf >= lnklev)
+                //    .Select(e => new { e.Item, inLinkLevel = e.LinkLevelSelf }));
+                applicableFinal.AddRange(empEntities.Where(e => e.LinkLevelSelf >= lnklev).Select(e => new { e.Item, LinkLevel = (int?)e.LinkLevelSelf })); // Explicitly casting to int?
+
+
+            }
+
+            var applicableFinalSet = applicableFinal.Select(a => (long?)Convert.ToInt64(a.Item)).ToHashSet();
+
+            var entityApplicable00Final = await _context.EntityApplicable00s
+                .Where(e => e.TransactionId == transId)
+                .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
+                .ToListAsync();
+
+            var applicableFinal02Emp = await (
+                from emp in _context.EmployeeDetails
+                join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
+                join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
+                where ea.TransactionId == transId && applicableFinalSet.Contains(hlv.LevelOneId)
+                select ea.MasterId
+            ).Distinct().ToListAsync();
+
+            var newHigh = entityApplicable00Final
+                .Where(e => applicableFinalSet.Contains(e.LinkId) || e.LinkLevel == 15)
+                .Select(e => e.MasterId)
+                .Union(applicableFinal02Emp)
+                .Distinct()
+                .ToList();
+
+            var finalRoles = await _context.AdmRoleMasters
+                .Join(_context.UserTypes, a => a.UserTypeId, b => b.Id, (a, b) => new { a, b })
+                .Join(newHigh, x => x.a.RoleId, e => e, (x, e) => new { x.a, x.b })
+                .Where(x => x.a.Type != "A" && x.b.Code != "A" && x.a.RoleId != firstEntityId && x.b.Id != 5)
+                .Select(x => new
+                {
+                    x.a.RoleId,
+                    x.a.RoleName,
+                    x.a.RoleCode,
+                    UserType = x.b.Description ?? "NA"
+                }).ToListAsync();
+
+            var additionalRoles = await _context.HrEmployeeUserRelations
+                .Where(a => a.EmpId == empId)
+                .Join(_context.AdmUserRoleMasters, a => a.UserId, c => c.UserId, (a, c) => new { a, c })
+                .Join(_context.AdmRoleMasters, ac => ac.c.RoleId, d => d.RoleId, (ac, d) => new { ac, d })
+                .Join(_context.UserTypes, d => d.d.UserTypeId, e => e.Id, (d, e) => new { d, e })
+                .Select(x => new
+                {
+                    x.d.d.RoleId,
+                    x.d.d.RoleName,
+                    x.d.d.RoleCode,
+                    UserType = x.e.Description ?? "NA"
+                }).ToListAsync();
+
+            return finalRoles.Union(additionalRoles).ToList();
+        }
+
     }
 }

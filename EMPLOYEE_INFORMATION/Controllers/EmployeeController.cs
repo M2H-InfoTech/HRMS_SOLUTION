@@ -737,11 +737,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var letterType = await _employeeInformation.GetLastEntityByEmployeeId(empId);
             return Ok(letterType);
         }
-        [HttpPost]
-        public async Task<IActionResult> GetUserRoles(RoleDetailsDto RoleDetailsDtos)
+        [HttpGet]
+        public async Task<IActionResult> GetUserRoles(int? firstEntityId, int? secondEntityId)
         {
-            var employee = await _employeeInformation.GetUserRoles(RoleDetailsDtos);
+            var employee = await _employeeInformation.GetUserRoles(firstEntityId, secondEntityId);
             return Ok(employee);
         }
+
     }
 }
