@@ -731,5 +731,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var letterType = await _employeeInformation.GetLetterSubTypeByIdAsync(LetterSubTypeID);
             return Ok(letterType);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetLastEntityByEmployeeId(int empId)
+        {
+            var letterType = await _employeeInformation.GetLastEntityByEmployeeId(empId);
+            return Ok(letterType);
+        }
     }
 }
