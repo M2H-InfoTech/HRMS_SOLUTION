@@ -464,7 +464,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
 
 
-        private async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc, List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
+        private async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(
+           DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc,
+           List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
         {
             var empList = await GetFilteredEmployeesAsync(new HashSet<int> { 4, 5, 8, 9 });
 
@@ -473,7 +475,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Select(e => e.Value) // Convert to non-nullable int
                 .ToHashSet();
 
-            var finalQuery = await (
+            var finalQuery =
                 from emp in (
                     from emp in _context.HrEmpMasters
                     join res in _context.Resignations
@@ -493,7 +495,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) ||
                         empSystemStatus.Equals(byte.MinValue.ToString()) ||
                         empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
-                     && emp.EmpStatus.HasValue // Ensure it's not null
+                    && emp.EmpStatus.HasValue // Ensure it's not null
                     && empStatusSet.Contains(emp.EmpStatus.Value) // Use Value instead of GetValueOrDefault()
                     && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
                     && (probationStatus == 2 && emp.IsProbation == true ||
@@ -570,15 +572,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     IsSave = emp.IsSave,
                     EmpFileNumber = emp.EmpFileNumber,
                     CurrentStatus = emp.CurrentStatus
-                }).Distinct().ToListAsync();
+                };
 
-            // **Apply Pagination**
-            var totalRecords = finalQuery.Count();
-            var paginatedResult = finalQuery
-                .OrderBy(x => x.EmpCode) // Sorting logic
+            // **Get total count before pagination**
+            var totalRecords = await finalQuery.CountAsync();
+            var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            if (pageNumber > maxPages) pageNumber = maxPages;
+            if (pageNumber < 1) pageNumber = 1;
+
+            var paginatedResult = await finalQuery
+                .OrderBy(x => x.EmpCode)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
             return new PaginatedResult<EmployeeResultDto>
             {
@@ -588,6 +594,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 Records = paginatedResult
             };
         }
+
 
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
         {
@@ -930,15 +937,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
             #endregion
 
 
-            // Apply pagination
+
+
             var totalRecords = resultFour.Count();
+            var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            if (pageNumber > maxPages) pageNumber = maxPages;
+            if (pageNumber < 1) pageNumber = 1;
+
             var paginatedResult = resultFour
                 .OrderBy(x => x.EmpCode)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            // Return paginated result
             return new PaginatedResult<EmployeeResultDto>
             {
                 TotalRecords = totalRecords,
@@ -946,6 +957,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 PageSize = pageSize,
                 Records = paginatedResult
             };
+
+
+
 
         }
         private async Task<PaginatedResult<EmployeeResultDto>> GetPaginatedNotExistLinkSelectEmployeeDataAsync(
@@ -1030,11 +1044,20 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                    CurrentStatus = a.CurrentStatus
                                }).ToListAsync();
 
+
+
+
+
             var totalRecords = query.Count();
-            var paginatedResult = query.OrderBy(x => x.EmpCode)
-                                              .Skip((pageNumber - 1) * pageSize)
-                                              .Take(pageSize)
-                                              .ToList();
+            var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            if (pageNumber > maxPages) pageNumber = maxPages;
+            if (pageNumber < 1) pageNumber = 1;
+
+            var paginatedResult = query
+                .OrderBy(x => x.EmpCode)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
             return new PaginatedResult<EmployeeResultDto>
             {
@@ -1043,6 +1066,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 PageSize = pageSize,
                 Records = paginatedResult
             };
+
+
+
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InforFormatOneOrZeroNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
         {
@@ -1134,7 +1160,11 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private async Task<PaginatedResult<EmployeeResultDto>> GetPaginatedEmployeeResultAsync(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
             var employeeResults = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
+
             var totalRecords = employeeResults.Count();
+            var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            if (pageNumber > maxPages) pageNumber = maxPages;
+            if (pageNumber < 1) pageNumber = 1;
 
             var paginatedResult = employeeResults
                 .OrderBy(x => x.EmpCode)
