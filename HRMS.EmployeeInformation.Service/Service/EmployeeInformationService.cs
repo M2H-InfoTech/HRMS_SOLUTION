@@ -444,5 +444,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return _employeeRepository.GetLetterSubTypeByIdAsync(LetterSubTypeID);
         }
+
+        public Task<int?> GetLastEntityByEmployeeId(int? empId)
+        {
+            return _employeeRepository.GetLastEntity(empId);
+        }
     }
 }
