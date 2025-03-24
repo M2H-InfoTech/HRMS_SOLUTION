@@ -466,13 +466,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         private async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc, List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
         {
-            //var empList = await GetFilteredEmployeesAsync(new HashSet<int> { 4, 5, 8, 9 });
+            var empList = await GetFilteredEmployeesAsync(new HashSet<int> { 4, 5, 8, 9 });
 
-            //// Ensure empList contains values before using it
-            //var empStatusSet = empList
-            //    .Where(e => e.HasValue) // Filter null values
-            //    .Select(e => e.Value) // Convert to non-nullable int
-            //    .ToHashSet();
+            var empStatusSet = empList
+                .Where(e => e.HasValue) // Filter null values
+                .Select(e => e.Value) // Convert to non-nullable int
+                .ToHashSet();
 
             var finalQuery = await (
                 from emp in (
@@ -495,7 +494,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         empSystemStatus.Equals(byte.MinValue.ToString()) ||
                         empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
                      && emp.EmpStatus.HasValue // Ensure it's not null
-                    && result.Contains(emp.EmpStatus.Value) // Use Value instead of GetValueOrDefault()
+                    && empStatusSet.Contains(emp.EmpStatus.Value) // Use Value instead of GetValueOrDefault()
                     && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
                     && (probationStatus == 2 && emp.IsProbation == true ||
                         probationStatus == 3 && emp.IsProbation == false ||
