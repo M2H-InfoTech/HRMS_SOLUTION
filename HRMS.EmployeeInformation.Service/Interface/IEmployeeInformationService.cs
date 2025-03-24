@@ -100,7 +100,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<object> GetAllLetterType();
         Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID);
         Task<int?> GetLastEntityByEmployeeId(int? empId);
-        Task<object> GetUserRoles(RoleDetailsDto RoleDetailsDtos);
+        Task<object> GetUserRoles(int? firstEntityId, int? secondEntityId);
 
 
     }

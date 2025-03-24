@@ -103,7 +103,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> GetAllLetterType();
         Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID);
         Task<int?> GetLastEntity(int? empId);
-        Task<object> GetUserRoles(RoleDetailsDto RoleDetailsDtos);
+        Task<object> GetUserRoles(int? firstEntityId, int? secondEntityId);
 
     }
 }
