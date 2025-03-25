@@ -547,6 +547,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 from reason in reasonGroup.DefaultIfEmpty()
                 join country in _context.AdmCountryMasters on pers.Nationality equals country.CountryId into countryGroup
                 from country in countryGroup.DefaultIfEmpty()
+                join empDetails in _context.EmployeeDetails on rep.ReprotToWhome equals empDetails.EmpId into empDetailsGroup
+                from empDetails in empDetailsGroup.DefaultIfEmpty()
                 select new EmployeeResultDto
                 {
                     EmpId = emp.EmpId,
@@ -571,7 +573,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     Nationality = country.Nationality,
                     IsSave = emp.IsSave,
                     EmpFileNumber = emp.EmpFileNumber,
-                    CurrentStatus = emp.CurrentStatus
+                    CurrentStatus = emp.CurrentStatus,
+                    LevelThreeDescription = highView.LevelThreeDescription,
+                    LevelFourDescription = highView.LevelFourDescription,
+                    LevelFiveDescription = highView.LevelFiveDescription,
+                    LevelSixDescription = highView.LevelSixDescription,
+                    LevelSevenDescription = highView.LevelSevenDescription,
+                    LevelEightDescription = highView.LevelEightDescription,
+                    LevelNineDescription = highView.LevelNineDescription,
+                    LevelTenDescription = highView.LevelTenDescription,
+                    LevelElevenDescription = highView.LevelElevenDescription,
+                    LevelTwelveDescription = highView.LevelTwelveDescription,
+                    ReportingEmployeeCode = empDetails.EmpCode,
+                    ReportingEmployeeName = empDetails.Name,
                 };
 
 
