@@ -327,7 +327,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (linkLevelExists)
             {
                 return await InfoFormatOneOrZeroLinkLevelExist(
-                    employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
+                    employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
             }
 
             if (employeeInformationParameters.empIds == byte.MinValue.ToString())
@@ -345,7 +345,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 }
                 else
                 {
-                    return await InforFormatOneOrZeroNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat);
+                    return await InforFormatOneOrZeroNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat, employeeInformationParameters.draw);
                 }
             }
 
@@ -355,7 +355,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             if (linkLevelExists)
             {
-                return await InfoFormatTwoLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
+                return await InfoFormatTwoLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
             }
 
             else
@@ -375,7 +375,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     }
                     else
                     {
-                        return await InforFormatTwoNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat);
+                        return await InforFormatTwoNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat, employeeInformationParameters.draw);
 
                     }
 
@@ -387,7 +387,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             if (linkLevelExists)
             {
-                return await InfoFormatThreeLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
+                return await InfoFormatThreeLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
             }
             else
             {
@@ -407,7 +407,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     }
                     else
                     {
-                        return await InforFormatThreeNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat);
+                        return await InforFormatThreeNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat, employeeInformationParameters.draw);
 
                     }
 
@@ -420,7 +420,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             if (linkLevelExists)
             {
-                return await InfoFormatFourLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
+                return await InfoFormatFourLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
             }
             else
             {
@@ -439,7 +439,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     }
                     else
                     {
-                        return await InforFormatFourNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat);
+                        return await InforFormatFourNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat, employeeInformationParameters.draw);
 
                     }
 
@@ -466,7 +466,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         private async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(
            DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc,
-           List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
+           List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize, int draw)
         {
             var empList = await GetFilteredEmployeesAsync(new HashSet<int> { 4, 5, 8, 9 });
 
@@ -601,6 +601,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return new PaginatedResult<EmployeeResultDto>
             {
+                draw = draw,
                 TotalRecords = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
@@ -609,7 +610,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
 
 
-        private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
         {
             //Parse and process the status list
 
@@ -624,7 +625,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var result = statusSet.Where(filteredStatuses.Contains).ToList();
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
-        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw);
 
         }
         private async Task<HashSet<int>> GetStatusSetAsync(bool isResignation, HashSet<int>? excludedSet = null)
@@ -646,7 +647,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                            .ToHashSet();
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatTwoLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
         {
 
             var statusSet = ParseStatusList(empStatus);
@@ -657,11 +658,11 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
-        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw);
 
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatThreeLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
         {
 
             var statusSet = ParseStatusList(empStatus);
@@ -673,12 +674,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
-        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw);
 
 
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatFourLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
         {
 
             var result = await (
@@ -975,6 +976,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return new PaginatedResult<EmployeeResultDto>
             {
+                draw = draw,
                 TotalRecords = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
@@ -987,7 +989,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
         private async Task<PaginatedResult<EmployeeResultDto>> GetPaginatedNotExistLinkSelectEmployeeDataAsync(
         DateTime? durationFrom, DateTime? durationTo, string empStatus, List<string>? empIdList,
-        int pageNumber, int pageSize, string? ageFormat)
+        int pageNumber, int pageSize, string? ageFormat, int draw)
         {
 
 
@@ -1094,6 +1096,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return new PaginatedResult<EmployeeResultDto>
             {
+                draw = draw,
                 TotalRecords = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
@@ -1103,21 +1106,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
         }
-        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatOneOrZeroNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
+        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatOneOrZeroNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat, int draw)
         {
-            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat, draw);
         }
-        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatTwoNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
+        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatTwoNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat, int draw)
         {
-            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat, draw);
         }
-        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatThreeNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
+        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatThreeNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat, int draw)
         {
-            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat, draw);
         }
-        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatFourNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
+        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatFourNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat, int draw)
         {
-            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat, draw);
         }
         private async Task<List<EmployeeResultDto>> GetEmployeeResultEmpIdZeroEmployeeExistsAsync(string systemStatus, string currentStatusDesc, string ageFormat)
         {
