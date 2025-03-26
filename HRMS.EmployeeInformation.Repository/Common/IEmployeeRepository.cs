@@ -1,4 +1,5 @@
-﻿using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using EMPLOYEE_INFORMATION.Models;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using Microsoft.AspNetCore.Http;
 using MPLOYEE_INFORMATION.DTO.DTOs;
@@ -110,6 +111,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> GetEmployeeMasterHeaderDataAsync();
         Task<object> GetCategoryMasterDetailsAsync();
         Task<object> GetEmployeeMasterHeaderEditDataAsync();
+        Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId);
 
     }
 }

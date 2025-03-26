@@ -107,6 +107,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<object> GetEmployeeMasterHeaderDataAsync();
         Task<object> GetCategoryMasterDetailsAsync();
         Task<object> GetEmployeeMasterHeaderEditDataAsync();
+        Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId);
 
 
     }
