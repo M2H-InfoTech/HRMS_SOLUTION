@@ -103,6 +103,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<object> GetUserRoles(int? firstEntityId, int? secondEntityId);
         Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(HrEmpProfdtlsApprlDto dto);
         Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId);
+        Task<string> GetReligionsAsync();
 
 
     }
