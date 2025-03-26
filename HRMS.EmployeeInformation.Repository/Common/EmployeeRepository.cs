@@ -8447,5 +8447,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
             // Return concatenated results
             return (string.Join("", employeeStatuses), string.Join("", systemStatuses));
         }
+        public async Task<string> GetReligionsAsync()
+        {
+            var religions = await _context.AdmReligionMasters
+                .Select(r => $"<option value={r.ReligionId}>{r.ReligionName}</option>")
+                .ToListAsync();
+
+            return string.Join("", religions);
+        }
     }
 }

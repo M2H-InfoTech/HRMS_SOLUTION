@@ -464,5 +464,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return _employeeRepository.GetEmployeeAndSystemStatuses(empId);
         }
+
+        public Task<string> GetReligionsAsync()
+        {
+            return _employeeRepository.GetReligionsAsync();
+        }
     }
 }

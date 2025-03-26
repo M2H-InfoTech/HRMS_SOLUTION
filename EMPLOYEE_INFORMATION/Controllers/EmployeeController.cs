@@ -742,14 +742,20 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUserRoles(int? firstEntityId, int? secondEntityId)
         {
-            var employee = await _employeeInformation.GetUserRoles(firstEntityId, secondEntityId);
-            return Ok(employee);
+            var userRole = await _employeeInformation.GetUserRoles(firstEntityId, secondEntityId);
+            return Ok(userRole);
         }
         [HttpGet]
         public async Task<IActionResult> GetEmployeeAndSystemStatuses(int empId)
         {
             var employee = await _employeeInformation.GetEmployeeAndSystemStatuses(empId);
             return Ok(new { employee.EmployeeStatuses, employee.SystemStatuses });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetReligionsAsync()
+        {
+            var religion = await _employeeInformation.GetReligionsAsync();
+            return Ok(religion);
         }
     }
 }
