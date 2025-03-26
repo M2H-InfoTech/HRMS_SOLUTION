@@ -603,6 +603,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 draw = draw,
                 recordsTotal = totalRecords,
+                recordsFiltered = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 data = paginatedResult
@@ -978,6 +979,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 draw = draw,
                 recordsTotal = totalRecords,
+                recordsFiltered = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 data = paginatedResult
@@ -1098,6 +1100,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 draw = draw,
                 recordsTotal = totalRecords,
+                recordsFiltered = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 data = paginatedResult
@@ -1219,6 +1222,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return new PaginatedResult<EmployeeResultDto>
             {
                 recordsTotal = totalRecords,
+                recordsFiltered = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 data = paginatedResult
@@ -8455,5 +8459,17 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return string.Join("", religions);
         }
+        //    public async Task<string> hh()
+        //    {
+        //        var employeeFields = await _context.EmployeeFieldMaster00s
+        //.OrderBy(f => f.FieldMaster00ID)
+        //.Select(f => new
+        //{
+        //    f.FieldMaster00ID,
+        //    f.FieldCode,
+        //    f.FieldDescription
+        //})
+        //.ToListAsync();
+        //    }
     }
 }
