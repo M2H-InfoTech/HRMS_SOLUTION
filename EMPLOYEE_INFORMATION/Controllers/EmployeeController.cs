@@ -748,7 +748,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmployeeAndSystemStatuses(int empId)
         {
-            var employee = await _employeeInformation.GetEmployeeAndSystemStatuses(empId);
+            var employee = await _employeeInformation.GetEmployeeAndSystemStatusesAsync(empId);
             return Ok(new { employee.EmployeeStatuses, employee.SystemStatuses });
         }
         [HttpGet]
@@ -756,6 +756,24 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             var religion = await _employeeInformation.GetReligionsAsync();
             return Ok(religion);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeMasterHeaderData()
+        {
+            var employeeMasterHeaderData = await _employeeInformation.GetEmployeeMasterHeaderDataAsync();
+            return Ok(employeeMasterHeaderData);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetCategoryMasterDetailsAsync()
+        {
+            var categoryData = await _employeeInformation.GetCategoryMasterDetailsAsync();
+            return Ok(categoryData);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeMasterHeaderEditDataAsync()
+        {
+            var masterHeaderEditData = await _employeeInformation.GetEmployeeMasterHeaderEditDataAsync();
+            return Ok(masterHeaderEditData);
         }
     }
 }

@@ -460,14 +460,29 @@ namespace HRMS.EmployeeInformation.Service.Service
             return _employeeRepository.UpdateProfessionalDetailsAsync(dto);
         }
 
-        public Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId)
+        public Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatusesAsync(int empId)
         {
-            return _employeeRepository.GetEmployeeAndSystemStatuses(empId);
+            return _employeeRepository.GetEmployeeAndSystemStatusesAsync(empId);
         }
 
         public Task<string> GetReligionsAsync()
         {
             return _employeeRepository.GetReligionsAsync();
+        }
+
+        public Task<object> GetEmployeeMasterHeaderDataAsync()
+        {
+            return _employeeRepository.GetEmployeeMasterHeaderDataAsync();
+        }
+
+        public Task<object> GetCategoryMasterDetailsAsync()
+        {
+            return _employeeRepository.GetCategoryMasterDetailsAsync();
+        }
+
+        public Task<object> GetEmployeeMasterHeaderEditDataAsync()
+        {
+            return _employeeRepository.GetEmployeeMasterHeaderEditDataAsync();
         }
     }
 }
