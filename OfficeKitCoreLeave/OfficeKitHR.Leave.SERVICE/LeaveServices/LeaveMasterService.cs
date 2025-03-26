@@ -206,23 +206,7 @@ namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.LeaveServices
 
                 List<HrmLeaveMasterViewDto> hrmLeaveMasters1 = new List<HrmLeaveMasterViewDto> ( );
                 return hrmLeaveMasters1;
-
-                //// Define the second result set (EntityApplicable00Final)
-                //var entityApplicable00Final = _employeedbContext.EntityApplicable00s
-                //    .Where (e => e.TransactionId == transactionId)
-                //    .Select (e => new { e.LinkId, e.LinkLevel, e.MasterId })
-                //    .ToList ( );
-
             }
-
-
-
-
-
-            //List<HrmLeaveMaster> hrmLeaveMasters = new List<HrmLeaveMaster> ( );
-            //var LeaveMasterList = await _dbContext.HrmLeaveMasters.ToListAsync ( );
-            //var LeaveMasterListToView = _mapper.Map<List<HrmLeaveMasterDTO>> (LeaveMasterList);
-            //return LeaveMasterListToView;
         }
         private static int TryParseToInt (string input)
         {

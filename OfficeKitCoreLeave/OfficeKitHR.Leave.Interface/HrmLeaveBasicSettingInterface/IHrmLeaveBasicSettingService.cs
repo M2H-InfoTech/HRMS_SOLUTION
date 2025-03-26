@@ -4,9 +4,9 @@ namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.Interface.HrmLeaveBasicSettingInt
     {
     public interface IHrmLeaveBasicSettingService
         {
-        Task<int> HrmLeaveBasicSettingSave(HrmLeaveBasicSettingDto dto);
-        Task<HrmLeaveBasicSettingDto> GetLeaveBasicSettingsById (int leavebasicSettingsId);
-        Task<bool> DeleteBasicSettings(int leavebasicSettingsId);
+        Task<int> SaveLeaveBasicSetting (HrmLeaveBasicSettingDto dto);
+        Task<HrmLeaveBasicSettingDto> GetLeaveBasicSettingById (int leaveSettingId);
+        Task<bool> DeleteLeaveBasicSetting (int leaveSettingId);
         Task<List<HrmLeaveBasicSettingDto>> GetAllLeaveBasicSettings();
         }
     }

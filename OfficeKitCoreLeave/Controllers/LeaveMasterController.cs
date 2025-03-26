@@ -67,7 +67,7 @@ namespace OFFICEKITCORELEAVE.Controllers
             }
             return Ok (result);
         }
-        [HttpPost ("DeleteLeaveMaster")]
+        [HttpDelete ("DeleteLeaveMaster")]
         public async Task<IActionResult> DeleteLeaveMaster (int LeaveMasterId)
         {
             if (LeaveMasterId == 0)

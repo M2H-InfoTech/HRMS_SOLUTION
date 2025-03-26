@@ -6,68 +6,68 @@ using OFFICEKITCORELEAVE.OfficeKitHR.Leave.Interface.HrmLeaveBasicSettingInterfa
 using OFFICEKITCORELEAVE.OfficeKitHR.Leave.MODELS;
 
 namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.HrmLeaveBasicSettings
-    {
+{
     public class HrmLeaveBasicSettingService : IHrmLeaveBasicSettingService
+    {
+        private readonly LeaveDBContext _leavedbContext;
+        private readonly IMapper _mapper;
+        public HrmLeaveBasicSettingService (LeaveDBContext leavedbContext_, IMapper mapper_)
         {
-            private readonly LeaveDBContext _leavedbContext;
-            private readonly IMapper _mapper;
-            public HrmLeaveBasicSettingService(LeaveDBContext leavedbContext_,IMapper mapper_)
-            {
-                _leavedbContext = leavedbContext_;
-                _mapper = mapper_;
-            }
+            _leavedbContext = leavedbContext_;
+            _mapper = mapper_;
+        }
 
-            public Task<int> HrmLeaveBasicSettingSave (HrmLeaveBasicSettingDto dto)
+        public Task<int> SaveLeaveBasicSetting (HrmLeaveBasicSettingDto dto)
+        {
+            var HRMBasicSettings = _mapper.Map<HrmLeaveBasicSetting> (dto);
+            _leavedbContext.HrmLeaveBasicSettings.Add (HRMBasicSettings);
+            _leavedbContext.SaveChanges ( );
+            return Task.FromResult (HRMBasicSettings.SettingsId);
+        }
+        public Task<HrmLeaveBasicSettingDto> GetLeaveBasicSettingById (int leavebasicSettingsId)
+        {
+            var BasicSettings = _leavedbContext.HrmLeaveBasicSettings.FindAsync (leavebasicSettingsId);
+            if (BasicSettings == null)
             {
-                var HRMBasicSettings = _mapper.Map<HrmLeaveBasicSetting> (dto);
-                _leavedbContext.HrmLeaveBasicSettings.Add(HRMBasicSettings);
-                _leavedbContext.SaveChanges();
-                return Task.FromResult(HRMBasicSettings.SettingsId);
+                return null;
             }
-            public Task<HrmLeaveBasicSettingDto> GetLeaveBasicSettingsById (int leavebasicSettingsId)
+            else
             {
-                var BasicSettings = _leavedbContext.HrmLeaveBasicSettings.FindAsync (leavebasicSettingsId);
-                if (BasicSettings == null)
-                {
-                    return null;
-                }
-                else
-                {
-                    var returnSettings = _mapper.Map<HrmLeaveBasicSettingDto>(BasicSettings);
-                    return Task.FromResult(returnSettings);
-                }
+                var returnSettings = _mapper.Map<HrmLeaveBasicSettingDto> (BasicSettings);
+                return Task.FromResult (returnSettings);
             }
-            public Task<bool> DeleteBasicSettings (int leavebasicSettingsId)
+        }
+        public Task<bool> DeleteLeaveBasicSetting (int leavebasicSettingsId)
+        {
+            bool flag = false;
+            var DeleteData = GetLeaveBasicSettingById (leavebasicSettingsId);
+            if (DeleteData == null)
             {
-                bool flag = false;
-                var DeleteData = GetLeaveBasicSettingsById(leavebasicSettingsId);
-                if (DeleteData == null)
-                {
-                    flag = false;
-                    return Task.FromResult(flag);
-                }
-                else
-                {
-                    var SettingToDelete = _mapper.Map<HrmLeaveBasicSetting>(DeleteData);
-                    _leavedbContext.HrmLeaveBasicSettings.Remove (SettingToDelete);
-                    _leavedbContext.SaveChangesAsync ();
-                    flag = true;
-                    return Task.FromResult (flag);
-                }
-                
+                flag = false;
+                return Task.FromResult (flag);
             }
-            public async Task<List<HrmLeaveBasicSettingDto>> GetAllLeaveBasicSettings ( )
+            else
             {
-                var settingsList = await _leavedbContext.HrmLeaveBasicSettings.ToListAsync ( );
-
-                if (settingsList == null || !settingsList.Any ( ))
-                {
-                    return new List<HrmLeaveBasicSettingDto> ( ); 
-                }
-
-                return _mapper.Map<List<HrmLeaveBasicSettingDto>> (settingsList);
+                var SettingToDelete = _mapper.Map<HrmLeaveBasicSetting> (DeleteData);
+                _leavedbContext.HrmLeaveBasicSettings.Remove (SettingToDelete);
+                _leavedbContext.SaveChangesAsync ( );
+                flag = true;
+                return Task.FromResult (flag);
             }
-
 
         }
+        public async Task<List<HrmLeaveBasicSettingDto>> GetAllLeaveBasicSettings ( )
+        {
+            var settingsList = await _leavedbContext.HrmLeaveBasicSettings.ToListAsync ( );
+
+            if (settingsList == null || !settingsList.Any ( ))
+            {
+                return new List<HrmLeaveBasicSettingDto> ( );
+            }
+
+            return _mapper.Map<List<HrmLeaveBasicSettingDto>> (settingsList);
+        }
+
+
     }
+}
