@@ -278,6 +278,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<AdmRoleMaster> AdmRoleMasters { get; set; }
 
     public virtual DbSet<UserType> UserTypes { get; set; }
+    public virtual DbSet<EmployeeFieldMaster00> EmployeeFieldMaster00s { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4173,6 +4174,21 @@ public partial class EmployeeDBContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.Description).IsUnicode(false);
+        });
+        modelBuilder.Entity<EmployeeFieldMaster00>(entity =>
+        {
+            entity.HasKey(e => e.FieldMaster00Id).HasName("PK__Employee__69B4071FD2E70292");
+
+            entity.ToTable("EmployeeFieldMaster00");
+
+            entity.Property(e => e.FieldMaster00Id).HasColumnName("FieldMaster00ID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FieldCode)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.FieldDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

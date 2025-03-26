@@ -2513,7 +2513,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             try
             {
-                var rr = await GetEmployeeAndSystemStatuses(dto.EmpId);
+                var rr = await GetEmployeeAndSystemStatusesAsync(dto.EmpId);
 
 
                 if (dto.updateType == "Pending")
@@ -8419,7 +8419,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return finalRoles.Union(additionalRoles).ToList();
         }
-        public async Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId)
+        public async Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatusesAsync(int empId)
         {
             // Fetch WorkerInESS value
             var workerInESS = await GetDefaultCompanyParameter(empId, "EnableWorkerInEs", "EMP1");
@@ -8459,17 +8459,46 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return string.Join("", religions);
         }
-        //    public async Task<string> hh()
-        //    {
-        //        var employeeFields = await _context.EmployeeFieldMaster00s
-        //.OrderBy(f => f.FieldMaster00ID)
-        //.Select(f => new
-        //{
-        //    f.FieldMaster00ID,
-        //    f.FieldCode,
-        //    f.FieldDescription
-        //})
-        //.ToListAsync();
-        //    }
+        public async Task<object> GetEmployeeMasterHeaderDataAsync()
+        {
+
+            return await _context.EmployeeFieldMaster00s.OrderBy(f => f.FieldMaster00Id)
+                        .Select(f => new
+                        {
+                            f.FieldMaster00Id,
+                            f.FieldCode,
+                            f.FieldDescription
+                        }).ToListAsync();
+        }
+        public async Task<object> GetCategoryMasterDetailsAsync()
+        {
+
+            return await _context.Categorymasters
+                 .Join(_context.HrmValueTypes
+                         .Where(b => b.Type == typeof(CatTrxType).Name), // Filter BEFORE join
+                       a => a.CatTrxTypeId,
+                       b => b.Value,
+                       (a, b) => new
+                       {
+                           SortOrder = a.SortOrder,
+                           Description = a.Description,
+                           Value = b.Value,
+                           Code = b.Code.Trim()
+                       })
+                 .ToListAsync();
+        }
+        public async Task<object> GetEmployeeMasterHeaderEditDataAsync()
+        {
+            var excludedCodes = new[] { "ASSIGN", "PAYSCALE" };
+            return await _context.EmployeeFieldMaster00s
+                                .Where(f => !excludedCodes.Contains(f.FieldCode))
+                                .OrderBy(f => f.FieldMaster00Id)
+                                .Select(f => new
+                                {
+                                    f.FieldMaster00Id,
+                                    f.FieldCode,
+                                    f.FieldDescription
+                                }).ToListAsync();
+        }
     }
 }
