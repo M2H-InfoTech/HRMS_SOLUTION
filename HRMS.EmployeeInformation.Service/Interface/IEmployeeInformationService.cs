@@ -99,6 +99,13 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<string> DeleteDesciplinaryLetter(string? masterId);
         Task<object> GetAllLetterType();
         Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID);
+        Task<int?> GetLastEntityByEmployeeId(int? empId);
+        Task<object> GetUserRoles(int? firstEntityId, int? secondEntityId);
+        Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(HrEmpProfdtlsApprlDto dto);
+        Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId);
+        Task<string> GetReligionsAsync();
+
+
     }
 
 }

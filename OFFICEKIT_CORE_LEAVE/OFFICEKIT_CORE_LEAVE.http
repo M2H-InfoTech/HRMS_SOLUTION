@@ -1,0 +1,6 @@
+@OFFICEKIT_CORE_LEAVE_HostAddress = http://localhost:5003
+
+GET {{OFFICEKIT_CORE_LEAVE_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

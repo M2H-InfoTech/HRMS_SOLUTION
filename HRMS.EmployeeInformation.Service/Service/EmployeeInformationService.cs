@@ -444,5 +444,30 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return _employeeRepository.GetLetterSubTypeByIdAsync(LetterSubTypeID);
         }
+
+        public Task<int?> GetLastEntityByEmployeeId(int? empId)
+        {
+            return _employeeRepository.GetLastEntity(empId);
+        }
+
+        public Task<object> GetUserRoles(int? firstEntityId, int? secondEntityId)
+        {
+            return _employeeRepository.GetUserRoles(firstEntityId, secondEntityId);
+        }
+
+        public Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(HrEmpProfdtlsApprlDto dto)
+        {
+            return _employeeRepository.UpdateProfessionalDetailsAsync(dto);
+        }
+
+        public Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId)
+        {
+            return _employeeRepository.GetEmployeeAndSystemStatuses(empId);
+        }
+
+        public Task<string> GetReligionsAsync()
+        {
+            return _employeeRepository.GetReligionsAsync();
+        }
     }
 }

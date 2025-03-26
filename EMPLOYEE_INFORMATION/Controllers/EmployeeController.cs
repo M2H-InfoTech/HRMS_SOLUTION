@@ -191,14 +191,16 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpPost]
         public async Task<IActionResult> InsertOrUpdateProfessionalData([FromBody] HrEmpProfdtlsApprlDto apprlDto)
         {
-            var professionalData = await _employeeInformation.InsertOrUpdateProfessionalData(apprlDto);
+            //var professionalData = await _employeeInformation.InsertOrUpdateProfessionalData(apprlDto);
 
-            if (professionalData == null)
-            {
-                return NotFound();
-            }
+            //if (professionalData == null)
+            //{
+            //    return NotFound();
+            //}
 
-            return Ok(professionalData);
+            //return Ok(professionalData);
+            var professionalData = await _employeeInformation.UpdateProfessionalDetailsAsync(apprlDto);
+            return Ok(professionalData.ErrorMessage);
 
         }
         [HttpGet]
@@ -730,6 +732,30 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             var letterType = await _employeeInformation.GetLetterSubTypeByIdAsync(LetterSubTypeID);
             return Ok(letterType);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetLastEntityByEmployeeId(int empId)
+        {
+            var letterType = await _employeeInformation.GetLastEntityByEmployeeId(empId);
+            return Ok(letterType);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetUserRoles(int? firstEntityId, int? secondEntityId)
+        {
+            var userRole = await _employeeInformation.GetUserRoles(firstEntityId, secondEntityId);
+            return Ok(userRole);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeAndSystemStatuses(int empId)
+        {
+            var employee = await _employeeInformation.GetEmployeeAndSystemStatuses(empId);
+            return Ok(new { employee.EmployeeStatuses, employee.SystemStatuses });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetReligionsAsync()
+        {
+            var religion = await _employeeInformation.GetReligionsAsync();
+            return Ok(religion);
         }
     }
 }

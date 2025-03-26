@@ -47,5 +47,6 @@
         public DateTime? DateFrom { get; set; }
 
         public int? MasterId { get; set; }
+        public string? updateType { get; set; }
     }
 }

@@ -327,7 +327,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (linkLevelExists)
             {
                 return await InfoFormatOneOrZeroLinkLevelExist(
-                    employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
+                    employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
             }
 
             if (employeeInformationParameters.empIds == byte.MinValue.ToString())
@@ -345,7 +345,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 }
                 else
                 {
-                    return await InforFormatOneOrZeroNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat);
+                    return await InforFormatOneOrZeroNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat, employeeInformationParameters.draw);
                 }
             }
 
@@ -355,7 +355,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             if (linkLevelExists)
             {
-                return await InfoFormatTwoLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
+                return await InfoFormatTwoLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
             }
 
             else
@@ -375,7 +375,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     }
                     else
                     {
-                        return await InforFormatTwoNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat);
+                        return await InforFormatTwoNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat, employeeInformationParameters.draw);
 
                     }
 
@@ -387,7 +387,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             if (linkLevelExists)
             {
-                return await InfoFormatThreeLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
+                return await InfoFormatThreeLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
             }
             else
             {
@@ -407,7 +407,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     }
                     else
                     {
-                        return await InforFormatThreeNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat);
+                        return await InforFormatThreeNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat, employeeInformationParameters.draw);
 
                     }
 
@@ -420,7 +420,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             if (linkLevelExists)
             {
-                return await InfoFormatFourLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize);
+                return await InfoFormatFourLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
             }
             else
             {
@@ -439,7 +439,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     }
                     else
                     {
-                        return await InforFormatFourNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat);
+                        return await InforFormatFourNotExistLinkSelect(employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.empStatus, empIdList, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, ageFormat, employeeInformationParameters.draw);
 
                     }
 
@@ -448,9 +448,34 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return new PaginatedResult<EmployeeResultDto>();
 
         }
-        private async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc, List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize)
+        public async Task<List<int?>> GetFilteredEmployeesAsync(HashSet<int> statusSet)
         {
-            var finalQuery = await (
+            var nonResignationStatuses = await GetStatusSetAsync(false);
+            var resignationStatuses = await GetStatusSetAsync(true);
+            var excludedStatuses = await GetStatusSetAsync(true, statusSet);
+
+            var employeeList = await _context.HrEmpMasters.Where(a => (nonResignationStatuses.Contains((int)a.EmpStatus) && resignationStatuses.Any(r => statusSet.Contains(r))) && !excludedStatuses.Contains((int)a.SeperationStatus) || ((nonResignationStatuses.Contains((int)a.EmpStatus) || statusSet.Contains((int)a.EmpStatus)) && resignationStatuses.Any(r => statusSet.Contains(r)) && excludedStatuses.Contains((int)a.SeperationStatus))).Select(a => a.EmpStatus).ToListAsync();
+
+
+
+
+
+            return employeeList;
+        }
+
+
+        private async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(
+           DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc,
+           List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize, int draw)
+        {
+            var empList = await GetFilteredEmployeesAsync(new HashSet<int> { 4, 5, 8, 9 });
+
+            var empStatusSet = empList
+                .Where(e => e.HasValue) // Filter null values
+                .Select(e => e.Value) // Convert to non-nullable int
+                .ToHashSet();
+
+            var finalQuery =
                 from emp in (
                     from emp in _context.HrEmpMasters
                     join res in _context.Resignations
@@ -467,15 +492,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
                          emp.JoinDt >= durationFrom && emp.JoinDt <= durationTo ||
                          emp.ProbationDt >= durationFrom && emp.ProbationDt <= durationTo ||
                          emp.RelievingDate >= durationFrom && emp.RelievingDate <= durationTo)
-                        && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) ||
-                            empSystemStatus.Equals(byte.MinValue.ToString()) ||
-                            empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
-                        && result.Contains(emp.EmpStatus.GetValueOrDefault())
-                        && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
-                        && (probationStatus == 2 && emp.IsProbation == true ||
-                            probationStatus == 3 && emp.IsProbation == false ||
-                            probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
-                        && emp.IsDelete.Equals(false)
+                    && (emp.CurrentStatus == Convert.ToInt32(empSystemStatus) ||
+                        empSystemStatus.Equals(byte.MinValue.ToString()) ||
+                        empSystemStatus == currentStatusDesc && res.ResignationId != null && res.RelievingDate >= DateTime.UtcNow)
+                    && emp.EmpStatus.HasValue // Ensure it's not null
+                    && empStatusSet.Contains(emp.EmpStatus.Value) // Use Value instead of GetValueOrDefault()
+                    && !excludedStatuses.Contains(emp.SeperationStatus.GetValueOrDefault())
+                    && (probationStatus == 2 && emp.IsProbation == true ||
+                        probationStatus == 3 && emp.IsProbation == false ||
+                        probationStatus == 1 && (emp.IsProbation == true || emp.IsProbation == false))
+                    && emp.IsDelete.Equals(false)
                     select new
                     {
                         EmpId = emp.EmpId,
@@ -521,6 +547,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 from reason in reasonGroup.DefaultIfEmpty()
                 join country in _context.AdmCountryMasters on pers.Nationality equals country.CountryId into countryGroup
                 from country in countryGroup.DefaultIfEmpty()
+                join empDetails in _context.EmployeeDetails on rep.ReprotToWhome equals empDetails.EmpId into empDetailsGroup
+                from empDetails in empDetailsGroup.DefaultIfEmpty()
                 select new EmployeeResultDto
                 {
                     EmpId = emp.EmpId,
@@ -545,27 +573,45 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     Nationality = country.Nationality,
                     IsSave = emp.IsSave,
                     EmpFileNumber = emp.EmpFileNumber,
-                    CurrentStatus = emp.CurrentStatus
-                }).ToListAsync();
+                    CurrentStatus = emp.CurrentStatus,
+                    LevelThreeDescription = highView.LevelThreeDescription,
+                    LevelFourDescription = highView.LevelFourDescription,
+                    LevelFiveDescription = highView.LevelFiveDescription,
+                    LevelSixDescription = highView.LevelSixDescription,
+                    LevelSevenDescription = highView.LevelSevenDescription,
+                    LevelEightDescription = highView.LevelEightDescription,
+                    LevelNineDescription = highView.LevelNineDescription,
+                    LevelTenDescription = highView.LevelTenDescription,
+                    LevelElevenDescription = highView.LevelElevenDescription,
+                    LevelTwelveDescription = highView.LevelTwelveDescription,
+                    ReportingEmployeeCode = empDetails.EmpCode,
+                    ReportingEmployeeName = empDetails.Name,
+                };
 
-            // **Apply Pagination**
-            var totalRecords = finalQuery.Count();
+
+
+
+            var totalRecords = await finalQuery.CountAsync();
             var paginatedResult = finalQuery
                 .OrderBy(x => x.EmpCode) // Sorting logic
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
+
             return new PaginatedResult<EmployeeResultDto>
             {
-                TotalRecords = totalRecords,
+                draw = draw,
+                recordsTotal = totalRecords,
+                recordsFiltered = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Records = paginatedResult
+                data = paginatedResult
             };
         }
 
-        private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+
+        private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
         {
             //Parse and process the status list
 
@@ -580,7 +626,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var result = statusSet.Where(filteredStatuses.Contains).ToList();
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
-        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw);
 
         }
         private async Task<HashSet<int>> GetStatusSetAsync(bool isResignation, HashSet<int>? excludedSet = null)
@@ -602,7 +648,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                            .ToHashSet();
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatTwoLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
         {
 
             var statusSet = ParseStatusList(empStatus);
@@ -613,11 +659,11 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
-        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw);
 
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatThreeLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
         {
 
             var statusSet = ParseStatusList(empStatus);
@@ -629,12 +675,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
-        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize);
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw);
 
 
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatFourLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
         {
 
             var result = await (
@@ -906,27 +952,46 @@ namespace HRMS.EmployeeInformation.Repository.Common
             #endregion
 
 
-            // Apply pagination
+
+
+            //var totalRecords = resultFour.Count();
+            //var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            //if (pageNumber > maxPages) pageNumber = maxPages;
+            //if (pageNumber < 1) pageNumber = 1;
+
+            //var paginatedResult = resultFour
+            //    .OrderBy(x => x.EmpCode)
+            //    .Skip((pageNumber - 1) * pageSize)
+            //    .Take(pageSize)
+            //    .ToList();
+
+
             var totalRecords = resultFour.Count();
             var paginatedResult = resultFour
-                .OrderBy(x => x.EmpCode)
+                .OrderBy(x => x.EmpCode) // Sorting logic
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            // Return paginated result
+
+
             return new PaginatedResult<EmployeeResultDto>
             {
-                TotalRecords = totalRecords,
+                draw = draw,
+                recordsTotal = totalRecords,
+                recordsFiltered = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Records = paginatedResult
+                data = paginatedResult
             };
+
+
+
 
         }
         private async Task<PaginatedResult<EmployeeResultDto>> GetPaginatedNotExistLinkSelectEmployeeDataAsync(
         DateTime? durationFrom, DateTime? durationTo, string empStatus, List<string>? empIdList,
-        int pageNumber, int pageSize, string? ageFormat)
+        int pageNumber, int pageSize, string? ageFormat, int draw)
         {
 
 
@@ -1006,35 +1071,59 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                    CurrentStatus = a.CurrentStatus
                                }).ToListAsync();
 
+
+
+
+
+            //var totalRecords = query.Count();
+            //var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            //if (pageNumber > maxPages) pageNumber = maxPages;
+            //if (pageNumber < 1) pageNumber = 1;
+
+            //var paginatedResult = query
+            //    .OrderBy(x => x.EmpCode)
+            //    .Skip((pageNumber - 1) * pageSize)
+            //    .Take(pageSize)
+            //    .ToList();
+
+
             var totalRecords = query.Count();
-            var paginatedResult = query.OrderBy(x => x.EmpCode)
-                                              .Skip((pageNumber - 1) * pageSize)
-                                              .Take(pageSize)
-                                              .ToList();
+            var paginatedResult = query
+                .OrderBy(x => x.EmpCode) // Sorting logic
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+
 
             return new PaginatedResult<EmployeeResultDto>
             {
-                TotalRecords = totalRecords,
+                draw = draw,
+                recordsTotal = totalRecords,
+                recordsFiltered = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Records = paginatedResult
+                data = paginatedResult
             };
+
+
+
         }
-        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatOneOrZeroNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
+        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatOneOrZeroNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat, int draw)
         {
-            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat, draw);
         }
-        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatTwoNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
+        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatTwoNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat, int draw)
         {
-            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat, draw);
         }
-        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatThreeNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
+        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatThreeNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat, int draw)
         {
-            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat, draw);
         }
-        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatFourNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat)
+        private async Task<PaginatedResult<EmployeeResultDto>> InforFormatFourNotExistLinkSelect(DateTime? durationFrom, DateTime? durationTo, string? EmpStatus, List<string>? empIdList, int pageNumber, int pageSize, string? ageFormat, int draw)
         {
-            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat);
+            return await GetPaginatedNotExistLinkSelectEmployeeDataAsync(durationFrom, durationTo, EmpStatus, empIdList, pageNumber, pageSize, ageFormat, draw);
         }
         private async Task<List<EmployeeResultDto>> GetEmployeeResultEmpIdZeroEmployeeExistsAsync(string systemStatus, string currentStatusDesc, string ageFormat)
         {
@@ -1110,20 +1199,33 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private async Task<PaginatedResult<EmployeeResultDto>> GetPaginatedEmployeeResultAsync(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
         {
             var employeeResults = await GetEmployeeResultEmpIdZeroEmployeeExistsAsync(systemStatus, currentStatusDesc, ageFormat);
-            var totalRecords = employeeResults.Count();
 
+            //var totalRecords = employeeResults.Count();
+            //var maxPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            //if (pageNumber > maxPages) pageNumber = maxPages;
+            //if (pageNumber < 1) pageNumber = 1;
+
+            //var paginatedResult = employeeResults
+            //    .OrderBy(x => x.EmpCode)
+            //    .Skip((pageNumber - 1) * pageSize)
+            //    .Take(pageSize)
+            //    .ToList();
+
+            var totalRecords = employeeResults.Count();
             var paginatedResult = employeeResults
-                .OrderBy(x => x.EmpCode)
+                .OrderBy(x => x.EmpCode) // Sorting logic
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
+
             return new PaginatedResult<EmployeeResultDto>
             {
-                TotalRecords = totalRecords,
+                recordsTotal = totalRecords,
+                recordsFiltered = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Records = paginatedResult
+                data = paginatedResult
             };
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatZeroOrOneEmpIdZeroEmployeeExists(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
@@ -1147,13 +1249,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
         //-----------------------------Start---------------------------------------------------------
         private async Task<int?> GetLinkLevelByRoleId(int roleId)
         {
-            int? linkLevel = await _context.SpecialAccessRights
-                .Where(s => s.RoleId == roleId)
-                .OrderBy(s => s.LinkLevel)
-                .Select(s => s.LinkLevel)
-                .FirstOrDefaultAsync();
+            //int? linkLevel = await _context.SpecialAccessRights
+            //    .Where(s => s.RoleId == roleId)
+            //    .OrderBy(s => s.LinkLevel)
+            //    .Select(s => s.LinkLevel)
+            //    .FirstOrDefaultAsync();
 
-            return linkLevel ?? await _context.EntityAccessRights02s
+            return await _context.EntityAccessRights02s
                 .Where(e => e.RoleId == roleId)
                 .OrderBy(e => e.LinkLevel)
                 .Select(e => e.LinkLevel)
@@ -2242,6 +2344,318 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return codeId?.ToString();
         }
+        //    public async Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(
+        //string updateType, int empID, int ProfId, string companyName, string designation,
+        //string companyAddress, string postboxNo, string contactPerson, long? contactNo,
+        //string jobDescription, DateTime? joiningDate, DateTime? leavingDate, string leaveReason,
+        //int? ctc, int? currencyID, int entryBy, DateTime? entryDate)
+        //    {
+        //        try
+        //        {
+
+        //            if (updateType == "Pending")
+        //            {
+        //                var record = await _context.HrEmpProfdtlsApprls
+        //                    .FirstOrDefaultAsync(x => x.ProfId == ProfId && x.EmpId == empID);
+
+        //                if (record != null)
+        //                {
+        //                    record.CompName = companyName;
+        //                    record.Designation = designation;
+        //                    record.CompAddress = companyAddress;
+        //                    record.Pbno = postboxNo;
+        //                    record.ContactPer = contactPerson;
+        //                    record.ContactNo = contactNo.ToString();
+        //                    record.JobDesc = jobDescription;
+        //                    record.JoinDt = joiningDate;
+        //                    record.LeavingDt = leavingDate;
+        //                    record.LeaveReason = leaveReason;
+        //                    record.Ctc = ctc.ToString();
+        //                    record.CurrencyId = currencyID;
+        //                    record.EntryBy = entryBy;
+        //                    record.EntryDt = DateTime.UtcNow;
+
+        //                    await _context.SaveChangesAsync();
+        //                }
+        //            }
+        //            else if (updateType == "Approved")
+        //            {
+
+        //                var workflowNeed = await IsWorkflowNeeded();
+
+        //                string? codeId = await GenerateRequestId(empID);
+        //                var requestID = await _context.AdmCodegenerationmasters
+        //                       .Where(c => c.CodeId == Convert.ToInt32(codeId))
+        //                       .Select(c => c.LastSequence)
+        //                       .FirstOrDefaultAsync();
+        //                if (workflowNeed.Equals(true))
+        //                {
+        //                    var transactionID = await _context.TransactionMasters
+        //                        .Where(t => t.TransactionType == "Professional")
+        //                        .Select(t => t.TransactionId)
+        //                        .FirstOrDefaultAsync();
+
+        //                    //var codeID = await context.GetSequence(empID, transactionID, null, null);
+
+        //                    if (codeId == null)
+        //                    {
+        //                        return (0, "NoSequence");
+        //                    }
+
+
+
+        //                    var newApproval = new HrEmpProfdtlsApprl
+        //                    {
+        //                        EmpId = empID,
+        //                        CompName = companyName,
+        //                        Designation = designation,
+        //                        CompAddress = companyAddress,
+        //                        Pbno = postboxNo,
+        //                        ContactPer = contactPerson,
+        //                        ContactNo = contactNo.ToString(),
+        //                        JobDesc = jobDescription,
+        //                        JoinDt = joiningDate,
+        //                        LeavingDt = leavingDate,
+        //                        LeaveReason = leaveReason,
+        //                        Ctc = ctc.ToString(),
+        //                        CurrencyId = currencyID,
+        //                        Status = "P",
+        //                        FlowStatus = "E",
+        //                        EntryBy = entryBy,
+        //                        EntryDt = entryDate ?? DateTime.UtcNow,
+        //                        RequestId = requestID,
+        //                        MasterId = ProfId
+        //                    };
+
+        //                    await _context.HrEmpProfdtlsApprls.AddAsync(newApproval);
+        //                    await _context.SaveChangesAsync();
+
+        //                    var newErrorID = newApproval.ProfId;
+
+        //                    //await context.WorkFlowActivityFlow(empID, "Professional", newErrorID, entryBy);
+
+        //                    await ExecuteWorkFlowActivityFlow(empID, "Professional", newErrorID.ToString(), entryBy.ToString());
+
+        //                    return (newErrorID, "Successfully Updated");
+        //                }
+        //                else if (workflowNeed.Equals(false))
+        //                {
+        //                    var record = await _context.HrEmpProfdtls
+        //                        .FirstOrDefaultAsync(x => x.ProfId == ProfId && x.EmpId == empID);
+
+        //                    if (record != null)
+        //                    {
+        //                        record.CompName = companyName;
+        //                        record.Designation = designation;
+        //                        record.CompAddress = companyAddress;
+        //                        record.Pbno = postboxNo;
+        //                        record.ContactPer = contactPerson;
+        //                        record.ContactNo = contactNo.ToString();
+        //                        record.JobDesc = jobDescription;
+        //                        record.JoinDt = joiningDate;
+        //                        record.LeavingDt = leavingDate;
+        //                        record.LeaveReason = leaveReason;
+        //                        record.Ctc = ctc.ToString();
+        //                        record.CurrencyId = currencyID;
+        //                        record.EntryBy = entryBy;
+        //                        record.EntryDt = DateTime.UtcNow;
+        //                        await _context.SaveChangesAsync();
+
+        //                    }
+
+        //                    var approval = new HrEmpProfdtlsApprl
+        //                    {
+        //                        EmpId = empID,
+        //                        CompName = companyName,
+        //                        Designation = designation,
+        //                        CompAddress = companyAddress,
+        //                        Pbno = postboxNo,
+        //                        ContactPer = contactPerson,
+        //                        ContactNo = contactNo.ToString(),
+        //                        JobDesc = jobDescription,
+        //                        JoinDt = joiningDate,
+        //                        LeavingDt = leavingDate,
+        //                        LeaveReason = leaveReason,
+        //                        Ctc = ctc.ToString(),
+        //                        CurrencyId = currencyID,
+        //                        Status = "A",
+        //                        FlowStatus = "E",
+        //                        EntryBy = entryBy,
+        //                        EntryDt = entryDate ?? DateTime.UtcNow,
+        //                        RequestId = requestID,
+        //                        MasterId = ProfId
+        //                    };
+
+        //                    await _context.HrEmpProfdtlsApprls.AddAsync(approval);
+        //                    await _context.SaveChangesAsync();
+
+        //                    var empRecord = await _context.HrEmpMasters.FirstOrDefaultAsync(x => x.EmpId == empID);
+        //                    if (empRecord != null)
+        //                    {
+        //                        empRecord.ModifiedDate = DateTime.UtcNow;
+        //                        await _context.SaveChangesAsync();
+        //                    }
+        //                }
+
+
+        //                return (0, "Successfully Updated");
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            return (-1, ex.Message);
+        //        }
+        //        return (0, "Successfully Updated");
+        //    }
+
+
+        public async Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(HrEmpProfdtlsApprlDto dto)
+        {
+            try
+            {
+                var rr = await GetEmployeeAndSystemStatuses(dto.EmpId);
+
+
+                if (dto.updateType == "Pending")
+                {
+                    var record = await _context.HrEmpProfdtlsApprls
+                        .FirstOrDefaultAsync(x => x.ProfId == dto.ProfId && x.EmpId == dto.EmpId);
+
+                    if (record != null)
+                    {
+                        record.CompName = dto.CompName;
+                        record.Designation = dto.Designation;
+                        record.CompAddress = dto.CompAddress;
+                        record.Pbno = dto.Pbno;
+                        record.ContactPer = dto.ContactPer;
+                        record.ContactNo = dto.ContactNo;
+                        record.JobDesc = dto.JobDesc;
+                        record.JoinDt = dto.JoinDt;
+                        record.LeavingDt = dto.LeavingDt;
+                        record.LeaveReason = dto.LeaveReason;
+                        record.Ctc = dto.Ctc;
+                        record.CurrencyId = dto.CurrencyId;
+                        record.EntryBy = dto.EntryBy;
+                        record.EntryDt = DateTime.UtcNow;
+
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                else if (dto.updateType == "Approved")
+                {
+                    var workflowNeed = await IsWorkflowNeeded();
+                    string? codeId = await GenerateRequestId(dto.EmpId);
+                    var requestID = await _context.AdmCodegenerationmasters
+                        .Where(c => c.CodeId == Convert.ToInt32(codeId))
+                        .Select(c => c.LastSequence)
+                        .FirstOrDefaultAsync();
+
+                    if (workflowNeed)
+                    {
+                        if (codeId == null)
+                        {
+                            return (0, "NoSequence");
+                        }
+
+                        var newApproval = new HrEmpProfdtlsApprl
+                        {
+                            EmpId = dto.EmpId,
+                            CompName = dto.CompName,
+                            Designation = dto.Designation,
+                            CompAddress = dto.CompAddress,
+                            Pbno = dto.Pbno,
+                            ContactPer = dto.ContactPer,
+                            ContactNo = dto.ContactNo,
+                            JobDesc = dto.JobDesc,
+                            JoinDt = dto.JoinDt,
+                            LeavingDt = dto.LeavingDt,
+                            LeaveReason = dto.LeaveReason,
+                            Ctc = dto.Ctc,
+                            CurrencyId = dto.CurrencyId,
+                            Status = "P",
+                            FlowStatus = "E",
+                            EntryBy = dto.EntryBy,
+                            EntryDt = dto.EntryDt,
+                            RequestId = requestID,
+                            MasterId = dto.ProfId
+                        };
+
+                        await _context.HrEmpProfdtlsApprls.AddAsync(newApproval);
+                        await _context.SaveChangesAsync();
+
+                        var newErrorID = newApproval.ProfId;
+                        await ExecuteWorkFlowActivityFlow(dto.EmpId, "Professional", newErrorID.ToString(), dto.EntryBy.ToString());
+
+                        return (newErrorID, "Successfully Updated");
+                    }
+                    else
+                    {
+                        var record = await _context.HrEmpProfdtls
+                            .FirstOrDefaultAsync(x => x.ProfId == dto.ProfId && x.EmpId == dto.EmpId);
+
+                        if (record != null)
+                        {
+                            record.CompName = dto.CompName;
+                            record.Designation = dto.Designation;
+                            record.CompAddress = dto.CompAddress;
+                            record.Pbno = dto.Pbno;
+                            record.ContactPer = dto.ContactPer;
+                            record.ContactNo = dto.ContactNo;
+                            record.JobDesc = dto.JobDesc;
+                            record.JoinDt = dto.JoinDt;
+                            record.LeavingDt = dto.LeavingDt;
+                            record.LeaveReason = dto.LeaveReason;
+                            record.Ctc = dto.Ctc;
+                            record.CurrencyId = dto.CurrencyId;
+                            record.EntryBy = dto.EntryBy;
+                            record.EntryDt = DateTime.UtcNow;
+
+                            await _context.SaveChangesAsync();
+                        }
+
+                        var approval = new HrEmpProfdtlsApprl
+                        {
+                            EmpId = dto.EmpId,
+                            CompName = dto.CompName,
+                            Designation = dto.Designation,
+                            CompAddress = dto.CompAddress,
+                            Pbno = dto.Pbno,
+                            ContactPer = dto.ContactPer,
+                            ContactNo = dto.ContactNo,
+                            JobDesc = dto.JobDesc,
+                            JoinDt = dto.JoinDt,
+                            LeavingDt = dto.LeavingDt,
+                            LeaveReason = dto.LeaveReason,
+                            Ctc = dto.Ctc,
+                            CurrencyId = dto.CurrencyId,
+                            Status = "A",
+                            FlowStatus = "E",
+                            EntryBy = dto.EntryBy,
+                            EntryDt = dto.EntryDt,
+                            RequestId = requestID,
+                            MasterId = dto.ProfId
+                        };
+
+                        await _context.HrEmpProfdtlsApprls.AddAsync(approval);
+                        await _context.SaveChangesAsync();
+
+                        var empRecord = await _context.HrEmpMasters.FirstOrDefaultAsync(x => x.EmpId == dto.EmpId);
+                        if (empRecord != null)
+                        {
+                            empRecord.ModifiedDate = DateTime.UtcNow;
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                }
+
+                return (0, "Successfully Updated");
+            }
+            catch (Exception ex)
+            {
+                return (-1, ex.Message);
+            }
+        }
+
         public async Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
         {
             var existingEntity = await _context.HrEmpProfdtlsApprls
@@ -2258,28 +2672,67 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 bool isWorkflowNeeded = await IsWorkflowNeeded();
                 var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
+                hrEmpProfdtlsApprl.EntryBy = profdtlsApprlDto.EntryBy;
+                hrEmpProfdtlsApprl.EntryDt = DateTime.UtcNow; // Ensure Entry Date is set
 
                 if (isWorkflowNeeded)
                 {
                     string? codeId = await GenerateRequestId(profdtlsApprlDto.EmpId);
-                    if (codeId != null)
+                    if (codeId == null)
                     {
-                        hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
-                        await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
-                        await UpdateCodeGeneration(codeId);
+                        await transaction.RollbackAsync();
+                        return "NoSequence";  // Match SQL logic
                     }
+
+                    hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
+                    await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
+                    await UpdateCodeGeneration(codeId);
+
+                    // Call Workflow Activity Flow - Assuming a method exists
+                    await ExecuteWorkFlowActivityFlow(profdtlsApprlDto.EmpId, "Professional", hrEmpProfdtlsApprl.RequestId, profdtlsApprlDto.EntryBy.ToString());
                 }
                 else
                 {
-                    await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
-                    await _context.SaveChangesAsync();
+
+                    var hrEmpProfdtl = new HrEmpProfdtl
+                    {
+                        InstId = profdtlsApprlDto.InstId,
+                        ProfId = profdtlsApprlDto.ProfId,
+                        EmpId = profdtlsApprlDto.EmpId,
+                        CompName = profdtlsApprlDto.CompName,
+                        Designation = profdtlsApprlDto.Designation,
+                        CompAddress = profdtlsApprlDto.CompAddress,
+                        Pbno = profdtlsApprlDto.Pbno,
+                        ContactPer = profdtlsApprlDto.ContactPer,
+                        ContactNo = profdtlsApprlDto.ContactNo,
+                        JobDesc = profdtlsApprlDto.JobDesc,
+                        JoinDt = profdtlsApprlDto.JoinDt,
+                        LeavingDt = profdtlsApprlDto.LeavingDt,
+                        LeaveReason = profdtlsApprlDto.LeaveReason,
+                        Ctc = profdtlsApprlDto.Ctc,
+                        CurrencyId = profdtlsApprlDto.CurrencyId,
+                        CompSite = profdtlsApprlDto.CompSite,
+                        EntryBy = profdtlsApprlDto.EntryBy,
+                        EntryDt = profdtlsApprlDto.EntryDt,
+                    };
+                    await _context.HrEmpProfdtls.AddAsync(hrEmpProfdtl);
+
+                    //await _context.SaveChangesAsync();
+
                     await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
+                }
+
+                // Update HR_EMP_MASTER.ModifiedDate
+                var empMaster = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId);
+                if (empMaster != null)
+                {
+                    empMaster.ModifiedDate = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
                 }
 
                 int result = await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                string? strMessage = result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
-                return strMessage;
+                return result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
             }
             catch
             {
@@ -2287,6 +2740,98 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 throw;
             }
         }
+
+        // Fixes in GetLastSequence
+        public async Task<string?> GetLastSequence(string codeId)
+        {
+            return await _context.AdmCodegenerationmasters
+                .Where(a => a.CodeId.ToString() == codeId) // Fix condition
+                .Select(a => a.LastSequence)
+                .FirstOrDefaultAsync();
+        }
+
+        // Fixes in UpdateCodeGeneration
+        public async Task UpdateCodeGeneration(string codeId)
+        {
+            var codeGenEntity = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(c => c.CodeId.ToString() == codeId);
+            if (codeGenEntity != null)
+            {
+                codeGenEntity.CurrentCodeValue = (codeGenEntity.CurrentCodeValue ?? 0) + 1;
+
+                // Validate substring length before applying it
+                int length = codeGenEntity.NumberFormat.Length - codeGenEntity.CurrentCodeValue.ToString().Length;
+                string sequence = length > 0 ? codeGenEntity.NumberFormat[..length] : "";
+
+                codeGenEntity.LastSequence = $"{codeGenEntity.Code}{sequence}{codeGenEntity.CurrentCodeValue}";
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // New Method: Execute WorkFlowActivityFlow
+        private async Task ExecuteWorkFlowActivityFlow(int empId, string transactionType, string? requestId, string entryBy)
+        {
+            // Assuming there’s a stored procedure call or business logic
+            await _context.Database.ExecuteSqlRawAsync(
+                "EXEC WorkFlowActivityFlow @p0, @p1, @p2, @p3",
+                empId, transactionType, requestId, entryBy
+            );
+        }
+
+
+        //public async Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
+        //{
+        //    var existingEntity = await _context.HrEmpProfdtlsApprls
+        //        .FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId &&
+        //                                  e.JoinDt.HasValue && e.JoinDt.Value.Date == profdtlsApprlDto.JoinDt &&
+        //                                  e.LeavingDt.HasValue && e.LeavingDt.Value.Date == profdtlsApprlDto.LeavingDt);
+        //    if (existingEntity != null)
+        //    {
+        //        return _employeeSettings.DataInsertFailedStatus;
+        //    }
+
+        //    using var transaction = await _context.Database.BeginTransactionAsync();
+        //    try
+        //    {
+        //        bool isWorkflowNeeded = await IsWorkflowNeeded();
+        //        var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
+
+        //        if (isWorkflowNeeded)
+        //        {
+        //            string? codeId = await GenerateRequestId(profdtlsApprlDto.EmpId);
+        //            if (codeId != null)
+        //            {
+        //                hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
+        //                await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
+        //                await UpdateCodeGeneration(codeId);
+        //            }
+        //        }
+        //        else
+        //        {
+
+        //            var hrEmpProfdtlsApprlDto = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
+
+        //            await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprlDto);
+        //            await _context.SaveChangesAsync();
+        //            await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
+
+        //        }
+        //        var empMaster = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId);
+        //        if (empMaster != null)
+        //        {
+        //            empMaster.ModifiedDate = DateTime.UtcNow;
+        //            await _context.SaveChangesAsync();
+        //        }
+        //        int result = await _context.SaveChangesAsync();
+        //        await transaction.CommitAsync();
+        //        string? strMessage = result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
+        //        return strMessage;
+        //    }
+        //    catch
+        //    {
+        //        await transaction.RollbackAsync();
+        //        throw;
+        //    }
+        //}
         public async Task<bool> IsWorkflowNeeded()
         {
             return await _context.CompanyParameters
@@ -2304,24 +2849,24 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return GetSequence(empId, transactionID, "", 0);
         }
-        public async Task<string?> GetLastSequence(string codeId)
-        {
-            return await _context.AdmCodegenerationmasters
-                .Where(a => a.Code == codeId)
-                .Select(a => a.LastSequence)
-                .FirstOrDefaultAsync();
-        }
-        public async Task UpdateCodeGeneration(string codeId)
-        {
-            var codeGenEntity = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(c => c.CodeId == Convert.ToInt32(codeId));
+        //public async Task<string?> GetLastSequence(string codeId)
+        //{
+        //    return await _context.AdmCodegenerationmasters
+        //        .Where(a => a.Code == codeId)
+        //        .Select(a => a.LastSequence)
+        //        .FirstOrDefaultAsync();
+        //}
+        //public async Task UpdateCodeGeneration(string codeId)
+        //{
+        //    var codeGenEntity = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(c => c.CodeId == Convert.ToInt32(codeId));
 
-            if (codeGenEntity != null)
-            {
-                codeGenEntity.CurrentCodeValue = (codeGenEntity.CurrentCodeValue ?? 0) + 1;
-                codeGenEntity.LastSequence = $"{codeGenEntity.Code}{codeGenEntity.NumberFormat[..^codeGenEntity.CurrentCodeValue.ToString().Length]}{codeGenEntity.CurrentCodeValue}";
-                await _context.SaveChangesAsync();
-            }
-        }
+        //    if (codeGenEntity != null)
+        //    {
+        //        codeGenEntity.CurrentCodeValue = (codeGenEntity.CurrentCodeValue ?? 0) + 1;
+        //        codeGenEntity.LastSequence = $"{codeGenEntity.Code}{codeGenEntity.NumberFormat[..^codeGenEntity.CurrentCodeValue.ToString().Length]}{codeGenEntity.CurrentCodeValue}";
+        //        await _context.SaveChangesAsync();
+        //    }
+        //}
         private async Task InsertProfessionalDetails(int empId)
         {
             var profdtlsApprlDto = await _context.HrEmpProfdtlsApprls
@@ -3059,6 +3604,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
                               RejoinApprovalDate = a.RejoinApprovalDate.HasValue ? a.RejoinApprovalDate.Value.ToString(_employeeSettings.DateFormat) : null,
                               RejoinRemarks = a.RejoinRemarks
                           }).AsNoTracking().ToListAsync();
+        }
+        public async Task<int?> GetLastEntity(int? empId)
+        {
+            return await _context.HrEmpMasters
+                  .Where(e => e.EmpId == empId)
+                  .Select(e => e.LastEntity)
+                  .FirstOrDefaultAsync();
         }
         public async Task<List<TransferAndPromotionDto>> TransferAndPromotionAsync(int employeeId)
         {
@@ -3972,7 +4524,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         EmpId = empRewardsDto.EmpId,
                         AchievementId = achievementId,
                         RewardType = rewardTypeId,
-                        Status = ApprovalStatus.Approved.ToString(),
+                        Status = _employeeSettings.EmployeeStatus,
                         Reason = empRewardsDto.Reason,
                         RewardDate = DateTime.UtcNow,
                         Amount = empRewardsDto.Amount
@@ -4401,8 +4953,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                      12 => a.LevelTwelveDescription,
                                      _ => null
                                  },
-                                 a.FromDate,
-                                 a.ToDate,
+                                 //a.FromDate,
+                                 //a.ToDate,
                                  SortOrder = v,
                                  IsExist = 0
                              }).ToList();
@@ -4961,8 +5513,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                       LevelElevenDescription = h.LevelElevenDescription,
                                       LevelTwelveId = h.LevelTwelveId,
                                       LevelTwelveDescription = h.LevelTwelveDescription,
-                                      FromDate = (DateTime?)null,
-                                      ToDate = (DateTime?)null
+                                      //FromDate = (DateTime?)null,
+                                      //ToDate = (DateTime?)null
                                   }).ToListAsync();
             return employeeLevel;
         }
@@ -7512,20 +8064,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .FirstOrDefaultAsync();
 
             // Fetch High-Level Data
-            var highLevelData = await _context.HighLevelViewTables
-                .AsNoTracking()
-                .Select(h => new HighLevelTableDto
-                {
-                    LevelOneId = h.LevelOneId,
-                    LevelOneDescription = h.LevelOneDescription,
-                    LevelTwoId = h.LevelTwoId,
-                    LevelTwoDescription = h.LevelTwoDescription + "(" + h.LevelOneDescription + ")",
-                    LevelThreeId = h.LevelThreeId,
-                    LevelThreeDescription = h.LevelThreeDescription + "(" + h.LevelOneDescription + "-" + h.LevelTwoDescription + ")",
-                    LevelFourId = h.LevelFourId,
-                    LevelFourDescription = h.LevelFourDescription + "(" + h.LevelThreeDescription + ")"
-                })
-                .ToListAsync();
+            //var highLevelData = await _context.HighLevelViewTables
+            //    .AsNoTracking()
+            //    .Select(h => new HighLevelTableDto
+            //    {
+            //        LevelOneId = h.LevelOneId,
+            //        LevelOneDescription = h.LevelOneDescription,
+            //        LevelTwoId = h.LevelTwoId,
+            //        LevelTwoDescription = h.LevelTwoDescription + "(" + h.LevelOneDescription + ")",
+            //        LevelThreeId = h.LevelThreeId,
+            //        LevelThreeDescription = h.LevelThreeDescription + "(" + h.LevelOneDescription + "-" + h.LevelTwoDescription + ")",
+            //        LevelFourId = h.LevelFourId,
+            //        LevelFourDescription = h.LevelFourDescription + "(" + h.LevelThreeDescription + ")"
+            //    })
+            //    .ToListAsync();
+            var highLevelData = await GetAccessLevel();
 
             // Determine final link selection
             int finalLinkSelect = linkSelect ?? entityAccess ?? 13;
@@ -7535,6 +8088,51 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 HighLevelData = highLevelData,
                 LinkSelect = finalLinkSelect
             };
+        }
+        private async Task<List<HighLevelTableDto>> GetAccessLevel()
+        {
+            return await _context.HighLevelViewTables
+             .AsNoTracking()
+             .Select(h => new HighLevelTableDto
+             {
+                 LevelOneId = h.LevelOneId,
+                 LevelOneDescription = h.LevelOneDescription,
+
+                 LevelTwoId = h.LevelTwoId,
+                 LevelTwoDescription = h.LevelTwoDescription + " (" + h.LevelOneDescription + ")",
+
+                 LevelThreeId = h.LevelThreeId,
+                 LevelThreeDescription = h.LevelThreeDescription + " (" + h.LevelOneDescription + "-" + h.LevelTwoDescription + ")",
+
+                 LevelFourId = h.LevelFourId,
+                 LevelFourDescription = h.LevelFourDescription + " (" + h.LevelThreeDescription + ")",
+
+                 LevelFiveId = h.LevelFiveId,
+                 LevelFiveDescription = h.LevelFiveDescription + " (" + h.LevelThreeDescription + "-" + h.LevelFourDescription + ")",
+
+                 LevelSixId = h.LevelSixId,
+                 LevelSixDescription = h.LevelSixDescription + " (" + h.LevelFourDescription + "-" + h.LevelFiveDescription + ")",
+
+                 LevelSevenId = h.LevelSevenId,
+                 LevelSevenDescription = h.LevelSevenDescription + " (" + h.LevelThreeDescription + "-" + h.LevelSixDescription + ")",
+
+                 LevelEightId = h.LevelEightId,
+                 LevelEightDescription = h.LevelEightDescription + " (" + h.LevelThreeDescription + "-" + h.LevelSevenDescription + ")",
+
+                 LevelNineId = h.LevelNineId,
+                 LevelNineDescription = h.LevelNineDescription + " (" + h.LevelSevenDescription + "-" + h.LevelEightDescription + ")",
+
+                 LevelTenId = h.LevelTenId,
+                 LevelTenDescription = h.LevelTenDescription + " (" + h.LevelEightDescription + "-" + h.LevelNineDescription + ")",
+
+                 LevelElevenId = h.LevelElevenId,
+                 LevelElevenDescription = h.LevelElevenDescription + " (" + h.LevelNineDescription + "-" + h.LevelTenDescription + ")"
+
+
+
+
+             })
+             .ToListAsync();
         }
         public async Task<object> GetLevelAsync(int level)
         {
@@ -7669,5 +8267,209 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             AppointmentLetter = l.AppointmentLetter ?? 0
                         }).FirstAsync();
         }
+        private async Task<int> GetTransactionIdByTransactionType(string transactionType)
+        {
+            return await _context.TransactionMasters.Where(a => a.TransactionType == transactionType).Select(a => a.TransactionId).FirstOrDefaultAsync();
+        }
+        private async Task<bool> GetExistsRoleAsync(int roleId)
+        {
+            return await _context.AdmRoleMasters.AnyAsync(a => a.Type == "A" && a.RoleId == roleId);
+        }
+        public async Task<object> GetUserRoles(RoleDetailsDto RoleDetailsDtos)
+        {
+            // Fetch transactionId & roleId if required (not used in current logic)
+            var transactionId = await GetTransactionIdByTransactionType(RoleDetailsDtos.TransactionType);
+            var roleId = await GetLinkLevelByRoleId(RoleDetailsDtos.FirstEntityId);
+
+            // Check if role exists
+            bool roleExists = await GetExistsRoleAsync(RoleDetailsDtos.FirstEntityId);
+
+            // Build base query
+            var query = from a in _context.AdmRoleMasters
+                        join b in _context.UserTypes on a.UserTypeId equals b.Id into userTypeGroup
+                        from b in userTypeGroup.DefaultIfEmpty() // Left Join
+                        select new
+                        {
+                            RoleId = a.RoleId,
+                            RoleName = a.RoleName,
+                            RoleCode = a.RoleCode,
+                            UserType = b.Description ?? "NA",
+                            Type = a.Type,
+                            Code = b.Code
+                        };
+
+            // Apply additional conditions if role does not exist
+            if (!roleExists)
+            {
+                //query = query.Where(a => a.RoleId != null && a.RoleCode != "A"); // Adjust filter logic as needed
+                query = query.Where(a => a.Type != "A" && a.Code != "A"); // Adjust filter logic as needed
+            }
+
+            // Execute query asynchronously
+            var result = await query.ToListAsync();
+
+            return result;
+        }
+
+
+        public async Task<object> GetUserRoles(int? firstEntityId, int? secondEntityId)
+        {
+            int empId = 269;
+            var transId = await GetTransactionIdByTransactionType("Role");
+            var workflowTransId = await _context.TransactionMasters
+                .Where(t => t.TransactionType == "W_Flow")
+                .Select(t => t.TransactionId)
+                .FirstOrDefaultAsync();
+
+            int? lnklev = await _context.SpecialAccessRights
+                .Where(s => s.RoleId == firstEntityId)
+                .Select(s => s.LinkLevel)
+                .FirstOrDefaultAsync();
+
+            bool hasAccess = await _context.EntityAccessRights02s
+                .AnyAsync(s => s.RoleId == firstEntityId && s.LinkLevel == 15);
+
+            if (hasAccess)
+            {
+                var roles = await _context.AdmRoleMasters.Join(_context.UserTypes, r => r.UserTypeId, u => u.Id,
+                    (r, u) => new
+                    {
+                        RoleId = r.RoleId,
+                        RoleName = r.RoleName,
+                        RoleCode = r.RoleCode,
+                        UserType = u.Description ?? "NA",
+                        Code = u.Code,
+                        Type = r.Type
+                    }).ToListAsync();
+
+                return roles.Where(a => a.Type != "A" && a.Code != "A").ToList();
+            }
+
+            var empEntity = await _context.HrEmpMasters
+                .Where(h => h.EmpId == secondEntityId)
+                .Select(h => h.EmpEntity)
+                .FirstOrDefaultAsync();
+
+            var empEntities = SplitStrings_XML(empEntity, ',')
+                .Select((item, index) => new { Item = item, LinkLevelSelf = index + 2 })
+                .Where(e => !string.IsNullOrEmpty(e.Item));
+
+            var applicableFinal = await _context.EntityAccessRights02s
+                .Where(s => s.RoleId == firstEntityId)
+                .SelectMany(s => SplitStrings_XML(s.LinkId, default),
+                    (s, item) => new { Item = item, LinkLevel = s.LinkLevel })
+                .ToListAsync();
+
+            if (lnklev > 0)
+            {
+                //applicableFinal.AddRange(empEntities
+                //    .Where(e => e.LinkLevelSelf >= lnklev)
+                //    .Select(e => new { e.Item, inLinkLevel = e.LinkLevelSelf }));
+                applicableFinal.AddRange(empEntities.Where(e => e.LinkLevelSelf >= lnklev).Select(e => new { e.Item, LinkLevel = (int?)e.LinkLevelSelf })); // Explicitly casting to int?
+
+
+            }
+
+            var applicableFinalSet = applicableFinal.Select(a => (long?)Convert.ToInt64(a.Item)).ToHashSet();
+
+            var entityApplicable00Final = await _context.EntityApplicable00s
+                .Where(e => e.TransactionId == transId)
+                .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
+                .ToListAsync();
+
+            var applicableFinal02Emp = await (
+                from emp in _context.EmployeeDetails
+                join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
+                join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
+                where ea.TransactionId == transId && applicableFinalSet.Contains(hlv.LevelOneId)
+                select ea.MasterId
+            ).Distinct().ToListAsync();
+
+            var newHigh = entityApplicable00Final
+                .Where(e => applicableFinalSet.Contains(e.LinkId) || e.LinkLevel == 15)
+                .Select(e => e.MasterId)
+                .Union(applicableFinal02Emp)
+                .Distinct()
+                .ToList();
+
+            var finalRoles = await _context.AdmRoleMasters
+                .Join(_context.UserTypes, a => a.UserTypeId, b => b.Id, (a, b) => new { a, b })
+                .Join(newHigh, x => x.a.RoleId, e => e, (x, e) => new { x.a, x.b })
+                .Where(x => x.a.Type != "A" && x.b.Code != "A" && x.a.RoleId != firstEntityId && x.b.Id != 5)
+                .Select(x => new
+                {
+                    x.a.RoleId,
+                    x.a.RoleName,
+                    x.a.RoleCode,
+                    UserType = x.b.Description ?? "NA"
+                }).ToListAsync();
+
+            var additionalRoles = await _context.HrEmployeeUserRelations
+                .Where(a => a.EmpId == empId)
+                .Join(_context.AdmUserRoleMasters, a => a.UserId, c => c.UserId, (a, c) => new { a, c })
+                .Join(_context.AdmRoleMasters, ac => ac.c.RoleId, d => d.RoleId, (ac, d) => new { ac, d })
+                .Join(_context.UserTypes, d => d.d.UserTypeId, e => e.Id, (d, e) => new { d, e })
+                .Select(x => new
+                {
+                    x.d.d.RoleId,
+                    x.d.d.RoleName,
+                    x.d.d.RoleCode,
+                    UserType = x.e.Description ?? "NA"
+                }).ToListAsync();
+
+            return finalRoles.Union(additionalRoles).ToList();
+        }
+        public async Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId)
+        {
+            // Fetch WorkerInESS value
+            var workerInESS = await GetDefaultCompanyParameter(empId, "EnableWorkerInEs", "EMP1");
+
+            // Fetch Employee Statuses
+            var excludedStatuses = new HashSet<string> { "R", "D", "A", "X", "O" };
+            if (workerInESS == "0")
+            {
+                excludedStatuses.Add("W");
+            }
+
+            var employeeStatuses = await _context.HrEmpStatusSettings
+                .Where(s => !excludedStatuses.Contains(s.Status))
+                .Select(s => $"<option value={s.StatusId}>{s.StatusDesc}</option>")
+                .ToListAsync();
+
+            // Fetch System Statuses
+            var employeeCurrentStatuses = await _context.HrEmpMasters
+                .Where(e => e.EmpId == empId)
+                .Select(e => e.CurrentStatus)
+                .Union(new int?[] { 7 }) // Including '7' as per the SQL UNION
+                .ToListAsync();
+
+            var systemStatuses = await _context.EmployeeCurrentStatuses
+                .Where(s => employeeCurrentStatuses.Contains(s.Status))
+                .Select(s => $"<option value={s.Status}>{s.StatusDesc}</option>")
+                .ToListAsync();
+
+            // Return concatenated results
+            return (string.Join("", employeeStatuses), string.Join("", systemStatuses));
+        }
+        public async Task<string> GetReligionsAsync()
+        {
+            var religions = await _context.AdmReligionMasters
+                .Select(r => $"<option value={r.ReligionId}>{r.ReligionName}</option>")
+                .ToListAsync();
+
+            return string.Join("", religions);
+        }
+        //    public async Task<string> hh()
+        //    {
+        //        var employeeFields = await _context.EmployeeFieldMaster00s
+        //.OrderBy(f => f.FieldMaster00ID)
+        //.Select(f => new
+        //{
+        //    f.FieldMaster00ID,
+        //    f.FieldCode,
+        //    f.FieldDescription
+        //})
+        //.ToListAsync();
+        //    }
     }
 }
