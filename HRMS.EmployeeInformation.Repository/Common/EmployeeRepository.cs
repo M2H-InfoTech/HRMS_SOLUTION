@@ -602,10 +602,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return new PaginatedResult<EmployeeResultDto>
             {
                 draw = draw,
-                TotalRecords = totalRecords,
+                recordsTotal = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Records = paginatedResult
+                data = paginatedResult
             };
         }
 
@@ -977,10 +977,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return new PaginatedResult<EmployeeResultDto>
             {
                 draw = draw,
-                TotalRecords = totalRecords,
+                recordsTotal = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Records = paginatedResult
+                data = paginatedResult
             };
 
 
@@ -1097,10 +1097,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return new PaginatedResult<EmployeeResultDto>
             {
                 draw = draw,
-                TotalRecords = totalRecords,
+                recordsTotal = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Records = paginatedResult
+                data = paginatedResult
             };
 
 
@@ -1218,10 +1218,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return new PaginatedResult<EmployeeResultDto>
             {
-                TotalRecords = totalRecords,
+                recordsTotal = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Records = paginatedResult
+                data = paginatedResult
             };
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatZeroOrOneEmpIdZeroEmployeeExists(int pageNumber, int pageSize, string? ageFormat, string? systemStatus, string? currentStatusDesc)
@@ -2340,6 +2340,318 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return codeId?.ToString();
         }
+        //    public async Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(
+        //string updateType, int empID, int ProfId, string companyName, string designation,
+        //string companyAddress, string postboxNo, string contactPerson, long? contactNo,
+        //string jobDescription, DateTime? joiningDate, DateTime? leavingDate, string leaveReason,
+        //int? ctc, int? currencyID, int entryBy, DateTime? entryDate)
+        //    {
+        //        try
+        //        {
+
+        //            if (updateType == "Pending")
+        //            {
+        //                var record = await _context.HrEmpProfdtlsApprls
+        //                    .FirstOrDefaultAsync(x => x.ProfId == ProfId && x.EmpId == empID);
+
+        //                if (record != null)
+        //                {
+        //                    record.CompName = companyName;
+        //                    record.Designation = designation;
+        //                    record.CompAddress = companyAddress;
+        //                    record.Pbno = postboxNo;
+        //                    record.ContactPer = contactPerson;
+        //                    record.ContactNo = contactNo.ToString();
+        //                    record.JobDesc = jobDescription;
+        //                    record.JoinDt = joiningDate;
+        //                    record.LeavingDt = leavingDate;
+        //                    record.LeaveReason = leaveReason;
+        //                    record.Ctc = ctc.ToString();
+        //                    record.CurrencyId = currencyID;
+        //                    record.EntryBy = entryBy;
+        //                    record.EntryDt = DateTime.UtcNow;
+
+        //                    await _context.SaveChangesAsync();
+        //                }
+        //            }
+        //            else if (updateType == "Approved")
+        //            {
+
+        //                var workflowNeed = await IsWorkflowNeeded();
+
+        //                string? codeId = await GenerateRequestId(empID);
+        //                var requestID = await _context.AdmCodegenerationmasters
+        //                       .Where(c => c.CodeId == Convert.ToInt32(codeId))
+        //                       .Select(c => c.LastSequence)
+        //                       .FirstOrDefaultAsync();
+        //                if (workflowNeed.Equals(true))
+        //                {
+        //                    var transactionID = await _context.TransactionMasters
+        //                        .Where(t => t.TransactionType == "Professional")
+        //                        .Select(t => t.TransactionId)
+        //                        .FirstOrDefaultAsync();
+
+        //                    //var codeID = await context.GetSequence(empID, transactionID, null, null);
+
+        //                    if (codeId == null)
+        //                    {
+        //                        return (0, "NoSequence");
+        //                    }
+
+
+
+        //                    var newApproval = new HrEmpProfdtlsApprl
+        //                    {
+        //                        EmpId = empID,
+        //                        CompName = companyName,
+        //                        Designation = designation,
+        //                        CompAddress = companyAddress,
+        //                        Pbno = postboxNo,
+        //                        ContactPer = contactPerson,
+        //                        ContactNo = contactNo.ToString(),
+        //                        JobDesc = jobDescription,
+        //                        JoinDt = joiningDate,
+        //                        LeavingDt = leavingDate,
+        //                        LeaveReason = leaveReason,
+        //                        Ctc = ctc.ToString(),
+        //                        CurrencyId = currencyID,
+        //                        Status = "P",
+        //                        FlowStatus = "E",
+        //                        EntryBy = entryBy,
+        //                        EntryDt = entryDate ?? DateTime.UtcNow,
+        //                        RequestId = requestID,
+        //                        MasterId = ProfId
+        //                    };
+
+        //                    await _context.HrEmpProfdtlsApprls.AddAsync(newApproval);
+        //                    await _context.SaveChangesAsync();
+
+        //                    var newErrorID = newApproval.ProfId;
+
+        //                    //await context.WorkFlowActivityFlow(empID, "Professional", newErrorID, entryBy);
+
+        //                    await ExecuteWorkFlowActivityFlow(empID, "Professional", newErrorID.ToString(), entryBy.ToString());
+
+        //                    return (newErrorID, "Successfully Updated");
+        //                }
+        //                else if (workflowNeed.Equals(false))
+        //                {
+        //                    var record = await _context.HrEmpProfdtls
+        //                        .FirstOrDefaultAsync(x => x.ProfId == ProfId && x.EmpId == empID);
+
+        //                    if (record != null)
+        //                    {
+        //                        record.CompName = companyName;
+        //                        record.Designation = designation;
+        //                        record.CompAddress = companyAddress;
+        //                        record.Pbno = postboxNo;
+        //                        record.ContactPer = contactPerson;
+        //                        record.ContactNo = contactNo.ToString();
+        //                        record.JobDesc = jobDescription;
+        //                        record.JoinDt = joiningDate;
+        //                        record.LeavingDt = leavingDate;
+        //                        record.LeaveReason = leaveReason;
+        //                        record.Ctc = ctc.ToString();
+        //                        record.CurrencyId = currencyID;
+        //                        record.EntryBy = entryBy;
+        //                        record.EntryDt = DateTime.UtcNow;
+        //                        await _context.SaveChangesAsync();
+
+        //                    }
+
+        //                    var approval = new HrEmpProfdtlsApprl
+        //                    {
+        //                        EmpId = empID,
+        //                        CompName = companyName,
+        //                        Designation = designation,
+        //                        CompAddress = companyAddress,
+        //                        Pbno = postboxNo,
+        //                        ContactPer = contactPerson,
+        //                        ContactNo = contactNo.ToString(),
+        //                        JobDesc = jobDescription,
+        //                        JoinDt = joiningDate,
+        //                        LeavingDt = leavingDate,
+        //                        LeaveReason = leaveReason,
+        //                        Ctc = ctc.ToString(),
+        //                        CurrencyId = currencyID,
+        //                        Status = "A",
+        //                        FlowStatus = "E",
+        //                        EntryBy = entryBy,
+        //                        EntryDt = entryDate ?? DateTime.UtcNow,
+        //                        RequestId = requestID,
+        //                        MasterId = ProfId
+        //                    };
+
+        //                    await _context.HrEmpProfdtlsApprls.AddAsync(approval);
+        //                    await _context.SaveChangesAsync();
+
+        //                    var empRecord = await _context.HrEmpMasters.FirstOrDefaultAsync(x => x.EmpId == empID);
+        //                    if (empRecord != null)
+        //                    {
+        //                        empRecord.ModifiedDate = DateTime.UtcNow;
+        //                        await _context.SaveChangesAsync();
+        //                    }
+        //                }
+
+
+        //                return (0, "Successfully Updated");
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            return (-1, ex.Message);
+        //        }
+        //        return (0, "Successfully Updated");
+        //    }
+
+
+        public async Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(HrEmpProfdtlsApprlDto dto)
+        {
+            try
+            {
+                var rr = await GetEmployeeAndSystemStatuses(dto.EmpId);
+
+
+                if (dto.updateType == "Pending")
+                {
+                    var record = await _context.HrEmpProfdtlsApprls
+                        .FirstOrDefaultAsync(x => x.ProfId == dto.ProfId && x.EmpId == dto.EmpId);
+
+                    if (record != null)
+                    {
+                        record.CompName = dto.CompName;
+                        record.Designation = dto.Designation;
+                        record.CompAddress = dto.CompAddress;
+                        record.Pbno = dto.Pbno;
+                        record.ContactPer = dto.ContactPer;
+                        record.ContactNo = dto.ContactNo;
+                        record.JobDesc = dto.JobDesc;
+                        record.JoinDt = dto.JoinDt;
+                        record.LeavingDt = dto.LeavingDt;
+                        record.LeaveReason = dto.LeaveReason;
+                        record.Ctc = dto.Ctc;
+                        record.CurrencyId = dto.CurrencyId;
+                        record.EntryBy = dto.EntryBy;
+                        record.EntryDt = DateTime.UtcNow;
+
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                else if (dto.updateType == "Approved")
+                {
+                    var workflowNeed = await IsWorkflowNeeded();
+                    string? codeId = await GenerateRequestId(dto.EmpId);
+                    var requestID = await _context.AdmCodegenerationmasters
+                        .Where(c => c.CodeId == Convert.ToInt32(codeId))
+                        .Select(c => c.LastSequence)
+                        .FirstOrDefaultAsync();
+
+                    if (workflowNeed)
+                    {
+                        if (codeId == null)
+                        {
+                            return (0, "NoSequence");
+                        }
+
+                        var newApproval = new HrEmpProfdtlsApprl
+                        {
+                            EmpId = dto.EmpId,
+                            CompName = dto.CompName,
+                            Designation = dto.Designation,
+                            CompAddress = dto.CompAddress,
+                            Pbno = dto.Pbno,
+                            ContactPer = dto.ContactPer,
+                            ContactNo = dto.ContactNo,
+                            JobDesc = dto.JobDesc,
+                            JoinDt = dto.JoinDt,
+                            LeavingDt = dto.LeavingDt,
+                            LeaveReason = dto.LeaveReason,
+                            Ctc = dto.Ctc,
+                            CurrencyId = dto.CurrencyId,
+                            Status = "P",
+                            FlowStatus = "E",
+                            EntryBy = dto.EntryBy,
+                            EntryDt = dto.EntryDt,
+                            RequestId = requestID,
+                            MasterId = dto.ProfId
+                        };
+
+                        await _context.HrEmpProfdtlsApprls.AddAsync(newApproval);
+                        await _context.SaveChangesAsync();
+
+                        var newErrorID = newApproval.ProfId;
+                        await ExecuteWorkFlowActivityFlow(dto.EmpId, "Professional", newErrorID.ToString(), dto.EntryBy.ToString());
+
+                        return (newErrorID, "Successfully Updated");
+                    }
+                    else
+                    {
+                        var record = await _context.HrEmpProfdtls
+                            .FirstOrDefaultAsync(x => x.ProfId == dto.ProfId && x.EmpId == dto.EmpId);
+
+                        if (record != null)
+                        {
+                            record.CompName = dto.CompName;
+                            record.Designation = dto.Designation;
+                            record.CompAddress = dto.CompAddress;
+                            record.Pbno = dto.Pbno;
+                            record.ContactPer = dto.ContactPer;
+                            record.ContactNo = dto.ContactNo;
+                            record.JobDesc = dto.JobDesc;
+                            record.JoinDt = dto.JoinDt;
+                            record.LeavingDt = dto.LeavingDt;
+                            record.LeaveReason = dto.LeaveReason;
+                            record.Ctc = dto.Ctc;
+                            record.CurrencyId = dto.CurrencyId;
+                            record.EntryBy = dto.EntryBy;
+                            record.EntryDt = DateTime.UtcNow;
+
+                            await _context.SaveChangesAsync();
+                        }
+
+                        var approval = new HrEmpProfdtlsApprl
+                        {
+                            EmpId = dto.EmpId,
+                            CompName = dto.CompName,
+                            Designation = dto.Designation,
+                            CompAddress = dto.CompAddress,
+                            Pbno = dto.Pbno,
+                            ContactPer = dto.ContactPer,
+                            ContactNo = dto.ContactNo,
+                            JobDesc = dto.JobDesc,
+                            JoinDt = dto.JoinDt,
+                            LeavingDt = dto.LeavingDt,
+                            LeaveReason = dto.LeaveReason,
+                            Ctc = dto.Ctc,
+                            CurrencyId = dto.CurrencyId,
+                            Status = "A",
+                            FlowStatus = "E",
+                            EntryBy = dto.EntryBy,
+                            EntryDt = dto.EntryDt,
+                            RequestId = requestID,
+                            MasterId = dto.ProfId
+                        };
+
+                        await _context.HrEmpProfdtlsApprls.AddAsync(approval);
+                        await _context.SaveChangesAsync();
+
+                        var empRecord = await _context.HrEmpMasters.FirstOrDefaultAsync(x => x.EmpId == dto.EmpId);
+                        if (empRecord != null)
+                        {
+                            empRecord.ModifiedDate = DateTime.UtcNow;
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                }
+
+                return (0, "Successfully Updated");
+            }
+            catch (Exception ex)
+            {
+                return (-1, ex.Message);
+            }
+        }
+
         public async Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
         {
             var existingEntity = await _context.HrEmpProfdtlsApprls
@@ -2356,28 +2668,67 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 bool isWorkflowNeeded = await IsWorkflowNeeded();
                 var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
+                hrEmpProfdtlsApprl.EntryBy = profdtlsApprlDto.EntryBy;
+                hrEmpProfdtlsApprl.EntryDt = DateTime.UtcNow; // Ensure Entry Date is set
 
                 if (isWorkflowNeeded)
                 {
                     string? codeId = await GenerateRequestId(profdtlsApprlDto.EmpId);
-                    if (codeId != null)
+                    if (codeId == null)
                     {
-                        hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
-                        await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
-                        await UpdateCodeGeneration(codeId);
+                        await transaction.RollbackAsync();
+                        return "NoSequence";  // Match SQL logic
                     }
+
+                    hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
+                    await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
+                    await UpdateCodeGeneration(codeId);
+
+                    // Call Workflow Activity Flow - Assuming a method exists
+                    await ExecuteWorkFlowActivityFlow(profdtlsApprlDto.EmpId, "Professional", hrEmpProfdtlsApprl.RequestId, profdtlsApprlDto.EntryBy.ToString());
                 }
                 else
                 {
-                    await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
-                    await _context.SaveChangesAsync();
+
+                    var hrEmpProfdtl = new HrEmpProfdtl
+                    {
+                        InstId = profdtlsApprlDto.InstId,
+                        ProfId = profdtlsApprlDto.ProfId,
+                        EmpId = profdtlsApprlDto.EmpId,
+                        CompName = profdtlsApprlDto.CompName,
+                        Designation = profdtlsApprlDto.Designation,
+                        CompAddress = profdtlsApprlDto.CompAddress,
+                        Pbno = profdtlsApprlDto.Pbno,
+                        ContactPer = profdtlsApprlDto.ContactPer,
+                        ContactNo = profdtlsApprlDto.ContactNo,
+                        JobDesc = profdtlsApprlDto.JobDesc,
+                        JoinDt = profdtlsApprlDto.JoinDt,
+                        LeavingDt = profdtlsApprlDto.LeavingDt,
+                        LeaveReason = profdtlsApprlDto.LeaveReason,
+                        Ctc = profdtlsApprlDto.Ctc,
+                        CurrencyId = profdtlsApprlDto.CurrencyId,
+                        CompSite = profdtlsApprlDto.CompSite,
+                        EntryBy = profdtlsApprlDto.EntryBy,
+                        EntryDt = profdtlsApprlDto.EntryDt,
+                    };
+                    await _context.HrEmpProfdtls.AddAsync(hrEmpProfdtl);
+
+                    //await _context.SaveChangesAsync();
+
                     await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
+                }
+
+                // Update HR_EMP_MASTER.ModifiedDate
+                var empMaster = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId);
+                if (empMaster != null)
+                {
+                    empMaster.ModifiedDate = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
                 }
 
                 int result = await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                string? strMessage = result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
-                return strMessage;
+                return result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
             }
             catch
             {
@@ -2385,6 +2736,98 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 throw;
             }
         }
+
+        // Fixes in GetLastSequence
+        public async Task<string?> GetLastSequence(string codeId)
+        {
+            return await _context.AdmCodegenerationmasters
+                .Where(a => a.CodeId.ToString() == codeId) // Fix condition
+                .Select(a => a.LastSequence)
+                .FirstOrDefaultAsync();
+        }
+
+        // Fixes in UpdateCodeGeneration
+        public async Task UpdateCodeGeneration(string codeId)
+        {
+            var codeGenEntity = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(c => c.CodeId.ToString() == codeId);
+            if (codeGenEntity != null)
+            {
+                codeGenEntity.CurrentCodeValue = (codeGenEntity.CurrentCodeValue ?? 0) + 1;
+
+                // Validate substring length before applying it
+                int length = codeGenEntity.NumberFormat.Length - codeGenEntity.CurrentCodeValue.ToString().Length;
+                string sequence = length > 0 ? codeGenEntity.NumberFormat[..length] : "";
+
+                codeGenEntity.LastSequence = $"{codeGenEntity.Code}{sequence}{codeGenEntity.CurrentCodeValue}";
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // New Method: Execute WorkFlowActivityFlow
+        private async Task ExecuteWorkFlowActivityFlow(int empId, string transactionType, string? requestId, string entryBy)
+        {
+            // Assuming there’s a stored procedure call or business logic
+            await _context.Database.ExecuteSqlRawAsync(
+                "EXEC WorkFlowActivityFlow @p0, @p1, @p2, @p3",
+                empId, transactionType, requestId, entryBy
+            );
+        }
+
+
+        //public async Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
+        //{
+        //    var existingEntity = await _context.HrEmpProfdtlsApprls
+        //        .FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId &&
+        //                                  e.JoinDt.HasValue && e.JoinDt.Value.Date == profdtlsApprlDto.JoinDt &&
+        //                                  e.LeavingDt.HasValue && e.LeavingDt.Value.Date == profdtlsApprlDto.LeavingDt);
+        //    if (existingEntity != null)
+        //    {
+        //        return _employeeSettings.DataInsertFailedStatus;
+        //    }
+
+        //    using var transaction = await _context.Database.BeginTransactionAsync();
+        //    try
+        //    {
+        //        bool isWorkflowNeeded = await IsWorkflowNeeded();
+        //        var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
+
+        //        if (isWorkflowNeeded)
+        //        {
+        //            string? codeId = await GenerateRequestId(profdtlsApprlDto.EmpId);
+        //            if (codeId != null)
+        //            {
+        //                hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
+        //                await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
+        //                await UpdateCodeGeneration(codeId);
+        //            }
+        //        }
+        //        else
+        //        {
+
+        //            var hrEmpProfdtlsApprlDto = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
+
+        //            await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprlDto);
+        //            await _context.SaveChangesAsync();
+        //            await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
+
+        //        }
+        //        var empMaster = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId);
+        //        if (empMaster != null)
+        //        {
+        //            empMaster.ModifiedDate = DateTime.UtcNow;
+        //            await _context.SaveChangesAsync();
+        //        }
+        //        int result = await _context.SaveChangesAsync();
+        //        await transaction.CommitAsync();
+        //        string? strMessage = result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
+        //        return strMessage;
+        //    }
+        //    catch
+        //    {
+        //        await transaction.RollbackAsync();
+        //        throw;
+        //    }
+        //}
         public async Task<bool> IsWorkflowNeeded()
         {
             return await _context.CompanyParameters
@@ -2402,24 +2845,24 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return GetSequence(empId, transactionID, "", 0);
         }
-        public async Task<string?> GetLastSequence(string codeId)
-        {
-            return await _context.AdmCodegenerationmasters
-                .Where(a => a.Code == codeId)
-                .Select(a => a.LastSequence)
-                .FirstOrDefaultAsync();
-        }
-        public async Task UpdateCodeGeneration(string codeId)
-        {
-            var codeGenEntity = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(c => c.CodeId == Convert.ToInt32(codeId));
+        //public async Task<string?> GetLastSequence(string codeId)
+        //{
+        //    return await _context.AdmCodegenerationmasters
+        //        .Where(a => a.Code == codeId)
+        //        .Select(a => a.LastSequence)
+        //        .FirstOrDefaultAsync();
+        //}
+        //public async Task UpdateCodeGeneration(string codeId)
+        //{
+        //    var codeGenEntity = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(c => c.CodeId == Convert.ToInt32(codeId));
 
-            if (codeGenEntity != null)
-            {
-                codeGenEntity.CurrentCodeValue = (codeGenEntity.CurrentCodeValue ?? 0) + 1;
-                codeGenEntity.LastSequence = $"{codeGenEntity.Code}{codeGenEntity.NumberFormat[..^codeGenEntity.CurrentCodeValue.ToString().Length]}{codeGenEntity.CurrentCodeValue}";
-                await _context.SaveChangesAsync();
-            }
-        }
+        //    if (codeGenEntity != null)
+        //    {
+        //        codeGenEntity.CurrentCodeValue = (codeGenEntity.CurrentCodeValue ?? 0) + 1;
+        //        codeGenEntity.LastSequence = $"{codeGenEntity.Code}{codeGenEntity.NumberFormat[..^codeGenEntity.CurrentCodeValue.ToString().Length]}{codeGenEntity.CurrentCodeValue}";
+        //        await _context.SaveChangesAsync();
+        //    }
+        //}
         private async Task InsertProfessionalDetails(int empId)
         {
             var profdtlsApprlDto = await _context.HrEmpProfdtlsApprls
@@ -7972,6 +8415,37 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return finalRoles.Union(additionalRoles).ToList();
         }
+        public async Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId)
+        {
+            // Fetch WorkerInESS value
+            var workerInESS = await GetDefaultCompanyParameter(empId, "EnableWorkerInEs", "EMP1");
 
+            // Fetch Employee Statuses
+            var excludedStatuses = new HashSet<string> { "R", "D", "A", "X", "O" };
+            if (workerInESS == "0")
+            {
+                excludedStatuses.Add("W");
+            }
+
+            var employeeStatuses = await _context.HrEmpStatusSettings
+                .Where(s => !excludedStatuses.Contains(s.Status))
+                .Select(s => $"<option value={s.StatusId}>{s.StatusDesc}</option>")
+                .ToListAsync();
+
+            // Fetch System Statuses
+            var employeeCurrentStatuses = await _context.HrEmpMasters
+                .Where(e => e.EmpId == empId)
+                .Select(e => e.CurrentStatus)
+                .Union(new int?[] { 7 }) // Including '7' as per the SQL UNION
+                .ToListAsync();
+
+            var systemStatuses = await _context.EmployeeCurrentStatuses
+                .Where(s => employeeCurrentStatuses.Contains(s.Status))
+                .Select(s => $"<option value={s.Status}>{s.StatusDesc}</option>")
+                .ToListAsync();
+
+            // Return concatenated results
+            return (string.Join("", employeeStatuses), string.Join("", systemStatuses));
+        }
     }
 }

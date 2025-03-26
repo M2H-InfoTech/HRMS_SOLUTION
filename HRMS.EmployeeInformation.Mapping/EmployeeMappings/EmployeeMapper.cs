@@ -15,7 +15,10 @@ namespace EMPLOYEE_INFORMATION.Services.Mapping
         {
             CreateMap<CompanyParameter, CompanyParameterDto>().ReverseMap();
             CreateMap<EmployeeLanguageSkill, LanguageSkillResultDto>().ReverseMap();
-            CreateMap<HrEmpProfdtlsApprl, HrEmpProfdtlsApprlDto>().ReverseMap();
+            CreateMap<HrEmpProfdtlsApprlDto, HrEmpProfdtlsApprl>()
+                .ForMember(dest => dest.MasterId, opt => opt.Ignore())
+                .ForMember(dest => dest.ProfId, opt => opt.Ignore())// Ignore Identity Column
+                .ForMember(dest => dest.EntryDt, opt => opt.MapFrom(src => DateTime.Now));
             CreateMap<HrEmpProfdtlsApprl, HrEmpProfdtl>().ReverseMap();
             CreateMap<HrEmpreference, ReferenceSaveDto>().ReverseMap();
             CreateMap<PersonalDetailsHistoryDto, PersonalDetailsHistory>().ReverseMap(); ;
@@ -46,6 +49,15 @@ namespace EMPLOYEE_INFORMATION.Services.Mapping
             CreateMap<HrEmpTechnicalApprl, SaveSkillSetDto>().ReverseMap();
             CreateMap<HrEmpMaster, EmployeeDetailsUpdateDto>().ReverseMap();
             CreateMap<LetterMaster01, LetterMaster01Dto>().ReverseMap();
+            CreateMap<HrEmpProfdtl, HrEmpProfdtlsApprl>()
+           .ForMember(dest => dest.Status, opt => opt.Ignore()) // Extra fields
+           .ForMember(dest => dest.FlowStatus, opt => opt.Ignore())
+           .ForMember(dest => dest.RequestId, opt => opt.Ignore())
+           .ForMember(dest => dest.DateFrom, opt => opt.Ignore())
+           .ForMember(dest => dest.MasterId, opt => opt.Ignore())
+           .ReverseMap()
+           .ForMember(dest => dest.ApprlId, opt => opt.Ignore()); // Extra in HrEmpProfdtl
+
         }
     }
 }
