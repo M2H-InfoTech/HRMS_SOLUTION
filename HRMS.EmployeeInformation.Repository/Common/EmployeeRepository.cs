@@ -8500,5 +8500,24 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                     f.FieldDescription
                                 }).ToListAsync();
         }
+
+        public async Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId)
+        {
+            return await (from a in _context.Dependent00s
+                          join b in _context.DependentMasters on a.RelationshipId equals b.DependentId
+                          where a.DepEmpId == empId
+                          select new DependentDto1
+                          {
+                              DepId = a.DepId,
+                              Name = a.Name,
+                              Description = b.Description,
+                              DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString("dd/MM/yyyy") : "0",
+                              InterEmpId = a.InterEmpId ?? 0,
+                              Type = a.Type,
+                              Phone = a.Description,
+                              Gender = a.Gender == "M" ? "Male" : (a.Gender == "O" ? "Others" : "Female")
+                          }).ToListAsync();
+        }
     }
 }
+

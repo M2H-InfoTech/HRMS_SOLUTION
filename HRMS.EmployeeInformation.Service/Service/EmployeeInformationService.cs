@@ -484,5 +484,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return _employeeRepository.GetEmployeeMasterHeaderEditDataAsync();
         }
+
+        public async Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId)
+        {
+            return await _employeeRepository.GetDependentsByEmpId(empId);
+        }
     }
 }
