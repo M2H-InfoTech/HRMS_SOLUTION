@@ -191,14 +191,16 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpPost]
         public async Task<IActionResult> InsertOrUpdateProfessionalData([FromBody] HrEmpProfdtlsApprlDto apprlDto)
         {
-            var professionalData = await _employeeInformation.InsertOrUpdateProfessionalData(apprlDto);
+            //var professionalData = await _employeeInformation.InsertOrUpdateProfessionalData(apprlDto);
 
-            if (professionalData == null)
-            {
-                return NotFound();
-            }
+            //if (professionalData == null)
+            //{
+            //    return NotFound();
+            //}
 
-            return Ok(professionalData);
+            //return Ok(professionalData);
+            var professionalData = await _employeeInformation.UpdateProfessionalDetailsAsync(apprlDto);
+            return Ok(professionalData.ErrorMessage);
 
         }
         [HttpGet]
@@ -743,6 +745,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employee = await _employeeInformation.GetUserRoles(firstEntityId, secondEntityId);
             return Ok(employee);
         }
-
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeAndSystemStatuses(int empId)
+        {
+            var employee = await _employeeInformation.GetEmployeeAndSystemStatuses(empId);
+            return Ok(new { employee.EmployeeStatuses, employee.SystemStatuses });
+        }
     }
 }

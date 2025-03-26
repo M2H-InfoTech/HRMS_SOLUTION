@@ -455,5 +455,14 @@ namespace HRMS.EmployeeInformation.Service.Service
             return _employeeRepository.GetUserRoles(firstEntityId, secondEntityId);
         }
 
+        public Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(HrEmpProfdtlsApprlDto dto)
+        {
+            return _employeeRepository.UpdateProfessionalDetailsAsync(dto);
+        }
+
+        public Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId)
+        {
+            return _employeeRepository.GetEmployeeAndSystemStatuses(empId);
+        }
     }
 }

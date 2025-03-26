@@ -104,6 +104,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID);
         Task<int?> GetLastEntity(int? empId);
         Task<object> GetUserRoles(int? firstEntityId, int? secondEntityId);
+        Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(HrEmpProfdtlsApprlDto dto);
+        Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId);
 
     }
 }
