@@ -748,7 +748,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmployeeAndSystemStatuses(int empId)
         {
-            var employee = await _employeeInformation.GetEmployeeAndSystemStatuses(empId);
+            var employee = await _employeeInformation.GetEmployeeAndSystemStatusesAsync(empId);
             return Ok(new { employee.EmployeeStatuses, employee.SystemStatuses });
         }
         [HttpGet]
@@ -756,6 +756,43 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             var religion = await _employeeInformation.GetReligionsAsync();
             return Ok(religion);
+        }
+        [HttpGet("{empId}")]
+        public async Task<IActionResult> GetDependents(int empId)
+        {
+            try
+            {
+                var result = await _employeeInformation.GetDependentsByEmpId(empId);
+                if (result == null || !result.Any())
+                {
+                    return NotFound($"No dependents found for employee ID {empId}.");
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                
+                return StatusCode(500, "An internal server error occurred. Please try again later.");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeMasterHeaderData()
+        {
+            var employeeMasterHeaderData = await _employeeInformation.GetEmployeeMasterHeaderDataAsync();
+            return Ok(employeeMasterHeaderData);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetCategoryMasterDetailsAsync()
+        {
+            var categoryData = await _employeeInformation.GetCategoryMasterDetailsAsync();
+            return Ok(categoryData);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeMasterHeaderEditDataAsync()
+        {
+            var masterHeaderEditData = await _employeeInformation.GetEmployeeMasterHeaderEditDataAsync();
+            return Ok(masterHeaderEditData);
         }
     }
 }

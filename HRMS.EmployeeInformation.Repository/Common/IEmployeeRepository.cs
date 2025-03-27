@@ -1,4 +1,5 @@
-﻿using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using EMPLOYEE_INFORMATION.Models;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using Microsoft.AspNetCore.Http;
 using MPLOYEE_INFORMATION.DTO.DTOs;
@@ -105,8 +106,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<int?> GetLastEntity(int? empId);
         Task<object> GetUserRoles(int? firstEntityId, int? secondEntityId);
         Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(HrEmpProfdtlsApprlDto dto);
-        Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId);
+        Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatusesAsync(int empId);
         Task<string> GetReligionsAsync();
+        Task<object> GetEmployeeMasterHeaderDataAsync();
+        Task<object> GetCategoryMasterDetailsAsync();
+        Task<object> GetEmployeeMasterHeaderEditDataAsync();
+        Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId);
 
     }
 }
