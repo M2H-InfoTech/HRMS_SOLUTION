@@ -7,11 +7,11 @@ using OFFICEKITCORELEAVE.OfficeKitHR.Leave.MODELS;
 
 namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.HrmLeaveBasicSettings
 {
-    public class HrmLeaveBasicSettingService : IHrmLeaveBasicSettingService
+    public class LeaveBasicSettingService : ILeaveBasicSettingService
     {
         private readonly LeaveDBContext _leavedbContext;
         private readonly IMapper _mapper;
-        public HrmLeaveBasicSettingService (LeaveDBContext leavedbContext_, IMapper mapper_)
+        public LeaveBasicSettingService (LeaveDBContext leavedbContext_, IMapper mapper_)
         {
             _leavedbContext = leavedbContext_;
             _mapper = mapper_;

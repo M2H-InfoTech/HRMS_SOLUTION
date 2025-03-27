@@ -9,8 +9,8 @@ namespace OFFICEKITCORELEAVE.Controllers
     [ApiController]
     public class HrmLeaveBasicSettingController : ControllerBase
     {
-        private readonly IHrmLeaveBasicSettingService _hrmLeaveBasicSettingService;
-        public HrmLeaveBasicSettingController (IHrmLeaveBasicSettingService hrmLeaveBasicSettingService_)
+        private readonly ILeaveBasicSettingService _hrmLeaveBasicSettingService;
+        public HrmLeaveBasicSettingController (ILeaveBasicSettingService hrmLeaveBasicSettingService_)
         {
             _hrmLeaveBasicSettingService = hrmLeaveBasicSettingService_;
         }
