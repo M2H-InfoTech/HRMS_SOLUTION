@@ -811,24 +811,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             return Json(DurationFrom > DurationTo ? "Error" : "Valid");
         }
-
-        [HttpGet("daily-rate-policies")]
+        [HttpGet]
         public async Task<IActionResult> GetDailyRatePolicies()
         {
-            var policies = await _employeeInformation.GetDailyRatePoliciesAsync();
+            var policies = await _employeeInformation.GetWageTypesWithRatesAsync();
             return Ok(policies);
-        }
-        [HttpGet("wage-types")]
-        public IActionResult GetWageTypes()
-        {
-            var wageTypes = new List<object>
-                {
-                new { ID = 1, Description = "Monthly wage" },
-                new { ID = 2, Description = "Daily wage" },
-                new { ID = 3, Description = "Hourly Rate Fixed" },
-                new { ID = 4, Description = "Hourly Rate Based On Month" }
-                };
-            return Ok(wageTypes);
         }
     }
 }

@@ -111,6 +111,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<object> EmployeeCreationFilterAsync();
         Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId);
         Task<List<DailyRatePolicyDto>> GetDailyRatePoliciesAsync();
+        Task<object> GetWageTypesWithRatesAsync();
 
     }
 

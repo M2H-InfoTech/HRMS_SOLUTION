@@ -113,8 +113,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> GetFieldsToHideAsync();
         Task<object> EmployeeCreationFilterAsync();
         Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId);
-
         Task<List<DailyRatePolicyDto>> GetDailyRatePoliciesAsync();
+        Task<object> GetWageTypesWithRatesAsync();
 
     }
 }

@@ -504,5 +504,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetDailyRatePoliciesAsync();
         }
+
+        public Task<object> GetWageTypesWithRatesAsync()
+        {
+            return _employeeRepository.GetWageTypesWithRatesAsync();
+        }
     }
 }
