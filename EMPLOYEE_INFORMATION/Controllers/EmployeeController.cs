@@ -771,7 +771,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             }
             catch (Exception ex)
             {
-                
+
                 return StatusCode(500, "An internal server error occurred. Please try again later.");
             }
         }
@@ -794,6 +794,23 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var masterHeaderEditData = await _employeeInformation.GetEmployeeMasterHeaderEditDataAsync();
             return Ok(masterHeaderEditData);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetFieldsToHide()
+        {
+            var fieldsToHide = await _employeeInformation.GetFieldsToHideAsync();
+            return Ok(fieldsToHide);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EmployeeCreationFilter()
+        {
+            var employeeCreationFilter = await _employeeInformation.EmployeeCreationFilterAsync();
+            return Ok(employeeCreationFilter);
+        }
+        [HttpGet]
+        public IActionResult ValidateEmployeeDates(DateTime? DurationFrom, DateTime? DurationTo)
+        {
+            return Json(DurationFrom > DurationTo ? "Error" : "Valid");
+        }
 
         [HttpGet("daily-rate-policies")]
         public async Task<IActionResult> GetDailyRatePolicies()
@@ -805,13 +822,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public IActionResult GetWageTypes()
         {
             var wageTypes = new List<object>
-        {
-            new { ID = 1, Description = "Monthly wage" },
-            new { ID = 2, Description = "Daily wage" },
-            new { ID = 3, Description = "Hourly Rate Fixed" },
-            new { ID = 4, Description = "Hourly Rate Based On Month" }
-        };
-
+                {
+                new { ID = 1, Description = "Monthly wage" },
+                new { ID = 2, Description = "Daily wage" },
+                new { ID = 3, Description = "Hourly Rate Fixed" },
+                new { ID = 4, Description = "Hourly Rate Based On Month" }
+                };
             return Ok(wageTypes);
         }
     }

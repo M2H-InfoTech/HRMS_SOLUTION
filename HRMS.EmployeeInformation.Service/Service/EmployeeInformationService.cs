@@ -465,7 +465,7 @@ namespace HRMS.EmployeeInformation.Service.Service
             return _employeeRepository.GetEmployeeAndSystemStatusesAsync(empId);
         }
 
-        public Task<string> GetReligionsAsync()
+        public Task<object> GetReligionsAsync()
         {
             return _employeeRepository.GetReligionsAsync();
         }
@@ -483,6 +483,16 @@ namespace HRMS.EmployeeInformation.Service.Service
         public Task<object> GetEmployeeMasterHeaderEditDataAsync()
         {
             return _employeeRepository.GetEmployeeMasterHeaderEditDataAsync();
+        }
+
+        public Task<object> GetFieldsToHideAsync()
+        {
+            return _employeeRepository.GetFieldsToHideAsync();
+        }
+
+        public Task<object> EmployeeCreationFilterAsync()
+        {
+            return _employeeRepository.EmployeeCreationFilterAsync();
         }
 
         public async Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId)

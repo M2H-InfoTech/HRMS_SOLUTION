@@ -470,10 +470,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             var empList = await GetFilteredEmployeesAsync(new HashSet<int> { 4, 5, 8, 9 });
 
+
             var empStatusSet = empList
                 .Where(e => e.HasValue) // Filter null values
                 .Select(e => e.Value) // Convert to non-nullable int
                 .ToHashSet();
+
+
 
             var finalQuery =
                 from emp in (
@@ -509,8 +512,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         Name = $"{emp.FirstName} {emp.MiddleName} {emp.LastName}",
                         GuardiansName = emp.GuardiansName,
                         DateOfBirth = FormatDate(emp.DateOfBirth, _employeeSettings.DateFormat),
-                        JoinDate = emp.JoinDt.ToString(),
-                        DataDate = emp.JoinDt.ToString(),
+                        JoinDate = FormatDate(emp.JoinDt, _employeeSettings.DateFormat),
+                        DataDate = FormatDate(emp.JoinDt, _employeeSettings.DateFormat),
                         SeperationStatus = emp.SeperationStatus,
                         Gender = emp.Gender,
                         WorkingStatus = emp.SeperationStatus == (int)SeparationStatus.Live ? nameof(SeparationStatus.Live) : nameof(SeparationStatus.Resigned),
@@ -555,6 +558,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     ImageUrl = img.ImageUrl,
                     EmpCode = emp.EmpCode,
                     Name = emp.Name,
+                    GuardiansName = emp.GuardiansName,
                     JoinDate = emp.JoinDate,
                     DataDate = emp.DataDate,
                     EmpStatusDesc = currStatus.StatusDesc,
@@ -586,6 +590,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     LevelTwelveDescription = highView.LevelTwelveDescription,
                     ReportingEmployeeCode = empDetails.EmpCode,
                     ReportingEmployeeName = empDetails.Name,
+                    WorkingStatus = emp.WorkingStatus,
+                    RelievingDate = emp.RelievingDate
+
                 };
 
 
@@ -1415,6 +1422,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private static string FormatDate(DateTime? date, string format)
         {
             return date.HasValue ? date.Value.ToString(format) : string.Empty; // Or any other default value
+        }
+        private static string FormatString(string value, string defaultValue = "")
+        {
+            return string.IsNullOrEmpty(value) ? defaultValue : value;
         }
         public async Task<List<LanguageSkillResultDto>> LanguageSkillAsync(int employeeId)
         {
@@ -8451,13 +8462,17 @@ namespace HRMS.EmployeeInformation.Repository.Common
             // Return concatenated results
             return (string.Join("", employeeStatuses), string.Join("", systemStatuses));
         }
-        public async Task<string> GetReligionsAsync()
+        public async Task<object> GetReligionsAsync()
         {
             var religions = await _context.AdmReligionMasters
                 .Select(r => $"<option value={r.ReligionId}>{r.ReligionName}</option>")
                 .ToListAsync();
 
-            return string.Join("", religions);
+            return new
+            {
+                Religion_Name = string.Join("", religions) // Assign concatenated string under column name
+            };
+
         }
         public async Task<object> GetEmployeeMasterHeaderDataAsync()
         {
@@ -8499,6 +8514,31 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                     f.FieldCode,
                                     f.FieldDescription
                                 }).ToListAsync();
+        }
+        public async Task<object> GetFieldsToHideAsync()
+        {
+            return await _context.CompanyParameters
+                             .Where(cp => cp.ParameterCode == "HIDEEMPCREATFLD" && cp.Type == _employeeSettings.companyParameterCodesType)
+                             .Select(cp => (int?)cp.Value)  // Convert to nullable to handle NULL cases
+                             .FirstOrDefaultAsync() ?? 0;
+        }
+        public async Task<object> EmployeeCreationFilterAsync()
+        {
+            int linkselect = 0;  // Replace with actual value
+            string lnk = "";
+            var lnkList = _context.Categorymasters
+               .Where(c => c.SortOrder >= linkselect || linkselect == 15)
+               .Select(c => c.SortOrder.ToString()) // Convert SortOrder to string
+               .ToList();
+
+            // Concatenating SortOrder values into a single string
+            lnk = string.Join(",", lnkList) + ",13";
+            var accessLevels = await GetAccessLevel();
+            return new
+            {
+                LinkData = lnk,
+                AccessLevels = accessLevels
+            };
         }
 
         public async Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId)
