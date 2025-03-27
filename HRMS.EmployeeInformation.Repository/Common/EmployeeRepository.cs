@@ -8518,6 +8518,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
                               Gender = a.Gender == "M" ? "Male" : (a.Gender == "O" ? "Others" : "Female")
                           }).ToListAsync();
         }
+        public async Task<List<DailyRatePolicyDto>> GetDailyRatePoliciesAsync()
+        {
+            return await _context.DailyRatePolicy00s
+        .Select(d => new DailyRatePolicyDto
+        {
+            RateId = d.RateId,
+            Name = d.Name
+        })
+        .ToListAsync();
+        }
     }
 }
 

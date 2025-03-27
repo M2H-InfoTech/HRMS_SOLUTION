@@ -794,5 +794,25 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var masterHeaderEditData = await _employeeInformation.GetEmployeeMasterHeaderEditDataAsync();
             return Ok(masterHeaderEditData);
         }
+
+        [HttpGet("daily-rate-policies")]
+        public async Task<IActionResult> GetDailyRatePolicies()
+        {
+            var policies = await _employeeInformation.GetDailyRatePoliciesAsync();
+            return Ok(policies);
+        }
+        [HttpGet("wage-types")]
+        public IActionResult GetWageTypes()
+        {
+            var wageTypes = new List<object>
+        {
+            new { ID = 1, Description = "Monthly wage" },
+            new { ID = 2, Description = "Daily wage" },
+            new { ID = 3, Description = "Hourly Rate Fixed" },
+            new { ID = 4, Description = "Hourly Rate Based On Month" }
+        };
+
+            return Ok(wageTypes);
+        }
     }
 }

@@ -489,5 +489,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetDependentsByEmpId(empId);
         }
+
+        public async Task<List<DailyRatePolicyDto>> GetDailyRatePoliciesAsync()
+        {
+            return await _employeeRepository.GetDailyRatePoliciesAsync();
+        }
     }
 }
