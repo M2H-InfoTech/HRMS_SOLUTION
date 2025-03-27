@@ -475,9 +475,9 @@ namespace HRMS.EmployeeInformation.Service.Service
             return _employeeRepository.GetEmployeeMasterHeaderDataAsync();
         }
 
-        public Task<object> GetCategoryMasterDetailsAsync()
+        public Task<object> GetCategoryMasterDetailsAsync(int roleId)
         {
-            return _employeeRepository.GetCategoryMasterDetailsAsync();
+            return _employeeRepository.GetCategoryMasterDetailsAsync(roleId);
         }
 
         public Task<object> GetEmployeeMasterHeaderEditDataAsync()

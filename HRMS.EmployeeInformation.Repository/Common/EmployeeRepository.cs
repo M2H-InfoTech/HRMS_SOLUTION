@@ -8485,10 +8485,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             f.FieldDescription
                         }).ToListAsync();
         }
-        public async Task<object> GetCategoryMasterDetailsAsync()
+        public async Task<object> GetCategoryMasterDetailsAsync(int roleId)
         {
 
-            return await _context.Categorymasters
+            var categoryMaster = await _context.Categorymasters
                  .Join(_context.HrmValueTypes
                          .Where(b => b.Type == typeof(CatTrxType).Name), // Filter BEFORE join
                        a => a.CatTrxTypeId,
@@ -8501,6 +8501,15 @@ namespace HRMS.EmployeeInformation.Repository.Common
                            Code = b.Code.Trim()
                        })
                  .ToListAsync();
+
+            var linkLevel = await GetLinkLevelByRoleId(roleId);
+
+            return new
+            {
+                CategoryMaster = categoryMaster,
+                LinkLevel = linkLevel
+            };
+
         }
         public async Task<object> GetEmployeeMasterHeaderEditDataAsync()
         {

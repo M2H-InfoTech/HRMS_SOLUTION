@@ -783,9 +783,9 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(employeeMasterHeaderData);
         }
         [HttpGet]
-        public async Task<IActionResult> GetCategoryMasterDetailsAsync()
+        public async Task<IActionResult> GetCategoryMasterDetailsAsync(int roleId)
         {
-            var categoryData = await _employeeInformation.GetCategoryMasterDetailsAsync();
+            var categoryData = await _employeeInformation.GetCategoryMasterDetailsAsync(roleId);
             return Ok(categoryData);
         }
         [HttpGet]
