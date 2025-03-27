@@ -279,6 +279,7 @@ public partial class EmployeeDBContext : DbContext
 
     public virtual DbSet<UserType> UserTypes { get; set; }
     public virtual DbSet<EmployeeFieldMaster00> EmployeeFieldMaster00s { get; set; }
+    public virtual DbSet<DailyRatePolicy00> DailyRatePolicy00s { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4189,6 +4190,32 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.FieldDescription)
                 .HasMaxLength(500)
                 .IsUnicode(false);
+        });
+        modelBuilder.Entity<DailyRatePolicy00>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("DailyRatePolicy00");
+
+            entity.Property(e => e.Days)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.ExcludedPublicHoliday)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Excluded/PublicHoliday");
+            entity.Property(e => e.ExcludedWeaklyHoliday)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Excluded/WeaklyHoliday");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.RateId)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("Rate_Id");
+            entity.Property(e => e.UpdateDate).HasColumnType("datetime");
         });
 
         OnModelCreatingPartial(modelBuilder);
