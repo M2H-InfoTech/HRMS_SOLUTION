@@ -4388,7 +4388,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         Speak = skill.Speak,
                         Comprehend = skill.Comprehend,
                         MotherTongue = skill.MotherTongue,
-                        Status = ApprovalStatus.Approved.ToString()// "A"
+                        Status = _employeeSettings.EmployeeStatus
                     });
                 }
                 else
