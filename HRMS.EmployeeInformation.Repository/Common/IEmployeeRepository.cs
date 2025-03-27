@@ -108,7 +108,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatusesAsync(int empId);
         Task<object> GetReligionsAsync();
         Task<object> GetEmployeeMasterHeaderDataAsync();
-        Task<object> GetCategoryMasterDetailsAsync();
+        Task<object> GetCategoryMasterDetailsAsync(int roleId);
         Task<object> GetEmployeeMasterHeaderEditDataAsync();
         Task<object> GetFieldsToHideAsync();
         Task<object> EmployeeCreationFilterAsync();
