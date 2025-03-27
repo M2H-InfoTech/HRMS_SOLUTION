@@ -8561,12 +8561,36 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<DailyRatePolicyDto>> GetDailyRatePoliciesAsync()
         {
             return await _context.DailyRatePolicy00s
-        .Select(d => new DailyRatePolicyDto
+                        .Select(d => new DailyRatePolicyDto
+                        {
+                            RateId = d.RateId,
+                            Name = d.Name
+                        }).ToListAsync();
+        }
+        public async Task<object> GetWageTypesWithRatesAsync()
         {
-            RateId = d.RateId,
-            Name = d.Name
-        })
-        .ToListAsync();
+            var wageTypes = new List<object>
+                            {
+                                new { ID = 1, Description = "Monthly wage" },
+                                new { ID = 2, Description = "Daily wage" },
+                                new { ID = 3, Description = "Hourly Rate Fixed" },
+                                new { ID = 4, Description = "Hourly Rate Based On Month" }
+                            };
+
+            var dailyRatePolicies = await _context.DailyRatePolicy00s
+                                    .Select(d => new
+                                    {
+                                        RateId = d.RateId,
+                                        Name = d.Name
+                                    }).ToListAsync();
+
+            return new
+            {
+                WageTypes = wageTypes,
+                DailyRatePolicies = dailyRatePolicies
+            };
+
+
         }
     }
 }
