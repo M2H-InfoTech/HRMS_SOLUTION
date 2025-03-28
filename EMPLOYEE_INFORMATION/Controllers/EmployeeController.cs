@@ -757,7 +757,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var religion = await _employeeInformation.GetReligionsAsync();
             return Ok(religion);
         }
-        [HttpGet("{empId}")]
+        [HttpGet]
         public async Task<IActionResult> GetDependents(int empId)
         {
             try
