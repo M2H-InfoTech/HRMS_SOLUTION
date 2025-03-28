@@ -115,6 +115,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId);
         Task<List<DailyRatePolicyDto>> GetDailyRatePoliciesAsync();
         Task<object> GetWageTypesWithRatesAsync();
+        Task<int> IsEnableWeddingDate(int empId);
 
     }
 }

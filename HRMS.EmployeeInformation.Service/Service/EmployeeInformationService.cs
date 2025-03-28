@@ -509,5 +509,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return _employeeRepository.GetWageTypesWithRatesAsync();
         }
+
+        public Task<int> IsEnableWeddingDate(int empId)
+        {
+            return _employeeRepository.IsEnableWeddingDate(empId);
+        }
     }
 }
