@@ -6707,59 +6707,60 @@ namespace HRMS.EmployeeInformation.Repository.Common
             try
             {
                 var empMaster = await _context.HrEmpMasters.FindAsync(personalDetailsDto.EmpId);
-                var empAddress = await _context.HrEmpAddresses.FindAsync(personalDetailsDto.EmpId);
+                //var empAddress = await _context.HrEmpAddresses.FindAsync(personalDetailsDto.EmpId);
+                var empAddress = await _context.HrEmpAddresses.Where(x => x.EmpId == personalDetailsDto.EmpId).FirstOrDefaultAsync();
                 var empPersonalHistory = await _context.HrEmpPersonals.FindAsync(personalDetailsDto.EmpId);
 
                 bool hasChanges = false;
                 PersonalDetailsHistoryDto? history = null;
                 if (empMaster != null)
                 {
-                    if (empMaster.EmpId == personalDetailsDto.EmpId && (empMaster.GuardiansName != personalDetailsDto.GuardiansName || empMaster.Gender != personalDetailsDto.Gender || empMaster.DateOfBirth != personalDetailsDto.DateOfBirth))
-                    {
-                        empMaster.GuardiansName = personalDetailsDto.GuardiansName;
-                        empMaster.DateOfBirth = personalDetailsDto.DateOfBirth;
-                        empMaster.Gender = personalDetailsDto.Gender;
-                        empMaster.UpdatedBy = personalDetailsDto.EntryBy;
-                        empMaster.UpdatedDate = DateTime.UtcNow;
-                        hasChanges = true;
-                    }
+                    //if (empMaster.EmpId == personalDetailsDto.EmpId && (empMaster.GuardiansName != personalDetailsDto.GuardiansName || empMaster.Gender != personalDetailsDto.Gender || empMaster.DateOfBirth != personalDetailsDto.DateOfBirth))
+                    //{
+                    empMaster.GuardiansName = personalDetailsDto.GuardiansName;
+                    empMaster.DateOfBirth = personalDetailsDto.DateOfBirth;
+                    empMaster.Gender = personalDetailsDto.Gender;
+                    empMaster.UpdatedBy = personalDetailsDto.EntryBy;
+                    empMaster.UpdatedDate = DateTime.UtcNow;
+                    hasChanges = true;
+                    //}
                 }
 
                 if (empAddress != null)
                 {
-                    if (empAddress.EmpId == personalDetailsDto.EmpId && empAddress.PersonalEmail != personalDetailsDto.PersonalEMail)
-                    {
-                        empAddress.PersonalEmail = personalDetailsDto.PersonalEMail;
-                        empAddress.UpdatedBy = personalDetailsDto.EntryBy;
-                        empAddress.UpdatedDate = DateTime.UtcNow;
-                        hasChanges = true;
-                    }
+                    //if (empAddress.AddId == personalDetailsDto.EmpId && !string.Equals(empAddress.PersonalEmail?.Trim(), personalDetailsDto.PersonalEMail?.Trim(), StringComparison.OrdinalIgnoreCase))
+                    //{
+                    empAddress.PersonalEmail = personalDetailsDto.PersonalEMail;
+                    empAddress.UpdatedBy = personalDetailsDto.EntryBy;
+                    empAddress.UpdatedDate = DateTime.UtcNow;
+                    hasChanges = true;
+                    //}
                 }
 
                 if (empPersonalHistory != null)
                 {
-                    if (empPersonalHistory.Dob != personalDetailsDto.DateOfBirth || empPersonalHistory.Nationality != personalDetailsDto.NationalityID || empPersonalHistory.Gender != personalDetailsDto.Gender ||
-                        empPersonalHistory.Religion != personalDetailsDto.ReligionID || empPersonalHistory.Country != personalDetailsDto.CountryID || empPersonalHistory.MaritalStatus != personalDetailsDto.MaritalStatus ||
-                        empPersonalHistory.IdentMark != personalDetailsDto.IdentificationMark || empPersonalHistory.BloodGrp != personalDetailsDto.BloodGrp ||
-                        empPersonalHistory.Height != personalDetailsDto.Height || empPersonalHistory.Weight != personalDetailsDto.Weight || empPersonalHistory.WeddingDate != personalDetailsDto.WeddingDate ||
-                        empPersonalHistory.CountryOfBirth != personalDetailsDto.country2ID)
-                    {
-                        empPersonalHistory.Dob = personalDetailsDto.DateOfBirth;
-                        empPersonalHistory.Nationality = personalDetailsDto.NationalityID;
-                        empPersonalHistory.Gender = personalDetailsDto.Gender;
-                        empPersonalHistory.Religion = personalDetailsDto.ReligionID;
-                        empPersonalHistory.Country = personalDetailsDto.CountryID;
-                        empPersonalHistory.MaritalStatus = personalDetailsDto.MaritalStatus;
-                        empPersonalHistory.IdentMark = personalDetailsDto.IdentificationMark;
-                        empPersonalHistory.BloodGrp = personalDetailsDto.BloodGrp;
-                        empPersonalHistory.Height = personalDetailsDto.Height;
-                        empPersonalHistory.Weight = personalDetailsDto.Weight;
-                        empPersonalHistory.WeddingDate = personalDetailsDto.WeddingDate;
-                        empPersonalHistory.CountryOfBirth = personalDetailsDto.country2ID;
-                        empPersonalHistory.UpdatedBy = personalDetailsDto.EntryBy;
-                        empPersonalHistory.UpdatedDate = DateTime.UtcNow;
-                        hasChanges = true;
-                    }
+                    //if (empPersonalHistory.Dob != personalDetailsDto.DateOfBirth || empPersonalHistory.Nationality != personalDetailsDto.NationalityID || empPersonalHistory.Gender != personalDetailsDto.Gender ||
+                    //    empPersonalHistory.Religion != personalDetailsDto.ReligionID || empPersonalHistory.Country != personalDetailsDto.CountryID || empPersonalHistory.MaritalStatus != personalDetailsDto.MaritalStatus ||
+                    //    empPersonalHistory.IdentMark != personalDetailsDto.IdentificationMark || empPersonalHistory.BloodGrp != personalDetailsDto.BloodGrp ||
+                    //    empPersonalHistory.Height != personalDetailsDto.Height || empPersonalHistory.Weight != personalDetailsDto.Weight || empPersonalHistory.WeddingDate != personalDetailsDto.WeddingDate ||
+                    //    empPersonalHistory.CountryOfBirth != personalDetailsDto.country2ID)
+                    //{
+                    empPersonalHistory.Dob = personalDetailsDto.DateOfBirth;
+                    empPersonalHistory.Nationality = personalDetailsDto.NationalityID;
+                    empPersonalHistory.Gender = personalDetailsDto.Gender;
+                    empPersonalHistory.Religion = personalDetailsDto.ReligionID;
+                    empPersonalHistory.Country = personalDetailsDto.CountryID;
+                    empPersonalHistory.MaritalStatus = personalDetailsDto.MaritalStatus;
+                    empPersonalHistory.IdentMark = personalDetailsDto.IdentificationMark;
+                    empPersonalHistory.BloodGrp = personalDetailsDto.BloodGrp;
+                    empPersonalHistory.Height = personalDetailsDto.Height;
+                    empPersonalHistory.Weight = personalDetailsDto.Weight;
+                    empPersonalHistory.WeddingDate = personalDetailsDto.WeddingDate;
+                    empPersonalHistory.CountryOfBirth = personalDetailsDto.country2ID;
+                    empPersonalHistory.UpdatedBy = personalDetailsDto.EntryBy;
+                    empPersonalHistory.UpdatedDate = DateTime.UtcNow;
+                    hasChanges = true;
+                    //}
                 }
 
                 //Insert into PersonalDetailsHistory only if data has changed
