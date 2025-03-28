@@ -817,5 +817,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var policies = await _employeeInformation.GetWageTypesWithRatesAsync();
             return Ok(policies);
         }
+        [HttpGet]
+        public async Task<IActionResult> IsEnableWeddingDate(int empId)
+        {
+            var employeeMasterData = await _employeeInformation.IsEnableWeddingDate(empId);
+            return Ok(employeeMasterData);
+        }
     }
 }

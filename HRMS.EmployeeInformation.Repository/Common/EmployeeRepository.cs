@@ -8433,7 +8433,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatusesAsync(int empId)
         {
             // Fetch WorkerInESS value
-            var workerInESS = await GetDefaultCompanyParameter(empId, "EnableWorkerInEs", "EMP1");
+            var workerInESS = await GetDefaultCompanyParameter(empId, "EnableWorkerInEs", _employeeSettings.companyParameterCodesType);//"EMP1"
 
             // Fetch Employee Statuses
             var excludedStatuses = new HashSet<string> { "R", "D", "A", "X", "O" };
@@ -8599,6 +8599,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 DailyRatePolicies = dailyRatePolicies
             };
 
+
+        }
+        public async Task<int> IsEnableWeddingDate(int empId)
+        {
+            var weddingDateEnable = await GetDefaultCompanyParameter(empId, "ENABLEWEDDINGDATE", _employeeSettings.companyParameterCodesType);//"EMP1"
+            return int.Parse(weddingDateEnable);
 
         }
     }

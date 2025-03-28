@@ -112,6 +112,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId);
         Task<List<DailyRatePolicyDto>> GetDailyRatePoliciesAsync();
         Task<object> GetWageTypesWithRatesAsync();
+        Task<int> IsEnableWeddingDate(int empId);
 
     }
 
