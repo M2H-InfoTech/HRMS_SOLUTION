@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using EMPLOYEE_INFORMATION.Data;
 using Microsoft.EntityFrameworkCore;
+using MPLOYEE_INFORMATION.DTO.DTOs;
 using OFFICEKITCORELEAVE.OfficeKit.Leave.Data;
 using OFFICEKITCORELEAVE.OfficeKit.Leave.DTO;
 using OFFICEKITCORELEAVE.OfficeKit.Leave.MODELS;
@@ -262,6 +263,127 @@ namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.LeaveServices
             return list.Split (delimiter)
                    .Select (item => item.Trim ( )) // Trim whitespace from each item
                    .Where (item => !string.IsNullOrEmpty (item)); // Exclude empty items
+        }
+        public async Task<List<HrmLeaveMasterViewDto>> GetAll (HrmLeaveMasterSearchDto sortDto)
+        {
+            var transid = await _employeedbContext.TransactionMasters
+               .Where (t => t.TransactionType == "Leave")
+               .Select (t => t.TransactionId)
+               .FirstOrDefaultAsync ( );
+
+            int? lnklev = await _employeedbContext.SpecialAccessRights
+                .Where (s => s.RoleId == sortDto.RoleId)
+                .Select (s => s.LinkLevel)
+                .FirstOrDefaultAsync ( );
+
+            bool hasAccess = await _employeedbContext.EntityAccessRights02s
+                .AnyAsync (s => s.RoleId == sortDto.RoleId && s.LinkLevel == 15);
+
+            if (hasAccess)
+            {
+                var leaveMasters = _dbContext.HrmLeaveMasters.ToList ( );
+
+                // Query employeemaster from _employeedbContext
+                var adm_User_Masters = _employeedbContext.AdmUserMasters.ToList ( );
+
+                var leavemastersdata = (from leaveMaster in leaveMasters
+                                  join ADM_User_Master in adm_User_Masters
+                                  on leaveMaster.CreatedBy equals ADM_User_Master.UserId
+                                  select new HrmLeaveMasterViewDto
+                                  {
+                                      Username = ADM_User_Master.UserName,
+                                      LeavemasterId = leaveMaster.LeaveMasterId,
+                                      LeaveCode = leaveMaster.LeaveCode,
+                                      Description = leaveMaster.Description,
+                                      PayType = leaveMaster.PayType,
+                                      LeaveUnit = leaveMaster.LeaveUnit,
+                                      Active = leaveMaster.Active,
+                                  }).ToList ( );
+                return leavemastersdata;
+            }
+
+            // **Step 1: Compute `ctnew`**
+            var empEntity = await _employeedbContext.HrEmpMasters
+                .Where (h => h.EmpId == sortDto.employeeId)
+                .Select (h => h.EmpEntity)
+                .FirstOrDefaultAsync ( );
+
+            var ctnew = SplitStrings_XML (empEntity, ',')
+                .Select ((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
+                .Where (c => !string.IsNullOrEmpty (c.Item))
+                .ToList ( );
+
+            // **Step 2: Compute `applicableFinal`**
+            var applicableFinal = await _employeedbContext.EntityAccessRights02s
+                .Where (s => s.RoleId == sortDto.RoleId)
+                .SelectMany (s => SplitStrings_XML (s.LinkId, default),
+                    (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
+                .ToListAsync ( );
+
+            if (lnklev > 0)
+            {
+                applicableFinal.AddRange (
+                    ctnew.Where (c => c.LinkLevel >= lnklev)
+                         .Select (c => new LinkItemDto { Item = c.Item, LinkLevel = c.LinkLevel })
+                );
+            }
+
+            // Convert `applicableFinal` to HashSet for fast lookup
+            //var applicableFinalSet = applicableFinal.Select(a => a.Item).ToHashSet();
+            var applicableFinalSetLong = applicableFinal.Select (a => (long?)Convert.ToInt64 (a.Item)).ToHashSet ( );
+
+            // **Step 3: Fetch `EntityApplicable00Final`**
+            var entityApplicable00Final = await _employeedbContext.EntityApplicable00s
+                .Where (e => e.TransactionId == transid)
+                .Select (e => new { e.LinkId, e.LinkLevel, e.MasterId })
+                .ToListAsync ( );
+
+            // **Step 4: Compute `applicableFinal02`**
+            var applicableFinal02 = applicableFinal.ToList ( ); // Already computed
+
+            // **Step 5: Compute `applicableFinal02Emp`**
+            var applicableFinal02Emp = await (
+                from emp in _employeedbContext.EmployeeDetails
+                join ea in _employeedbContext.EntityApplicable01s on emp.EmpId equals ea.EmpId
+                join hlv in _employeedbContext.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
+                join af2 in applicableFinal02 on hlv.LevelOneId.ToString ( ) equals af2.Item into af2LevelOne
+                from af2L1 in af2LevelOne.DefaultIfEmpty ( )
+                where ea.TransactionId == transid
+                select ea.MasterId
+            ).Distinct ( ).ToListAsync ( );
+
+            // **Step 6: Compute `newhigh`**
+            var newhigh = entityApplicable00Final
+                .Where (e => applicableFinalSetLong.Contains (e.LinkId) || e.LinkLevel == 15)
+                .Select (e => e.MasterId)
+                .Union (applicableFinal02Emp)
+                .Distinct ( )
+                .ToList ( );
+
+            // **Step 7: Final WorkFlowDetails Query**
+            //return await _employeedbContext.WorkFlowDetails
+            //    .Where (x => x.IsActive == true && newhigh.Contains (wf.WorkFlowId))
+            //    .Select (wf => new HrmLeaveMasterViewDto
+            //    {
+            //        WorkFlowId = wf.WorkFlowId,
+            //        Description = wf.Description
+            //    })
+            //    .ToListAsync ( );
+
+            return await (from leaveMaster in _dbContext.HrmLeaveMasters
+                          where newhigh.Contains (leaveMaster.LeaveMasterId)
+                          join ADM_User_Master in _employeedbContext.AdmUserMasters
+                          on leaveMaster.CreatedBy equals ADM_User_Master.UserId
+                          select new HrmLeaveMasterViewDto
+                          {
+                              Username = ADM_User_Master.UserName,
+                              LeavemasterId = leaveMaster.LeaveMasterId,
+                              LeaveCode = leaveMaster.LeaveCode,
+                              Description = leaveMaster.Description,
+                              PayType = leaveMaster.PayType,
+                              LeaveUnit = leaveMaster.LeaveUnit,
+                              Active = leaveMaster.Active
+                          }).ToListAsync ( );
         }
     }
 }

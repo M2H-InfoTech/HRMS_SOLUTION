@@ -174,8 +174,8 @@ namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.HrmLeaveBasicsettingsDeta
                 //entitlehead = _leaveDBContext.HrmLeaveEntitlementHeads.ToListAsync().Result.Where(x => x.SettingsId == LeaveBasicSettingsDetails.SettingsId).FirstOrDefault().LeaveEntitlementId;
 
                 entitlehead = _leaveDBContext.HrmLeaveEntitlementHeads.FirstOrDefaultAsync (x => x.SettingsId == LeaveBasicSettingsDetails.SettingsId).Result?.LeaveEntitlementId ?? 0;
-                var hrmLeaveEntitlementRegExistance = _leaveDBContext.HrmLeaveEntitlementRegs.Any(x => x.LeaveEntitlementId == LeaveBasicSettingsDetails.LeaveEntitlementId && x.Newjoin == 0);
-                if(hrmLeaveEntitlementRegExistance)
+                var hrmLeaveEntitlementRegExistance = _leaveDBContext.HrmLeaveEntitlementRegs.Any (x => x.LeaveEntitlementId == LeaveBasicSettingsDetails.LeaveEntitlementId && x.Newjoin == 0);
+                if (hrmLeaveEntitlementRegExistance)
                 {
                     var hrmLeaveEntitlementRegData = _leaveDBContext.HrmLeaveEntitlementRegs.Where (x => x.LeaveEntitlementId == LeaveBasicSettingsDetails.LeaveEntitlementId && x.Newjoin == 0);
                     var mappedData = _mapper.Map<HrmLeaveEntitlementReg> (hrmLeaveEntitlementRegData);
@@ -184,10 +184,96 @@ namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.HrmLeaveBasicsettingsDeta
                 var hrmLeaveEntitlementRegExistanceNewJoin = _leaveDBContext.HrmLeaveEntitlementRegs.Any (x => x.LeaveEntitlementId == LeaveBasicSettingsDetails.LeaveEntitlementId && x.Newjoin == 1);
                 if (hrmLeaveEntitlementRegExistanceNewJoin)
                 {
-                    var hrmLeaveEntitlementRegData = _leaveDBContext.HrmLeaveEntitlementRegs.Where (x => x.LeaveEntitlementId == LeaveBasicSettingsDetails.LeaveEntitlementId && x.Newjoin == 1);
-                    var mappedData = _mapper.Map<HrmLeaveEntitlementReg> (hrmLeaveEntitlementRegData);
-                    var result = _leaveDBContext.HrmLeaveEntitlementRegs.Remove (mappedData);
+                    var hrmLeaveEntitlementRegData = _leaveDBContext.HrmLeaveEntitlementRegs.Where (x => x.LeaveEntitlementId == LeaveBasicSettingsDetails.LeaveEntitlementId && x.Newjoin == 1).ToList ( );
+                    foreach (var entitlement in hrmLeaveEntitlementRegData)
+                    {
+                        _leaveDBContext.HrmLeaveEntitlementRegs.Remove (entitlement);
+                    }
+
+                    _leaveDBContext.SaveChanges ( );
                 }
+
+                var servicebasedleaveexistance = _leaveDBContext.HrmLeaveServicedbasedleaves.Any (x => x.LeaveEntitlementId == entitlehead);
+                if (servicebasedleaveexistance)
+                {
+                    var servicebasedleaveData = _leaveDBContext.HrmLeaveServicedbasedleaves.Where (x => x.LeaveEntitlementId == entitlehead).ToList ( );
+                    _leaveDBContext.HrmLeaveServicedbasedleaves.RemoveRange (servicebasedleaveData);
+                    //var mappedData = _mapper.Map<HrmLeaveServicedbasedleave> (servicebasedleaveData);
+                    //foreach (var Data in servicebasedleaveData)
+                    //{
+                    //    _leaveDBContext.HrmLeaveServicedbasedleaves.Remove (Data);
+                    //}
+                    _leaveDBContext.SaveChanges ( );
+                }
+                var hrmleavepartialpaymentdata = _leaveDBContext.HrmLeavePartialPayments.ToList ( ).Where (x => x.SettingsDetailsId == entitlehead);
+                _leaveDBContext.RemoveRange (hrmleavepartialpaymentdata);
+            }
+            else if (_leaveDBContext.HrmLeaveBasicsettingsDetails.Any (x => x.SettingsId == LeaveBasicSettingsDetails.SettingsId))
+            {
+                int headId = 0;
+                var hrmleavebasicsettingsdetails = new HrmLeaveBasicsettingsDetail
+                {
+                    //SettingsId = LeaveBasicSettingsDetails.SettingsId,
+                    //Lopcheck = LeaveBasicSettingsDetails.Lopcheck,
+                    //Gender = LeaveBasicSettingsDetails.Gender,
+                    //MaritalStatus = LeaveBasicSettingsDetails.MaritalStatus,
+                    //Carryforward = LeaveBasicSettingsDetails.Carryforward,
+                    //RolloverCount = LeaveBasicSettingsDetails.RolloverCount,
+                    //CreatedBy = LeaveBasicSettingsDetails.CreatedBy,
+                    //OndemandLeaveGrand = LeaveBasicSettingsDetails.OndemandLeaveGrand,
+                    //EligibilityPeriod = LeaveBasicSettingsDetails.EligibilityPeriod,
+
+                    SettingsId = LeaveBasicSettingsDetails.SettingsId,
+                    Lopcheck = LeaveBasicSettingsDetails.Lopcheck,
+                    Gender = LeaveBasicSettingsDetails.Gender,
+                    MaritalStatus = LeaveBasicSettingsDetails.MaritalStatus,
+                    Carryforward = LeaveBasicSettingsDetails.Carryforward,
+                    RolloverCount = LeaveBasicSettingsDetails.RolloverCount,
+                    CreatedBy = LeaveBasicSettingsDetails.CreatedBy,
+                    OndemandLeaveGrand = LeaveBasicSettingsDetails.OndemandLeaveGrand,
+                    EligibilityPeriod = LeaveBasicSettingsDetails.EligibilityPeriod,
+                    PredatedApplication = LeaveBasicSettingsDetails.PredatedApplication,
+                    Maternity = LeaveBasicSettingsDetails.Maternity,
+                    Compensatory = LeaveBasicSettingsDetails.Compensatory,
+                    MinServiceDays = LeaveBasicSettingsDetails.MinServiceDays,
+                    CsectionMaxLeave = LeaveBasicSettingsDetails.CsectionMaxLeave,
+                    EligibleCount = LeaveBasicSettingsDetails.EligibleCount,
+                    LeaveType = LeaveBasicSettingsDetails.LeaveType,
+                    CompCaryfrwrd = LeaveBasicSettingsDetails.CompCaryfrwrd,
+                    Carryforwardtype = LeaveBasicSettingsDetails.Carryforwardtype,
+                    Defaultreturndate = LeaveBasicSettingsDetails.Defaultreturndate,
+                    Attachment = LeaveBasicSettingsDetails.Attachment,
+                    Salaryadvance = LeaveBasicSettingsDetails.Salaryadvance,
+                    Roledeligation = LeaveBasicSettingsDetails.Roledeligation,
+                    CreatedDate = DateTime.UtcNow,
+                    Weeklyleaveday = LeaveBasicSettingsDetails.Weeklyleaveday,
+                    Ishalfday = LeaveBasicSettingsDetails.Ishalfday,
+                    LeaveInclude = LeaveBasicSettingsDetails.LeaveInclude,
+                    LeavedaysSalaryadvance = LeaveBasicSettingsDetails.LeavedaysSalaryadvance,
+                    SalaryadvanceApplybeforedays = LeaveBasicSettingsDetails.SalaryadvanceApplybeforedays,
+                    Returnrequest = LeaveBasicSettingsDetails.Returnrequest,
+                    Attachmentmandatory = LeaveBasicSettingsDetails.Attachmentmandatory,
+                    Applywithoutbalance = LeaveBasicSettingsDetails.Applywithoutbalance,
+                    Casualholiday = LeaveBasicSettingsDetails.Casualholiday,
+                    PassageeligibilityEnable = LeaveBasicSettingsDetails.PassageeligibilityEnable,
+                    Passageeligibilitydays = LeaveBasicSettingsDetails.Passageeligibilitydays,
+                    PassportRequest = LeaveBasicSettingsDetails.PassportRequest,
+                    EnableLeaveGrander = LeaveBasicSettingsDetails.EnableLeaveGrander,
+                    Autocarryforward = LeaveBasicSettingsDetails.Autocarryforward,
+                    Yearlylimit = LeaveBasicSettingsDetails.Yearlylimit,
+                    Yearlylimitcount = LeaveBasicSettingsDetails.Yearlylimitcount,
+                    ApplicableOnnotice = LeaveBasicSettingsDetails.ApplicableOnnotice,
+                    Blockpreviouslap = LeaveBasicSettingsDetails.Blockpreviouslap,
+                    LeaveEncashment = LeaveBasicSettingsDetails.LeaveEncashment,
+                    Disableyearlylimit = LeaveBasicSettingsDetails.Disableyearlylimit,
+                    Allowleavecancel = LeaveBasicSettingsDetails.Allowleavecancel,
+                    Passportrequireddays = LeaveBasicSettingsDetails.Passportrequireddays,
+                    LeaveAccrual = LeaveBasicSettingsDetails.LeaveAccrual,
+                    ShowcurrentmonthWeekoff = LeaveBasicSettingsDetails.ShowcurrentmonthWeekoff,
+                    Leavebalanceroundoption = LeaveBasicSettingsDetails.Leavebalanceroundoption,
+                    LeaveEncashmentMnthly = LeaveBasicSettingsDetails.LeaveEncashmentMnthly,
+                    LeaveReductionForLateIn = LeaveBasicSettingsDetails.LeaveReductionForLateIn,
+                };
             }
             return Task.FromResult (0);
         }

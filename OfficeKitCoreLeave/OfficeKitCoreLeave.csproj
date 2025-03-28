@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HRMS.EmployeeInformation.Data\HRMS.EmployeeInformation.Data.csproj" />
+    <ProjectReference Include="..\HRMS.EmployeeInformation.DTO\HRMS.EmployeeInformation.DTO.csproj" />
   </ItemGroup>
 
 </Project>
