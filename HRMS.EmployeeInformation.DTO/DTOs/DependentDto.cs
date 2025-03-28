@@ -13,3 +13,4 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? Gender { get; set; }
     }
 }
+
