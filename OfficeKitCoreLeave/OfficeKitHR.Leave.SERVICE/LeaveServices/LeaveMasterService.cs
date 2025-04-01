@@ -69,146 +69,146 @@ namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.LeaveServices
             _dbContext.SaveChanges ( );
             return true;
         }
-        public async Task<List<HrmLeaveMasterViewDto>> GetAllLeaveMasters (HrmLeaveMasterSearchDto sortDto)
-        {
-            var transaction = await _employeedbContext.TransactionMasters.FirstOrDefaultAsync (x => x.TransactionType == "Leave");
-            int transactionId = transaction?.TransactionId ?? 0;
-            var specialright = _employeedbContext.SpecialAccessRights.Where (x => x.RoleId == sortDto.RoleId);
-            var boolr = _employeedbContext.EntityAccessRights02s.AsEnumerable ( ).SelectMany (s => SplitStrings_XML (s.LinkId, default).Select (item => new { s.RoleId, s.LinkLevel, Item = item })).Any (x => x.RoleId == sortDto.RoleId && x.LinkLevel == 15);
+        //public async Task<List<HrmLeaveMasterViewDto>> GetAllLeaveMasters (HrmLeaveMasterSearchDto sortDto)
+        //{
+        //    var transaction = await _employeedbContext.TransactionMasters.FirstOrDefaultAsync (x => x.TransactionType == "Leave");
+        //    int transactionId = transaction?.TransactionId ?? 0;
+        //    var specialright = _employeedbContext.SpecialAccessRights.Where (x => x.RoleId == sortDto.RoleId);
+        //    var boolr = _employeedbContext.EntityAccessRights02s.AsEnumerable ( ).SelectMany (s => SplitStrings_XML (s.LinkId, default).Select (item => new { s.RoleId, s.LinkLevel, Item = item })).Any (x => x.RoleId == sortDto.RoleId && x.LinkLevel == 15);
 
-            if (boolr)
-            {
-                // Query leaveMaster from _dbContext
-                var leaveMasters = _dbContext.HrmLeaveMasters.ToList ( );
+        //    if (boolr)
+        //    {
+        //        // Query leaveMaster from _dbContext
+        //        var leaveMasters = _dbContext.HrmLeaveMasters.ToList ( );
 
-                // Query employeemaster from _employeedbContext
-                var adm_User_Masters = _employeedbContext.AdmUserMasters.ToList ( );
+        //        // Query employeemaster from _employeedbContext
+        //        var adm_User_Masters = _employeedbContext.AdmUserMasters.ToList ( );
 
-                var resultdata = (from leaveMaster in leaveMasters
-                                  join ADM_User_Master in adm_User_Masters
-                                  on leaveMaster.CreatedBy equals ADM_User_Master.UserId
-                                  select new HrmLeaveMasterViewDto
-                                  {
-                                      Username = ADM_User_Master.UserName,
-                                      LeavemasterId = leaveMaster.LeaveMasterId,
-                                      LeaveCode = leaveMaster.LeaveCode,
-                                      Description = leaveMaster.Description,
-                                      PayType = leaveMaster.PayType,
-                                      LeaveUnit = leaveMaster.LeaveUnit,
-                                      Active = leaveMaster.Active,
-                                  }).ToList ( );
-                return resultdata;
-            }
-
-
-            else
-            {
-                var lnklev = 0;
-                var empEntities = (from emp in _employeedbContext.HrEmpMasters
-                                   where emp.EmpId == sortDto.employeeId
-                                   select emp.EmpEntity).FirstOrDefault ( )?.Split (',').Select ((item, index) => new
-                                   {
-                                       Item = item,
-                                       LinkLevelSelf = (int?)(index + 2)
-                                   }).ToList ( );
-                var data = empEntities;
-                var entityapplicable00 = await _employeedbContext.EntityApplicable00s.Where (x => x.TransactionId == transactionId).ToListAsync ( );
-                var entityaccessright02 = await _employeedbContext.EntityAccessRights02s.Where (x => x.RoleId == sortDto.RoleId).ToListAsync ( );
-                //var applicableFinal = (
-                //    from s in _employeedbContext.EntityAccessRights02s
-                //    from f in SplitStrings_XML (s.LinkId,default).Select (item => new { Item = item })
-                //    where s.RoleId == sortDto.RoleId
-                //    select new { Item = f.Item, LinkLevel = s.LinkLevel }
-                //)
-                //.Union (
-                //    from ct in empEntities
-                //    where lnklev > 0 && ct.LinkLevelSelf >= lnklev
-                //    select new { Item = ct.Item, LinkLevel = ct.LinkLevelSelf }
-                //)
-                //.ToList ( );
-                var applicableFinal = (from s in _employeedbContext.EntityAccessRights02s.AsEnumerable ( ) // Load data into memory
-                                       from f in SplitStrings_XML (s.LinkId, default).Select (item => new { Item = item }) // Perform split in-memory
-                                       where s.RoleId == sortDto.RoleId
-                                       select new { Item = f.Item, LinkLevel = s.LinkLevel })
-                                       .Union (
-                                       from ct in empEntities where lnklev > 0 && ct.LinkLevelSelf >= lnklev select new { Item = ct.Item, LinkLevel = ct.LinkLevelSelf }).ToList ( );
-                var EntityApplicalble00Final = _employeedbContext.EntityApplicable00s.ToListAsync ( ).Result.Where (x => x.TransactionId == transactionId);
-
-                var applicableFinal02EMP = (from d in _employeedbContext.EmployeeDetails
-                                            join e in _employeedbContext.EntityApplicable01s on d.EmpId equals e.EmpId
-                                            where e.TransactionId == transactionId
-                                            join a in _employeedbContext.HighLevelViewTables on d.LastEntity equals a.LastEntityId
-                                            join b in applicableFinal on true equals true // Join with ApplicableFinal
-                                            where
-                                                (b.LinkLevel == 1 && a.LevelOneId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 2 && a.LevelTwoId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 3 && a.LevelThreeId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 4 && a.LevelFourId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 5 && a.LevelFiveId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 6 && a.LevelSixId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 7 && a.LevelSevenId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 8 && a.LevelEightId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 9 && a.LevelNineId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 10 && a.LevelTenId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 11 && a.LevelElevenId == TryParseToInt (b.Item)) ||
-                                                (b.LinkLevel == 12 && a.LevelTwelveId == TryParseToInt (b.Item))
-                                            select e.MasterId).Distinct ( );
-
-                var newHigh = (from c in _employeedbContext.EntityApplicable00s
-                               join a in _employeedbContext.HighLevelViewTables on c.LinkLevel equals a.LastEntityId
-                               where
-                                   (c.LinkLevel == 1 && a.LevelOneId == c.LinkId) ||
-                                   (c.LinkLevel == 2 && a.LevelTwoId == c.LinkId) ||
-                                   (c.LinkLevel == 3 && a.LevelThreeId == c.LinkId) ||
-                                   (c.LinkLevel == 4 && a.LevelFourId == c.LinkId) ||
-                                   (c.LinkLevel == 5 && a.LevelFiveId == c.LinkId) ||
-                                   (c.LinkLevel == 6 && a.LevelSixId == c.LinkId) ||
-                                   (c.LinkLevel == 7 && a.LevelSevenId == c.LinkId) ||
-                                   (c.LinkLevel == 8 && a.LevelEightId == c.LinkId) ||
-                                   (c.LinkLevel == 9 && a.LevelNineId == c.LinkId) ||
-                                   (c.LinkLevel == 10 && a.LevelTenId == c.LinkId) ||
-                                   (c.LinkLevel == 11 && a.LevelElevenId == c.LinkId) ||
-                                   (c.LinkLevel == 12 && a.LevelTwelveId == c.LinkId)
-                               join b in applicableFinal on true equals true
-                               where
-                                   (b.LinkLevel == 1 && a.LevelOneId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 2 && a.LevelTwoId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 3 && a.LevelThreeId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 4 && a.LevelFourId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 5 && a.LevelFiveId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 6 && a.LevelSixId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 7 && a.LevelSevenId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 8 && a.LevelEightId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 9 && a.LevelNineId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 10 && a.LevelTenId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 11 && a.LevelElevenId == TryParseToInt (b.Item)) ||
-                                   (b.LinkLevel == 12 && a.LevelTwelveId == TryParseToInt (b.Item))
-                               select c.MasterId)
-                              .Union (applicableFinal02EMP)
-                              .Union (from e in _employeedbContext.EntityApplicable00s where e.LinkLevel == 15 select e.MasterId)
-                              .Distinct ( )
-                              .ToList ( );
-
-                var finalResult = (from user in _employeedbContext.AdmUserMasters
-                                   join settings in _dbContext.HrmLeaveBasicSettings on user.UserId equals settings.CreatedBy into ps
-                                   from settings in ps.DefaultIfEmpty ( )
-                                   join high in newHigh on settings.SettingsId equals high
-                                   select new
-                                   {
-                                       user.UserName,
-                                       settings.SettingsId,
-                                       settings.SettingsName,
-                                       settings.SettingsDescription,
-                                       CreatedDate = settings.CreatedDate, // Format as DD/MM/YYYY
-                                   }).ToList ( );
+        //        var resultdata = (from leaveMaster in leaveMasters
+        //                          join ADM_User_Master in adm_User_Masters
+        //                          on leaveMaster.CreatedBy equals ADM_User_Master.UserId
+        //                          select new HrmLeaveMasterViewDto
+        //                          {
+        //                              Username = ADM_User_Master.UserName,
+        //                              LeavemasterId = leaveMaster.LeaveMasterId,
+        //                              LeaveCode = leaveMaster.LeaveCode,
+        //                              Description = leaveMaster.Description,
+        //                              PayType = leaveMaster.PayType,
+        //                              LeaveUnit = leaveMaster.LeaveUnit,
+        //                              Active = leaveMaster.Active,
+        //                          }).ToList ( );
+        //        return resultdata;
+        //    }
 
 
-                var result = applicableFinal.ToList ( );
+        //    else
+        //    {
+        //        var lnklev = 0;
+        //        var empEntities = (from emp in _employeedbContext.HrEmpMasters
+        //                           where emp.EmpId == sortDto.employeeId
+        //                           select emp.EmpEntity).FirstOrDefault ( )?.Split (',').Select ((item, index) => new
+        //                           {
+        //                               Item = item,
+        //                               LinkLevelSelf = (int?)(index + 2)
+        //                           }).ToList ( );
+        //        var data = empEntities;
+        //        var entityapplicable00 = await _employeedbContext.EntityApplicable00s.Where (x => x.TransactionId == transactionId).ToListAsync ( );
+        //        var entityaccessright02 = await _employeedbContext.EntityAccessRights02s.Where (x => x.RoleId == sortDto.RoleId).ToListAsync ( );
+        //        //var applicableFinal = (
+        //        //    from s in _employeedbContext.EntityAccessRights02s
+        //        //    from f in SplitStrings_XML (s.LinkId,default).Select (item => new { Item = item })
+        //        //    where s.RoleId == sortDto.RoleId
+        //        //    select new { Item = f.Item, LinkLevel = s.LinkLevel }
+        //        //)
+        //        //.Union (
+        //        //    from ct in empEntities
+        //        //    where lnklev > 0 && ct.LinkLevelSelf >= lnklev
+        //        //    select new { Item = ct.Item, LinkLevel = ct.LinkLevelSelf }
+        //        //)
+        //        //.ToList ( );
+        //        var applicableFinal = (from s in _employeedbContext.EntityAccessRights02s.AsEnumerable ( ) // Load data into memory
+        //                               from f in SplitStrings_XML (s.LinkId, default).Select (item => new { Item = item }) // Perform split in-memory
+        //                               where s.RoleId == sortDto.RoleId
+        //                               select new { Item = f.Item, LinkLevel = s.LinkLevel })
+        //                               .Union (
+        //                               from ct in empEntities where lnklev > 0 && ct.LinkLevelSelf >= lnklev select new { Item = ct.Item, LinkLevel = ct.LinkLevelSelf }).ToList ( );
+        //        var EntityApplicalble00Final = _employeedbContext.EntityApplicable00s.ToListAsync ( ).Result.Where (x => x.TransactionId == transactionId);
 
-                List<HrmLeaveMasterViewDto> hrmLeaveMasters1 = new List<HrmLeaveMasterViewDto> ( );
-                return hrmLeaveMasters1;
-            }
-        }
+        //        var applicableFinal02EMP = (from d in _employeedbContext.EmployeeDetails
+        //                                    join e in _employeedbContext.EntityApplicable01s on d.EmpId equals e.EmpId
+        //                                    where e.TransactionId == transactionId
+        //                                    join a in _employeedbContext.HighLevelViewTables on d.LastEntity equals a.LastEntityId
+        //                                    join b in applicableFinal on true equals true // Join with ApplicableFinal
+        //                                    where
+        //                                        (b.LinkLevel == 1 && a.LevelOneId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 2 && a.LevelTwoId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 3 && a.LevelThreeId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 4 && a.LevelFourId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 5 && a.LevelFiveId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 6 && a.LevelSixId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 7 && a.LevelSevenId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 8 && a.LevelEightId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 9 && a.LevelNineId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 10 && a.LevelTenId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 11 && a.LevelElevenId == TryParseToInt (b.Item)) ||
+        //                                        (b.LinkLevel == 12 && a.LevelTwelveId == TryParseToInt (b.Item))
+        //                                    select e.MasterId).Distinct ( );
+
+        //        var newHigh = (from c in _employeedbContext.EntityApplicable00s
+        //                       join a in _employeedbContext.HighLevelViewTables on c.LinkLevel equals a.LastEntityId
+        //                       where
+        //                           (c.LinkLevel == 1 && a.LevelOneId == c.LinkId) ||
+        //                           (c.LinkLevel == 2 && a.LevelTwoId == c.LinkId) ||
+        //                           (c.LinkLevel == 3 && a.LevelThreeId == c.LinkId) ||
+        //                           (c.LinkLevel == 4 && a.LevelFourId == c.LinkId) ||
+        //                           (c.LinkLevel == 5 && a.LevelFiveId == c.LinkId) ||
+        //                           (c.LinkLevel == 6 && a.LevelSixId == c.LinkId) ||
+        //                           (c.LinkLevel == 7 && a.LevelSevenId == c.LinkId) ||
+        //                           (c.LinkLevel == 8 && a.LevelEightId == c.LinkId) ||
+        //                           (c.LinkLevel == 9 && a.LevelNineId == c.LinkId) ||
+        //                           (c.LinkLevel == 10 && a.LevelTenId == c.LinkId) ||
+        //                           (c.LinkLevel == 11 && a.LevelElevenId == c.LinkId) ||
+        //                           (c.LinkLevel == 12 && a.LevelTwelveId == c.LinkId)
+        //                       join b in applicableFinal on true equals true
+        //                       where
+        //                           (b.LinkLevel == 1 && a.LevelOneId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 2 && a.LevelTwoId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 3 && a.LevelThreeId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 4 && a.LevelFourId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 5 && a.LevelFiveId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 6 && a.LevelSixId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 7 && a.LevelSevenId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 8 && a.LevelEightId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 9 && a.LevelNineId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 10 && a.LevelTenId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 11 && a.LevelElevenId == TryParseToInt (b.Item)) ||
+        //                           (b.LinkLevel == 12 && a.LevelTwelveId == TryParseToInt (b.Item))
+        //                       select c.MasterId)
+        //                      .Union (applicableFinal02EMP)
+        //                      .Union (from e in _employeedbContext.EntityApplicable00s where e.LinkLevel == 15 select e.MasterId)
+        //                      .Distinct ( )
+        //                      .ToList ( );
+
+        //        var finalResult = (from user in _employeedbContext.AdmUserMasters
+        //                           join settings in _dbContext.HrmLeaveBasicSettings on user.UserId equals settings.CreatedBy into ps
+        //                           from settings in ps.DefaultIfEmpty ( )
+        //                           join high in newHigh on settings.SettingsId equals high
+        //                           select new
+        //                           {
+        //                               user.UserName,
+        //                               settings.SettingsId,
+        //                               settings.SettingsName,
+        //                               settings.SettingsDescription,
+        //                               CreatedDate = settings.CreatedDate, // Format as DD/MM/YYYY
+        //                           }).ToList ( );
+
+
+        //        var result = applicableFinal.ToList ( );
+
+        //        List<HrmLeaveMasterViewDto> hrmLeaveMasters1 = new List<HrmLeaveMasterViewDto> ( );
+        //        return hrmLeaveMasters1;
+        //    }
+        //}
         private static int TryParseToInt (string input)
         {
             return int.TryParse (input, out var result) ? result : -1;
@@ -264,7 +264,7 @@ namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.LeaveServices
                    .Select (item => item.Trim ( )) // Trim whitespace from each item
                    .Where (item => !string.IsNullOrEmpty (item)); // Exclude empty items
         }
-        public async Task<List<HrmLeaveMasterViewDto>> GetAll (HrmLeaveMasterSearchDto sortDto)
+        public async Task<List<HrmLeaveMasterViewDto>> GetAllLeaveMasters (HrmLeaveMasterSearchDto sortDto)
         {
             var transid = await _employeedbContext.TransactionMasters
                .Where (t => t.TransactionType == "Leave")
@@ -360,15 +360,6 @@ namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.LeaveServices
                 .Distinct ( )
                 .ToList ( );
 
-            // **Step 7: Final WorkFlowDetails Query**
-            //return await _employeedbContext.WorkFlowDetails
-            //    .Where (x => x.IsActive == true && newhigh.Contains (wf.WorkFlowId))
-            //    .Select (wf => new HrmLeaveMasterViewDto
-            //    {
-            //        WorkFlowId = wf.WorkFlowId,
-            //        Description = wf.Description
-            //    })
-            //    .ToListAsync ( );
 
             return await (from leaveMaster in _dbContext.HrmLeaveMasters
                           where newhigh.Contains (leaveMaster.LeaveMasterId)
@@ -384,6 +375,6 @@ namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.LeaveServices
                               LeaveUnit = leaveMaster.LeaveUnit,
                               Active = leaveMaster.Active
                           }).ToListAsync ( );
-        }
+        } 
     }
 }
