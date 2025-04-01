@@ -286,6 +286,8 @@
         public int? Checkcase { get; set; }
 
         public int? ExperiancebasedVacation { get; set; }
+        public int? Rejoinwarning { get; set; }
+        public double? Rejoinwarningdays { get; set; }
 
 
     }
