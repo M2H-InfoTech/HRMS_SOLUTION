@@ -514,5 +514,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return _employeeRepository.IsEnableWeddingDate(empId);
         }
+
+        public Task<object> GetEmployeePersonalDetails(int empId)
+        {
+            return _employeeRepository.GetEmployeePersonalDetails(empId);
+        }
     }
 }

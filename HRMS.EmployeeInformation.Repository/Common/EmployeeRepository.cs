@@ -8608,6 +8608,257 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return int.Parse(weddingDateEnable);
 
         }
+
+
+        public async Task<object> GetEmployeePersonalDetails(int empId)
+        {
+
+            var designationDetails = (from a in _context.Categorymasters
+                                      join b in _context.SubCategoryLinksNews
+                                      on new { SortOrder = (long?)a.SortOrder, CatTrxTypeId = a.CatTrxTypeId.ToString() }
+                                          equals new { SortOrder = (long?)b.LinkLevel, CatTrxTypeId = "4" }
+                                      join c in _context.Subcategories
+                                      on b.SubcategoryId equals c.SubEntityId
+                                      select new
+                                      {
+                                          LinkID = b.LinkId,
+                                          Designation = c.Description
+                                      }).AsEnumerable();
+
+            var gradeDetails = (from a in _context.Categorymasters
+                                join b in _context.SubCategoryLinksNews
+                                on new { SortOrder = (long?)a.SortOrder, CatTrxTypeId = a.CatTrxTypeId.ToString() }
+                                    equals new { SortOrder = (long?)b.LinkLevel, CatTrxTypeId = "6" }
+                                join c in _context.Subcategories
+                                on b.SubcategoryId equals c.SubEntityId
+                                select new
+                                {
+                                    LinkID = b.LinkId,
+                                    Designation = c.Description
+                                }).AsEnumerable();
+
+            var bandDetails = (from a in _context.Categorymasters
+                               join b in _context.SubCategoryLinksNews
+                               on new { SortOrder = (long?)a.SortOrder, CatTrxTypeId = a.CatTrxTypeId.ToString() }
+                                   equals new { SortOrder = (long?)b.LinkLevel, CatTrxTypeId = "5" }
+                               join c in _context.Subcategories
+                               on b.SubcategoryId equals c.SubEntityId
+                               select new
+                               {
+                                   LinkID = b.LinkId,
+                                   Designation = c.Description
+                               }).AsEnumerable();
+
+            var branchDetails = (from a in _context.Categorymasters
+                                 join b in _context.SubCategoryLinksNews
+                                 on new { SortOrder = (long?)a.SortOrder, CatTrxTypeId = a.CatTrxTypeId.ToString() }
+                                     equals new { SortOrder = (long?)b.LinkLevel, CatTrxTypeId = "2" }
+                                 join c in _context.Subcategories
+                                 on b.SubcategoryId equals c.SubEntityId
+                                 select new
+                                 {
+                                     LinkID = b.LinkId,
+                                     Designation = c.Description
+                                 }).AsEnumerable();
+
+            var departmentDetails = (from a in _context.Categorymasters
+                                     join b in _context.SubCategoryLinksNews
+                                     on new { SortOrder = (long?)a.SortOrder, CatTrxTypeId = a.CatTrxTypeId.ToString() }
+                                         equals new { SortOrder = (long?)b.LinkLevel, CatTrxTypeId = "3" }
+                                     join c in _context.Subcategories
+                                     on b.SubcategoryId equals c.SubEntityId
+                                     select new
+                                     {
+                                         LinkID = b.LinkId,
+                                         Designation = c.Description
+                                     }).AsEnumerable();
+
+
+
+            var empPersonal = await (from emp in _context.HrEmpMasters
+                                     join e in designationDetails on emp.DesigId equals e.LinkID into desig
+                                     from e in desig.DefaultIfEmpty()
+                                     join f in gradeDetails on emp.GradeId equals f.LinkID into grade
+                                     from f in grade.DefaultIfEmpty()
+                                     join g in bandDetails on emp.BandId equals g.LinkID into band
+                                     from g in band.DefaultIfEmpty()
+                                     join i in _context.HrEmpImages on emp.EmpId equals i.EmpId into images
+                                     from i in images.DefaultIfEmpty()
+                                     join j in branchDetails on emp.BranchId equals j.LinkID into branch
+                                     from j in branch.DefaultIfEmpty()
+                                     join k in departmentDetails on emp.DepId equals k.LinkID into dept
+                                     from k in dept.DefaultIfEmpty()
+                                     join l in _context.HrEmpAddresses on emp.EmpId equals l.EmpId into address
+                                     from l in address.DefaultIfEmpty()
+                                     join m in _context.HrEmpPersonals on emp.EmpId equals m.EmpId into personal
+                                     from m in personal.DefaultIfEmpty()
+                                     join n in _context.AdmCountryMasters on m.Nationality equals n.CountryId into nationality
+                                     from n in nationality.DefaultIfEmpty()
+                                     join o in _context.AdmCountryMasters on m.Country equals o.CountryId into country
+                                     from o in country.DefaultIfEmpty()
+                                     join p in _context.AdmCountryMasters on m.CountryOfBirth equals p.CountryId into birthCountry
+                                     from p in birthCountry.DefaultIfEmpty()
+                                     join rep in _context.HrEmpReportings on emp.EmpId equals rep.EmpId into repGroup
+                                     from rep in repGroup.DefaultIfEmpty()
+                                     join res in _context.Resignations on emp.EmpId equals res.EmpId into resGroup
+                                     from res in resGroup.DefaultIfEmpty()
+                                     join empDetails in _context.EmployeeDetails on rep.ReprotToWhome equals empDetails.EmpId into empDetailsGroup
+                                     from empDetails in empDetailsGroup.DefaultIfEmpty()
+                                     join h in _context.HighLevelViewTables on emp.LastEntity equals
+                                                     (h.LevelSixId == 0 ? h.LevelFiveId :
+                                                     h.LevelSevenId == 0 ? h.LevelSixId :
+                                                     h.LevelEightId == 0 ? h.LevelSevenId :
+                                                     h.LevelNineId == 0 ? h.LevelEightId :
+                                                     h.LevelTenId == 0 ? h.LevelNineId :
+                                                     h.LevelElevenId == 0 ? h.LevelTenId :
+                                                     h.LevelTwelveId == 0 ? h.LevelElevenId : (int?)null)
+                                     into highLevelJoin
+                                     from b in highLevelJoin.DefaultIfEmpty()
+                                     where emp.EmpId == empId
+                                     select new
+                                     {
+
+                                         emp.EmpId,
+                                         Name = (string.IsNullOrEmpty(emp.MiddleName) && string.IsNullOrEmpty(emp.LastName)) ? emp.FirstName :
+                                                string.IsNullOrEmpty(emp.MiddleName) ? emp.FirstName + " " + emp.LastName :
+                                                string.IsNullOrEmpty(emp.LastName) ? emp.FirstName + " " + emp.MiddleName :
+                                                emp.FirstName + " " + emp.MiddleName + " " + emp.LastName,
+                                         Branch = j != null ? j.Designation : "NA",
+                                         Department = k != null ? k.Designation : "NA",
+                                         Grade = f != null ? f.Designation : "NA",
+                                         Band = g != null ? g.Designation : "NA",
+                                         Designation = e != null ? e.Designation : "NA",
+                                         emp.LastEntity,
+                                         DateOfBirth = FormatDate(emp.DateOfBirth, _employeeSettings.DateFormat),
+                                         EmpCode = emp != null ? emp.EmpCode : "NA",
+                                         JoinDate = FormatDate(emp.JoinDt, _employeeSettings.DateFormat),
+                                         ProbationDate = FormatDate(emp.ProbationDt, _employeeSettings.DateFormat),
+                                         BloodGroup = m != null ? m.BloodGrp : "NA",
+                                         CompanyEmail = l != null ? l.OfficialEmail : null,
+                                         PersonalEMail = l != null ? l.PersonalEmail : null,
+                                         ImageUrl = i != null && !string.IsNullOrEmpty(i.ImageUrl) ? i.ImageUrl : "default.jpg",
+                                         ReportingTo = empDetails.Name,
+                                         ResignationDate = FormatDate(res.ResignationDate, _employeeSettings.DateFormat),
+                                         RelievingDate = FormatDate(res.RelievingDate, _employeeSettings.DateFormat),
+                                         emp.CurrentStatus,
+                                         emp.EmpStatus,
+                                         Age = CalculateAge(emp.DateOfBirth, _employeeSettings.DateFormat),
+                                         Gender = GetGender(emp.Gender).ToString(),
+                                         emp.NoticePeriod,
+                                         Country = o.CountryName,
+                                         Nationality = n.Nationality,
+                                         CountryOfBirth = p.CountryName,
+                                         GratuityStrtDate = FormatDate(emp.GratuityStrtDate, _employeeSettings.DateFormat),
+                                         FirstEntryDate = FormatDate(emp.FirstEntryDate, _employeeSettings.DateFormat),
+                                         emp.IsProbation,
+                                         emp.Ishra,
+                                         emp.IsExpat,
+                                         emp.MealAllowanceDeduct,
+                                         ServiceLength = GetEmployeeServiceLength(empId),
+                                         emp.CompanyConveyance,
+                                         emp.CompanyVehicle,
+
+                                         LevelOneDescription = b.LevelOneDescription,
+                                         //LevelTwoId = b.LevelTwoId,
+                                         LevelTwoDescription = b.LevelTwoDescription + " (" + b.LevelOneDescription + ")",
+                                         //LevelThreeId = b.LevelThreeId,
+                                         LevelThreeDescription = b.LevelThreeDescription + " (" + b.LevelOneDescription + "-" + b.LevelTwoDescription + ")",
+                                         //LevelFourId = b.LevelFourId,
+                                         LevelFourDescription = b.LevelFourDescription + " (" + b.LevelThreeDescription + ")",
+                                         // LevelFiveId = b.LevelFiveId,
+                                         LevelFiveDescription = b.LevelFiveDescription + " (" + b.LevelThreeDescription + "-" + b.LevelFourDescription + ")",
+                                         //LevelSixId = b.LevelSixId,
+                                         LevelSixDescription = b.LevelSixDescription + " (" + b.LevelFourDescription + "-" + b.LevelFiveDescription + ")",
+                                         // LevelSevenId = b.LevelSevenId,
+                                         LevelSevenDescription = b.LevelSevenDescription + " (" + b.LevelThreeDescription + "-" + b.LevelSixDescription + ")",
+                                         // LevelEightId = b.LevelEightId,
+                                         LevelEightDescription = b.LevelEightDescription + " (" + b.LevelThreeDescription + "-" + b.LevelSevenDescription + ")",
+                                         //LevelNineId = b.LevelNineId,
+                                         LevelNineDescription = b.LevelNineDescription + " (" + b.LevelSevenDescription + "-" + b.LevelEightDescription + ")",
+                                         // LevelTenId = b.LevelTenId,
+                                         LevelTenDescription = b.LevelTenDescription + " (" + b.LevelEightDescription + "-" + b.LevelNineDescription + ")",
+                                         // LevelElevenId = b.LevelElevenId,
+                                         LevelElevenDescription = b.LevelElevenDescription + " (" + b.LevelNineDescription + "-" + b.LevelTenDescription + ")",
+                                         EnableEditButton = GetEditButtonCode(empId).Result,
+                                         IsSave = emp.IsSave ?? 0,
+                                         ProfilePercentage = "0%"
+
+                                     }).Distinct().ToListAsync();
+
+            var empParameterValue = await GetDefaultCompanyParameter(empId, "EDITOPFOREMP", _employeeSettings.companyParameterCodesType);
+
+            return new
+            {
+                EmpData = empPersonal,
+                Value = empParameterValue
+            };
+        }
+        public string GetEmployeeServiceLength(int empId)
+        {
+            // Get join date
+            var joinDate = _context.EmployeeDetails
+                                  .Where(e => e.EmpId == empId)
+                                  .Select(e => e.JoinDt)
+                                  .FirstOrDefault();
+
+            if (joinDate == null)
+                return "0Y: 0M: 0D"; // Employee not found
+
+            // Determine last working date
+            var lastDate = _context.Resignations
+                .Where(r => r.EmpId == empId
+                            && (r.ApprovalStatus == "P" || r.ApprovalStatus == "A")
+                            && r.RejoinStatus != "A"
+                            && r.ApprovalStatus != "D"
+                            && r.RelievingDate < DateTime.UtcNow)
+                .OrderByDescending(r => r.RelievingDate)
+                .Select(r => r.RelievingDate)
+                .FirstOrDefault() ?? DateTime.Now;
+
+            // Future join date scenario
+            if (joinDate > lastDate)
+                return "0Y: 0M: 0D";
+
+            // Calculate service length
+            int years = lastDate.Year - joinDate.Value.Year;
+            int months = lastDate.Month - joinDate.Value.Month;
+            int days = lastDate.Day - joinDate.Value.Day;
+
+            // Adjust for negative month or day
+            if (days < 0)
+            {
+                months--;
+                days += DateTime.DaysInMonth(lastDate.Year, lastDate.Month);
+            }
+
+            if (months < 0)
+            {
+                years--;
+                months += 12;
+            }
+
+            return $"{years}Y: {months}M: {days}D";
+        }
+        public async Task<string> GetEditButtonCode(int empId)
+        {
+
+            // Get the default company parameter from the function
+            var defaultValue = GetDefaultCompanyParameter(empId, "EMPEDITBUTTN", "EMP1").Result;
+
+            // If no result from the function, return null or appropriate value
+            if (defaultValue == null)
+                return null;
+
+            // Query HRM_VALUE_TYPES for the required code
+            var editButtonCode = await _context.HrmValueTypes
+                .Where(v => v.Type == "EmployeeReporting" && v.Value == Convert.ToInt32(defaultValue))
+                .Select(v => v.Code)
+                .FirstOrDefaultAsync();  // This returns the first match or null if no match found
+
+            return editButtonCode;
+
+        }
+
     }
 }
 

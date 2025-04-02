@@ -281,6 +281,10 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<EmployeeFieldMaster00> EmployeeFieldMaster00s { get; set; }
     public virtual DbSet<DailyRatePolicy00> DailyRatePolicy00s { get; set; }
 
+    public virtual DbSet<SubCategoryLinksNew> SubCategoryLinksNews { get; set; }
+
+    public virtual DbSet<Subcategory> Subcategories { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4217,6 +4221,44 @@ public partial class EmployeeDBContext : DbContext
                 .HasColumnName("Rate_Id");
             entity.Property(e => e.UpdateDate).HasColumnType("datetime");
         });
+        modelBuilder.Entity<SubCategoryLinksNew>(entity =>
+        {
+            entity.HasKey(e => e.LinkId);
+
+            entity.ToTable("SubCategoryLinksNew");
+
+            entity.Property(e => e.LinkId).HasColumnName("LinkID");
+            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
+            entity.Property(e => e.EntryDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LinkableCategoryId).HasColumnName("LinkableCategoryID");
+            entity.Property(e => e.LinkedEntityId)
+                .HasDefaultValue(0)
+                .HasColumnName("LinkedEntityID");
+            entity.Property(e => e.SubcategoryId).HasColumnName("SubcategoryID");
+        });
+
+        modelBuilder.Entity<Subcategory>(entity =>
+        {
+            entity.HasKey(e => e.SubEntityId).HasName("PK__SUBCATEG__2BFB85D9AB330A8F");
+
+            entity.ToTable("SUBCATEGORY");
+
+            entity.Property(e => e.SubEntityId).HasColumnName("SubEntityID");
+            entity.Property(e => e.Code).IsUnicode(false);
+            entity.Property(e => e.Description).IsUnicode(false);
+            entity.Property(e => e.DisplayEntName).IsUnicode(false);
+            entity.Property(e => e.EntityId).HasColumnName("EntityID");
+            entity.Property(e => e.EntryBy).HasColumnName("Entry_By");
+            entity.Property(e => e.InstId).HasColumnName("Inst_Id");
+            entity.Property(e => e.IsDuplicate).HasDefaultValue(0);
+            entity.Property(e => e.TransactionDate).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+        });
+
 
         OnModelCreatingPartial(modelBuilder);
     }

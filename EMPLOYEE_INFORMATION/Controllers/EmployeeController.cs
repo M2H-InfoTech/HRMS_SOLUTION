@@ -823,5 +823,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeMasterData = await _employeeInformation.IsEnableWeddingDate(empId);
             return Ok(employeeMasterData);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeePersonalDetails(int empId)
+        {
+            var employeeMasterData = await _employeeInformation.GetEmployeePersonalDetails(empId);
+            return Ok(employeeMasterData);
+        }
     }
 }
