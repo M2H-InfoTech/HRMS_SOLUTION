@@ -2950,24 +2950,27 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<AllDocumentsDto>> DocumentsAsync(int employeeId, List<string> excludedDocTypes)
         {
 
-            var tempDocumentFill = from a in _context.ReasonMasterFieldValues
-                                   join b in _context.GeneralCategoryFields on a.CategoryFieldId equals b.CategoryFieldId
-                                   join c in _context.HrmsDatatypes on b.DataTypeId equals c.DataTypeId into dataTypeJoin
-                                   from c in dataTypeJoin.DefaultIfEmpty()
-                                   join d in _context.AdmCountryMasters on a.FieldValues equals d.CountryId.ToString() into countryJoin
-                                   from d in countryJoin.DefaultIfEmpty()
-                                   join e in _context.ReasonMasters on a.FieldValues equals e.ReasonId.ToString() into reasonJoin
-                                   from e in reasonJoin.DefaultIfEmpty()
-                                   select new DocumentFillDto
-                                   {
-                                       ReasonId = a.ReasonId,
-                                       CategoryFieldId = a.CategoryFieldId,
-                                       FieldValues = null,
-                                       FieldDescription = b.FieldDescription,
-                                       DataTypeId = b.DataTypeId
-                                   };
-            var tempDocumentFillList = await tempDocumentFill.AsNoTracking().ToListAsync();
-            var tempDocumentFillDict = tempDocumentFillList.ToDictionary(x => x.ReasonId, x => x);
+            var tempDocumentFill = await (from a in _context.ReasonMasterFieldValues
+                                          join b in _context.GeneralCategoryFields on a.CategoryFieldId equals b.CategoryFieldId
+                                          join c in _context.HrmsDatatypes on b.DataTypeId equals c.DataTypeId into dataTypeJoin
+                                          from c in dataTypeJoin.DefaultIfEmpty()
+                                          join d in _context.AdmCountryMasters on a.FieldValues equals d.CountryId.ToString() into countryJoin
+                                          from d in countryJoin.DefaultIfEmpty()
+                                          join e in _context.ReasonMasters on a.FieldValues equals e.ReasonId.ToString() into reasonJoin
+                                          from e in reasonJoin.DefaultIfEmpty()
+                                          select new DocumentFillDto
+                                          {
+                                              ReasonId = a.ReasonId,
+                                              CategoryFieldId = a.CategoryFieldId,
+                                              FieldValues = null,
+                                              FieldDescription = b.FieldDescription,
+                                              DataTypeId = b.DataTypeId
+                                          }).AsNoTracking().ToListAsync();
+            var tempDocumentFillList = tempDocumentFill;
+            //var tempDocumentFillDict = tempDocumentFillList.ToDictionary(x => x.ReasonId, x => x);
+            var tempDocumentFillDict = tempDocumentFillList
+    .DistinctBy(x => x.ReasonId)
+    .ToDictionary(x => x.ReasonId, x => x);
 
             // Step 2: Retrieve Approved Documents
 
@@ -3099,7 +3102,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var approvedFiles = files.Where(f => f.Status == ApprovalStatus.Approved.ToString()).ToList();
 
             return new List<AllDocumentsDto>
-     {
+            {
                  new AllDocumentsDto
                  {
                      TempDocumentFill = tempDocumentFillList,
@@ -3109,7 +3112,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                      PendingFiles = pendingFiles,
                      ApprovedFiles = approvedFiles
                  }
-      };
+            };
 
         }
         public async Task<List<PersonalDetailsDto>> GetPersonalDetailsByIdAsync(int employeeid)
@@ -8525,12 +8528,31 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                     f.FieldDescription
                                 }).ToListAsync();
         }
+        //public async Task<object> GetFieldsToHideAsync()
+        //{
+        //    return await _context.CompanyParameters
+        //                     .Where(cp => cp.ParameterCode == "HIDEEMPCREATFLD" && cp.Type == _employeeSettings.companyParameterCodesType)
+        //                     .Select(cp => (int?)cp.Value)  // Convert to nullable to handle NULL cases
+        //                     .FirstOrDefaultAsync() ?? 0;
+        //}
         public async Task<object> GetFieldsToHideAsync()
         {
-            return await _context.CompanyParameters
-                             .Where(cp => cp.ParameterCode == "HIDEEMPCREATFLD" && cp.Type == _employeeSettings.companyParameterCodesType)
-                             .Select(cp => (int?)cp.Value)  // Convert to nullable to handle NULL cases
-                             .FirstOrDefaultAsync() ?? 0;
+            var parameterVal = await _context.CompanyParameters
+                                  .Where(cp => cp.ParameterCode == "HIDEEMPCREATFLD" && cp.Type == _employeeSettings.companyParameterCodesType)
+                                  .Select(cp => (int?)cp.Value)  // Convert to nullable to handle NULL cases
+                                  .FirstOrDefaultAsync() ?? 0;
+
+            List<string> FieldCode = new List<string>(); // Ensure FieldCode is always initialized
+
+            if (parameterVal == 1)
+            {
+                FieldCode = await _context.EmployeeFieldMaster01s
+                              .Where(a => a.Visibility == 0 && a.FieldMaster00Id == 1)
+                              .Select(a => a.FieldCode)
+                              .ToListAsync();
+            }
+
+            return FieldCode;
         }
         public async Task<object> EmployeeCreationFilterAsync()
         {
@@ -8793,19 +8815,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 Value = empParameterValue
             };
         }
-        public string GetEmployeeServiceLength(int empId)
+        private async Task<string> GetEmployeeServiceLength(int empId)
         {
             // Get join date
-            var joinDate = _context.EmployeeDetails
+            var joinDate = await _context.EmployeeDetails
                                   .Where(e => e.EmpId == empId)
                                   .Select(e => e.JoinDt)
-                                  .FirstOrDefault();
+                                  .FirstOrDefaultAsync();
 
             if (joinDate == null)
                 return "0Y: 0M: 0D"; // Employee not found
 
             // Determine last working date
-            var lastDate = _context.Resignations
+            var lastDate = await _context.Resignations
                 .Where(r => r.EmpId == empId
                             && (r.ApprovalStatus == "P" || r.ApprovalStatus == "A")
                             && r.RejoinStatus != "A"
@@ -8813,7 +8835,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             && r.RelievingDate < DateTime.UtcNow)
                 .OrderByDescending(r => r.RelievingDate)
                 .Select(r => r.RelievingDate)
-                .FirstOrDefault() ?? DateTime.Now;
+                .FirstOrDefaultAsync() ?? DateTime.Now;
 
             // Future join date scenario
             if (joinDate > lastDate)
@@ -8839,7 +8861,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return $"{years}Y: {months}M: {days}D";
         }
-        public async Task<string> GetEditButtonCode(int empId)
+        private async Task<string> GetEditButtonCode(int empId)
         {
 
             // Get the default company parameter from the function
@@ -8858,7 +8880,88 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return editButtonCode;
 
         }
+        public async Task<object> FillEmpProject(int empId)
+        {
+            var result = await (from a in _context.Projects
+                                join b in _context.GeneralCategories on a.ProjectNameid equals b.Id
+                                join c in _context.ReasonMasters on a.ProjectDescriptionid equals c.ReasonId
+                                where a.EmployeeId == empId && a.Status == null
+                                orderby a.Id
+                                select new
+                                {
+                                    a.Id,
+                                    Projectdes = b.Description,
+                                    c.Description,
+                                    StartDate = a.StartDate.HasValue ? FormatDate(a.StartDate, _employeeSettings.DateFormat) : null,
+                                    EndDate = a.EndDate.HasValue ? FormatDate(a.EndDate, _employeeSettings.DateFormat) : null
+                                }).AsNoTracking().ToListAsync(); // Execute the database query asynchronously
 
+            // Assign row numbers in memory
+            var finalResult = result
+                .Select((x, index) => new
+                {
+                    x.Id,
+                    x.Projectdes,
+                    x.Description,
+                    x.StartDate,
+                    x.EndDate,
+                    Sno = index + 1 // Generate row numbers
+                })
+                .ToList();
+
+            return finalResult;
+        }
+        public async Task<string> DeleteEmployeeDetails(string empIds, int entryBy)
+        {
+            // Split empIds into a list
+            List<int> empIdList = empIds.Split(',').Select(int.Parse).ToList();
+
+            // Fetch matching UserIds from HR_EMPLOYEE_USER_RELATION
+            var userIds = _context.HrEmployeeUserRelations
+                            .Where(rel => empIdList.Contains(rel.EmpId))
+                            .Select(rel => rel.UserId)
+                            .ToList();
+
+            var usersToUpdate = _context.AdmUserMasters
+                                       .Where(u => userIds.Contains(u.UserId))
+                                       .ToList();
+
+            foreach (var user in usersToUpdate)
+            {
+                user.Active = _employeeSettings.LetterN;// "N";
+                user.Status = _employeeSettings.LetterN;// "N";
+                user.NeedApp = false;
+            }
+
+            // Update HR_EMP_MASTER
+            var employeesToUpdate = _context.HrEmpMasters
+                                           .Where(e => empIdList.Contains(e.EmpId))
+                                           .ToList();
+
+            foreach (var emp in employeesToUpdate)
+            {
+                emp.IsDelete = true;
+                emp.DeletedBy = entryBy;
+                emp.DeletedDate = DateTime.UtcNow;
+                emp.ModifiedDate = DateTime.UtcNow;
+                emp.SeperationStatus = 4;
+                emp.CurrentStatus = 4;
+            }
+
+            // Delete from SurveyRelation
+            var surveysToDelete = _context.SurveyRelations
+                                         .Where(s => empIdList.Contains((int)s.EmpId))
+                                         .ToList();
+
+            _context.SurveyRelations.RemoveRange(surveysToDelete);
+
+
+            int result = await _context.SaveChangesAsync();
+
+            return result > 0 ? _employeeSettings.DataDeletedSuccessStatus : _employeeSettings.DataInsertFailedStatus;
+
+
+        }
     }
 }
 

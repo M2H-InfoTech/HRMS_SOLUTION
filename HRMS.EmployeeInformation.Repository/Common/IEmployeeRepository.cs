@@ -117,6 +117,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> GetWageTypesWithRatesAsync();
         Task<int> IsEnableWeddingDate(int empId);
         Task<object> GetEmployeePersonalDetails(int empId);
+        Task<object> FillEmpProject(int empId);
+        Task<string> DeleteEmployeeDetails(string empIds, int entryBy);
 
     }
 }
