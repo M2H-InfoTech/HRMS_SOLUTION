@@ -757,7 +757,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var religion = await _employeeInformation.GetReligionsAsync();
             return Ok(religion);
         }
-        [HttpGet("{empId}")]
+        [HttpGet]
         public async Task<IActionResult> GetDependents(int empId)
         {
             try
@@ -771,7 +771,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             }
             catch (Exception ex)
             {
-                
+
                 return StatusCode(500, "An internal server error occurred. Please try again later.");
             }
         }
@@ -783,9 +783,9 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(employeeMasterHeaderData);
         }
         [HttpGet]
-        public async Task<IActionResult> GetCategoryMasterDetailsAsync()
+        public async Task<IActionResult> GetCategoryMasterDetailsAsync(int roleId)
         {
-            var categoryData = await _employeeInformation.GetCategoryMasterDetailsAsync();
+            var categoryData = await _employeeInformation.GetCategoryMasterDetailsAsync(roleId);
             return Ok(categoryData);
         }
         [HttpGet]
@@ -793,6 +793,53 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             var masterHeaderEditData = await _employeeInformation.GetEmployeeMasterHeaderEditDataAsync();
             return Ok(masterHeaderEditData);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetFieldsToHide()
+        {
+            var fieldsToHide = await _employeeInformation.GetFieldsToHideAsync();
+            return Ok(fieldsToHide);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EmployeeCreationFilter()
+        {
+            var employeeCreationFilter = await _employeeInformation.EmployeeCreationFilterAsync();
+            return Ok(employeeCreationFilter);
+        }
+        [HttpGet]
+        public IActionResult ValidateEmployeeDates(DateTime? DurationFrom, DateTime? DurationTo)
+        {
+            return Json(DurationFrom > DurationTo ? "Error" : "Valid");
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetDailyRatePolicies()
+        {
+            var policies = await _employeeInformation.GetWageTypesWithRatesAsync();
+            return Ok(policies);
+        }
+        [HttpGet]
+        public async Task<IActionResult> IsEnableWeddingDate(int empId)
+        {
+            var employeeWeddingDate = await _employeeInformation.IsEnableWeddingDate(empId);
+            return Ok(employeeWeddingDate);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeePersonalDetails(int empId)
+        {
+            var employeePersonalDetails = await _employeeInformation.GetEmployeePersonalDetails(empId);
+            return Ok(employeePersonalDetails);
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillEmpProject(int empId)
+        {
+            var employeeProject = await _employeeInformation.FillEmpProject(empId);
+            return Ok(employeeProject);
+        }
+        [HttpDelete]
+        public async Task<IActionResult> DeleteEmployeeDetails(string empIds, int entryBy)
+        {
+            var employeeProject = await _employeeInformation.DeleteEmployeeDetails(empIds, entryBy);
+            return Ok(employeeProject);
         }
     }
 }

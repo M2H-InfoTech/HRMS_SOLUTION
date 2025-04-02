@@ -1,5 +1,4 @@
-﻿using EMPLOYEE_INFORMATION.Models;
-using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using Microsoft.AspNetCore.Http;
 using MPLOYEE_INFORMATION.DTO.DTOs;
@@ -107,11 +106,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> GetUserRoles(int? firstEntityId, int? secondEntityId);
         Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(HrEmpProfdtlsApprlDto dto);
         Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatusesAsync(int empId);
-        Task<string> GetReligionsAsync();
+        Task<object> GetReligionsAsync();
         Task<object> GetEmployeeMasterHeaderDataAsync();
-        Task<object> GetCategoryMasterDetailsAsync();
+        Task<object> GetCategoryMasterDetailsAsync(int roleId);
         Task<object> GetEmployeeMasterHeaderEditDataAsync();
+        Task<object> GetFieldsToHideAsync();
+        Task<object> EmployeeCreationFilterAsync();
         Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId);
+        Task<List<DailyRatePolicyDto>> GetDailyRatePoliciesAsync();
+        Task<object> GetWageTypesWithRatesAsync();
+        Task<int> IsEnableWeddingDate(int empId);
+        Task<object> GetEmployeePersonalDetails(int empId);
+        Task<object> FillEmpProject(int empId);
+        Task<string> DeleteEmployeeDetails(string empIds, int entryBy);
 
     }
 }

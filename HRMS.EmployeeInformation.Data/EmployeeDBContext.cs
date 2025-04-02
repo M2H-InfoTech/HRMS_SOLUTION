@@ -279,6 +279,13 @@ public partial class EmployeeDBContext : DbContext
 
     public virtual DbSet<UserType> UserTypes { get; set; }
     public virtual DbSet<EmployeeFieldMaster00> EmployeeFieldMaster00s { get; set; }
+    public virtual DbSet<DailyRatePolicy00> DailyRatePolicy00s { get; set; }
+
+    public virtual DbSet<SubCategoryLinksNew> SubCategoryLinksNews { get; set; }
+
+    public virtual DbSet<Subcategory> Subcategories { get; set; }
+    public virtual DbSet<Project> Projects { get; set; }
+    public virtual DbSet<EmployeeFieldMaster01> EmployeeFieldMaster01s { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4190,6 +4197,99 @@ public partial class EmployeeDBContext : DbContext
                 .HasMaxLength(500)
                 .IsUnicode(false);
         });
+        modelBuilder.Entity<DailyRatePolicy00>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("DailyRatePolicy00");
+
+            entity.Property(e => e.Days)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.ExcludedPublicHoliday)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Excluded/PublicHoliday");
+            entity.Property(e => e.ExcludedWeaklyHoliday)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Excluded/WeaklyHoliday");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.RateId)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("Rate_Id");
+            entity.Property(e => e.UpdateDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<SubCategoryLinksNew>(entity =>
+        {
+            entity.HasKey(e => e.LinkId);
+
+            entity.ToTable("SubCategoryLinksNew");
+
+            entity.Property(e => e.LinkId).HasColumnName("LinkID");
+            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
+            entity.Property(e => e.EntryDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LinkableCategoryId).HasColumnName("LinkableCategoryID");
+            entity.Property(e => e.LinkedEntityId)
+                .HasDefaultValue(0)
+                .HasColumnName("LinkedEntityID");
+            entity.Property(e => e.SubcategoryId).HasColumnName("SubcategoryID");
+        });
+
+        modelBuilder.Entity<Subcategory>(entity =>
+        {
+            entity.HasKey(e => e.SubEntityId).HasName("PK__SUBCATEG__2BFB85D9AB330A8F");
+
+            entity.ToTable("SUBCATEGORY");
+
+            entity.Property(e => e.SubEntityId).HasColumnName("SubEntityID");
+            entity.Property(e => e.Code).IsUnicode(false);
+            entity.Property(e => e.Description).IsUnicode(false);
+            entity.Property(e => e.DisplayEntName).IsUnicode(false);
+            entity.Property(e => e.EntityId).HasColumnName("EntityID");
+            entity.Property(e => e.EntryBy).HasColumnName("Entry_By");
+            entity.Property(e => e.InstId).HasColumnName("Inst_Id");
+            entity.Property(e => e.IsDuplicate).HasDefaultValue(0);
+            entity.Property(e => e.TransactionDate).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+        });
+        modelBuilder.Entity<Project>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("Project");
+
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .IsUnicode(false)
+                .HasColumnName("status");
+        });
+        modelBuilder.Entity<EmployeeFieldMaster01>(entity =>
+        {
+            entity.HasKey(e => e.FieldMaster01Id).HasName("PK__Employee__697671BA59EA847C");
+
+            entity.ToTable("EmployeeFieldMaster01");
+
+            entity.Property(e => e.FieldMaster01Id).HasColumnName("FieldMaster01ID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FieldCode)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.FieldDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.FieldMaster00Id).HasColumnName("FieldMaster00ID");
+        });
+
 
         OnModelCreatingPartial(modelBuilder);
     }

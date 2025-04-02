@@ -465,7 +465,7 @@ namespace HRMS.EmployeeInformation.Service.Service
             return _employeeRepository.GetEmployeeAndSystemStatusesAsync(empId);
         }
 
-        public Task<string> GetReligionsAsync()
+        public Task<object> GetReligionsAsync()
         {
             return _employeeRepository.GetReligionsAsync();
         }
@@ -475,9 +475,9 @@ namespace HRMS.EmployeeInformation.Service.Service
             return _employeeRepository.GetEmployeeMasterHeaderDataAsync();
         }
 
-        public Task<object> GetCategoryMasterDetailsAsync()
+        public Task<object> GetCategoryMasterDetailsAsync(int roleId)
         {
-            return _employeeRepository.GetCategoryMasterDetailsAsync();
+            return _employeeRepository.GetCategoryMasterDetailsAsync(roleId);
         }
 
         public Task<object> GetEmployeeMasterHeaderEditDataAsync()
@@ -485,9 +485,49 @@ namespace HRMS.EmployeeInformation.Service.Service
             return _employeeRepository.GetEmployeeMasterHeaderEditDataAsync();
         }
 
+        public Task<object> GetFieldsToHideAsync()
+        {
+            return _employeeRepository.GetFieldsToHideAsync();
+        }
+
+        public Task<object> EmployeeCreationFilterAsync()
+        {
+            return _employeeRepository.EmployeeCreationFilterAsync();
+        }
+
         public async Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId)
         {
             return await _employeeRepository.GetDependentsByEmpId(empId);
+        }
+
+        public async Task<List<DailyRatePolicyDto>> GetDailyRatePoliciesAsync()
+        {
+            return await _employeeRepository.GetDailyRatePoliciesAsync();
+        }
+
+        public Task<object> GetWageTypesWithRatesAsync()
+        {
+            return _employeeRepository.GetWageTypesWithRatesAsync();
+        }
+
+        public Task<int> IsEnableWeddingDate(int empId)
+        {
+            return _employeeRepository.IsEnableWeddingDate(empId);
+        }
+
+        public Task<object> GetEmployeePersonalDetails(int empId)
+        {
+            return _employeeRepository.GetEmployeePersonalDetails(empId);
+        }
+
+        public Task<object> FillEmpProject(int empId)
+        {
+            return _employeeRepository.FillEmpProject(empId);
+        }
+
+        public Task<string> DeleteEmployeeDetails(string empIds, int entryBy)
+        {
+            return _employeeRepository.DeleteEmployeeDetails(empIds, entryBy);
         }
     }
 }
