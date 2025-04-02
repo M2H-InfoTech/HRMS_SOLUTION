@@ -519,5 +519,15 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return _employeeRepository.GetEmployeePersonalDetails(empId);
         }
+
+        public Task<object> FillEmpProject(int empId)
+        {
+            return _employeeRepository.FillEmpProject(empId);
+        }
+
+        public Task<string> DeleteEmployeeDetails(string empIds, int entryBy)
+        {
+            return _employeeRepository.DeleteEmployeeDetails(empIds, entryBy);
+        }
     }
 }

@@ -820,14 +820,26 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> IsEnableWeddingDate(int empId)
         {
-            var employeeMasterData = await _employeeInformation.IsEnableWeddingDate(empId);
-            return Ok(employeeMasterData);
+            var employeeWeddingDate = await _employeeInformation.IsEnableWeddingDate(empId);
+            return Ok(employeeWeddingDate);
         }
         [HttpGet]
         public async Task<IActionResult> GetEmployeePersonalDetails(int empId)
         {
-            var employeeMasterData = await _employeeInformation.GetEmployeePersonalDetails(empId);
-            return Ok(employeeMasterData);
+            var employeePersonalDetails = await _employeeInformation.GetEmployeePersonalDetails(empId);
+            return Ok(employeePersonalDetails);
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillEmpProject(int empId)
+        {
+            var employeeProject = await _employeeInformation.FillEmpProject(empId);
+            return Ok(employeeProject);
+        }
+        [HttpDelete]
+        public async Task<IActionResult> DeleteEmployeeDetails(string empIds, int entryBy)
+        {
+            var employeeProject = await _employeeInformation.DeleteEmployeeDetails(empIds, entryBy);
+            return Ok(employeeProject);
         }
     }
 }

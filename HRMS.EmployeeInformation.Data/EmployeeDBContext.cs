@@ -284,6 +284,8 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<SubCategoryLinksNew> SubCategoryLinksNews { get; set; }
 
     public virtual DbSet<Subcategory> Subcategories { get; set; }
+    public virtual DbSet<Project> Projects { get; set; }
+    public virtual DbSet<EmployeeFieldMaster01> EmployeeFieldMaster01s { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4257,6 +4259,35 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.UpdatedDate)
                 .HasDefaultValueSql("(getutcdate())")
                 .HasColumnType("datetime");
+        });
+        modelBuilder.Entity<Project>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("Project");
+
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .IsUnicode(false)
+                .HasColumnName("status");
+        });
+        modelBuilder.Entity<EmployeeFieldMaster01>(entity =>
+        {
+            entity.HasKey(e => e.FieldMaster01Id).HasName("PK__Employee__697671BA59EA847C");
+
+            entity.ToTable("EmployeeFieldMaster01");
+
+            entity.Property(e => e.FieldMaster01Id).HasColumnName("FieldMaster01ID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FieldCode)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.FieldDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.FieldMaster00Id).HasColumnName("FieldMaster00ID");
         });
 
 
