@@ -8776,7 +8776,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                          emp.Ishra,
                                          emp.IsExpat,
                                          emp.MealAllowanceDeduct,
-                                         ServiceLength = GetEmployeeServiceLength(empId),
+                                         ServiceLength = GetEmployeeServiceLength(empId).Result,
                                          emp.CompanyConveyance,
                                          emp.CompanyVehicle,
 
@@ -8865,7 +8865,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
 
             // Get the default company parameter from the function
-            var defaultValue = GetDefaultCompanyParameter(empId, "EMPEDITBUTTN", "EMP1").Result;
+            var defaultValue = await GetDefaultCompanyParameter(empId, "EMPEDITBUTTN", "EMP1");
 
             // If no result from the function, return null or appropriate value
             if (defaultValue == null)
@@ -8962,6 +8962,56 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
         }
+        //private async Task<object> GetDDD(string linkId)
+        //{
+
+        //    var splitLinkIds = linkId.Split(',').Where(id => !string.IsNullOrEmpty(id)).ToList();
+
+
+
+        //    var companyParams = (from a in _context.CompanyParameters
+        //                         join b in _context.CompanyParameters01s on a.Id equals b.ParamId
+        //                         where new[] { "PRODTE", "REVDTE", "EMPNOTCE" }.Contains(a.ParameterCode)
+        //                         && splitLinkIds.Contains(b.LinkId)
+        //                         select new
+        //                         {
+        //                             a.ParameterCode,
+        //                             b.Value,
+        //                             b.LevelId,
+        //                             IsLinked = true
+        //                         })
+        //                        .Union(
+        //                            from a in _context.CompanyParameters
+        //                            where new[] { "PRODTE", "REVDTE", "EMPNOTCE" }.Contains(a.ParameterCode)
+        //                            select new
+        //                            {
+        //                                a.ParameterCode,
+        //                                a.Value,
+        //                                LevelID = (int?)null,
+        //                                IsLinked = false
+        //                            }
+        //                        )
+        //                        .ToList();
+
+        //    var prodte = companyParams.Where(p => p.ParameterCode == "PRODTE")
+        //                               .OrderByDescending(p => p.IsLinked)
+        //                               .ThenByDescending(p => p.LevelID)
+        //                               .FirstOrDefault();
+
+        //    var revdte = companyParams.Where(p => p.ParameterCode == "REVDTE")
+        //                               .OrderByDescending(p => p.IsLinked)
+        //                               .ThenByDescending(p => p.LevelID)
+        //                               .FirstOrDefault();
+
+        //    var empnotce = companyParams.Where(p => p.ParameterCode == "EMPNOTCE")
+        //                                 .OrderByDescending(p => p.IsLinked)
+        //                                 .ThenByDescending(p => p.LevelID)
+        //                                 .FirstOrDefault();
+
+        //    var result = new { PRODTE = prodte, REVDTE = revdte, EMPNOTCE = empnotce };
+        //    return result;
+
+        //}
     }
 }
 
