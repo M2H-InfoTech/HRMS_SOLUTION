@@ -9055,6 +9055,64 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 return (1, $"Error: {ex.Message}");
             }
         }
+
+        public async Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request)
+        {
+            var employee = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == request.EmpID);
+            var employeePersonal = _context.HrEmpPersonals.FirstOrDefault(e => e.EmpId == request.EmpID);
+            var employeeAddress = _context.HrEmpAddresses.FirstOrDefault(e => e.EmpId == request.EmpID);
+
+            if (employee == null) return (1, "Employee not found");
+
+            // Update Employee Table
+            employee.GuardiansName = request.GuardiansName;
+            employee.NationalIdNo = request.NationalID;
+            employee.PassportNo = request.PassportNo;
+            employee.NoticePeriod = request.NoticePeriod;
+            employee.CountryOfBirth = request.Country2ID;
+            employee.GratuityStrtDate = request.GraStrtDate;
+            employee.FirstEntryDate ??= request.FrstEntryDate;
+            employee.Ishra = request.ISHRA;
+            employee.IsExpat = request.IsExpat;
+            employee.IsMarkAttn = request.MarkAttn;
+            employee.CompanyConveyance = request.CompanyConveyance;
+            employee.CompanyVehicle = request.CompanyVehicle;
+            employee.MealAllowanceDeduct = request.MealAllowanceDeduct;
+            employee.EmpFileNumber = request.EmpFileNumber;
+            employee.ModifiedDate = DateTime.UtcNow;
+
+            // Update Employee Personal Table
+            if (employeePersonal != null)
+            {
+                employeePersonal.MaritalStatus = request.MaritalStatus;
+                employeePersonal.BloodGrp = request.BloodGroup;
+                employeePersonal.Religion = request.ReligionID;
+                employeePersonal.IdentMark = request.IdentificationMark;
+                employeePersonal.EntryBy = request.EntryBy;
+                employeePersonal.EntryDt = request.EntryDate;
+                employeePersonal.Height = request.Height;
+                employeePersonal.Weight = request.Weight;
+                employeePersonal.WeddingDate = request.WeddingDate;
+            }
+
+            // Update Employee Address Table
+            if (employeeAddress != null)
+            {
+                employeeAddress.OfficialEmail = request.EmailId;
+                employeeAddress.PersonalEmail = request.PersonalEMail;
+            }
+
+            // Update ADM_User_Master Table
+            var userRelation = _context.HrEmployeeUserRelations.FirstOrDefault(r => r.EmpId == request.EmpID);
+            if (userRelation != null)
+            {
+                var user = _context.AdmUserMasters.FirstOrDefault(u => u.UserId == userRelation.UserId);
+                if (user != null) user.Email = request.EmailId;
+            }
+
+            await _context.SaveChangesAsync();
+            return (0, _employeeSettings.DataUpdateSuccessStatus);
+        }
     }
 }
 

@@ -510,29 +510,34 @@ namespace HRMS.EmployeeInformation.Service.Service
             return _employeeRepository.GetWageTypesWithRatesAsync();
         }
 
-        public Task<int> IsEnableWeddingDate(int empId)
+        public async Task<int> IsEnableWeddingDate(int empId)
         {
-            return _employeeRepository.IsEnableWeddingDate(empId);
+            return await _employeeRepository.IsEnableWeddingDate(empId);
         }
 
-        public Task<object> GetEmployeePersonalDetails(int empId)
+        public async Task<object> GetEmployeePersonalDetails(int empId)
         {
-            return _employeeRepository.GetEmployeePersonalDetails(empId);
+            return await _employeeRepository.GetEmployeePersonalDetails(empId);
         }
 
-        public Task<object> FillEmpProject(int empId)
+        public async Task<object> FillEmpProject(int empId)
         {
-            return _employeeRepository.FillEmpProject(empId);
+            return await _employeeRepository.FillEmpProject(empId);
         }
 
-        public Task<string> DeleteEmployeeDetails(string empIds, int entryBy)
+        public async Task<string> DeleteEmployeeDetails(string empIds, int entryBy)
         {
-            return _employeeRepository.DeleteEmployeeDetails(empIds, entryBy);
+            return await _employeeRepository.DeleteEmployeeDetails(empIds, entryBy);
         }
 
-        public Task<object> GetProbationEffective(string linkId)
+        public async Task<object> GetProbationEffective(string linkId)
         {
-            return _employeeRepository.GetProbationEffective(linkId);
+            return await _employeeRepository.GetProbationEffective(linkId);
+        }
+
+        public async Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request)
+        {
+            return await _employeeRepository.UpdateEditEmployeeDetailsAsync(request);
         }
 
         //public Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy)

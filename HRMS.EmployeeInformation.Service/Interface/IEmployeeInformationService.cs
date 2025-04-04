@@ -118,6 +118,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<string> DeleteEmployeeDetails(string empIds, int entryBy);
         Task<object> GetProbationEffective(string linkId);
         //Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy);
+        Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
 
     }
 

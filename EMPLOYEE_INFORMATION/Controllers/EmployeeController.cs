@@ -847,7 +847,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var probationEffectDate = await _employeeInformation.GetProbationEffective(linkId);
             return Ok(probationEffectDate);
         }
-
+        [HttpPut]
+        public async Task<IActionResult> UpdateEditEmployeeDetailsAsync([FromBody] UpdateEmployeeRequestDto request)
+        {
+            var employeeProject = await _employeeInformation.UpdateEditEmployeeDetails(request);
+            return Ok(new { employeeProject.Item1, employeeProject.Item2 });
+        }
         //[HttpDelete]
         //public async Task<IActionResult> DeleteSavedEmployee(int empId, string status, int entryBy)
         //{
