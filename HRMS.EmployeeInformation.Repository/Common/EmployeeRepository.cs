@@ -8801,6 +8801,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                          LevelTenDescription = b.LevelTenDescription + " (" + b.LevelEightDescription + "-" + b.LevelNineDescription + ")",
                                          // LevelElevenId = b.LevelElevenId,
                                          LevelElevenDescription = b.LevelElevenDescription + " (" + b.LevelNineDescription + "-" + b.LevelTenDescription + ")",
+                                         LevelTwelveDescription = b.LevelTwelveDescription + " (" + b.LevelTenDescription + "-" + b.LevelElevenDescription + ")",
                                          EnableEditButton = GetEditButtonCode(empId).Result,
                                          IsSave = emp.IsSave ?? 0,
                                          ProfilePercentage = "0%"
