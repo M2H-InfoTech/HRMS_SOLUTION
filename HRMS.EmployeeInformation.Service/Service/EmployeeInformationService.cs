@@ -529,5 +529,15 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return _employeeRepository.DeleteEmployeeDetails(empIds, entryBy);
         }
+
+        public Task<object> GetProbationEffective(string linkId)
+        {
+            return _employeeRepository.GetProbationEffective(linkId);
+        }
+
+        //public Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy)
+        //{
+        //    return _employeeRepository.DeleteSavedEmployee(empId, status, entryBy);
+        //}
     }
 }

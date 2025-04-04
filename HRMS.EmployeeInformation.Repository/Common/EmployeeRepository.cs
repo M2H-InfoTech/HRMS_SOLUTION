@@ -8963,56 +8963,98 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
         }
-        //private async Task<object> GetDDD(string linkId)
-        //{
+        public async Task<object> GetProbationEffective(string linkId)
+        {
 
-        //    var splitLinkIds = linkId.Split(',').Where(id => !string.IsNullOrEmpty(id)).ToList();
+            var splitLinkIds = linkId.Split(',')
+                         .Where(id => int.TryParse(id, out _))  // Ensure only valid integers
+                         .Select(int.Parse)  // Convert to int
+                         .ToList();
+
+            var companyParams = await (from a in _context.CompanyParameters
+                                       join b in _context.CompanyParameters01s on a.Id equals b.ParamId
+                                       where new[] { "PRODTE", "REVDTE", "EMPNOTCE" }.Contains(a.ParameterCode)
+                                       && splitLinkIds.Contains((int)b.LinkId.Value) // Ensure int comparison
+                                       select new
+                                       {
+                                           a.ParameterCode,
+                                           Value = (object)b.Value, // Ensure both return 'object' type
+                                           LevelId = (long?)b.LevelId, // Convert to nullable long
+                                           IsLinked = true
+                                       })
+                             .Union(
+                                 from a in _context.CompanyParameters
+                                 where new[] { "PRODTE", "REVDTE", "EMPNOTCE" }.Contains(a.ParameterCode)
+                                 select new
+                                 {
+                                     a.ParameterCode,
+                                     Value = (object)a.Value, // Ensure both return 'object' type
+                                     LevelId = (long?)null, // Convert to nullable long
+                                     IsLinked = false
+                                 }
+                             )
+                             .ToListAsync();
 
 
 
-        //    var companyParams = (from a in _context.CompanyParameters
-        //                         join b in _context.CompanyParameters01s on a.Id equals b.ParamId
-        //                         where new[] { "PRODTE", "REVDTE", "EMPNOTCE" }.Contains(a.ParameterCode)
-        //                         && splitLinkIds.Contains(b.LinkId)
-        //                         select new
-        //                         {
-        //                             a.ParameterCode,
-        //                             b.Value,
-        //                             b.LevelId,
-        //                             IsLinked = true
-        //                         })
-        //                        .Union(
-        //                            from a in _context.CompanyParameters
-        //                            where new[] { "PRODTE", "REVDTE", "EMPNOTCE" }.Contains(a.ParameterCode)
-        //                            select new
-        //                            {
-        //                                a.ParameterCode,
-        //                                a.Value,
-        //                                LevelID = (int?)null,
-        //                                IsLinked = false
-        //                            }
-        //                        )
-        //                        .ToList();
+            var prodte = companyParams.Where(p => p.ParameterCode == "PRODTE")
+                                       .OrderByDescending(p => p.IsLinked)
+                                       .ThenByDescending(p => p.LevelId)
+                                       .FirstOrDefault();
 
-        //    var prodte = companyParams.Where(p => p.ParameterCode == "PRODTE")
-        //                               .OrderByDescending(p => p.IsLinked)
-        //                               .ThenByDescending(p => p.LevelID)
-        //                               .FirstOrDefault();
+            var revdte = companyParams.Where(p => p.ParameterCode == "REVDTE")
+                                       .OrderByDescending(p => p.IsLinked)
+                                       .ThenByDescending(p => p.LevelId)
+                                       .FirstOrDefault();
 
-        //    var revdte = companyParams.Where(p => p.ParameterCode == "REVDTE")
-        //                               .OrderByDescending(p => p.IsLinked)
-        //                               .ThenByDescending(p => p.LevelID)
-        //                               .FirstOrDefault();
+            var empnotce = companyParams.Where(p => p.ParameterCode == "EMPNOTCE")
+                                         .OrderByDescending(p => p.IsLinked)
+                                         .ThenByDescending(p => p.LevelId)
+                                         .FirstOrDefault();
 
-        //    var empnotce = companyParams.Where(p => p.ParameterCode == "EMPNOTCE")
-        //                                 .OrderByDescending(p => p.IsLinked)
-        //                                 .ThenByDescending(p => p.LevelID)
-        //                                 .FirstOrDefault();
+            var result = new { PRODTE = prodte, REVDTE = revdte, EMPNOTCE = empnotce };
+            return result;
 
-        //    var result = new { PRODTE = prodte, REVDTE = revdte, EMPNOTCE = empnotce };
-        //    return result;
+        }
+        public async Task<string> DeleteSavedEmployee()
+        {
+            return await Task.FromResult(string.Empty);
+        }
+        public async Task<(int errorID, string errorMessage)> DeleteSavedEmployee(int empId, string status, int entryBy)
+        {
+            try
+            {
+                using var transaction = await _context.Database.BeginTransactionAsync();
 
-        //}
+                // Fetch the employee record
+                var employee = await _context.HrEmpMasters.FindAsync(empId);
+                if (employee == null)
+                    return (1, "Employee not found");
+
+                // Insert into history table
+                var history = new DeletedSavedEmployeeHistory
+                {
+                    EmpId = empId,
+                    Comments = status,
+                    EntryBy = entryBy,
+                    EntryDate = DateTime.UtcNow
+                };
+
+                _context.DeletedSavedEmployeeHistories.Add(history);
+                await _context.SaveChangesAsync();
+
+                // Delete from employee master table
+                _context.HrEmpMasters.Remove(employee);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return (0, "Deleted");
+            }
+            catch (Exception ex)
+            {
+                return (1, $"Error: {ex.Message}");
+            }
+        }
     }
 }
 
