@@ -841,5 +841,18 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeProject = await _employeeInformation.DeleteEmployeeDetails(empIds, entryBy);
             return Ok(employeeProject);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetProbationEffective(string linkId)
+        {
+            var probationEffectDate = await _employeeInformation.GetProbationEffective(linkId);
+            return Ok(probationEffectDate);
+        }
+
+        //[HttpDelete]
+        //public async Task<IActionResult> DeleteSavedEmployee(int empId, string status, int entryBy)
+        //{
+        //    var employeeProject = await _employeeInformation.DeleteSavedEmployeeAsync(empId, status, entryBy);
+        //    return Ok(employeeProject);
+        //}
     }
 }

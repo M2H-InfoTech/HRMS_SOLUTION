@@ -286,6 +286,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<Subcategory> Subcategories { get; set; }
     public virtual DbSet<Project> Projects { get; set; }
     public virtual DbSet<EmployeeFieldMaster01> EmployeeFieldMaster01s { get; set; }
+    public virtual DbSet<DeletedSavedEmployeeHistory> DeletedSavedEmployeeHistories { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4288,6 +4289,17 @@ public partial class EmployeeDBContext : DbContext
                 .HasMaxLength(500)
                 .IsUnicode(false);
             entity.Property(e => e.FieldMaster00Id).HasColumnName("FieldMaster00ID");
+        });
+        modelBuilder.Entity<DeletedSavedEmployeeHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__DeletedS__3214EC27E8E28464");
+
+            entity.ToTable("DeletedSavedEmployeeHistory");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.Comments).IsUnicode(false);
+            entity.Property(e => e.EmpId).HasColumnName("EmpID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
         });
 
 
