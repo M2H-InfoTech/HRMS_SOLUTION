@@ -9312,6 +9312,28 @@ namespace HRMS.EmployeeInformation.Repository.Common
             await _context.SaveChangesAsync();
             return (0, _employeeSettings.DataUpdateSuccessStatus);
         }
+        public async Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria)
+        {
+            return mode switch
+            {
+                "GetGeoType" => await _context.HrmValueTypes
+                                              .Where(a => a.Type == "GeoSpacingType")
+                                              .Select(a => new { a.Value, a.Code })
+                                              .ToListAsync(),
+
+                "GetGeoCoordinates" => await _context.MasterGeotaggings
+                                                     .Where(g => g.GeoSpaceType == geoSpacingType
+                                                              && g.GeoCriteria == geoCriteria
+                                                              && g.Status == 1)
+                                                     .Select(g => new
+                                                     {
+                                                         Value = g.GeoMasterId,
+                                                         Description = g.CoordinateName
+                                                     }).ToListAsync(),
+
+                _ => string.Empty
+            };
+        }
     }
 }
 
