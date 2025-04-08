@@ -67,7 +67,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<string> InsertOrUpdateCertificatesAsync(CertificationSaveDto certificates);
         Task<string> UpdateEmployeeTypeAsync(EmployeeTypeDto EmployeeType);
         Task<string> InsertOrUpdateSkillAsync(SaveSkillSetDto skillset);
-        Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds);
+        Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string updateType, string FirstEntityID, int EmpEntityIds);
         Task<object> FillCountryAsync();
         Task<string?> UpdateEmployeeDetailsAsync(EmployeeDetailsUpdateDto employeeDetailsDto);
         Task<string?> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto);
