@@ -853,6 +853,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeProject = await _employeeInformation.UpdateEditEmployeeDetails(request);
             return Ok(new { employeeProject.Item1, employeeProject.Item2 });
         }
+        [HttpGet]
+        public async Task<IActionResult> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria)
+        {
+            var employeeProject = await _employeeInformation.GetGeoDetails(mode, geoSpacingType, geoCriteria);
+            return Ok(employeeProject);
+        }
         //[HttpDelete]
         //public async Task<IActionResult> DeleteSavedEmployee(int empId, string status, int entryBy)
         //{

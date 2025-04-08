@@ -540,6 +540,11 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.UpdateEditEmployeeDetailsAsync(request);
         }
 
+        public async Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria)
+        {
+            return await _employeeRepository.GetGeoDetails(mode, geoSpacingType, geoCriteria);
+        }
+
         //public Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy)
         //{
         //    return _employeeRepository.DeleteSavedEmployee(empId, status, entryBy);
