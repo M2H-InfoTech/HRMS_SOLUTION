@@ -104,6 +104,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<(int ErrorID, string ErrorMessage)> UpdateProfessionalDetailsAsync(HrEmpProfdtlsApprlDto dto);
         Task<(string EmployeeStatuses, string SystemStatuses)> GetEmployeeAndSystemStatuses(int empId);
         Task<string> GetReligionsAsync();
+        Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId);
 
 
     }

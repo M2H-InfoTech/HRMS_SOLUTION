@@ -14,13 +14,18 @@ namespace OFFICEKIT_CORE_ATTENDANCE.OFFICEKIT.Attendance.Service
         {
             return await attendanceLogRepository.GetAttendanceLogsAsync(request);
         }
-        public async Task<bool> AddManualLogAsync(ManualAttendanceLogRequestDto manualLogDto)
+        public async Task<bool> AddOrUpdateManualAttendanceLogAsync(ManualAttendanceLogRequestDto manualLogDto)
         {
             var existingLog = await attendanceLogRepository.GetExistingLogAsync(manualLogDto);
 
             if (existingLog != null)
             {
-                return false; // Duplicate log found, reject the request
+                existingLog.LogDate = manualLogDto.LogDate;
+                existingLog.Direction = manualLogDto.Direction;
+                existingLog.UpdatedDate = DateTime.UtcNow;
+
+                return await attendanceLogRepository.UpdateAttendanceLog(existingLog);
+               
             }
 
             // Convert DTO to Entity using the custom mapper
@@ -30,6 +35,10 @@ namespace OFFICEKIT_CORE_ATTENDANCE.OFFICEKIT.Attendance.Service
             return await attendanceLogRepository.AddManualAttendanceLogAsync(mappedAttendanceLog);
         }
 
+        public Task<bool> DeleteAttendanceLogAsync(int id)
+        {
+            return attendanceLogRepository.DeleteAttendanceLogAsync(id);
+        }
     }
 }
 

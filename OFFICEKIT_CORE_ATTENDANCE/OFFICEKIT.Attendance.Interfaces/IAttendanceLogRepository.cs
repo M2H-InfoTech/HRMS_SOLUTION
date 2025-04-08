@@ -13,6 +13,8 @@ namespace OFFICEKIT_CORE_ATTENDANCE.OFFICEKIT.Attendance.Interfaces
         Task<IEnumerable<AttLogListResponseDto>> GetAttendanceLogsAsync(AttLogListRequestDto request);
         Task<bool> AddManualAttendanceLogAsync(Attendancelog Request);
         Task<Attendancelog?> GetExistingLogAsync(ManualAttendanceLogRequestDto manualLogDto);
+        Task<bool> UpdateAttendanceLog(Attendancelog attendancelog);
+        Task<bool> DeleteAttendanceLogAsync(int logId);
 
     }
 }

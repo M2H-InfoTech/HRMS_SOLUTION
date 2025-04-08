@@ -97,8 +97,20 @@ namespace OFFICEKIT_CORE_ATTENDANCE.OFFICEKIT.Attendance.Repository
                                           && a.Direction == manualLogDto.Direction);
         }
 
+        public async Task<bool> UpdateAttendanceLog(Attendancelog attendancelog)
+        {
+            context.Attendancelogs.Update(attendancelog);
+            return await context.SaveChangesAsync() > 0;
+        }
 
+        public async Task<bool> DeleteAttendanceLogAsync(int logId)
+        {
+            var log = await context.Attendancelogs.FirstOrDefaultAsync(x => x.AttLogId == logId);
+            if (log == null) return false;
 
+            context.Attendancelogs.Remove(log);
+            return await context.SaveChangesAsync() > 0;
+        }
 
     }
 }

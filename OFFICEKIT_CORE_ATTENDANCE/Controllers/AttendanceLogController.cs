@@ -13,7 +13,7 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
     public class AttendanceLogController(IAttendanceLogRepository attendanceLog,IAttendanceLogService attendanceLogService) : ControllerBase
     {
 
-        [HttpPost("employee-names")]
+        [HttpPost]
         public async Task<IActionResult> GetAllEmployeeNames()
         {
             var result = await attendanceLog.GetAllEmployeeNamesAsync();
@@ -26,7 +26,7 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
             return StatusCode(result.StatusCode, result.Error);
 
         }
-        [HttpPost("get-employee-details")]
+        [HttpPost]
         public async Task<IActionResult> GetEmployeeDetails([FromBody] AttendanceLogEmployeeDetailsRequestDto request)
         {
             var result = await attendanceLog.GetEmployeeDetailsAsync(request);
@@ -38,7 +38,7 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
 
             return NotFound("Employee details not found."); // Return 404 if not found
         }
-        [HttpPost("get-attendance-logs")]
+        [HttpPost]
         public async Task<IActionResult> GetAttendanceLogs([FromBody] AttLogListRequestDto request)
         {
             try
@@ -58,17 +58,28 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
             }
         }
 
-        [HttpPost("add-manual-logs")]
-        public async Task<IActionResult> AddAttManualLog(ManualAttendanceLogRequestDto manualLogDto)
+        [HttpPost]
+        public async Task<IActionResult> AddOrUpdateAttManualLog(ManualAttendanceLogRequestDto manualLogDto)
         {
             
             if (manualLogDto == null) return BadRequest("Invalid request data.");
 
-            bool isAdded = await attendanceLogService.AddManualLogAsync(manualLogDto);
+            bool isAdded = await attendanceLogService.AddOrUpdateManualAttendanceLogAsync(manualLogDto);
             if (!isAdded) return Conflict("Duplicate log entry detected.");
             return isAdded ? Ok("Manual attendance log added successfully.") : StatusCode(500, "Failed to add log.");
         }
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAttendanc
+        
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAttendanceLog(int id)
+        {
+            var result = await attendanceLogService.DeleteAttendanceLogAsync(id);
+            if (!result)
+            {
+                return NotFound(new { message = "Attendance log not found or could not be deleted." });
+            }
+
+            return Ok(new { message = "Attendance log deleted successfully." });
+        }
     }
 }

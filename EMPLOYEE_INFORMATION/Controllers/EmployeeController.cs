@@ -757,5 +757,24 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var religion = await _employeeInformation.GetReligionsAsync();
             return Ok(religion);
         }
+        [HttpGet("{empId}")]
+        public async Task<IActionResult> GetDependents(int empId)
+        {
+            try
+            {
+                var result = await _employeeInformation.GetDependentsByEmpId(empId);
+                if (result == null || !result.Any())
+                {
+                    return NotFound($"No dependents found for employee ID {empId}.");
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                
+                return StatusCode(500, "An internal server error occurred. Please try again later.");
+            }
+        }
+
     }
 }
