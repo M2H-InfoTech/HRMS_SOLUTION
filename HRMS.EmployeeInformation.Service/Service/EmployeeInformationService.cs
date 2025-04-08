@@ -336,9 +336,9 @@ namespace HRMS.EmployeeInformation.Service.Service
         //    return await _employeeRepository.UploadEmployeeDocuments(files, skillset);
         //}
 
-        public async Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
+        public async Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string updateType, string FirstEntityID, int EmpEntityIds)
         {
-            return await _employeeRepository.InsertQualification(Qualification, FirstEntityID, EmpEntityIds);
+            return await _employeeRepository.InsertQualification(Qualification, updateType, FirstEntityID, EmpEntityIds);
         }
         public async Task<object> FillCountryAsync()
         {

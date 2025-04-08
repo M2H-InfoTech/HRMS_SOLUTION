@@ -5793,188 +5793,384 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return value;
 
         }
-        public async Task<string> InsertQualification(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
+        public async Task<string> InsertQualification(QualificationTableDto Qualification, string updateType, string FirstEntityID, int EmpEntityIds)
         {
             //throw new NotImplementedException ( );
-
-            var WorkFlowNeed = await (from a in _context.CompanyParameters
-                                      join b in _context.HrmValueTypes on a.Value equals b.Value
-                                      where b.Type == "EmployeeReporting" && a.ParameterCode == "WRKFLO"
-                                      select b.Code).FirstAsync();
-
-            int Qualifid = 0;
-
-            if (WorkFlowNeed == "Yes")
+            var Detailid = Qualification.Qlficationid;
+            if (Detailid == 0)
             {
-                var TransactionID = _context.TransactionMasters
-                               .Where(tm => tm.TransactionType == "Qualification")
-                               .Select(tm => tm.TransactionId)
-                               .FirstOrDefault();
 
+                var WorkFlowNeed = await (from a in _context.CompanyParameters
+                                          join b in _context.HrmValueTypes on a.Value equals b.Value
+                                          where b.Type == "EmployeeReporting" && a.ParameterCode == "WRKFLO"
+                                          select b.Code).FirstAsync();
 
+                int Qualifid = 0;
 
-                //var CodeID = await GetSequence (Qualification.Emp_Id, TransactionID, FirstEntityID, EmpEntityIds);
-
-                var codeID = GetSequence(Qualification.EmpId ?? 0, TransactionID, FirstEntityID, EmpEntityIds);
-
-                if (codeID == null)
+                if (WorkFlowNeed == "Yes")
                 {
-                    return "No sequence";
-                }
-
-                var RequestID = _context.AdmCodegenerationmasters.Where(ac => ac.CodeId == Convert.ToInt32(codeID)).Select(ac => ac.LastSequence).FirstOrDefault();
-
-
-                var qualificationApproval = new HrEmpQualificationApprl
-                {
-                    InstId = Qualification.InstId,
-                    EmpId = Qualification.EmpId ?? 0,
-                    Course = Qualification.Course,
-                    University = Qualification.University,
-                    InstName = Qualification.InstName,
-                    //DurFrm = Qualification.Dur_Frm,
-                    DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm) ? tempDurFrm : (DateTime?)null,
-                    DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo) ? tempDurTo : (DateTime?)null,
-
-                    // DurTo = Qualification.Dur_To,
-                    YearPass = Qualification.YearPass,
-                    MarkPer = Qualification.MarkPer,
-                    Class = Qualification.Class,
-                    Subjects = Qualification.Subjects,
-                    Status = Qualification.Status,
-                    FlowStatus = Qualification.Status,
-                    EntryBy = (int)Qualification.Entryby,
-                    EntryDt = (DateTime)Qualification.EntryDate,
-                    RequestId = RequestID
-                };
-                _context.HrEmpQualificationApprls.Add(qualificationApproval);
-                _context.SaveChanges();
-                Qualification.Qlficationid = qualificationApproval.QlfId;
-
-                Qualifid = qualificationApproval.QlfId;
+                    var TransactionID = _context.TransactionMasters
+                                   .Where(tm => tm.TransactionType == "Qualification")
+                                   .Select(tm => tm.TransactionId)
+                                   .FirstOrDefault();
 
 
-                var codeGenMaster = _context.AdmCodegenerationmasters.FirstOrDefault(ac => ac.CodeId == Convert.ToInt32(codeID));
-                if (codeGenMaster != null)
-                {
-                    codeGenMaster.CurrentCodeValue = (_context.AdmCodegenerationmasters
-                                                          .Where(ac => ac.CodeId == Convert.ToInt32(codeID))
-                                                          .Max(ac => ac.CurrentCodeValue) ?? 0) + 1;
 
-                    string numberFormat = codeGenMaster.NumberFormat;
-                    string currentCodeValue = codeGenMaster.CurrentCodeValue.ToString();
+                    //var CodeID = await GetSequence (Qualification.Emp_Id, TransactionID, FirstEntityID, EmpEntityIds);
 
-                    int length = numberFormat.Length - currentCodeValue.Length;
-                    string seq = numberFormat.Substring(0, length);
-                    string finalCode = codeGenMaster.Code + seq + currentCodeValue;
+                    var codeID = GetSequence(Qualification.EmpId ?? 0, TransactionID, FirstEntityID, EmpEntityIds);
 
-                    codeGenMaster.LastSequence = finalCode;
-                    _context.SaveChanges();
-                }
-            }
-            else
-            {
-                // Check Employee Qualification Settings
-                int? optionenb = GetEmployeeParametersettingsNew(Qualification.Entryby, "ENBQUALIF", _employeeSettings.companyParameterCodesType);
+                    if (codeID == null)
+                    {
+                        return "No sequence";
+                    }
 
-                var qualificationApprl = new HrEmpQualificationApprl
-                {
-                    InstId = Qualification.InstId,
-                    EmpId = Qualification.EmpId ?? 0,
-                    Course = Qualification.Course,
-                    University = Qualification.University,
-                    InstName = Qualification.InstName,
+                    var RequestID = _context.AdmCodegenerationmasters.Where(ac => ac.CodeId == Convert.ToInt32(codeID)).Select(ac => ac.LastSequence).FirstOrDefault();
 
-                    DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm) ? tempDurFrm : (DateTime?)null,
-                    DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo) ? tempDurTo : (DateTime?)null,
 
-                    YearPass = Qualification.YearPass,
-                    MarkPer = Qualification.MarkPer,
-                    Class = Qualification.Class,
-                    Subjects = Qualification.Subjects,
-                    Status = ApprovalStatus.Approved.ToString(),// "A",
-                    FlowStatus = _employeeSettings.E,
-                    EntryBy = (int)Qualification.Entryby,
-                    EntryDt = (DateTime)Qualification.EntryDate,
-                    RequestId = null,
-                    DateFrom = DateTime.UtcNow,
-                    CourseId = Qualification.CourseId,
-                    UniversityId = Qualification.UniversityId,
-                    InstitId = Qualification.InstitutId,
-                    SpecialId = Qualification.SpecialId
-                };
-                _context.HrEmpQualificationApprls.Add(qualificationApprl);
-                _context.SaveChanges();
-
-                if (optionenb == 1)
-                {
-                    var qualification = new HrEmpQualification
+                    var qualificationApproval = new HrEmpQualificationApprl
                     {
                         InstId = Qualification.InstId,
                         EmpId = Qualification.EmpId ?? 0,
                         Course = Qualification.Course,
                         University = Qualification.University,
                         InstName = Qualification.InstName,
-                        DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm1) ? tempDurFrm1 : (DateTime?)null,
-                        DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo1) ? tempDurTo1 : (DateTime?)null,
+                        //DurFrm = Qualification.Dur_Frm,
+                        DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm) ? tempDurFrm : (DateTime?)null,
+                        DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo) ? tempDurTo : (DateTime?)null,
+
+                        // DurTo = Qualification.Dur_To,
+                        YearPass = Qualification.YearPass,
+                        MarkPer = Qualification.MarkPer,
+                        Class = Qualification.Class,
+                        Subjects = Qualification.Subjects,
+                        Status = Qualification.Status,
+                        FlowStatus = Qualification.Status,
+                        EntryBy = (int)Qualification.Entryby,
+                        EntryDt = (DateTime)Qualification.EntryDate,
+                        RequestId = RequestID
+                    };
+                    _context.HrEmpQualificationApprls.Add(qualificationApproval);
+                    _context.SaveChanges();
+                    Qualification.Qlficationid = qualificationApproval.QlfId;
+
+                    Qualifid = qualificationApproval.QlfId;
+
+
+                    var codeGenMaster = _context.AdmCodegenerationmasters.FirstOrDefault(ac => ac.CodeId == Convert.ToInt32(codeID));
+                    if (codeGenMaster != null)
+                    {
+                        codeGenMaster.CurrentCodeValue = (_context.AdmCodegenerationmasters
+                                                              .Where(ac => ac.CodeId == Convert.ToInt32(codeID))
+                                                              .Max(ac => ac.CurrentCodeValue) ?? 0) + 1;
+
+                        string numberFormat = codeGenMaster.NumberFormat;
+                        string currentCodeValue = codeGenMaster.CurrentCodeValue.ToString();
+
+                        int length = numberFormat.Length - currentCodeValue.Length;
+                        string seq = numberFormat.Substring(0, length);
+                        string finalCode = codeGenMaster.Code + seq + currentCodeValue;
+
+                        codeGenMaster.LastSequence = finalCode;
+                        _context.SaveChanges();
+                    }
+                }
+                else
+                {
+                    // Check Employee Qualification Settings
+                    int? optionenb = GetEmployeeParametersettingsNew(Qualification.Entryby, "ENBQUALIF", _employeeSettings.companyParameterCodesType);
+
+                    var qualificationApprl = new HrEmpQualificationApprl
+                    {
+                        InstId = Qualification.InstId,
+                        EmpId = Qualification.EmpId ?? 0,
+                        Course = Qualification.Course,
+                        University = Qualification.University,
+                        InstName = Qualification.InstName,
+
+                        DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm) ? tempDurFrm : (DateTime?)null,
+                        DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo) ? tempDurTo : (DateTime?)null,
 
                         YearPass = Qualification.YearPass,
                         MarkPer = Qualification.MarkPer,
                         Class = Qualification.Class,
                         Subjects = Qualification.Subjects,
+                        Status = ApprovalStatus.Approved.ToString(),// "A",
+                        FlowStatus = _employeeSettings.E,
                         EntryBy = (int)Qualification.Entryby,
                         EntryDt = (DateTime)Qualification.EntryDate,
+                        RequestId = null,
+                        DateFrom = DateTime.UtcNow,
                         CourseId = Qualification.CourseId,
                         UniversityId = Qualification.UniversityId,
                         InstitId = Qualification.InstitutId,
                         SpecialId = Qualification.SpecialId
                     };
-                    _context.HrEmpQualifications.Add(qualification);
+                    _context.HrEmpQualificationApprls.Add(qualificationApprl);
                     _context.SaveChanges();
-                    Qualification.Qlficationid = qualification.QlfId;
 
-                    Qualifid = qualification.QlfId;
-
-                }
-
-                else
-                {
-                    var qualification = new HrEmpQualification
+                    if (optionenb == 1)
                     {
-                        InstId = Qualification.InstId,
-                        EmpId = Qualification.EmpId ?? 0,
-                        Course = Qualification.Course,
-                        University = Qualification.University,
-                        InstName = Qualification.InstName,
-                        DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm2) ? tempDurFrm2 : (DateTime?)null,
-                        DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo2) ? tempDurTo2 : (DateTime?)null,
-                        YearPass = Qualification.YearPass,
-                        MarkPer = Qualification.MarkPer,
-                        Class = Qualification.Class,
-                        Subjects = Qualification.Subjects,
-                        EntryBy = (int)Qualification.Entryby,
-                        EntryDt = (DateTime)Qualification.EntryDate
-                    };
-                    _context.HrEmpQualifications.Add(qualification);
-                    _context.SaveChanges();
-                    Qualification.Qlficationid = qualification.QlfId;
+                        var qualification = new HrEmpQualification
+                        {
+                            InstId = Qualification.InstId,
+                            EmpId = Qualification.EmpId ?? 0,
+                            Course = Qualification.Course,
+                            University = Qualification.University,
+                            InstName = Qualification.InstName,
+                            DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm1) ? tempDurFrm1 : (DateTime?)null,
+                            DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo1) ? tempDurTo1 : (DateTime?)null,
 
-                    Qualifid = qualification.QlfId;
+                            YearPass = Qualification.YearPass,
+                            MarkPer = Qualification.MarkPer,
+                            Class = Qualification.Class,
+                            Subjects = Qualification.Subjects,
+                            EntryBy = (int)Qualification.Entryby,
+                            EntryDt = (DateTime)Qualification.EntryDate,
+                            CourseId = Qualification.CourseId,
+                            UniversityId = Qualification.UniversityId,
+                            InstitId = Qualification.InstitutId,
+                            SpecialId = Qualification.SpecialId
+                        };
+                        _context.HrEmpQualifications.Add(qualification);
+                        _context.SaveChanges();
+                        Qualification.Qlficationid = qualification.QlfId;
 
+                        Qualifid = qualification.QlfId;
+
+                    }
+
+                    else
+                    {
+                        var qualification = new HrEmpQualification
+                        {
+                            InstId = Qualification.InstId,
+                            EmpId = Qualification.EmpId ?? 0,
+                            Course = Qualification.Course,
+                            University = Qualification.University,
+                            InstName = Qualification.InstName,
+                            DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm2) ? tempDurFrm2 : (DateTime?)null,
+                            DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo2) ? tempDurTo2 : (DateTime?)null,
+                            YearPass = Qualification.YearPass,
+                            MarkPer = Qualification.MarkPer,
+                            Class = Qualification.Class,
+                            Subjects = Qualification.Subjects,
+                            EntryBy = (int)Qualification.Entryby,
+                            EntryDt = (DateTime)Qualification.EntryDate
+                        };
+                        _context.HrEmpQualifications.Add(qualification);
+                        _context.SaveChanges();
+                        Qualification.Qlficationid = qualification.QlfId;
+
+                        Qualifid = qualification.QlfId;
+
+                    }
+
+                    // Update HR_EMP_MASTER
+                    var empMaster = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == Qualification.EmpId);
+                    if (empMaster != null)
+                    {
+                        empMaster.ModifiedDate = DateTime.UtcNow;
+                        _context.SaveChanges();
+                    }
                 }
 
-                // Update HR_EMP_MASTER
-                var empMaster = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == Qualification.EmpId);
-                if (empMaster != null)
-                {
-                    empMaster.ModifiedDate = DateTime.UtcNow;
-                    _context.SaveChanges();
-                }
+                // Set response message
+                var Error_Message = Qualifid.ToString();
+                return Error_Message;
             }
+            else
+            {
 
-            // Set response message
-            var Error_Message = Qualifid.ToString();
-            return Error_Message;
+                string errorMessage = "";
+                int? optionenb = GetEmployeeParametersettingsNew(Qualification.Entryby, "ENBQUALIF", _employeeSettings.companyParameterCodesType);
+
+
+                if (updateType == "Pending")
+                {
+                    var apprl = await _context.HrEmpQualificationApprls
+                        .FirstOrDefaultAsync(q => q.QlfId == Qualification.Qlficationid && q.EmpId == Qualification.EmpId);
+
+                    if (apprl != null)
+                    {
+                        apprl.Course = Qualification.Course;
+                        apprl.University = Qualification.University;
+                        apprl.InstName = Qualification.InstName;
+                        apprl.DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm) ? tempDurFrm : (DateTime?)null;
+                        apprl.DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo) ? tempDurTo : (DateTime?)null;
+                        apprl.YearPass = Qualification.YearPass;
+                        apprl.MarkPer = Qualification.MarkPer;
+                        apprl.Class = Qualification.Class;
+                        apprl.Subjects = Qualification.Subjects;
+                        apprl.EntryBy = Qualification.Entryby;
+                        apprl.EntryDt = Qualification.EntryDate;
+                        apprl.Status = "Pending"; // Assuming 'Pending' for status in your case
+
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                else if (updateType == "Approved")
+                {
+                    var workFlowNeed = await _context.CompanyParameters
+                        .Join(_context.HrmValueTypes, a => a.Value, b => b.Value, (a, b) => new { a, b })
+                        .Where(x => x.b.Type == "EmployeeReporting" && x.a.ParameterCode == "WRKFLO")
+                        .Select(x => x.b.Code)
+                        .FirstOrDefaultAsync();
+
+                    if (workFlowNeed == "Yes")
+                    {
+                        var transactionID = await _context.TransactionMasters
+                            .Where(tm => tm.TransactionType == "Qualification")
+                            .Select(tm => tm.TransactionId)
+                            .FirstOrDefaultAsync();
+
+                        var codeID =  GetSequence(Qualification.EmpId ?? 0, transactionID, FirstEntityID, EmpEntityIds);
+                       // GetSequence(Qualification.EmpId ?? 0, TransactionID, FirstEntityID, EmpEntityIds);
+                        if (codeID == null)
+                        {
+                            errorMessage = "NoSequence";
+                            return errorMessage;
+                        }
+
+                        var requestID = await _context.AdmCodegenerationmasters
+                            .Where(ac => ac.CodeId == Convert.ToInt32(codeID))
+                            .Select(ac => ac.LastSequence)
+                            .FirstOrDefaultAsync();
+
+                        //var codeGenMaster = _context.AdmCodegenerationmasters.FirstOrDefault(ac => ac.CodeId == Convert.ToInt32(codeID));
+
+                        var qualificationApproval = new HrEmpQualificationApprl
+                        {
+                            InstId = Qualification.InstId,
+                            EmpId = Qualification.EmpId ?? 0,
+                            Course = Qualification.Course,
+                            University = Qualification.University,
+                            InstName = Qualification.InstName,
+                            DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm) ? tempDurFrm : (DateTime?)null,
+                            DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo) ? tempDurTo : (DateTime?)null,
+                            YearPass = Qualification.YearPass,
+                            MarkPer = Qualification.MarkPer,
+                            Class = Qualification.Class,
+                            Subjects = Qualification.Subjects,
+                            Status = "Approved",
+                            FlowStatus = "E", // Assuming 'E' as FlowStatus
+                            EntryBy = Qualification.Entryby,
+                            EntryDt = Qualification.EntryDate,
+                            RequestId = requestID,
+                            MasterId = Qualification.Qlficationid // Assuming MasterID should be set here
+                        };
+
+                        _context.HrEmpQualificationApprls.Add(qualificationApproval);
+                        await _context.SaveChangesAsync();
+
+                        errorMessage = "Successfully Updated";
+
+                        // Workflow handling (assuming some function exists for this)
+                       // await WorkFlowActivityFlowAsync(qualification.EmpId, "Qualification", qualificationApproval.QlfId, qualification.Entryby);
+
+                        // Update code generation
+                        var codeGenMaster = await _context.AdmCodegenerationmasters
+                            .Where(ac => ac.CodeId == Convert.ToInt32(codeID))
+                            .FirstOrDefaultAsync();
+
+                        if (codeGenMaster != null)
+                        {
+                            codeGenMaster.CurrentCodeValue = (await _context.AdmCodegenerationmasters
+                                    .Where(ac => ac.CodeId == Convert.ToInt32(codeID))
+                                    .MaxAsync(ac => (int?)ac.CurrentCodeValue)) ?? 0 + 1;
+
+                            string numberFormat = codeGenMaster.NumberFormat;
+                            string currentCodeValue = codeGenMaster.CurrentCodeValue.ToString();
+
+                            int length = numberFormat.Length - currentCodeValue.Length;
+                            string seq = numberFormat.Substring(0, length);
+                            string finalCode = codeGenMaster.Code + seq + currentCodeValue;
+
+                            codeGenMaster.LastSequence = finalCode;
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                    else if (workFlowNeed == "No")
+                    {
+                        if (optionenb == 1)
+                        {
+                            var qualificationRecord = await _context.HrEmpQualifications
+                                .FirstOrDefaultAsync(q => q.QlfId == Qualification.Qlficationid && q.EmpId == Qualification.EmpId);
+
+                            if (qualificationRecord != null)
+                            {
+                                qualificationRecord.Course = Qualification.Course;
+                                qualificationRecord.University = Qualification.University;
+                                qualificationRecord.InstName = Qualification.InstName;
+                                qualificationRecord.DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm1) ? tempDurFrm1: (DateTime?)null;
+                                qualificationRecord.DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo1) ? tempDurTo1 : (DateTime?)null;
+                                qualificationRecord.YearPass = Qualification.YearPass;
+                                qualificationRecord.MarkPer = Qualification.MarkPer;
+                                qualificationRecord.Class = Qualification.Class;
+                                qualificationRecord.Subjects = Qualification.Subjects;
+                                qualificationRecord.EntryBy = Qualification.Entryby;
+                                qualificationRecord.EntryDt = Qualification.EntryDate;
+                                qualificationRecord.CourseId = Qualification.CourseId;
+                                qualificationRecord.UniversityId = Qualification.UniversityId;
+                                qualificationRecord.InstitId = Qualification.InstitutId;
+                                qualificationRecord.SpecialId = Qualification.SpecialId;
+
+                                await _context.SaveChangesAsync();
+                            }
+                        }
+                        else
+                        {
+                            var qualificationRecord = await _context.HrEmpQualifications
+                                .FirstOrDefaultAsync(q => q.QlfId == Qualification.Qlficationid && q.EmpId == Qualification.EmpId);
+
+                            if (qualificationRecord != null)
+                            {
+                                qualificationRecord.Course = Qualification.Course;
+                                qualificationRecord.University = Qualification.University;
+                                qualificationRecord.InstName = Qualification.InstName;
+                                qualificationRecord.DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm2) ? tempDurFrm2 : (DateTime?)null;
+                                qualificationRecord.DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo2) ? tempDurTo2 : (DateTime?)null;
+                                qualificationRecord.YearPass = Qualification.YearPass;
+                                qualificationRecord.MarkPer = Qualification.MarkPer;
+                                qualificationRecord.Class = Qualification.Class;
+                                qualificationRecord.Subjects = Qualification.Subjects;
+                                qualificationRecord.EntryBy = Qualification.Entryby;
+                                qualificationRecord.EntryDt = Qualification.EntryDate;
+
+                                await _context.SaveChangesAsync();
+                            }
+                        }
+
+                        // Insert to HR_EMP_QUALIFICATION_APPRL
+                        var qualificationApproval = new HrEmpQualificationApprl
+                        {
+                            InstId = Qualification.InstId,
+                            EmpId = Qualification.EmpId ?? 0,
+                            Course = Qualification.Course,
+                            University = Qualification.University,
+                            InstName = Qualification.InstName,
+                            DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm) ? tempDurFrm : (DateTime?)null,
+                            DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo) ? tempDurTo : (DateTime?)null,
+                            YearPass = Qualification.YearPass,
+                            MarkPer = Qualification.MarkPer,
+                            Class = Qualification.Class,
+                            Subjects = Qualification.Subjects,
+                            Status = "A",
+                            FlowStatus = "E", // Assuming 'E' as FlowStatus
+                            EntryBy = Qualification.Entryby,
+                            EntryDt = Qualification.EntryDate,
+                            RequestId = null,
+                            DateFrom = DateTime.UtcNow,
+                            MasterId = Qualification.Qlficationid
+                        };
+
+                        _context.HrEmpQualificationApprls.Add(qualificationApproval);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                return errorMessage;
+            }
         }
         public async Task<object> FillCountry()
         {

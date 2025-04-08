@@ -68,7 +68,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates);
         Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType);
         Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset);
-        Task<string> InsertQualification(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds);
+        Task<string> InsertQualification(QualificationTableDto Qualification, string updateType, string FirstEntityID, int EmpEntityIds);
         Task<object> FillCountry();
         Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus);
         Task<List<object>> AssetGroupDropdownEdit();

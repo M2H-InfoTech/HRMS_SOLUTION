@@ -511,9 +511,9 @@ namespace EMPLOYEE_INFORMATION.Controllers
         //}
 
         [HttpPost]
-        public async Task<IActionResult> InsertQualification([FromBody] QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
+        public async Task<IActionResult> InsertQualification([FromBody] QualificationTableDto Qualification, string updateType, string FirstEntityID, int EmpEntityIds)
         {
-            var empqualification = await _employeeInformation.InsertQualificationAsync(Qualification, FirstEntityID, EmpEntityIds);
+            var empqualification = await _employeeInformation.InsertQualificationAsync(Qualification, updateType, FirstEntityID, EmpEntityIds);
 
 
 
