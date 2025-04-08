@@ -20,6 +20,7 @@ public class LeaveDBContext : DbContext
     public virtual DbSet<HrmLeavePartialPayment> HrmLeavePartialPayments { get; set; }
     public virtual DbSet<HrmLeaveBasicsettingsDetail> HrmLeaveBasicsettingsDetails { get; set; }
     public virtual DbSet<HrmLeaveBasicsettingsDetailsHistory> HrmLeaveBasicsettingsDetailsHistories { get; set; }
+    public virtual DbSet<EntityLevelOne> EntityLevelOnes { get; set; }
     protected override void OnConfiguring (DbContextOptionsBuilder optionsBuilder)
 
         //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OFFICEKITCORELEAVE.OfficeKit.Leave.DTO;
 using OFFICEKITCORELEAVE.OfficeKit.Leave.MODELS;
+using OFFICEKITCORELEAVE.OfficeKitHR.Leave.DTO;
 using OFFICEKITCORELEAVE.OfficeKitHR.Leave.Interface.LeaveInterfaces;
 
 namespace OFFICEKITCORELEAVE.Controllers
@@ -75,6 +76,12 @@ namespace OFFICEKITCORELEAVE.Controllers
                 return BadRequest ("Please Provide A Id");
             }
             var result = await _leaveMasterService.DeleteLeaveMaster (LeaveMasterId);
+            return Ok (result);
+        }
+        [HttpPost("EntityApplicableSave")]
+        public async Task<IActionResult> EntityApplicableSave (SaveApplicableParameters Dto )
+        {
+            var result = await _leaveMasterService.EntityApplicableSave (Dto);
             return Ok (result);
         }
     }

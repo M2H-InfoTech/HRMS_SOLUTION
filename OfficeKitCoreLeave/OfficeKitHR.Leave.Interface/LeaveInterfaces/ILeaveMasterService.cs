@@ -1,5 +1,6 @@
 ﻿using OFFICEKITCORELEAVE.OfficeKit.Leave.DTO;
 using OFFICEKITCORELEAVE.OfficeKit.Leave.MODELS;
+using OFFICEKITCORELEAVE.OfficeKitHR.Leave.DTO;
 
 namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.Interface.LeaveInterfaces
 {
@@ -10,6 +11,6 @@ namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.Interface.LeaveInterfaces
         Task<List<HrmLeaveMasterViewDto>> GetAllLeaveMasters (HrmLeaveMasterSearchDto sortDto);
         Task<HrmLeaveMasterDTO> GetLeaveMasterById (int leaveMasterId);
         Task<bool> Checkexistance (string leaveCode);
-
+        Task<int> EntityApplicableSave (SaveApplicableParameters dto);
     }
 }
