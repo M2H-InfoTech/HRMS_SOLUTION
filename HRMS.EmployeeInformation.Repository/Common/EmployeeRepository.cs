@@ -3098,14 +3098,17 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             FileName = c.FolderName + a.FileName,
                             Status = b.Status
                         };
-            var pendingFiles = files.Where(f => f.Status == ApprovalStatus.Pending.ToString()).ToList();
-            var approvedFiles = files.Where(f => f.Status == ApprovalStatus.Approved.ToString()).ToList();
+            //var pendingFiles = files.Where(f => f.Status == ApprovalStatus.Pending.ToString()).ToList();
+            //var approvedFiles = files.Where(f => f.Status == ApprovalStatus.Approved.ToString()).ToList();
+
+            var pendingFiles = files.Where(f => f.Status == _employeeSettings.Status02).ToList();
+            var approvedFiles = files.Where(f => f.Status == _employeeSettings.EmployeeStatus).ToList();
 
             return new List<AllDocumentsDto>
             {
                  new AllDocumentsDto
                  {
-                     TempDocumentFill = tempDocumentFillList,
+                     //TempDocumentFill = tempDocumentFillList,
                      ApprovedDocuments = ApprovedDos,
                      DocumentList = docList,
                      PendingDocumentsDto = pendingDocuments,
