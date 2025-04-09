@@ -549,5 +549,12 @@ namespace HRMS.EmployeeInformation.Service.Service
         //{
         //    return _employeeRepository.DeleteSavedEmployee(empId, status, entryBy);
         //}
+
+        public async Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos)
+        {
+            return await _employeeRepository.EmployeeHraDtoAsync(EmployeeHraDtos);
+        }
+
+       
     }
 }

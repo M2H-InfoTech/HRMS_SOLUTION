@@ -9334,6 +9334,110 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 _ => string.Empty
             };
         }
+
+        public async Task<string?> EmployeeHraDtoAsync(EmployeeHraDto employeeHraDtos)
+        {
+            string? errorMessage = null;
+
+           
+            foreach (var hraDetail in employeeHraDtos.HraHistory)
+            {
+        
+                var empCode = hraDetail.EmpCode;
+                var isHRA = hraDetail.IsHRA;
+                var remarks = hraDetail.Remarks;
+                var empid = hraDetail.Empid;
+                var entryby = hraDetail.Entryby;
+
+             
+                if (!DateTime.TryParseExact(hraDetail.FromDate,
+                    new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss.fff" },
+                    null,
+                    System.Globalization.DateTimeStyles.None,
+                    out DateTime effectDate))
+                {
+                    errorMessage = "Invalid FromDate format. Expected format: yyyy-MM-dd or yyyy-MM-dd HH:mm:ss.fff.";
+                    return errorMessage;
+                }
+
+             
+                var empHistory = await _context.HraHistories
+                    .Where(h => h.EmployeeId == empid)
+                    .OrderByDescending(h => h.EntryDate)
+                    .FirstOrDefaultAsync();
+
+     
+                if (empHistory != null)
+                {
+           
+                    if (effectDate <= empHistory.FromDate)
+                    {
+                        errorMessage = "AS"; 
+                        return errorMessage;
+                    }
+
+               
+                    var empMaster = await _context.HrEmpMasters
+                        .FirstOrDefaultAsync(e => e.EmpId == empid);
+
+                   
+                    if (empMaster == null)
+                    {
+                        errorMessage = "Employee not found in HR_EMP_MASTER.";
+                        return errorMessage;
+                    }
+
+                   
+                    if (empMaster.Ishra == isHRA)
+                    {
+                        errorMessage = "SS"; 
+                        return errorMessage;
+                    }
+
+               
+                    empMaster.Ishra = isHRA;
+                    empMaster.ModifiedDate = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+
+                   
+                    empHistory.ToDate = effectDate.AddDays(-1); 
+                    await _context.SaveChangesAsync();
+                }
+
+              
+                DateTime? toDate = null;
+                if (hraDetail.ToDate != "string" && !string.IsNullOrWhiteSpace(hraDetail.ToDate))
+                {
+                    if (!DateTime.TryParseExact(hraDetail.ToDate, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateTime parsedToDate))
+                    {
+                        errorMessage = "Invalid ToDate format. Expected format: yyyy-MM-dd.";
+                        return errorMessage;
+                    }
+                    toDate = parsedToDate;
+                }
+
+             
+                var newHraHistory = new HraHistory
+                {
+                    EmployeeId = empid,
+                    IsHra = isHRA,
+                    FromDate = effectDate,
+                    ToDate = toDate, 
+                    Remarks = remarks,
+                    Entryby = entryby 
+                };
+
+                _context.HraHistories.Add(newHraHistory);
+                await _context.SaveChangesAsync();
+
+               
+                errorMessage = "Successfully Saved";
+            }
+
+            return errorMessage;
+        }
+
+
     }
 }
 
