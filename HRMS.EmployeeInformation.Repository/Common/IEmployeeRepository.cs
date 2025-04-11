@@ -38,7 +38,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<Fill_ModulesWorkFlowDto>> FillModulesWorkFlowAsync(int entityID, int linkId);
         Task<List<Fill_WorkFlowMasterDto>> FillWorkFlowMasterAsync(int emp_Id, int roleId);
         Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmpAsync(int linkId, int linkLevel);
-        Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeid, string status);
+        //Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeid, string status);
         Task<List<GetRejoinReportDto>> GetRejoinReportAsync(int employeeId);
         Task<List<GetEmpReportingReportDto>> GetEmpReportingReportAsync(int employeeId);
         Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetailsAsync(int linkId, int linkLevel);
@@ -121,7 +121,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> DeleteEmployeeDetails(string empIds, int entryBy);
         Task<object> GetProbationEffective(string linkId);
         //Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy);
-        Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
+        Task<int> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
+
+        //Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
         Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria);
         Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
 
@@ -129,9 +131,11 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> DeleteCertificate(int certificateid);
 
         Task<string?> AddEmpModuleDetailsAsync(BiometricDto BiometricDto);
-        List<ParamWorkFlowViewDto> GetWorkFlowData (int linkLevel, int valueId);
-        Task<long> UpdateWorkFlowELAsync (ParamWorkFlow01s2sDto dto);
-       
+        List<ParamWorkFlowViewDto> GetWorkFlowData(int linkLevel, int valueId);
+        Task<long> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto);
+        Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status);
+
+
 
     }
 }

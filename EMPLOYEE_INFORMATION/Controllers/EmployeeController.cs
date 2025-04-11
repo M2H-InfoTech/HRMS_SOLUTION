@@ -275,7 +275,9 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> SalarySeries(int employeeId, string status)
         {
-            var SalarySeries = await _employeeInformation.SalarySeriesAsync(employeeId, status);
+            //var SalarySeries = await _employeeInformation.SalarySeriesAsync1(employeeId, status);
+            //return Ok(SalarySeries);
+            var SalarySeries = await _employeeInformation.SalarySeriesAsync1(employeeId, status);
             return Ok(SalarySeries);
         }
 
@@ -851,7 +853,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> UpdateEditEmployeeDetailsAsync([FromBody] UpdateEmployeeRequestDto request)
         {
             var employeeProject = await _employeeInformation.UpdateEditEmployeeDetails(request);
-            return Ok(new { employeeProject.Item1, employeeProject.Item2 });
+            return Ok(employeeProject);
         }
         [HttpGet]
         public async Task<IActionResult> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria)
