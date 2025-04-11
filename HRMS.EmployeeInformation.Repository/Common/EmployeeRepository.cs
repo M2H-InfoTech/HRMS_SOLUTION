@@ -3750,8 +3750,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
         }
-        public async Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeId, string status)
+        public async Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status)
         {
+            // 1. Get distinct pay components (earnings + deductions)
             var payComponents = await (from a in _context.PayscaleRequest01s
                                        join b in _context.PayscaleRequest02s on a.PayRequest01Id equals b.PayRequestId01
                                        join payCode in _context.PayCodeMaster01s on b.PayComponentId equals payCode.PayCodeId
@@ -3759,7 +3760,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                        select new
                                        {
                                            b.PayType,
-                                           payCode.PayCodeDescription
+                                           PayCodeDescription = payCode.PayCodeDescription.Trim()
                                        }).Distinct().AsNoTracking().ToListAsync();
 
             var earningsDescriptions = payComponents
@@ -3767,84 +3768,218 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Select(x => x.PayCodeDescription)
                 .Distinct()
                 .ToList();
+
             var deductionDescriptions = payComponents
                 .Where(x => x.PayType == 2)
                 .Select(x => x.PayCodeDescription)
                 .Distinct()
                 .ToList();
+
             var allDescriptions = earningsDescriptions.Concat(deductionDescriptions).Distinct().ToList();
 
-
-            var pivoted = await (from pr1 in _context.PayscaleRequest01s
-                                 join pr2 in _context.PayscaleRequest02s on pr1.PayRequest01Id equals pr2.PayRequestId01
-                                 join pcm in _context.PayCodeMaster01s on pr2.PayComponentId equals pcm.PayCodeId
+            // 2. Pivot actual pay component amounts
+            var pivoted = await (from pr1 in _context.PayscaleRequest01s.AsNoTracking()
+                                 join pr2 in _context.PayscaleRequest02s.AsNoTracking() on pr1.PayRequest01Id equals pr2.PayRequestId01
+                                 join pcm in _context.PayCodeMaster01s.AsNoTracking() on pr2.PayComponentId equals pcm.PayCodeId
                                  where pr1.EmployeeId == employeeId &&
                                        (pr2.PayType == 1 || pr2.PayType == 2) &&
                                        pr1.EmployeeStatus == status
-                                 group pr2 by new { pr1.PayRequest01Id, pcm.PayCodeDescription } into g
+                                 group pr2 by new { pr1.PayRequest01Id, PayCodeDescription = pcm.PayCodeDescription.Trim() } into g
                                  select new
                                  {
                                      g.Key.PayRequest01Id,
                                      g.Key.PayCodeDescription,
                                      Amount = (decimal?)g.Sum(x => x.Amount) ?? 0
-                                 })
-                        .ToListAsync();
+                                 }).ToListAsync();
 
-            var result1 = pivoted
-        .GroupBy(x => x.PayRequest01Id)
-        .Select(g => new PayComponentPivotDto
-        {
-            PayRequestId01 = (int)g.Key,
-            PayCodeAmounts = earningsDescriptions.ToDictionary(
-                desc => desc,
-                desc => g.FirstOrDefault(x => x.PayCodeDescription == desc)?.Amount ?? 0
-            )
-        })
-        .ToList();
+            // 3. Convert pivot to dictionary for quick lookup
+            var pivotedDict = pivoted
+                .GroupBy(x => x.PayRequest01Id)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.ToDictionary(k => k.PayCodeDescription, v => v.Amount)
+                );
 
+            // 4. Main data query
+            var baseResult = await (
+                from a in _context.PayscaleRequest00s.AsNoTracking()
+                join b in _context.PayscaleRequest01s.AsNoTracking() on a.PayRequestId equals b.PayRequestId
+                join c in _context.EmployeeDetails.AsNoTracking() on b.EmployeeId equals c.EmpId
+                join br in _context.BranchDetails.AsNoTracking() on c.BranchId equals br.LinkId
+                join d in _context.CurrencyMasters.AsNoTracking() on a.CurrencyId equals d.CurrencyId
+                join e in _context.PayscaleRequest02s.AsNoTracking() on b.PayRequest01Id equals e.PayRequestId01
+                join f in _context.PayCodeMaster01s.AsNoTracking() on e.PayComponentId equals f.PayCodeId
+                where b.EmployeeId == employeeId && b.EmployeeStatus == status
+                orderby b.EffectiveDate ascending
+                select new
+                {
+                    c.EmpId,
+                    a.PayRequestId,
+                    b.PayRequest01Id,
+                    c.EmpCode,
+                    c.Name,
+                    Branch = br.Branch,
+                    b.TotalEarnings,
+                    b.TotalDeductions,
+                    b.TotalPay,
+                    b.EffectiveDate,
+                    d.CurrencyCode,
+                    IsArrears = (a.Type == 4),
+                    PaycodeBatch = (from elpb in _context.EmployeeLatestPayrollBatches.AsNoTracking()
+                                    join pcm in _context.PayCodeMaster00s.AsNoTracking() on elpb.PayrollBatchId equals pcm.PayCodeMasterId
+                                    where elpb.EmployeeId == employeeId
+                                    orderby elpb.EntryDate descending
+                                    select pcm.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
+                    PayPeriod = (from elpp in _context.EmployeeLatestPayrollPeriods.AsNoTracking()
+                                 join p in _context.Payroll00s.AsNoTracking() on elpp.PayrollPeriodId equals p.PayrollPeriodId
+                                 where elpp.EmployeeId == employeeId
+                                 orderby elpp.EntryDate descending
+                                 select p.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
+                    Remarks = b.PayscaleEmpRemarks
+                }).Distinct().ToListAsync();
 
+            // 5. Compose final flattened result with all pay components
+            var finalResult = baseResult.Select(row =>
+            {
+                var dict = new Dictionary<string, object>
+                {
+                    ["empId"] = row.EmpId,
+                    ["payRequestId"] = row.PayRequestId,
+                    ["payRequest01Id"] = row.PayRequest01Id,
+                    ["employeeCode"] = row.EmpCode,
+                    ["employeeName"] = row.Name,
+                    ["branch"] = row.Branch,
+                    ["totalEarnings"] = row.TotalEarnings,
+                    ["totalDeductions"] = row.TotalDeductions,
+                    ["totalPay"] = row.TotalPay,
+                    ["effectiveDate"] = row.EffectiveDate?.ToString(_employeeSettings.DateFormat),
+                    ["currencyCode"] = row.CurrencyCode,
+                    ["isArrears"] = row.IsArrears,
+                    ["paycodeBatch"] = row.PaycodeBatch,
+                    ["payPeriod"] = row.PayPeriod,
+                    ["remarks"] = row.Remarks
+                };
 
-            var pivotedDict = result1.ToDictionary(pe => pe.PayRequestId01, pe => pe.PayCodeAmounts);
+                // Add pay components, even if not present
+                if (pivotedDict.TryGetValue(row.PayRequest01Id, out var payComponents))
+                {
+                    foreach (var desc in allDescriptions)
+                    {
+                        dict[desc] = payComponents.ContainsKey(desc) ? payComponents[desc] : 0m;
+                    }
+                }
+                else
+                {
+                    foreach (var desc in allDescriptions)
+                    {
+                        dict[desc] = 0m;
+                    }
+                }
 
-            var result = await (from a in _context.PayscaleRequest00s
-                                join b in _context.PayscaleRequest01s on a.PayRequestId equals b.PayRequestId
-                                join c in _context.EmployeeDetails on b.EmployeeId equals c.EmpId
-                                join br in _context.BranchDetails on c.BranchId equals br.LinkId
-                                join d in _context.CurrencyMasters on a.CurrencyId equals d.CurrencyId
-                                join e in _context.PayscaleRequest02s on b.PayRequest01Id equals e.PayRequestId01
-                                join f in _context.PayCodeMaster01s on e.PayComponentId equals f.PayCodeId
-                                where b.EmployeeId == employeeId && b.EmployeeStatus == status
-                                orderby b.EffectiveDate ascending
-                                select new SalarySeriesDto
-                                {
-                                    EmpId = c.EmpId,
-                                    PayRequestId = (int)a.PayRequestId,
-                                    PayRequest01Id = (int)b.PayRequest01Id,
-                                    EmployeeCode = c.EmpCode,
-                                    EmployeeName = c.Name,
-                                    Branch = br.Branch,
-                                    TotalEarnings = (decimal)b.TotalEarnings,
-                                    TotalDeductions = (decimal)b.TotalDeductions,
-                                    TotalPay = (decimal)b.TotalPay,
-                                    EffectiveDate = b.EffectiveDate != null ? b.EffectiveDate.Value.ToString(_employeeSettings.DateFormat) : null,
-                                    CurrencyCode = d.CurrencyCode,
-                                    IsArrears = (a.Type == 4) ? true : false,
-                                    PaycodeBatch = (from elpb in _context.EmployeeLatestPayrollBatches
-                                                    join pcm in _context.PayCodeMaster00s on elpb.PayrollBatchId equals pcm.PayCodeMasterId
-                                                    where elpb.EmployeeId == employeeId
-                                                    orderby elpb.EntryDate descending
-                                                    select pcm.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
-                                    PayPeriod = (from elpp in _context.EmployeeLatestPayrollPeriods
-                                                 join p in _context.Payroll00s on elpp.PayrollPeriodId equals p.PayrollPeriodId
-                                                 where elpp.EmployeeId == employeeId
-                                                 orderby elpp.EntryDate descending
-                                                 select p.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
-                                    PayComponent = pivotedDict.ContainsKey((int)b.PayRequest01Id) ? pivotedDict[(int)b.PayRequest01Id] : new Dictionary<string, decimal>(),
-                                    Remarks = b.PayscaleEmpRemarks
-                                }).Distinct().ToListAsync();
-            return result;
+                return dict;
+            }).ToList();
 
+            return finalResult;
         }
+
+
+
+        //public async Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeId, string status)
+        //{
+        //    var payComponents = await (from a in _context.PayscaleRequest01s
+        //                               join b in _context.PayscaleRequest02s on a.PayRequest01Id equals b.PayRequestId01
+        //                               join payCode in _context.PayCodeMaster01s on b.PayComponentId equals payCode.PayCodeId
+        //                               where a.EmployeeId == employeeId
+        //                               select new
+        //                               {
+        //                                   b.PayType,
+        //                                   payCode.PayCodeDescription
+        //                               }).Distinct().AsNoTracking().ToListAsync();
+
+        //    var earningsDescriptions = payComponents
+        //        .Where(x => x.PayType == 1)
+        //        .Select(x => x.PayCodeDescription)
+        //        .Distinct()
+        //        .ToList();
+        //    var deductionDescriptions = payComponents
+        //        .Where(x => x.PayType == 2)
+        //        .Select(x => x.PayCodeDescription)
+        //        .Distinct()
+        //        .ToList();
+        //    var allDescriptions = earningsDescriptions.Concat(deductionDescriptions).Distinct().ToList();
+
+
+        //    var pivoted = await (from pr1 in _context.PayscaleRequest01s
+        //                         join pr2 in _context.PayscaleRequest02s on pr1.PayRequest01Id equals pr2.PayRequestId01
+        //                         join pcm in _context.PayCodeMaster01s on pr2.PayComponentId equals pcm.PayCodeId
+        //                         where pr1.EmployeeId == employeeId &&
+        //                               (pr2.PayType == 1 || pr2.PayType == 2) &&
+        //                               pr1.EmployeeStatus == status
+        //                         group pr2 by new { pr1.PayRequest01Id, pcm.PayCodeDescription } into g
+        //                         select new
+        //                         {
+        //                             g.Key.PayRequest01Id,
+        //                             g.Key.PayCodeDescription,
+        //                             Amount = (decimal?)g.Sum(x => x.Amount) ?? 0
+        //                         })
+        //                .ToListAsync();
+
+        //    var result1 = pivoted
+        //.GroupBy(x => x.PayRequest01Id)
+        //.Select(g => new PayComponentPivotDto
+        //{
+        //    PayRequestId01 = (int)g.Key,
+        //    PayCodeAmounts = earningsDescriptions.ToDictionary(
+        //        desc => desc,
+        //        desc => g.FirstOrDefault(x => x.PayCodeDescription == desc)?.Amount ?? 0
+        //    )
+        //})
+        //.ToList();
+
+
+
+        //    var pivotedDict = result1.ToDictionary(pe => pe.PayRequestId01, pe => pe.PayCodeAmounts);
+
+        //    var result = await (from a in _context.PayscaleRequest00s
+        //                        join b in _context.PayscaleRequest01s on a.PayRequestId equals b.PayRequestId
+        //                        join c in _context.EmployeeDetails on b.EmployeeId equals c.EmpId
+        //                        join br in _context.BranchDetails on c.BranchId equals br.LinkId
+        //                        join d in _context.CurrencyMasters on a.CurrencyId equals d.CurrencyId
+        //                        join e in _context.PayscaleRequest02s on b.PayRequest01Id equals e.PayRequestId01
+        //                        join f in _context.PayCodeMaster01s on e.PayComponentId equals f.PayCodeId
+        //                        where b.EmployeeId == employeeId && b.EmployeeStatus == status
+        //                        orderby b.EffectiveDate ascending
+        //                        select new SalarySeriesDto
+        //                        {
+        //                            EmpId = c.EmpId,
+        //                            PayRequestId = (int)a.PayRequestId,
+        //                            PayRequest01Id = (int)b.PayRequest01Id,
+        //                            EmployeeCode = c.EmpCode,
+        //                            EmployeeName = c.Name,
+        //                            Branch = br.Branch,
+        //                            TotalEarnings = (decimal)b.TotalEarnings,
+        //                            TotalDeductions = (decimal)b.TotalDeductions,
+        //                            TotalPay = (decimal)b.TotalPay,
+        //                            EffectiveDate = b.EffectiveDate != null ? b.EffectiveDate.Value.ToString(_employeeSettings.DateFormat) : null,
+        //                            CurrencyCode = d.CurrencyCode,
+        //                            IsArrears = (a.Type == 4) ? true : false,
+        //                            PaycodeBatch = (from elpb in _context.EmployeeLatestPayrollBatches
+        //                                            join pcm in _context.PayCodeMaster00s on elpb.PayrollBatchId equals pcm.PayCodeMasterId
+        //                                            where elpb.EmployeeId == employeeId
+        //                                            orderby elpb.EntryDate descending
+        //                                            select pcm.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
+        //                            PayPeriod = (from elpp in _context.EmployeeLatestPayrollPeriods
+        //                                         join p in _context.Payroll00s on elpp.PayrollPeriodId equals p.PayrollPeriodId
+        //                                         where elpp.EmployeeId == employeeId
+        //                                         orderby elpp.EntryDate descending
+        //                                         select p.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
+        //                            PayComponent = pivotedDict.ContainsKey((int)b.PayRequest01Id) ? pivotedDict[(int)b.PayRequest01Id] : new Dictionary<string, decimal>(),
+
+        //                            Remarks = b.PayscaleEmpRemarks
+        //                        }).Distinct().ToListAsync();
+        //    return result;
+
+        //}
         public async Task<List<FillEmpWorkFlowRoleDto>> FillEmpWorkFlowRoleAsync(int entityID)
         {
             return await (from b in _context.ParamRole00s
@@ -6027,8 +6162,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             .Select(tm => tm.TransactionId)
                             .FirstOrDefaultAsync();
 
-                        var codeID =  GetSequence(Qualification.EmpId ?? 0, transactionID, FirstEntityID, EmpEntityIds);
-                       // GetSequence(Qualification.EmpId ?? 0, TransactionID, FirstEntityID, EmpEntityIds);
+                        var codeID = GetSequence(Qualification.EmpId ?? 0, transactionID, FirstEntityID, EmpEntityIds);
+                        // GetSequence(Qualification.EmpId ?? 0, TransactionID, FirstEntityID, EmpEntityIds);
                         if (codeID == null)
                         {
                             errorMessage = "NoSequence";
@@ -6069,7 +6204,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         errorMessage = "Successfully Updated";
 
                         // Workflow handling (assuming some function exists for this)
-                       // await WorkFlowActivityFlowAsync(qualification.EmpId, "Qualification", qualificationApproval.QlfId, qualification.Entryby);
+                        // await WorkFlowActivityFlowAsync(qualification.EmpId, "Qualification", qualificationApproval.QlfId, qualification.Entryby);
 
                         // Update code generation
                         var codeGenMaster = await _context.AdmCodegenerationmasters
@@ -6105,7 +6240,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                 qualificationRecord.Course = Qualification.Course;
                                 qualificationRecord.University = Qualification.University;
                                 qualificationRecord.InstName = Qualification.InstName;
-                                qualificationRecord.DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm1) ? tempDurFrm1: (DateTime?)null;
+                                qualificationRecord.DurFrm = DateTime.TryParse(Qualification.DurFrm, out var tempDurFrm1) ? tempDurFrm1 : (DateTime?)null;
                                 qualificationRecord.DurTo = DateTime.TryParse(Qualification.DurTo, out var tempDurTo1) ? tempDurTo1 : (DateTime?)null;
                                 qualificationRecord.YearPass = Qualification.YearPass;
                                 qualificationRecord.MarkPer = Qualification.MarkPer;
@@ -9254,14 +9389,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 return (1, $"Error: {ex.Message}");
             }
         }
-
-        public async Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request)
+        public async Task<int> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request)
         {
             var employee = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == request.EmpID);
             var employeePersonal = _context.HrEmpPersonals.FirstOrDefault(e => e.EmpId == request.EmpID);
             var employeeAddress = _context.HrEmpAddresses.FirstOrDefault(e => e.EmpId == request.EmpID);
 
-            if (employee == null) return (1, "Employee not found");
+            if (employee == null) return (0);
 
             // Update Employee Table
             employee.GuardiansName = request.GuardiansName;
@@ -9309,9 +9443,67 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 if (user != null) user.Email = request.EmailId;
             }
 
-            await _context.SaveChangesAsync();
-            return (0, _employeeSettings.DataUpdateSuccessStatus);
+            return await _context.SaveChangesAsync() > 0 ? request.EmpID : 0;
+
         }
+
+        //public async Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request)
+        //{
+        //    var employee = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == request.EmpID);
+        //    var employeePersonal = _context.HrEmpPersonals.FirstOrDefault(e => e.EmpId == request.EmpID);
+        //    var employeeAddress = _context.HrEmpAddresses.FirstOrDefault(e => e.EmpId == request.EmpID);
+
+        //    if (employee == null) return (1, "Employee not found");
+
+        //    // Update Employee Table
+        //    employee.GuardiansName = request.GuardiansName;
+        //    employee.NationalIdNo = request.NationalID;
+        //    employee.PassportNo = request.PassportNo;
+        //    employee.NoticePeriod = request.NoticePeriod;
+        //    employee.CountryOfBirth = request.Country2ID;
+        //    employee.GratuityStrtDate = request.GraStrtDate;
+        //    employee.FirstEntryDate ??= request.FrstEntryDate;
+        //    employee.Ishra = request.ISHRA;
+        //    employee.IsExpat = request.IsExpat;
+        //    employee.IsMarkAttn = request.MarkAttn;
+        //    employee.CompanyConveyance = request.CompanyConveyance;
+        //    employee.CompanyVehicle = request.CompanyVehicle;
+        //    employee.MealAllowanceDeduct = request.MealAllowanceDeduct;
+        //    employee.EmpFileNumber = request.EmpFileNumber;
+        //    employee.ModifiedDate = DateTime.UtcNow;
+
+        //    // Update Employee Personal Table
+        //    if (employeePersonal != null)
+        //    {
+        //        employeePersonal.MaritalStatus = request.MaritalStatus;
+        //        employeePersonal.BloodGrp = request.BloodGroup;
+        //        employeePersonal.Religion = request.ReligionID;
+        //        employeePersonal.IdentMark = request.IdentificationMark;
+        //        employeePersonal.EntryBy = request.EntryBy;
+        //        employeePersonal.EntryDt = request.EntryDate;
+        //        employeePersonal.Height = request.Height;
+        //        employeePersonal.Weight = request.Weight;
+        //        employeePersonal.WeddingDate = request.WeddingDate;
+        //    }
+
+        //    // Update Employee Address Table
+        //    if (employeeAddress != null)
+        //    {
+        //        employeeAddress.OfficialEmail = request.EmailId;
+        //        employeeAddress.PersonalEmail = request.PersonalEMail;
+        //    }
+
+        //    // Update ADM_User_Master Table
+        //    var userRelation = _context.HrEmployeeUserRelations.FirstOrDefault(r => r.EmpId == request.EmpID);
+        //    if (userRelation != null)
+        //    {
+        //        var user = _context.AdmUserMasters.FirstOrDefault(u => u.UserId == userRelation.UserId);
+        //        if (user != null) user.Email = request.EmailId;
+        //    }
+
+        //    await _context.SaveChangesAsync();
+        //    return (request.EmpID, _employeeSettings.DataUpdateSuccessStatus);
+        //}
         public async Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria)
         {
             return mode switch
@@ -9339,17 +9531,17 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             string? errorMessage = null;
 
-           
+
             foreach (var hraDetail in employeeHraDtos.HraHistory)
             {
-        
+
                 var empCode = hraDetail.EmpCode;
                 var isHRA = hraDetail.IsHRA;
                 var remarks = hraDetail.Remarks;
                 var empid = hraDetail.Empid;
                 var entryby = hraDetail.Entryby;
 
-             
+
                 if (!DateTime.TryParseExact(hraDetail.FromDate,
                     new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss.fff" },
                     null,
@@ -9360,51 +9552,51 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     return errorMessage;
                 }
 
-             
+
                 var empHistory = await _context.HraHistories
                     .Where(h => h.EmployeeId == empid)
                     .OrderByDescending(h => h.EntryDate)
                     .FirstOrDefaultAsync();
 
-     
+
                 if (empHistory != null)
                 {
-           
+
                     if (effectDate <= empHistory.FromDate)
                     {
-                        errorMessage = "AS"; 
+                        errorMessage = "AS";
                         return errorMessage;
                     }
 
-               
+
                     var empMaster = await _context.HrEmpMasters
                         .FirstOrDefaultAsync(e => e.EmpId == empid);
 
-                   
+
                     if (empMaster == null)
                     {
                         errorMessage = "Employee not found in HR_EMP_MASTER.";
                         return errorMessage;
                     }
 
-                   
+
                     if (empMaster.Ishra == isHRA)
                     {
-                        errorMessage = "SS"; 
+                        errorMessage = "SS";
                         return errorMessage;
                     }
 
-               
+
                     empMaster.Ishra = isHRA;
                     empMaster.ModifiedDate = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
 
-                   
-                    empHistory.ToDate = effectDate.AddDays(-1); 
+
+                    empHistory.ToDate = effectDate.AddDays(-1);
                     await _context.SaveChangesAsync();
                 }
 
-              
+
                 DateTime? toDate = null;
                 if (hraDetail.ToDate != "string" && !string.IsNullOrWhiteSpace(hraDetail.ToDate))
                 {
@@ -9416,21 +9608,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     toDate = parsedToDate;
                 }
 
-             
+
                 var newHraHistory = new HraHistory
                 {
                     EmployeeId = empid,
                     IsHra = isHRA,
                     FromDate = effectDate,
-                    ToDate = toDate, 
+                    ToDate = toDate,
                     Remarks = remarks,
-                    Entryby = entryby 
+                    Entryby = entryby
                 };
 
                 _context.HraHistories.Add(newHraHistory);
                 await _context.SaveChangesAsync();
 
-               
+
                 errorMessage = "Successfully Saved";
             }
 

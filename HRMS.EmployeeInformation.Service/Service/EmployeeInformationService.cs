@@ -168,10 +168,11 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.TransferAndPromotionAsync(employeeid);
         }
-        public async Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeid, string status)
-        {
-            return await _employeeRepository.SalarySeriesAsync(employeeid, status);
-        }
+
+        //public async Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status)
+        //{
+        //    return await _employeeRepository.SalarySeriesAsync1(employeeId, status);
+        //}
         public async Task<List<AuditInformationDto>> AuditInformationAsync(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
         {
             return await _employeeRepository.AuditInformationAsync(employeeIDs, empId, roleId, infotype, infoDesc, datefrom, dateto);
@@ -536,7 +537,11 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.GetProbationEffective(linkId);
         }
 
-        public async Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request)
+        //public async Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request)
+        //{
+        //    return await _employeeRepository.UpdateEditEmployeeDetailsAsync(request);
+        //}
+        public async Task<int> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request)
         {
             return await _employeeRepository.UpdateEditEmployeeDetailsAsync(request);
         }
@@ -578,7 +583,10 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.UpdateWorkFlowELAsync (dto);
         }
 
-       
+        public async Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status)
+        {
+            return await _employeeRepository.SalarySeriesAsync1(employeeId, status);
+        }
 
     }
 }
