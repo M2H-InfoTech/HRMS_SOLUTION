@@ -2,6 +2,7 @@
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Repository.Common;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Service.Interface
@@ -67,7 +68,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<string> InsertOrUpdateCertificatesAsync(CertificationSaveDto certificates);
         Task<string> UpdateEmployeeTypeAsync(EmployeeTypeDto EmployeeType);
         Task<string> InsertOrUpdateSkillAsync(SaveSkillSetDto skillset);
-        Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds);
+        Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string updateType, string FirstEntityID, int EmpEntityIds);
         Task<object> FillCountryAsync();
         Task<string?> UpdateEmployeeDetailsAsync(EmployeeDetailsUpdateDto employeeDetailsDto);
         Task<string?> UpdatePersonalDetailsAsync(PersonalDetailsUpdateDto personalDetailsDto);
@@ -119,6 +120,13 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<object> GetProbationEffective(string linkId);
         //Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy);
         Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
+        Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria);
+        Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
+        Task<object> GetEmployeeCertifications(int employeeid);
+        Task<string> DeleteCertificate(int certificateid);
+
+        Task<string?> AddEmpModuleDetailsAsync(BiometricDto BiometricDto);
+        
 
     }
 

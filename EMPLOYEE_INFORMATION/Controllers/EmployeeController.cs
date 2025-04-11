@@ -511,9 +511,9 @@ namespace EMPLOYEE_INFORMATION.Controllers
         //}
 
         [HttpPost]
-        public async Task<IActionResult> InsertQualification([FromBody] QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
+        public async Task<IActionResult> InsertQualification([FromBody] QualificationTableDto Qualification, string updateType, string FirstEntityID, int EmpEntityIds)
         {
-            var empqualification = await _employeeInformation.InsertQualificationAsync(Qualification, FirstEntityID, EmpEntityIds);
+            var empqualification = await _employeeInformation.InsertQualificationAsync(Qualification, updateType, FirstEntityID, EmpEntityIds);
 
 
 
@@ -847,11 +847,17 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var probationEffectDate = await _employeeInformation.GetProbationEffective(linkId);
             return Ok(probationEffectDate);
         }
-        [HttpPut]
+        [HttpPost]
         public async Task<IActionResult> UpdateEditEmployeeDetailsAsync([FromBody] UpdateEmployeeRequestDto request)
         {
             var employeeProject = await _employeeInformation.UpdateEditEmployeeDetails(request);
             return Ok(new { employeeProject.Item1, employeeProject.Item2 });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria)
+        {
+            var employeeProject = await _employeeInformation.GetGeoDetails(mode, geoSpacingType, geoCriteria);
+            return Ok(employeeProject);
         }
         //[HttpDelete]
         //public async Task<IActionResult> DeleteSavedEmployee(int empId, string status, int entryBy)
@@ -859,5 +865,32 @@ namespace EMPLOYEE_INFORMATION.Controllers
         //    var employeeProject = await _employeeInformation.DeleteSavedEmployeeAsync(empId, status, entryBy);
         //    return Ok(employeeProject);
         //}
+        [HttpPost]
+        public async Task<IActionResult> HraSave([FromBody] EmployeeHraDto EmployeeHraDtos)
+        {
+            var hraSave = await _employeeInformation.EmployeeHraDtoAsync(EmployeeHraDtos);
+            return Ok(hraSave);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeCertifications(int employeeid)
+        {
+            var employeeCertifications = await _employeeInformation.GetEmployeeCertifications(employeeid);
+            return Ok(employeeCertifications);
+        }
+        [HttpDelete]
+        public async Task<IActionResult> DeleteCertificate(int certificateid)
+        {
+            var deleteCertificate = await _employeeInformation.DeleteCertificate(certificateid);
+            return Ok(deleteCertificate);
+        }
+        //biometric save
+        [HttpPost]
+        public async Task<IActionResult> AddEmpModuleDetails([FromBody] BiometricDto BiometricDto)
+        {
+            var biometrc = await _employeeInformation.AddEmpModuleDetailsAsync(BiometricDto);
+            return Ok(biometrc);
+        }
+
+
     }
 }

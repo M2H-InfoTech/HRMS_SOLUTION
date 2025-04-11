@@ -287,6 +287,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<Project> Projects { get; set; }
     public virtual DbSet<EmployeeFieldMaster01> EmployeeFieldMaster01s { get; set; }
     public virtual DbSet<DeletedSavedEmployeeHistory> DeletedSavedEmployeeHistories { get; set; }
+    public virtual DbSet<MasterGeotagging> MasterGeotaggings { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4300,6 +4301,32 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.Comments).IsUnicode(false);
             entity.Property(e => e.EmpId).HasColumnName("EmpID");
             entity.Property(e => e.EntryDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<MasterGeotagging>(entity =>
+        {
+            entity.HasKey(e => e.GeoMasterId).HasName("PK__Master_G__5873EF327F84BE55");
+
+            entity.ToTable("Master_Geotagging");
+
+            entity.Property(e => e.GeoMasterId).HasColumnName("GeoMaster_ID");
+            entity.Property(e => e.CoordinateName)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Latitude)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.Longitude)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.Radius)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
         });
 
 

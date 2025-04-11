@@ -3,6 +3,7 @@ using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Repository.Common;
 using HRMS.EmployeeInformation.Service.Interface;
 using Microsoft.AspNetCore.Http;
+
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Service.Service
@@ -336,9 +337,9 @@ namespace HRMS.EmployeeInformation.Service.Service
         //    return await _employeeRepository.UploadEmployeeDocuments(files, skillset);
         //}
 
-        public async Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds)
+        public async Task<string> InsertQualificationAsync(QualificationTableDto Qualification, string updateType, string FirstEntityID, int EmpEntityIds)
         {
-            return await _employeeRepository.InsertQualification(Qualification, FirstEntityID, EmpEntityIds);
+            return await _employeeRepository.InsertQualification(Qualification, updateType, FirstEntityID, EmpEntityIds);
         }
         public async Task<object> FillCountryAsync()
         {
@@ -540,9 +541,36 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.UpdateEditEmployeeDetailsAsync(request);
         }
 
+        public async Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria)
+        {
+            return await _employeeRepository.GetGeoDetails(mode, geoSpacingType, geoCriteria);
+        }
+
         //public Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy)
         //{
         //    return _employeeRepository.DeleteSavedEmployee(empId, status, entryBy);
         //}
+
+        public async Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos)
+        {
+            return await _employeeRepository.EmployeeHraDtoAsync(EmployeeHraDtos);
+        }
+        public async Task<object> GetEmployeeCertifications(int employeeid)
+        {
+            return await _employeeRepository.GetEmployeeCertifications(employeeid);
+        }
+        public async Task<string> DeleteCertificate(int certificateid)
+        {
+            return await _employeeRepository.DeleteCertificate(certificateid);
+        }
+
+
+        public async Task<string?> AddEmpModuleDetailsAsync(BiometricDto BiometricDto)
+        {
+            return await _employeeRepository.AddEmpModuleDetailsAsync(BiometricDto);
+        }
+
+       
+
     }
 }

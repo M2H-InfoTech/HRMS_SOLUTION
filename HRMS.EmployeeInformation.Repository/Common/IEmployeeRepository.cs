@@ -68,7 +68,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates);
         Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType);
         Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset);
-        Task<string> InsertQualification(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds);
+        Task<string> InsertQualification(QualificationTableDto Qualification, string updateType, string FirstEntityID, int EmpEntityIds);
         Task<object> FillCountry();
         Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus);
         Task<List<object>> AssetGroupDropdownEdit();
@@ -122,6 +122,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> GetProbationEffective(string linkId);
         //Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy);
         Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
+        Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria);
+        Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
+
+        Task<object> GetEmployeeCertifications(int employeeid);
+        Task<string> DeleteCertificate(int certificateid);
+
+        Task<string?> AddEmpModuleDetailsAsync(BiometricDto BiometricDto);
+       
 
     }
 }

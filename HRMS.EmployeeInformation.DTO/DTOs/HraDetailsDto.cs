@@ -2,6 +2,8 @@
 {
     public class HraDetailsDto
     {
+        public int Empid { get; set; }
+        public int Entryby { get; set; }
         public string? EmpCode { get; set; }
         public string? Name { get; set; }
         public bool IsHRA { get; set; }
