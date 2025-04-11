@@ -128,5 +128,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> GetEmployeeCertifications(int employeeid);
         Task<string> DeleteCertificate(int certificateid);
 
+        Task<string?> AddEmpModuleDetailsAsync(BiometricDto BiometricDto);
+       
+
     }
 }

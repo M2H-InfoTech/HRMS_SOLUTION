@@ -2,6 +2,7 @@
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Repository.Common;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Service.Interface
@@ -123,6 +124,9 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
         Task<object> GetEmployeeCertifications(int employeeid);
         Task<string> DeleteCertificate(int certificateid);
+
+        Task<string?> AddEmpModuleDetailsAsync(BiometricDto BiometricDto);
+        
 
     }
 

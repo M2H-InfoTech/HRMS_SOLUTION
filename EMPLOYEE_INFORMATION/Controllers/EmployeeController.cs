@@ -883,5 +883,14 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var deleteCertificate = await _employeeInformation.DeleteCertificate(certificateid);
             return Ok(deleteCertificate);
         }
+        //biometric save
+        [HttpPost]
+        public async Task<IActionResult> AddEmpModuleDetails([FromBody] BiometricDto BiometricDto)
+        {
+            var biometrc = await _employeeInformation.AddEmpModuleDetailsAsync(BiometricDto);
+            return Ok(biometrc);
+        }
+
+        
     }
 }
