@@ -15,5 +15,6 @@ public partial class HrmValueType
 
     public string? Description { get; set; }
 
+
     public int? ReqId { get; set; }
 }
