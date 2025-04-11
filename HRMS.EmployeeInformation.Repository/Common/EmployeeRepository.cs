@@ -9437,6 +9437,107 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return errorMessage;
         }
 
+        public async Task<object> GetEmployeeCertifications(int employeeid)
+        {
+            var certifications = await _context.EmployeeCertifications
+                .Where(c => c.EmpId == employeeid && c.Status != "D")
+                .Select(c => new
+                {
+                    c.CertificationId,
+                    c.CertificationName,
+                    c.CertificationField,
+                    c.YearofCompletion,
+                    c.IssuingAuthority
+                })
+                .ToListAsync();
+
+            if (certifications == null || !certifications.Any())
+            {
+                return new { message = "No certifications found for the given employee." };
+            }
+
+            return new { certifications };
+        }
+        public async Task<string> DeleteCertificate(int certificateid)
+        {
+
+            var certification = await _context.EmployeeCertifications
+                .FirstOrDefaultAsync(c => c.CertificationId == certificateid);
+
+            if (certification == null)
+            {
+                return "0";
+            }
+
+
+            certification.Status = "D";
+
+
+            await _context.SaveChangesAsync();
+
+
+            return "1";
+        }
+
+
+
+
+        public async Task<string?> AddEmpModuleDetailsAsync(BiometricDto biometricDto)
+        {
+            string? errorMessage = null;
+
+            try
+            {
+                var existingRecord = await _context.BiometricsDtls
+                    .FirstOrDefaultAsync(b => b.EmployeeId == biometricDto.EmployeeID);
+
+                if (existingRecord == null)
+                {
+                    var newBiometric = new BiometricsDtl
+                    {
+                        CompanyId = biometricDto.InstId,
+                        EmployeeId = biometricDto.EmployeeID,
+                        DeviceId = biometricDto.BranchBiometricId,
+                        UserId = biometricDto.BiometricId,
+                        EntryBy = biometricDto.EntryBy,
+                        EntryDt = biometricDto.EntryDt
+                    };
+
+                    await _context.BiometricsDtls.AddAsync(newBiometric);
+                }
+                else
+                {
+                    existingRecord.CompanyId = biometricDto.InstId;
+                    existingRecord.DeviceId = biometricDto.BranchBiometricId;
+                    existingRecord.UserId = biometricDto.BiometricIdEdit ?? biometricDto.BiometricId;
+                    existingRecord.EntryBy = biometricDto.EntryBy;
+                    existingRecord.EntryDt = biometricDto.EntryDt;
+
+                    _context.BiometricsDtls.Update(existingRecord);
+                }
+
+                var empRecord = await _context.HrEmpMasters
+                    .FirstOrDefaultAsync(e => e.EmpId == biometricDto.EmployeeID);
+
+                if (empRecord != null)
+                {
+                    empRecord.IsMarkAttn = biometricDto.MarkAttn;
+                }
+
+                await _context.SaveChangesAsync();
+                errorMessage = "Successfully Saved";
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error: {ex.Message}";
+            }
+
+            return errorMessage;
+        }
+
+
+
+
 
     }
 }

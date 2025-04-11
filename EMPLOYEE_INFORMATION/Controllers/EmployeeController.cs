@@ -871,6 +871,26 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var hraSave = await _employeeInformation.EmployeeHraDtoAsync(EmployeeHraDtos);
             return Ok(hraSave);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeCertifications(int employeeid)
+        {
+            var employeeCertifications = await _employeeInformation.GetEmployeeCertifications(employeeid);
+            return Ok(employeeCertifications);
+        }
+        [HttpDelete]
+        public async Task<IActionResult> DeleteCertificate(int certificateid)
+        {
+            var deleteCertificate = await _employeeInformation.DeleteCertificate(certificateid);
+            return Ok(deleteCertificate);
+        }
+        //biometric save
+        [HttpPost]
+        public async Task<IActionResult> AddEmpModuleDetails([FromBody] BiometricDto BiometricDto)
+        {
+            var biometrc = await _employeeInformation.AddEmpModuleDetailsAsync(BiometricDto);
+            return Ok(biometrc);
+        }
 
+        
     }
 }
