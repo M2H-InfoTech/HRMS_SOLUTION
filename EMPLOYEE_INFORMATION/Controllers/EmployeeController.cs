@@ -897,8 +897,8 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok (result);
         }
         //WORK FLOW MASTER
-        [HttpGet]
-        public async Task<IActionResult> UpdateWorkFlowELAsync (ParamWorkFlow01s2sDto dto)
+        [HttpPost]
+        public async Task<IActionResult> UpdateWorkFlowELAsync ([FromBody]ParamWorkFlow01s2sDto dto)
         {
             var WorkFlowResult = await _employeeInformation.UpdateWorkFlowELAsync (dto);
             return Ok (WorkFlowResult);
