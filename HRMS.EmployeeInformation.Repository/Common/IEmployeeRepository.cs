@@ -123,6 +123,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         //Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy);
         Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
         Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria);
+        Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
 
+      
     }
 }

@@ -865,5 +865,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
         //    var employeeProject = await _employeeInformation.DeleteSavedEmployeeAsync(empId, status, entryBy);
         //    return Ok(employeeProject);
         //}
+        [HttpPost]
+        public async Task<IActionResult> HraSave([FromBody] EmployeeHraDto EmployeeHraDtos)
+        {
+            var hraSave = await _employeeInformation.EmployeeHraDtoAsync(EmployeeHraDtos);
+            return Ok(hraSave);
+        }
+
     }
 }

@@ -120,6 +120,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         //Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy);
         Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
         Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria);
+        Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
 
     }
 
