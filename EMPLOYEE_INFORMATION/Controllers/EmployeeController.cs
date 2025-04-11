@@ -847,7 +847,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var probationEffectDate = await _employeeInformation.GetProbationEffective(linkId);
             return Ok(probationEffectDate);
         }
-        [HttpPut]
+        [HttpPost]
         public async Task<IActionResult> UpdateEditEmployeeDetailsAsync([FromBody] UpdateEmployeeRequestDto request)
         {
             var employeeProject = await _employeeInformation.UpdateEditEmployeeDetails(request);
@@ -891,6 +891,6 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(biometrc);
         }
 
-        
+
     }
 }
