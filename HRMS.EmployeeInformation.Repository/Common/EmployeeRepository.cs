@@ -9437,6 +9437,49 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return errorMessage;
         }
 
+        public async Task<object> GetEmployeeCertifications(int employeeid)
+        {
+            var certifications = await _context.EmployeeCertifications
+                .Where(c => c.EmpId == employeeid && c.Status != "D")
+                .Select(c => new
+                {
+                    c.CertificationId,
+                    c.CertificationName,
+                    c.CertificationField,
+                    c.YearofCompletion,
+                    c.IssuingAuthority
+                })
+                .ToListAsync();
+
+            if (certifications == null || !certifications.Any())
+            {
+                return new { message = "No certifications found for the given employee." };
+            }
+
+            return new { certifications };
+        }
+        public async Task<string> DeleteCertificate(int certificateid)
+        {
+
+            var certification = await _context.EmployeeCertifications
+                .FirstOrDefaultAsync(c => c.CertificationId == certificateid);
+
+            if (certification == null)
+            {
+                return "0";
+            }
+
+
+            certification.Status = "D";
+
+
+            await _context.SaveChangesAsync();
+
+
+            return "1";
+        }
+
+
 
     }
 }

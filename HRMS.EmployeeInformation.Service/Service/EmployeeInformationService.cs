@@ -554,7 +554,15 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.EmployeeHraDtoAsync(EmployeeHraDtos);
         }
+        public async Task<object> GetEmployeeCertifications(int employeeid)
+        {
+            return await _employeeRepository.GetEmployeeCertifications(employeeid);
+        }
+        public async Task<string> DeleteCertificate(int certificateid)
+        {
+            return await _employeeRepository.DeleteCertificate(certificateid);
+        }
 
-       
+
     }
 }

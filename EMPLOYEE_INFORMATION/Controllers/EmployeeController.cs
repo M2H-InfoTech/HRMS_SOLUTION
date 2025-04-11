@@ -871,6 +871,17 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var hraSave = await _employeeInformation.EmployeeHraDtoAsync(EmployeeHraDtos);
             return Ok(hraSave);
         }
-
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeCertifications(int employeeid)
+        {
+            var employeeCertifications = await _employeeInformation.GetEmployeeCertifications(employeeid);
+            return Ok(employeeCertifications);
+        }
+        [HttpDelete]
+        public async Task<IActionResult> DeleteCertificate(int certificateid)
+        {
+            var deleteCertificate = await _employeeInformation.DeleteCertificate(certificateid);
+            return Ok(deleteCertificate);
+        }
     }
 }

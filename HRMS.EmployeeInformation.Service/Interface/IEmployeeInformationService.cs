@@ -121,6 +121,8 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
         Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria);
         Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
+        Task<object> GetEmployeeCertifications(int employeeid);
+        Task<string> DeleteCertificate(int certificateid);
 
     }
 
