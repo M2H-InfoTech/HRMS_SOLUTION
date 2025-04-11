@@ -890,6 +890,19 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var biometrc = await _employeeInformation.AddEmpModuleDetailsAsync(BiometricDto);
             return Ok(biometrc);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetWorkFlowData (int linkLevel, int valueId)
+        {
+            var result = _employeeInformation.GetWorkFlowData (linkLevel, valueId);
+            return Ok (result);
+        }
+        //WORK FLOW MASTER
+        [HttpGet]
+        public async Task<IActionResult> UpdateWorkFlowELAsync (ParamWorkFlow01s2sDto dto)
+        {
+            var WorkFlowResult = await _employeeInformation.UpdateWorkFlowELAsync (dto);
+            return Ok (WorkFlowResult);
+        }
 
 
     }

@@ -126,7 +126,8 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<string> DeleteCertificate(int certificateid);
 
         Task<string?> AddEmpModuleDetailsAsync(BiometricDto BiometricDto);
-        
+        List<ParamWorkFlowViewDto> GetWorkFlowData (int linkLevel, int valueId);
+        Task<long> UpdateWorkFlowELAsync (ParamWorkFlow01s2sDto dto);
 
     }
 

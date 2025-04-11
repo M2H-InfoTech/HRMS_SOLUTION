@@ -9535,6 +9535,89 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return errorMessage;
         }
 
+        public List<ParamWorkFlowViewDto> GetWorkFlowData (int linkLevel, int valueId)
+        {
+            if (linkLevel == 13)
+            {
+                var result = (from a in _context.ParamWorkFlow02s
+                              join b in _context.WorkFlowDetails on a.WorkFlowId equals b.WorkFlowId
+                              join c in _context.TransactionMasters on a.TransactionId equals c.TransactionId
+                              where a.ValueId == valueId
+                              select new ParamWorkFlowViewDto
+                              {
+                                  ValueId = a.ValueId,
+                                  WorkFlowId = b.WorkFlowId,
+                                  TransactionId = c.TransactionId,
+                                  Description = c.Description
+                              }).ToList ( );
+                return result;
+            }
+            else
+            {
+                var result1 = (from a in _context.ParamWorkFlow01s
+                               join b in _context.WorkFlowDetails on a.WorkFlowId equals b.WorkFlowId
+                               join c in _context.TransactionMasters on a.TransactionId equals c.TransactionId
+                               where a.ValueId == valueId
+                               select new ParamWorkFlowViewDto
+                               {
+                                   ValueId = a.ValueId,
+                                   WorkFlowId = b.WorkFlowId,
+                                   TransactionId = c.TransactionId,
+                                   Description = c.Description
+                               }).ToList ( );
+                return result1;
+            }
+        }
+
+        public async Task<long> UpdateWorkFlowELAsync (ParamWorkFlow01s2sDto dto)
+        {
+            try
+            {
+                if (dto.LinkLevel == 13)
+                {
+                    var entity = await _context.ParamWorkFlow02s
+                        .FirstOrDefaultAsync (p => p.ValueId == dto.ValueId);
+
+                    if (entity == null)
+                        return 0;
+
+                    entity.LinkEmpId = dto.LinkId;
+                    entity.WorkFlowId = dto.WorkFlowId;
+                    entity.LinkLevel = dto.LinkLevel;
+                    entity.ModifiedBy = dto.ModifiedBy;
+                    entity.ModifiedDate = DateTime.UtcNow;
+
+                    _context.ParamWorkFlow02s.Update (entity);
+                }
+                else
+                {
+                    var entity = await _context.ParamWorkFlow01s
+                        .FirstOrDefaultAsync (p => p.ValueId == dto.ValueId);
+
+                    if (entity == null)
+                        return 0;
+
+                    entity.LinkId = dto.LinkId;
+                    entity.WorkFlowId = dto.WorkFlowId;
+                    entity.LinkLevel = dto.LinkLevel;
+                    entity.ModifiedBy = dto.ModifiedBy;
+                    entity.ModifiedDate = dto.ModifiedDate;
+
+                    _context.ParamWorkFlow01s.Update (entity);
+                }
+
+                await _context.SaveChangesAsync ( );
+                return dto.ValueId;
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
 
 
 
