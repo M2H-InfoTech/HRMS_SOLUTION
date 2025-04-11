@@ -569,6 +569,14 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.AddEmpModuleDetailsAsync(BiometricDto);
         }
+        public List<ParamWorkFlowViewDto> GetWorkFlowData (int linkLevel, int valueId)
+        {
+            return _employeeRepository.GetWorkFlowData (linkLevel, valueId);
+        }
+        public async Task<long> UpdateWorkFlowELAsync (ParamWorkFlow01s2sDto dto)
+        {
+            return await _employeeRepository.UpdateWorkFlowELAsync (dto);
+        }
 
        
 
