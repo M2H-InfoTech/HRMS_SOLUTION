@@ -1,10 +1,12 @@
 ﻿using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
 using HRMS.EmployeeInformation.Service.Interface;
 using Microsoft.AspNetCore.Http;
 
 using MPLOYEE_INFORMATION.DTO.DTOs;
+using System.Collections.Generic;
 
 namespace HRMS.EmployeeInformation.Service.Service
 {
@@ -586,6 +588,47 @@ namespace HRMS.EmployeeInformation.Service.Service
         public async Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status)
         {
             return await _employeeRepository.SalarySeriesAsync1(employeeId, status);
+        }
+        public async Task<int> GetAgeLimitValue(int empId)
+        {
+            return await _employeeRepository.GetAgeLimitValue(empId);
+        }
+
+        public async Task<ProfessionalDto> GetUpdateProfessional(int empId, string updateType, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateProfessional(empId, updateType, Detailid);
+        }
+        public async Task<QualificationTableDto> GetUpdateQualification(int empId, string updateType, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateQualification(empId, updateType, Detailid);
+        }
+        public async Task<RewardAndRecognitionDto> GetEmployeeRewardsDetails(int empId)
+        {
+            return await _employeeRepository.GetEmployeeRewardsDetails(empId);
+        }
+        public async Task<SkillSetDto> GetUpdateTechnical(int empId, string updateType, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateTechnical(empId, updateType, Detailid);
+        }
+        public async Task<CommunicationTableDto> GetUpdateCommunication(int empId, string updateType, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateCommunication(empId, updateType, Detailid);
+        }
+        public async Task<CommunicationTableDto> GetUpdateCommunicationExtra(int empId, string updateType, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateCommunicationExtra(empId, updateType, Detailid);
+        }
+        public async Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId,int Detailid)
+        {
+            return await _employeeRepository.GetUpdateEmergencyExtra(empId, Detailid);
+        }
+        public async Task<ReferenceDto> GetUpdateReference(int Detailid)
+        {
+            return await _employeeRepository.GetUpdateReference(Detailid);
+        }
+        public async Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid)
+        {
+            return await _employeeRepository.RetrieveEmployeeLanguage(empId, Detailid);
         }
 
     }

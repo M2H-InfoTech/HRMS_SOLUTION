@@ -1,7 +1,9 @@
 ﻿using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.Models;
 using Microsoft.AspNetCore.Http;
 using MPLOYEE_INFORMATION.DTO.DTOs;
+using System.Collections.Generic;
 
 namespace HRMS.EmployeeInformation.Repository.Common
 {
@@ -134,8 +136,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
         List<ParamWorkFlowViewDto> GetWorkFlowData(int linkLevel, int valueId);
         Task<long> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto);
         Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status);
-
-
+        Task<int> GetAgeLimitValue(int empId);
+        Task<ProfessionalDto> GetUpdateProfessional(int empId, string updateType, int Detailid);
+        Task<QualificationTableDto> GetUpdateQualification(int empId, string updateType, int Detailid);
+        Task<RewardAndRecognitionDto> GetEmployeeRewardsDetails(int empId);
+        Task<SkillSetDto> GetUpdateTechnical(int empId, string updateType, int Detailid);
+        Task<CommunicationTableDto> GetUpdateCommunication(int empId, string updateType, int Detailid);
+        Task<CommunicationTableDto> GetUpdateCommunicationExtra(int empId, string updateType, int Detailid);
+        Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId, int Detailid);
+        Task<ReferenceDto> GetUpdateReference(int Detailid);
+        Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid);
 
     }
 }
