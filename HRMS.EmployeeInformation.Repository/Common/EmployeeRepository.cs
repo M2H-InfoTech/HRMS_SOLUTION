@@ -10243,6 +10243,15 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .ToListAsync();
         }
 
+        public async Task<int> EnableNewQualif(int empId)
+        {
+
+            int? optionenb = GetEmployeeParametersettingsNew(empId, "ENBQUALIF", "EMP1");
+            return optionenb ?? 0;
+
+        }
+
+
     }
 }
 

@@ -146,6 +146,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<ReferenceDto> GetUpdateReference(int Detailid);
         Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid);
         Task<object> EmployeeCreationFilterAsync(int? firstEntityId);
+        Task<int> EnableNewQualif(int empId);
 
     }
 }

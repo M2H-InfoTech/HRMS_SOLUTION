@@ -634,5 +634,9 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.EmployeeCreationFilterAsync(firstEntityId);
         }
+        public async Task<int> EnableNewQualif(int empId)
+        {
+            return await _employeeRepository.EnableNewQualif(empId);
+        }
     }
 }

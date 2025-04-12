@@ -973,6 +973,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeCreationFilter = await _employeeInformation.GetAccessLevelByRoleId(firstEntityId);
             return Ok(employeeCreationFilter);
         }
+        [HttpGet]
+        public async Task<IActionResult> EnableNewQualif(int empId)
+        {
+            var EnableNewQualif = await _employeeInformation.EnableNewQualif(empId);
+            return Ok(EnableNewQualif);
+        }
 
     }
 }
