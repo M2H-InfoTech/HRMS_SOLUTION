@@ -879,7 +879,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeCertifications = await _employeeInformation.GetEmployeeCertifications(employeeid);
             return Ok(employeeCertifications);
         }
-        [HttpDelete]
+        [HttpPost]
         public async Task<IActionResult> DeleteCertificate(int certificateid)
         {
             var deleteCertificate = await _employeeInformation.DeleteCertificate(certificateid);
