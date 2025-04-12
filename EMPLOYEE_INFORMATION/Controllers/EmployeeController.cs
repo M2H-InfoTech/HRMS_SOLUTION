@@ -31,7 +31,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(token);
         }
         [HttpPost]
-        public async Task<IActionResult> GetEmployeeById(EmployeeInformationParameters employeeInformationParameters)
+        public async Task<IActionResult> GetEmployeeBootTableData(EmployeeInformationParameters employeeInformationParameters)
         {
             var result = await _employeeInformation.GetEmpData(employeeInformationParameters);
             return Ok(result);
