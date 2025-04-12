@@ -1815,7 +1815,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Fetch employee certifications
             var certifications = await _context.EmployeeCertifications
-                .Where(ec => ec.EmpId == employeeId && ec.Status != ApprovalStatus.Deleted.ToString())
+                .Where(ec => ec.EmpId == employeeId && ec.Status !=_employeeSettings.LetterD)
                 .Select(ec => new CertificationDto
                 {
                     empId = ec.EmpId,
