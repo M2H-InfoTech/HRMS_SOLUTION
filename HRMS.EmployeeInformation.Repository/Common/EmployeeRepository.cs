@@ -9774,7 +9774,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 if (dto.LinkLevel == 13)
                 {
                     var entity = await _context.ParamWorkFlow02s
-                        .FirstOrDefaultAsync (p => p.ValueId == dto.ValueId);
+                        .FirstOrDefaultAsync(p => p.ValueId == dto.ValueId);
 
                     if (entity == null)
                         return 0;
@@ -9785,12 +9785,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     entity.ModifiedBy = dto.ModifiedBy;
                     entity.ModifiedDate = DateTime.UtcNow;
 
-                    _context.ParamWorkFlow02s.Update (entity);
+                    _context.ParamWorkFlow02s.Update(entity);
                 }
                 else
                 {
                     var entity = await _context.ParamWorkFlow01s
-                        .FirstOrDefaultAsync (p => p.ValueId == dto.ValueId);
+                        .FirstOrDefaultAsync(p => p.ValueId == dto.ValueId);
 
                     if (entity == null)
                         return 0;
@@ -9801,10 +9801,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     entity.ModifiedBy = dto.ModifiedBy;
                     entity.ModifiedDate = dto.ModifiedDate;
 
-                    _context.ParamWorkFlow01s.Update (entity);
+                    _context.ParamWorkFlow01s.Update(entity);
                 }
 
-                await _context.SaveChangesAsync ( );
+                await _context.SaveChangesAsync();
                 return dto.ValueId;
             }
             catch (DbUpdateConcurrencyException ex)
@@ -9817,8 +9817,406 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
         }
 
+        public async Task<int> GetAgeLimitValue(int empId)
+        {
+            var AgeLimit = await GetDefaultCompanyParameter(empId, "EMPAGELIMIT", _employeeSettings.companyParameterCodesType);//"EMP1"
+
+            var dateOfBirth = await _context.HrEmpMasters.Where(e => e.EmpId == empId)
+            .Select(e => e.DateOfBirth).FirstOrDefaultAsync();
+
+            var age = DateTime.Now.Year - dateOfBirth.Value.Year;
+            var isAgeLimitValid = (age < Convert.ToInt32(AgeLimit)) ? 1 : 0;
+
+            return isAgeLimitValid;
+
+        }
+
+        public async Task<ProfessionalDto> GetUpdateProfessional(int empId, string updateType, int Detailid)
+        {
+            if (updateType == "Pending")
+            {
+                return await (from a in _context.HrEmpProfdtlsApprls
+                              join b in _context.CurrencyMasters
+                                  on a.CurrencyId equals b.CurrencyId into gj
+                              from b in gj.DefaultIfEmpty()
+                              where a.ProfId == Detailid && a.EmpId == empId
+                              select new ProfessionalDto
+                              {
+                                  Prof_Id = a.ProfId,
+                                  Emp_Id = a.EmpId,
+                                  Comp_Name = a.CompName,
+                                  Designation = a.Designation,
+                                  Comp_Address = a.CompAddress,
+                                  PBno = a.Pbno,
+                                  Contact_Per = a.ContactPer,
+                                  Contact_No = a.ContactNo,
+                                  Job_Desc = a.JobDesc,
+                                  Join_Dt = a.JoinDt.HasValue ? a.JoinDt.Value.ToString("dd/MM/yyyy") : null,
+                                  Leaving_Dt = a.LeavingDt.HasValue ? a.LeavingDt.Value.ToString("dd/MM/yyyy") : null,
+                                  Leave_Reason = a.LeaveReason,
+                                  Ctc = a.Ctc,
+                                  Currency_Id = b != null ? b.CurrencyId : (int?)null,
+                                  Currency = b != null ? b.Currency : null
+                              }).FirstOrDefaultAsync();
+            }
+            else if (updateType == "Approved")
+            {
+                return await (from a in _context.HrEmpProfdtls
+                              join b in _context.CurrencyMasters
+                                  on a.CurrencyId equals b.CurrencyId into gj
+                              from b in gj.DefaultIfEmpty()
+                              where a.ProfId == Detailid && a.EmpId == empId
+                              select new ProfessionalDto
+                              {
+                                  Prof_Id = a.ProfId,
+                                  Emp_Id = a.EmpId,
+                                  Comp_Name = a.CompName,
+                                  Designation = a.Designation,
+                                  Comp_Address = a.CompAddress,
+                                  PBno = a.Pbno,
+                                  Contact_Per = a.ContactPer,
+                                  Contact_No = a.ContactNo,
+                                  Job_Desc = a.JobDesc,
+                                  Join_Dt = a.JoinDt.HasValue ? a.JoinDt.Value.ToString("dd/MM/yyyy") : null,
+                                  Leaving_Dt = a.LeavingDt.HasValue ? a.LeavingDt.Value.ToString("dd/MM/yyyy") : null,
+                                  Leave_Reason = a.LeaveReason,
+                                  Ctc = a.Ctc,
+                                  Currency_Id = b != null ? b.CurrencyId : (int?)null,
+                                  Currency = b != null ? b.Currency : null
+                              }).FirstOrDefaultAsync();
+            }
+
+            return null;
+        }
+
+        public async Task<QualificationTableDto> GetUpdateQualification(int empId, string updateType, int Detailid)
+        {
+            int? optionenb = GetEmployeeParametersettingsNew(empId, "ENBQUALIF", "EMP1");
+
+            //QualificationTableDto result = null;
+
+            if (updateType == "Pending")
+            {
+                if (optionenb == 1)
+                {
+                    return await (from q in _context.HrEmpQualificationApprls
+                              where q.QlfId == Detailid && q.EmpId == empId
+                              select new QualificationTableDto
+                              {
+                                  Qlficationid = q.QlfId,
+                                  EmpId = q.EmpId,
+                                  Course = q.Course,
+                                  University = q.University,
+                                  InstName = q.InstName,
+                                  DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                                  DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                                  YearPass = q.YearPass,
+                                  MarkPer = q.MarkPer,
+                                  Subjects = q.Subjects,
+                                  Class = q.Class,
+                                  CourseId = q.CourseId ?? 0,
+                                  UniversityId = q.UniversityId ?? 0,
+                                  InstitutId = q.InstitId ?? 0,
+                                  SpecialId = q.SpecialId ?? 0
+                              }).FirstOrDefaultAsync();
+                }
+                else
+                {
+                    return await (from q in _context.HrEmpQualificationApprls
+                              where q.QlfId == Detailid && q.EmpId == empId
+                              select new QualificationTableDto
+                              {
+                                  Qlficationid = q.QlfId,
+                                  EmpId = q.EmpId,
+                                  Course = q.Course,
+                                  University = q.University,
+                                  InstName = q.InstName,
+                                  DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                                  DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                                  YearPass = q.YearPass,
+                                  MarkPer = q.MarkPer,
+                                  Subjects = q.Subjects,
+                                  Class = q.Class
+                              }).FirstOrDefaultAsync();
+                }
+            }
+            else if (updateType == "Approved")
+            {
+                if (optionenb == 1)
+                {
+                    return await (from q in _context.HrEmpQualifications
+                              where q.QlfId == Detailid && q.EmpId == empId
+                              select new QualificationTableDto
+                              {
+                                  Qlficationid = q.QlfId,
+                                  EmpId = q.EmpId,
+                                  Course = q.Course,
+                                  University = q.University,
+                                  InstName = q.InstName,
+                                  DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                                  DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                                  YearPass = q.YearPass,
+                                  MarkPer = q.MarkPer,
+                                  Subjects = q.Subjects,
+                                  Class = q.Class,
+                                  CourseId = q.CourseId ?? 0,
+                                  UniversityId = q.UniversityId ?? 0,
+                                  InstitutId = q.InstitId ?? 0,
+                                  SpecialId = q.SpecialId ?? 0
+                              }).FirstOrDefaultAsync();
+                }
+                else
+                {
+                    return await (from q in _context.HrEmpQualifications
+                              where q.QlfId == Detailid && q.EmpId == empId
+                              select new QualificationTableDto
+                              {
+                                  Qlficationid = q.QlfId,
+                                  EmpId = q.EmpId,
+                                  Course = q.Course,
+                                  University = q.University,
+                                  InstName = q.InstName,
+                                  DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                                  DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                                  YearPass = q.YearPass,
+                                  MarkPer = q.MarkPer,
+                                  Subjects = q.Subjects,
+                                  Class = q.Class
+                              }).FirstOrDefaultAsync();
+                }
+            }
+
+            return null;
+        }
+
+        public async Task<RewardAndRecognitionDto> GetEmployeeRewardsDetails(int empId)
+        {
+            return await (from a in _context.EmpRewards
+                          join b in _context.AchievementMasters on a.AchievementId equals b.AchievementId
+                          join c in _context.HrmValueTypes on a.RewardType equals c.Id
+                          where a.EmpId == empId && a.Status == "A"
+                          select new RewardAndRecognitionDto
+                          {
+                              RewardID = a.RewardId,
+                              Emp_id = a.EmpId,
+                              Achievement = b.Description,
+                              RewardType = c.Description,
+                              RewardValue = c.Id,
+                              Rewarddate = a.RewardDate.HasValue ? a.RewardDate.Value.ToString("dd/MM/yyyy") : null,
+                              Reason = a.Reason,
+                              Amount = a.Amount,
+                              rewardidtype = a.RewardType
+                          }).FirstOrDefaultAsync();
+
+           
+        }
+
+        public async Task<SkillSetDto> GetUpdateTechnical(int empId, string updateType, int Detailid)
+        {
+            if (updateType == "Pending")
+            {
+
+            return await (from t in _context.HrEmpTechnicalApprls
+                          where t.TechId == Detailid && t.EmpId == empId
+                          select new SkillSetDto
+                          {
+                              Tech_id = t.TechId,
+                              Emp_Id = t.EmpId,
+                              Course = t.Course,
+                              Course_Dtls = t.CourseDtls,
+                              Year = t.Year,
+                              Dur_Frm = t.DurFrm.HasValue ? t.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                              Dur_To = t.DurTo.HasValue ? t.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                              Mark_Per = t.MarkPer,
+                              langSkills = t.LangSkills,
+                              Inst_Name = t.InstName
+                          }).FirstOrDefaultAsync();
+
+    }
+            else if (updateType == "Approved")
+            {
+
+            return await (from t in _context.HrEmpTechnicals
+                          where t.TechId == Detailid && t.EmpId == empId
+                          select new SkillSetDto
+                          {
+                              Tech_id = t.TechId,
+                              Emp_Id = t.EmpId,
+                              Course = t.Course,
+                              Course_Dtls = t.CourseDtls,
+                              Year = t.Year,
+                              Dur_Frm = t.DurFrm.HasValue ? t.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                              Dur_To = t.DurTo.HasValue ? t.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                              Mark_Per = t.MarkPer,
+                              langSkills = t.LangSkills,
+                              Inst_Name = t.InstName
+                          }).FirstOrDefaultAsync();
+
+    
 
 
+    }
+            return null;
+}
+
+        public async Task<CommunicationTableDto> GetUpdateCommunication(int empId, string updateType, int Detailid)
+        {
+            if (updateType == "Pending")
+            {
+
+                return await (from a in _context.HrEmpAddressApprls
+                              join b in _context.AdmCountryMasters on a.Country equals b.CountryId into gj
+                              from b in gj.DefaultIfEmpty() // LEFT JOIN equivalent
+                              where a.AddId == Detailid && a.EmpId == empId
+                              select new CommunicationTableDto
+                              {
+                                  Inst_Id = a.InstId,
+                                  Add_Id = a.AddId,
+                                  Emp_Id = a.EmpId,
+                                  Add1 = a.Add1,
+                                  Add2 = a.Add2,
+                                  Country_ID = b != null ? b.CountryId : (int?)null, // Safe null handling for LEFT JOIN
+                                  Country_Name = b != null ? b.CountryName : null,
+                                  PBNo = a.Pbno,
+                                  Phone = a.Phone,
+                                  Mobile = a.Mobile,
+                                  OfficePhone = a.OfficePhone,
+                                  Extension = a.Extension,
+                                  EMail = a.Email,
+                                  PersonalEMail = a.PersonalEmail,
+                                  Status = a.Status
+                              }).FirstOrDefaultAsync(); // Get the first matching result (or null if none found)
+
+            }
+            return null;
+    }
+
+        public async Task<CommunicationTableDto> GetUpdateCommunicationExtra(int empId, string updateType, int Detailid)
+        {
+            if (updateType == "Pending")
+            {
+
+                return await (from a in _context.HrEmpAddress01Apprls
+                              join b in _context.AdmCountryMasters on a.Addr2Country equals b.CountryId into gj
+                              from b in gj.DefaultIfEmpty()
+                              where a.AddrId == Detailid && a.EmpId == empId
+                              select new CommunicationTableDto
+                              {
+                                  Add_Id = a.AddrId,
+                                  Emp_Id = (int)a.EmpId,
+                                  Add1 = a.PermanentAddr,
+                                  Add2 = a.ContactAddr,
+                                  PBNo = a.PinNo2,
+                                  Country_ID = b != null ? b.CountryId : (int?)null,
+                                  Country_Name = b != null ? b.CountryName : null,
+                                  Phone = a.PhoneNo,
+                                  Mobile = a.MobileNo,
+                                  OfficePhone = a.AlterPhoneNo,
+                                  Extension = null,
+                                  EMail = null,
+                                  PersonalEMail = null,
+                                  Status = null,
+                                  Inst_Id = 0
+                              }).FirstOrDefaultAsync();
+
+
+            }
+            else if (updateType == "Approved")
+            {
+                return await (from a in _context.HrEmpAddress01s
+                              join b in _context.AdmCountryMasters on a.Addr2Country equals b.CountryId into gj
+                              from b in gj.DefaultIfEmpty() // LEFT JOIN
+                              where a.AddrId == Detailid && a.EmpId == empId
+                              select new CommunicationTableDto
+                              {
+                                  Add_Id = a.AddrId,
+                                  Emp_Id = (int)a.EmpId,
+                                  Add1 = a.PermanentAddr,
+                                  Add2 = a.ContactAddr,
+                                  PBNo = a.PinNo2,
+                                  Country_ID = b != null ? b.CountryId : (int?)null,
+                                  Country_Name = b != null ? b.CountryName : null,
+                                  Phone = a.PhoneNo,
+                                  OfficePhone = a.AlterPhoneNo,
+                                  Mobile = a.MobileNo,
+                                  Inst_Id = 0,
+                                  Extension = null,
+                                  EMail = null,
+                                  PersonalEMail = null,
+                                  Status = null
+                              }).FirstOrDefaultAsync();
+
+
+            }
+            return null;
+        }
+
+        public async Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId, int Detailid)
+        {
+    
+            return await (from a in _context.HrEmpEmergaddresses
+                          join b in _context.AdmCountryMasters on a.Country equals b.CountryId into gj
+                          from b in gj.DefaultIfEmpty() // LEFT JOIN
+                          where a.AddrId == Detailid && a.EmpId == empId
+                          select new CommunicationTableDto
+                          {
+                              Add_Id = a.AddrId,
+                              Emp_Id = (int)a.EmpId,
+                              Add1 = a.Address,
+                              PBNo = a.PinNo,
+                              Country_ID = b != null ? b.CountryId : (int?)null,
+                              Country_Name = b != null ? b.CountryName : null,
+                              Phone = a.PhoneNo,
+                              OfficePhone = a.AlterPhoneNo,
+                              Mobile = a.MobileNo,
+
+                              // Hardcoded or unused fields
+                              Status = "A",
+                              Inst_Id = 0,
+                              Add2 = null,
+                              Extension = null,
+                              EMail = null,
+                              PersonalEMail = null
+                          }).FirstOrDefaultAsync();
+
+  
+
+        }
+
+        public async Task<ReferenceDto> GetUpdateReference(int Detailid)
+        {
+            return await (from a in _context.HrEmpreferences
+                          join b in _context.ConsultantDetails on a.ConsultantId equals b.Id into consultantJoin
+                          from b in consultantJoin.DefaultIfEmpty()
+                          join c in _context.EmployeeDetails on a.RefEmpId equals c.EmpId into empJoin
+                          from c in empJoin.DefaultIfEmpty()
+                          where a.RefId == Detailid
+                          select new ReferenceDto
+                          {
+                              RefID = a.RefId,
+                              RefTypedet = a.RefType == "I" ? "Internal"
+                                         : a.RefType == "E" ? "External" : null,
+                              RefType = a.RefType,
+                              RefMethoddet = a.RefMethod == "C" ? "Consultant"
+                                             : a.RefMethod == "O" ? "Others" : "NA",
+                              RefMethod = a.RefMethod,
+                              Id = b.Id,
+                              ConsultantName = b.ConsultantName ?? "",
+                              RefEmpName = c.Name ?? "",
+                              Emp_Code = c.EmpCode ?? "",
+                              RefEmpID = a.RefEmpId,
+                              RefName = a.RefName ?? "",
+                              PhoneNo = a.PhoneNo ?? "",
+                              Address = a.Address ?? ""
+                          }).FirstOrDefaultAsync();
+        }
+
+        public async Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int detailId)
+        {
+            return await _context.EmployeeLanguageSkills
+                .Where(x => x.EmpId == empId && x.EmpLangId == detailId)
+                .ToListAsync();
+        }
 
     }
 }
