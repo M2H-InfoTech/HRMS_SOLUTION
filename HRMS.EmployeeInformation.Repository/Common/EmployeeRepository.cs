@@ -327,7 +327,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (linkLevelExists)
             {
                 return await InfoFormatOneOrZeroLinkLevelExist(
-                    employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
+                    employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw, employeeInformationParameters.searchValue);
             }
 
             if (employeeInformationParameters.empIds == byte.MinValue.ToString())
@@ -355,7 +355,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             if (linkLevelExists)
             {
-                return await InfoFormatTwoLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
+                return await InfoFormatTwoLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw, employeeInformationParameters.searchValue);
             }
 
             else
@@ -387,7 +387,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             if (linkLevelExists)
             {
-                return await InfoFormatThreeLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw);
+                return await InfoFormatThreeLinkLevelExists(employeeInformationParameters.empStatus, employeeInformationParameters.systemStatus, employeeInformationParameters.empIds, employeeInformationParameters.filterType, employeeInformationParameters.durationFrom, employeeInformationParameters.durationTo, employeeInformationParameters.probationStatus, currentStatusDesc.ToString(), ageFormat, employeeInformationParameters.pageNumber, employeeInformationParameters.pageSize, employeeInformationParameters.draw, employeeInformationParameters.searchValue);
             }
             else
             {
@@ -466,7 +466,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         private async Task<PaginatedResult<EmployeeResultDto>> GetEmployeeLinkLevelExistDataAsync(
            DateTime? durationFrom, DateTime? durationTo, string empSystemStatus, string currentStatusDesc,
-           List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize, int draw)
+           List<int> result, HashSet<int> excludedStatuses, int probationStatus, int pageNumber, int pageSize, int draw, string searchValue)
         {
             var empList = await GetFilteredEmployeesAsync(new HashSet<int> { 4, 5, 8, 9 });
 
@@ -595,15 +595,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                 };
 
+            var filteredQuery = finalQuery
+               .Where(emp =>
+                   string.IsNullOrEmpty(searchValue) || emp.GuardiansName.Contains(searchValue) || emp.EmpCode.Contains(searchValue) || emp.EmpFileNumber.Contains(searchValue) || emp.PersonalEmail.Contains(searchValue) || emp.OfficialEmail.Contains(searchValue) || emp.Phone.Contains(searchValue) || emp.ReportingEmployeeName.Contains(searchValue) || emp.EmpStatus.Contains(searchValue) || emp.LevelOneDescription.Contains(searchValue) || emp.LevelTwoDescription.Contains(searchValue) || emp.LevelThreeDescription.Contains(searchValue) || emp.LevelFourDescription.Contains(searchValue) || emp.LevelFiveDescription.Contains(searchValue) || emp.LevelSixDescription.Contains(searchValue) || emp.LevelSevenDescription.Contains(searchValue) || emp.LevelEightDescription.Contains(searchValue) || emp.LevelNineDescription.Contains(searchValue) || emp.LevelTenDescription.Contains(searchValue) || emp.LevelElevenDescription.Contains(searchValue) || emp.LevelTwelveDescription.Contains(searchValue)
+               );
+
+            var totalRecords = await filteredQuery.CountAsync();
 
 
-
-            var totalRecords = await finalQuery.CountAsync();
-            var paginatedResult = finalQuery
-                .OrderBy(x => x.EmpCode) // Sorting logic
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            var paginatedResult = await filteredQuery
+                                .OrderBy(x => x.EmpCode)
+                                .Skip((pageNumber - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToListAsync();
 
 
             return new PaginatedResult<EmployeeResultDto>
@@ -615,10 +619,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 PageSize = pageSize,
                 data = paginatedResult
             };
+
+
+
         }
 
 
-        private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
+        private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatOneOrZeroLinkLevelExist(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom, DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw, string searchValue)
         {
             //Parse and process the status list
 
@@ -633,7 +640,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var result = statusSet.Where(filteredStatuses.Contains).ToList();
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
-        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw);
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw, searchValue);
 
         }
         private async Task<HashSet<int>> GetStatusSetAsync(bool isResignation, HashSet<int>? excludedSet = null)
@@ -655,7 +662,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                            .ToHashSet();
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatTwoLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw, string searchValue)
         {
 
             var statusSet = ParseStatusList(empStatus);
@@ -666,11 +673,11 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
-        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw);
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw, searchValue);
 
         }
         private async Task<PaginatedResult<EmployeeResultDto>> InfoFormatThreeLinkLevelExists(string? empStatus, string? empSystemStatus, string? empIds, string? filterType, DateTime? durationFrom,
-        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw)
+        DateTime? durationTo, int probationStatus, string? currentStatusDesc, string? ageFormat, int pageNumber, int pageSize, int draw, string searchValue)
         {
 
             var statusSet = ParseStatusList(empStatus);
@@ -682,7 +689,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             return await GetEmployeeLinkLevelExistDataAsync(durationFrom, durationTo, empSystemStatus,
-        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw);
+        currentStatusDesc, result, excludedStatuses, probationStatus, pageNumber, pageSize, draw, searchValue);
 
 
         }

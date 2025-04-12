@@ -16,6 +16,7 @@
         public int pageSize { get; set; }
 
         public int draw { get; set; }
+        public string? searchValue { get; set; }
 
         //public bool linkLevelExists { get; set; }
 
