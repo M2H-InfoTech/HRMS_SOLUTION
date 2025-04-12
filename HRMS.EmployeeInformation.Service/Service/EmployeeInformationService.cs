@@ -6,7 +6,6 @@ using HRMS.EmployeeInformation.Service.Interface;
 using Microsoft.AspNetCore.Http;
 
 using MPLOYEE_INFORMATION.DTO.DTOs;
-using System.Collections.Generic;
 
 namespace HRMS.EmployeeInformation.Service.Service
 {
@@ -576,13 +575,13 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.AddEmpModuleDetailsAsync(BiometricDto);
         }
-        public List<ParamWorkFlowViewDto> GetWorkFlowData (int linkLevel, int valueId)
+        public List<ParamWorkFlowViewDto> GetWorkFlowData(int linkLevel, int valueId)
         {
-            return _employeeRepository.GetWorkFlowData (linkLevel, valueId);
+            return _employeeRepository.GetWorkFlowData(linkLevel, valueId);
         }
-        public async Task<long> UpdateWorkFlowELAsync (ParamWorkFlow01s2sDto dto)
+        public async Task<long> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto)
         {
-            return await _employeeRepository.UpdateWorkFlowELAsync (dto);
+            return await _employeeRepository.UpdateWorkFlowELAsync(dto);
         }
 
         public async Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status)
@@ -618,7 +617,7 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetUpdateCommunicationExtra(empId, updateType, Detailid);
         }
-        public async Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId,int Detailid)
+        public async Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId, int Detailid)
         {
             return await _employeeRepository.GetUpdateEmergencyExtra(empId, Detailid);
         }
@@ -631,5 +630,9 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.RetrieveEmployeeLanguage(empId, Detailid);
         }
 
+        public async Task<object> GetAccessLevelByRoleId(int? firstEntityId)
+        {
+            return await _employeeRepository.EmployeeCreationFilterAsync(firstEntityId);
+        }
     }
 }

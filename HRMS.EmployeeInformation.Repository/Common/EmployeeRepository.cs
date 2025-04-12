@@ -1821,7 +1821,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Fetch employee certifications
             var certifications = await _context.EmployeeCertifications
-                .Where(ec => ec.EmpId == employeeId && ec.Status !=_employeeSettings.LetterD)
+                .Where(ec => ec.EmpId == employeeId && ec.Status != _employeeSettings.LetterD)
                 .Select(ec => new CertificationDto
                 {
                     empId = ec.EmpId,
@@ -8896,6 +8896,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
         public async Task<object> EmployeeCreationFilterAsync()
         {
+
             int linkselect = 0;  // Replace with actual value
             string lnk = "";
             var lnkList = _context.Categorymasters
@@ -8912,7 +8913,31 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 AccessLevels = accessLevels
             };
         }
+        public async Task<object> EmployeeCreationFilterAsync(int? firstEntityId)
+        {
+            var linkselect = await _context.EntityAccessRights02s
+                .Where(e => e.RoleId == firstEntityId)
+                .OrderBy(e => e.LinkLevel)
+                .Select(e => e.LinkLevel)
+                .FirstOrDefaultAsync();
 
+
+            // Replace with actual value
+            string lnk = "";
+            var lnkList = _context.Categorymasters
+               .Where(c => c.SortOrder >= linkselect || linkselect == 15)
+               .Select(c => c.SortOrder.ToString()) // Convert SortOrder to string
+               .ToList();
+
+            // Concatenating SortOrder values into a single string
+            lnk = string.Join(",", lnkList) + ",13";
+            var accessLevels = await GetAccessLevel();
+            return new
+            {
+                LinkData = lnk,
+                AccessLevels = accessLevels
+            };
+        }
         public async Task<IEnumerable<DependentDto1>> GetDependentsByEmpId(int empId)
         {
             return await (from a in _context.Dependent00s
@@ -9733,7 +9758,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return errorMessage;
         }
 
-        public List<ParamWorkFlowViewDto> GetWorkFlowData (int linkLevel, int valueId)
+        public List<ParamWorkFlowViewDto> GetWorkFlowData(int linkLevel, int valueId)
         {
             if (linkLevel == 13)
             {
@@ -9747,7 +9772,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                   WorkFlowId = b.WorkFlowId,
                                   TransactionId = c.TransactionId,
                                   Description = c.Description
-                              }).ToList ( );
+                              }).ToList();
                 return result;
             }
             else
@@ -9762,12 +9787,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                    WorkFlowId = b.WorkFlowId,
                                    TransactionId = c.TransactionId,
                                    Description = c.Description
-                               }).ToList ( );
+                               }).ToList();
                 return result1;
             }
         }
 
-        public async Task<long> UpdateWorkFlowELAsync (ParamWorkFlow01s2sDto dto)
+        public async Task<long> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto)
         {
             try
             {
@@ -9851,8 +9876,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                   Contact_Per = a.ContactPer,
                                   Contact_No = a.ContactNo,
                                   Job_Desc = a.JobDesc,
-                                  Join_Dt = a.JoinDt.HasValue ? a.JoinDt.Value.ToString("dd/MM/yyyy") : null,
-                                  Leaving_Dt = a.LeavingDt.HasValue ? a.LeavingDt.Value.ToString("dd/MM/yyyy") : null,
+                                  Join_Dt = FormatDate(a.JoinDt, _employeeSettings.DateFormat),// a.JoinDt.HasValue ? a.JoinDt.Value.ToString("dd/MM/yyyy") : null,
+                                  Leaving_Dt = FormatDate(a.LeavingDt, _employeeSettings.DateFormat),// a.LeavingDt.HasValue ? a.LeavingDt.Value.ToString("dd/MM/yyyy") : null,
                                   Leave_Reason = a.LeaveReason,
                                   Ctc = a.Ctc,
                                   Currency_Id = b != null ? b.CurrencyId : (int?)null,
@@ -9900,44 +9925,44 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 if (optionenb == 1)
                 {
                     return await (from q in _context.HrEmpQualificationApprls
-                              where q.QlfId == Detailid && q.EmpId == empId
-                              select new QualificationTableDto
-                              {
-                                  Qlficationid = q.QlfId,
-                                  EmpId = q.EmpId,
-                                  Course = q.Course,
-                                  University = q.University,
-                                  InstName = q.InstName,
-                                  DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
-                                  DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
-                                  YearPass = q.YearPass,
-                                  MarkPer = q.MarkPer,
-                                  Subjects = q.Subjects,
-                                  Class = q.Class,
-                                  CourseId = q.CourseId ?? 0,
-                                  UniversityId = q.UniversityId ?? 0,
-                                  InstitutId = q.InstitId ?? 0,
-                                  SpecialId = q.SpecialId ?? 0
-                              }).FirstOrDefaultAsync();
+                                  where q.QlfId == Detailid && q.EmpId == empId
+                                  select new QualificationTableDto
+                                  {
+                                      Qlficationid = q.QlfId,
+                                      EmpId = q.EmpId,
+                                      Course = q.Course,
+                                      University = q.University,
+                                      InstName = q.InstName,
+                                      DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                                      DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                                      YearPass = q.YearPass,
+                                      MarkPer = q.MarkPer,
+                                      Subjects = q.Subjects,
+                                      Class = q.Class,
+                                      CourseId = q.CourseId ?? 0,
+                                      UniversityId = q.UniversityId ?? 0,
+                                      InstitutId = q.InstitId ?? 0,
+                                      SpecialId = q.SpecialId ?? 0
+                                  }).FirstOrDefaultAsync();
                 }
                 else
                 {
                     return await (from q in _context.HrEmpQualificationApprls
-                              where q.QlfId == Detailid && q.EmpId == empId
-                              select new QualificationTableDto
-                              {
-                                  Qlficationid = q.QlfId,
-                                  EmpId = q.EmpId,
-                                  Course = q.Course,
-                                  University = q.University,
-                                  InstName = q.InstName,
-                                  DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
-                                  DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
-                                  YearPass = q.YearPass,
-                                  MarkPer = q.MarkPer,
-                                  Subjects = q.Subjects,
-                                  Class = q.Class
-                              }).FirstOrDefaultAsync();
+                                  where q.QlfId == Detailid && q.EmpId == empId
+                                  select new QualificationTableDto
+                                  {
+                                      Qlficationid = q.QlfId,
+                                      EmpId = q.EmpId,
+                                      Course = q.Course,
+                                      University = q.University,
+                                      InstName = q.InstName,
+                                      DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                                      DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                                      YearPass = q.YearPass,
+                                      MarkPer = q.MarkPer,
+                                      Subjects = q.Subjects,
+                                      Class = q.Class
+                                  }).FirstOrDefaultAsync();
                 }
             }
             else if (updateType == "Approved")
@@ -9945,44 +9970,44 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 if (optionenb == 1)
                 {
                     return await (from q in _context.HrEmpQualifications
-                              where q.QlfId == Detailid && q.EmpId == empId
-                              select new QualificationTableDto
-                              {
-                                  Qlficationid = q.QlfId,
-                                  EmpId = q.EmpId,
-                                  Course = q.Course,
-                                  University = q.University,
-                                  InstName = q.InstName,
-                                  DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
-                                  DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
-                                  YearPass = q.YearPass,
-                                  MarkPer = q.MarkPer,
-                                  Subjects = q.Subjects,
-                                  Class = q.Class,
-                                  CourseId = q.CourseId ?? 0,
-                                  UniversityId = q.UniversityId ?? 0,
-                                  InstitutId = q.InstitId ?? 0,
-                                  SpecialId = q.SpecialId ?? 0
-                              }).FirstOrDefaultAsync();
+                                  where q.QlfId == Detailid && q.EmpId == empId
+                                  select new QualificationTableDto
+                                  {
+                                      Qlficationid = q.QlfId,
+                                      EmpId = q.EmpId,
+                                      Course = q.Course,
+                                      University = q.University,
+                                      InstName = q.InstName,
+                                      DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                                      DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                                      YearPass = q.YearPass,
+                                      MarkPer = q.MarkPer,
+                                      Subjects = q.Subjects,
+                                      Class = q.Class,
+                                      CourseId = q.CourseId ?? 0,
+                                      UniversityId = q.UniversityId ?? 0,
+                                      InstitutId = q.InstitId ?? 0,
+                                      SpecialId = q.SpecialId ?? 0
+                                  }).FirstOrDefaultAsync();
                 }
                 else
                 {
                     return await (from q in _context.HrEmpQualifications
-                              where q.QlfId == Detailid && q.EmpId == empId
-                              select new QualificationTableDto
-                              {
-                                  Qlficationid = q.QlfId,
-                                  EmpId = q.EmpId,
-                                  Course = q.Course,
-                                  University = q.University,
-                                  InstName = q.InstName,
-                                  DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
-                                  DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
-                                  YearPass = q.YearPass,
-                                  MarkPer = q.MarkPer,
-                                  Subjects = q.Subjects,
-                                  Class = q.Class
-                              }).FirstOrDefaultAsync();
+                                  where q.QlfId == Detailid && q.EmpId == empId
+                                  select new QualificationTableDto
+                                  {
+                                      Qlficationid = q.QlfId,
+                                      EmpId = q.EmpId,
+                                      Course = q.Course,
+                                      University = q.University,
+                                      InstName = q.InstName,
+                                      DurFrm = q.DurFrm.HasValue ? q.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                                      DurTo = q.DurTo.HasValue ? q.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                                      YearPass = q.YearPass,
+                                      MarkPer = q.MarkPer,
+                                      Subjects = q.Subjects,
+                                      Class = q.Class
+                                  }).FirstOrDefaultAsync();
                 }
             }
 
@@ -10008,7 +10033,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                               rewardidtype = a.RewardType
                           }).FirstOrDefaultAsync();
 
-           
+
         }
 
         public async Task<SkillSetDto> GetUpdateTechnical(int empId, string updateType, int Detailid)
@@ -10016,48 +10041,48 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (updateType == "Pending")
             {
 
-            return await (from t in _context.HrEmpTechnicalApprls
-                          where t.TechId == Detailid && t.EmpId == empId
-                          select new SkillSetDto
-                          {
-                              Tech_id = t.TechId,
-                              Emp_Id = t.EmpId,
-                              Course = t.Course,
-                              Course_Dtls = t.CourseDtls,
-                              Year = t.Year,
-                              Dur_Frm = t.DurFrm.HasValue ? t.DurFrm.Value.ToString("dd/MM/yyyy") : null,
-                              Dur_To = t.DurTo.HasValue ? t.DurTo.Value.ToString("dd/MM/yyyy") : null,
-                              Mark_Per = t.MarkPer,
-                              langSkills = t.LangSkills,
-                              Inst_Name = t.InstName
-                          }).FirstOrDefaultAsync();
+                return await (from t in _context.HrEmpTechnicalApprls
+                              where t.TechId == Detailid && t.EmpId == empId
+                              select new SkillSetDto
+                              {
+                                  Tech_id = t.TechId,
+                                  Emp_Id = t.EmpId,
+                                  Course = t.Course,
+                                  Course_Dtls = t.CourseDtls,
+                                  Year = t.Year,
+                                  Dur_Frm = t.DurFrm.HasValue ? t.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                                  Dur_To = t.DurTo.HasValue ? t.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                                  Mark_Per = t.MarkPer,
+                                  langSkills = t.LangSkills,
+                                  Inst_Name = t.InstName
+                              }).FirstOrDefaultAsync();
 
-    }
+            }
             else if (updateType == "Approved")
             {
 
-            return await (from t in _context.HrEmpTechnicals
-                          where t.TechId == Detailid && t.EmpId == empId
-                          select new SkillSetDto
-                          {
-                              Tech_id = t.TechId,
-                              Emp_Id = t.EmpId,
-                              Course = t.Course,
-                              Course_Dtls = t.CourseDtls,
-                              Year = t.Year,
-                              Dur_Frm = t.DurFrm.HasValue ? t.DurFrm.Value.ToString("dd/MM/yyyy") : null,
-                              Dur_To = t.DurTo.HasValue ? t.DurTo.Value.ToString("dd/MM/yyyy") : null,
-                              Mark_Per = t.MarkPer,
-                              langSkills = t.LangSkills,
-                              Inst_Name = t.InstName
-                          }).FirstOrDefaultAsync();
-
-    
+                return await (from t in _context.HrEmpTechnicals
+                              where t.TechId == Detailid && t.EmpId == empId
+                              select new SkillSetDto
+                              {
+                                  Tech_id = t.TechId,
+                                  Emp_Id = t.EmpId,
+                                  Course = t.Course,
+                                  Course_Dtls = t.CourseDtls,
+                                  Year = t.Year,
+                                  Dur_Frm = t.DurFrm.HasValue ? t.DurFrm.Value.ToString("dd/MM/yyyy") : null,
+                                  Dur_To = t.DurTo.HasValue ? t.DurTo.Value.ToString("dd/MM/yyyy") : null,
+                                  Mark_Per = t.MarkPer,
+                                  langSkills = t.LangSkills,
+                                  Inst_Name = t.InstName
+                              }).FirstOrDefaultAsync();
 
 
-    }
+
+
+            }
             return null;
-}
+        }
 
         public async Task<CommunicationTableDto> GetUpdateCommunication(int empId, string updateType, int Detailid)
         {
@@ -10089,7 +10114,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             }
             return null;
-    }
+        }
 
         public async Task<CommunicationTableDto> GetUpdateCommunicationExtra(int empId, string updateType, int Detailid)
         {
@@ -10153,7 +10178,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         public async Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId, int Detailid)
         {
-    
+
             return await (from a in _context.HrEmpEmergaddresses
                           join b in _context.AdmCountryMasters on a.Country equals b.CountryId into gj
                           from b in gj.DefaultIfEmpty() // LEFT JOIN
@@ -10179,7 +10204,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                               PersonalEMail = null
                           }).FirstOrDefaultAsync();
 
-  
+
 
         }
 
