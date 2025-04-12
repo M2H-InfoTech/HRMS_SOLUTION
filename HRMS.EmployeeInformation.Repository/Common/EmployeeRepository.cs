@@ -10194,7 +10194,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                               Phone = a.PhoneNo,
                               OfficePhone = a.AlterPhoneNo,
                               Mobile = a.MobileNo,
-
+                             emername=a.EmerName,
+                             emerrelation=a.EmerRelation,
                               // Hardcoded or unused fields
                               Status = "A",
                               Inst_Id = 0,
