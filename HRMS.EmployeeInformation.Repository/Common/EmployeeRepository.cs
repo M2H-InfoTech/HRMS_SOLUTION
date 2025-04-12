@@ -45,6 +45,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<string> GetDefaultCompanyParameter(int employeeId, string parameterCode, string type)
         {
 
+
+
             string? defaultValue = byte.MinValue.ToString();
             if (employeeId == 0)
             {
