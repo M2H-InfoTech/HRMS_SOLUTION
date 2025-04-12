@@ -893,17 +893,17 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(biometrc);
         }
         [HttpGet]
-        public async Task<IActionResult> GetWorkFlowData (int linkLevel, int valueId)
+        public async Task<IActionResult> GetWorkFlowData(int linkLevel, int valueId)
         {
-            var result = _employeeInformation.GetWorkFlowData (linkLevel, valueId);
-            return Ok (result);
+            var result = _employeeInformation.GetWorkFlowData(linkLevel, valueId);
+            return Ok(result);
         }
         //WORK FLOW MASTER
         [HttpPost]
-        public async Task<IActionResult> UpdateWorkFlowELAsync ([FromBody]ParamWorkFlow01s2sDto dto)
+        public async Task<IActionResult> UpdateWorkFlowELAsync([FromBody] ParamWorkFlow01s2sDto dto)
         {
-            var WorkFlowResult = await _employeeInformation.UpdateWorkFlowELAsync (dto);
-            return Ok (WorkFlowResult);
+            var WorkFlowResult = await _employeeInformation.UpdateWorkFlowELAsync(dto);
+            return Ok(WorkFlowResult);
         }
         [HttpGet]
         public async Task<IActionResult> GetAgeLimitValue(int empId)
@@ -951,7 +951,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUpdateEmergencyExtra(int empId, int Detailid)
         {
-            var getUpdateEmergencyExtra = await _employeeInformation.GetUpdateEmergencyExtra(empId, 
+            var getUpdateEmergencyExtra = await _employeeInformation.GetUpdateEmergencyExtra(empId,
                 Detailid);
             return Ok(getUpdateEmergencyExtra);
         }
@@ -964,10 +964,15 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> RetrieveEmployeeLanguage(int empId, int Detailid)
         {
-            var retrieveEmployeeLanguage = await _employeeInformation.RetrieveEmployeeLanguage(empId,Detailid);
+            var retrieveEmployeeLanguage = await _employeeInformation.RetrieveEmployeeLanguage(empId, Detailid);
             return Ok(retrieveEmployeeLanguage);
         }
-
+        [HttpGet]
+        public async Task<IActionResult> GetAccessLevelByRoleId(int? firstEntityId)
+        {
+            var employeeCreationFilter = await _employeeInformation.GetAccessLevelByRoleId(firstEntityId);
+            return Ok(employeeCreationFilter);
+        }
 
     }
 }

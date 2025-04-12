@@ -4,7 +4,6 @@ using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
 using Microsoft.AspNetCore.Http;
 using MPLOYEE_INFORMATION.DTO.DTOs;
-using System.Collections.Generic;
 
 namespace HRMS.EmployeeInformation.Service.Interface
 {
@@ -138,9 +137,10 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<SkillSetDto> GetUpdateTechnical(int empId, string updateType, int Detailid);
         Task<CommunicationTableDto> GetUpdateCommunication(int empId, string updateType, int Detailid);
         Task<CommunicationTableDto> GetUpdateCommunicationExtra(int empId, string updateType, int Detailid);
-        Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId,int Detailid);
+        Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId, int Detailid);
         Task<ReferenceDto> GetUpdateReference(int Detailid);
         Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid);
+        Task<object> GetAccessLevelByRoleId(int? firstEntityId);
 
     }
 

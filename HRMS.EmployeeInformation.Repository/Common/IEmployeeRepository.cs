@@ -3,7 +3,6 @@ using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Models;
 using Microsoft.AspNetCore.Http;
 using MPLOYEE_INFORMATION.DTO.DTOs;
-using System.Collections.Generic;
 
 namespace HRMS.EmployeeInformation.Repository.Common
 {
@@ -146,6 +145,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId, int Detailid);
         Task<ReferenceDto> GetUpdateReference(int Detailid);
         Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid);
+        Task<object> EmployeeCreationFilterAsync(int? firstEntityId);
 
     }
 }
