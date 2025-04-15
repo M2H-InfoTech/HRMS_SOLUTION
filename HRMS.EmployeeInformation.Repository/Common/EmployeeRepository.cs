@@ -6495,10 +6495,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             ReceivedDate = assetEdits.ReceiveDate,
                             ExpiryDate = assetEdits.ExpiryDate,
                             ReturnDate = assetEdits.ReturnDate,
-                            Remarks = assetEdits.Remarks,
-                            IsActive = true,
-                            EntryBy=  assetEdits.EntryBy,
-                            EntryDate= DateTime.Now
+                            Remarks = assetEdits.Remarks
                         };
 
                         _context.EmployeesAssetsAssigns.Add(newAssetAssign);
