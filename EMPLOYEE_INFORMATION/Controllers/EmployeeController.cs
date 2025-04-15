@@ -879,7 +879,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeCertifications = await _employeeInformation.GetEmployeeCertifications(employeeid);
             return Ok(employeeCertifications);
         }
-        [HttpDelete]
+        [HttpPost]
         public async Task<IActionResult> DeleteCertificate(int certificateid)
         {
             var deleteCertificate = await _employeeInformation.DeleteCertificate(certificateid);
@@ -972,6 +972,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
         {
             var employeeCreationFilter = await _employeeInformation.GetAccessLevelByRoleId(firstEntityId);
             return Ok(employeeCreationFilter);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EnableNewQualif(int empId)
+        {
+            var EnableNewQualif = await _employeeInformation.EnableNewQualif(empId);
+            return Ok(EnableNewQualif);
         }
 
     }

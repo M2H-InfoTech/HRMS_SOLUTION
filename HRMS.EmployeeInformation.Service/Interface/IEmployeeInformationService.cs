@@ -141,6 +141,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<ReferenceDto> GetUpdateReference(int Detailid);
         Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid);
         Task<object> GetAccessLevelByRoleId(int? firstEntityId);
+        Task<int> EnableNewQualif(int empId);
 
     }
 
