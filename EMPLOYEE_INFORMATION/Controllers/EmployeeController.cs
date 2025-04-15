@@ -1052,5 +1052,119 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(EnableNewQualif);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> AssignEmployeeAccess(AssignEmployeeAccessRequestDto request)
+        {
+            if (request == null || request.empId <= 0 || request.entryBy <= 0)
+            {
+                return BadRequest("Invalid input.");
+            }
+
+            try
+            {
+                await _employeeInformation.AssignEmployeeAccessService( request);
+                return Ok(new { message = "Employee access assigned successfully." });
+            }
+            catch (Exception ex)
+            {
+                // Optional: log error
+                return StatusCode(500, new { error = "An error occurred.", details = ex.Message });
+            }
+        }
+        [HttpPost]
+        public async Task<IActionResult> InsertWorkFlow(SaveParamWorkflowDto request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Invalid input.");
+            }
+            try
+            {
+                await _employeeInformation.InsertWorkFlow(request);
+                return Ok(new { message = "Workflow inserted successfully." });
+            }
+            catch (Exception ex)
+            {
+                
+                return StatusCode(500, new { error = "An error occurred.", details = ex.Message });
+            }
+        }
+        //SaveWorkFlowEmp  Mode : InsertRoleEL
+        [HttpPost]
+        public async Task<IActionResult> InsertRole( RoleInsertDTO roleInsertDto)
+        {
+            if (roleInsertDto == null)
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            var errorId = await _employeeInformation.InsertRoleAsync(roleInsertDto);
+            return Ok(new { ErrorId = errorId });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetRoleDetails(int linkId, int linkLevel)
+        {
+            var roleDetails = await _employeeInformation.GetRoleDetailsAsync(linkId, linkLevel);
+
+            if (roleDetails == null || !roleDetails.Any())
+            {
+                return NotFound("No role details found.");
+            }
+
+            return Ok(roleDetails);
+        }
+         
+        
+        [HttpGet]
+        public async Task<IActionResult> GetGeoSpacingCriteria()
+        {
+            var result = await _employeeInformation.GetGeoSpacingCriteriaAsync();
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetGeoCoordinatesTab(int geoSpacingType, int geoCriteria)
+        {
+            var result = await _employeeInformation.GetGeoCoordinatesTabAsync(geoSpacingType, geoCriteria);
+            return Ok(result);
+        }
+        [HttpPost]
+        public async Task<IActionResult> SaveGeoLocation(SaveGeoLocationRequestDTO dto)
+        {
+            var message = await _employeeInformation.SaveGeoLocationAsync(dto);
+            return Ok(new { Success = true, Message = message });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetFilteredAssetCategories(int varAssetTypeID)
+        {
+            var data = await _employeeInformation.GetFilteredAssetCategoriesAsync(varAssetTypeID);
+            return Ok(data);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAssignedOrPendingAssetCategories(
+        [FromQuery] int varAssetTypeID,
+        [FromQuery] string varAssignAssetStatus)
+        {
+            var data = await _employeeInformation.GetAssignedOrPendingAssetCategoriesAsync(varAssetTypeID, varAssignAssetStatus);
+            return Ok(data);
+        }
+        [HttpGet]    
+        public async Task<IActionResult> GetGeneralSubCategory([FromQuery] string code)
+        {
+            var result = await _employeeInformation.GetGeneralSubCategoryAsync(code);
+            return Ok(result);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveEmployeeShift([FromBody] ShiftMasterAccessInputDto request)
+        {
+            var result = await _employeeInformation.SaveShiftMasterAccessAsync(request);
+            return Ok(new { Message = result });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetLanguages()
+        {
+            var result = await _employeeInformation.GetLanguagesAsync();
+            return Ok(result);
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using EMPLOYEE_INFORMATION.HRMS.EmployeeInformation.Models.Models.Entity;
 using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.Entity;
+
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using Microsoft.EntityFrameworkCore;
@@ -287,6 +288,11 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<Project> Projects { get; set; }
     public virtual DbSet<EmployeeFieldMaster01> EmployeeFieldMaster01s { get; set; }
     public virtual DbSet<DeletedSavedEmployeeHistory> DeletedSavedEmployeeHistories { get; set; }
+    public virtual DbSet<HolidaysMaster> HolidaysMasters { get; set; }
+    public virtual DbSet<Attendancepolicy00> Attendancepolicy00s { get; set; }
+    public virtual DbSet<LeavePolicyMaster> LeavePolicyMasters { get; set; }
+    public virtual DbSet<HrmLeaveMaster> HrmLeaveMasters { get; set; }
+    public virtual DbSet<HrmLeaveMasterandsettingsLink> HrmLeaveMasterandsettingsLinks { get; set; }
     public virtual DbSet<MasterGeotagging> MasterGeotaggings { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -4302,10 +4308,114 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.EmpId).HasColumnName("EmpID");
             entity.Property(e => e.EntryDate).HasColumnType("datetime");
         });
+        modelBuilder.Entity<HolidaysMaster>(entity =>
+        {
+            entity.HasKey(e => e.HolidayMasterId).HasName("PK__HOLIDAYS__349E6B295D6BCD1E");
+
+            entity.ToTable("HOLIDAYS_MASTER");
+
+            entity.Property(e => e.HolidayMasterId).HasColumnName("HolidayMaster_id");
+            entity.Property(e => e.CreatedBy).HasColumnName("Created_By");
+            entity.Property(e => e.CreatedOn)
+                .HasColumnType("datetime")
+                .HasColumnName("Created_On");
+            entity.Property(e => e.CurYear)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.ExcludeCasualHoliday).HasDefaultValue(0);
+            entity.Property(e => e.HolidayFromDate)
+                .HasColumnType("datetime")
+                .HasColumnName("Holiday_FromDate");
+            entity.Property(e => e.HolidayName)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("Holiday_Name");
+            entity.Property(e => e.HolidayToDate)
+                .HasColumnType("datetime")
+                .HasColumnName("Holiday_ToDate");
+            entity.Property(e => e.InstId).HasColumnName("inst_id");
+            entity.Property(e => e.Location)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<Attendancepolicy00>(entity =>
+        {
+            entity.HasKey(e => e.AttendancePolicyId).HasName("PK__ATTENDAN__0CD7A757E4E8F963");
+
+            entity.ToTable("ATTENDANCEPOLICY00");
+
+            entity.Property(e => e.AttendancePolicyId).HasColumnName("AttendancePolicyID");
+            entity.Property(e => e.CheckDirection)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.CkhOtconsiderInShortage).HasColumnName("CkhOTconsiderInShortage");
+            entity.Property(e => e.ConsiderApprovedHours).HasDefaultValue(0);
+            entity.Property(e => e.Criteria)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.EarlyIn).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.EarlyOut).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.EnableOtonRequest).HasColumnName("EnableOTOnRequest");
+            entity.Property(e => e.LateIn).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LateOut).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.MinimumWorkHrsForPrsnt).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PolicyName)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.ShortageFreeMinutes).HasDefaultValue(0.0);
+            entity.Property(e => e.SpeacialSeasonId).HasColumnName("SpeacialSeasonID");
+            entity.Property(e => e.SpecialOtenabled).HasColumnName("SpecialOTEnabled");
+            entity.Property(e => e.StrictShiftTime).HasDefaultValue(false);
+        });
+        modelBuilder.Entity<LeavePolicyMaster>(entity =>
+        {
+            entity.HasKey(e => e.LeavePolicyMasterId).HasName("PK__LeavePol__B26F14D4B19AA8D4");
+
+            entity.ToTable("LeavePolicyMaster");
+
+            entity.Property(e => e.LeavePolicyMasterId).HasColumnName("LeavePolicyMasterID");
+            entity.Property(e => e.Blockmultiunapprovedleave).HasColumnName("blockmultiunapprovedleave");
+            entity.Property(e => e.EmpId).HasColumnName("Emp_Id");
+            entity.Property(e => e.Entrydate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.InstId).HasColumnName("Inst_Id");
+            entity.Property(e => e.PolicyName).IsUnicode(false);
+        });
+        modelBuilder.Entity<HrmLeaveMaster>(entity =>
+        {
+            entity.HasKey(e => e.LeaveMasterId);
+
+            entity.ToTable("HRM_LEAVE_MASTER");
+
+            entity.Property(e => e.Colour)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.LeaveCode)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<HrmLeaveMasterandsettingsLink>(entity =>
+        {
+            entity.HasKey(e => e.IdMasterandSettingsLink);
+
+            entity.ToTable("HRM_LEAVE_MASTERANDSETTINGS_LINK");
+
+            entity.Property(e => e.IdMasterandSettingsLink).HasColumnName("Id_MasterandSettingsLink");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+        });
         modelBuilder.Entity<MasterGeotagging>(entity =>
         {
             entity.HasKey(e => e.GeoMasterId).HasName("PK__Master_G__5873EF327F84BE55");
-
+        
             entity.ToTable("Master_Geotagging");
 
             entity.Property(e => e.GeoMasterId).HasColumnName("GeoMaster_ID");
@@ -4328,7 +4438,6 @@ public partial class EmployeeDBContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
         });
-
 
         OnModelCreatingPartial(modelBuilder);
     }

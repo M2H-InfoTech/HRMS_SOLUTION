@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure.Core;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.DTO.DTOs;
 using EMPLOYEE_INFORMATION.HRMS.EmployeeInformation.Models.Models.Entity;
@@ -10566,8 +10567,1079 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return optionenb ?? 0;
 
         }
+        //Helper method to get default company parameter-for AssignAttendancePolicyAccessAsync
+        public async Task<int> GetDefaultAttendancePolicyAsync(int empId)
+        {
+            if (empId == 0)
+                return 0;
+
+            int? defaultPolicyId = null;
+
+            // Step 1: Try CompanyParameters02
+            defaultPolicyId = await (from a in _context.CompanyParameters02s
+                                     join b in _context.CompanyParameters on a.ParamId equals b.Id
+                                     where b.ParameterCode == "DEFATTNPOL"
+                                           && b.Type == "EMP1"
+                                           && a.EmpId == empId
+                                     select a.Value).FirstOrDefaultAsync();
+
+            if (defaultPolicyId == null || defaultPolicyId == 0)
+            {
+                // Step 2: Try via EmpEntity (except LevelID 1)
+                var empEntity = await _context.EmployeeDetails
+                    .Where(e => e.EmpId == empId)
+                    .Select(e => e.EmpEntity)
+                    .FirstOrDefaultAsync();
+
+                var empEntityIds = empEntity?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                             .Select(long.Parse)
+                                             .ToList();
+
+                if (empEntityIds?.Any() == true)
+                {
+                    defaultPolicyId = await (from a in _context.CompanyParameters01s
+                                             join b in _context.CompanyParameters on a.ParamId equals b.Id into joined
+                                             from b in joined.DefaultIfEmpty()
+                                             where empEntityIds.Contains(a.LinkId ?? 0)
+                                                   && b.ParameterCode == "DEFATTNPOL"
+                                                   && b.Type == "EMP1"
+                                                   && a.LevelId != 1
+                                             orderby a.LevelId descending
+                                             select a.Value).FirstOrDefaultAsync();
+                }
+            }
+
+            if (defaultPolicyId == null || defaultPolicyId == 0)
+            {
+                // Step 3: Try EmpFirstEntity
+                var empFirstEntity = await _context.EmployeeDetails
+                    .Where(e => e.EmpId == empId)
+                    .Select(e => e.EmpFirstEntity)
+                    .FirstOrDefaultAsync();
+
+                var firstEntityIds = empFirstEntity?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                                    .Select(long.Parse)
+                                                    .ToList();
+                if (firstEntityIds?.Any() == true)
+                {
+                    defaultPolicyId = await (from a in _context.CompanyParameters01s
+                                             join b in _context.CompanyParameters on a.ParamId equals b.Id into joined
+                                             from b in joined.DefaultIfEmpty()
+                                             where firstEntityIds.Contains(a.LinkId ?? 0)
+                                                   && b.ParameterCode == "DEFATTNPOL"
+                                                   && b.Type == "EMP1"
+                                             orderby a.LevelId descending
+                                             select a.Value).FirstOrDefaultAsync();
+                }
+            }
+
+            if (defaultPolicyId == null || defaultPolicyId == 0)
+            {
+                // Step 4: Company-level fallback
+                defaultPolicyId = await _context.CompanyParameters
+                    .Where(p => p.ParameterCode == "DEFATTNPOL" && p.Type == "EMP1")
+                    .Select(p => p.Value)
+                    .FirstOrDefaultAsync();
+            }
+
+            return defaultPolicyId ?? 0;
+        }
+        //helper method  for helper method of SHIFT ACCESS
+        public string GetControlValue(dynamic param, string controlType, bool isMultiple)
+        {
+            if (param == null) return null;
+
+            return controlType switch
+            {
+                "Number" => param.Value,
+                "Text" => param.Text,
+                "Image" => param.Data,
+                _ when isMultiple => param.MultipleValues,
+                _ => param.Value
+            };
+        }
 
 
+
+
+
+        public async Task AssignHolidayAccessAsync(AssignEmployeeAccessRequestDto request)
+        {
+           
+
+
+            if (!long.TryParse(request.EmpFirstEntity, out var parsedFirstEntityId))
+                throw new Exception("Invalid First Entity ID format");
+
+            var joiningDate = request.JoinDt;
+            var empEntityIds = request.EmpEntity;
+
+            var holidayAccessExists = await _context.HrmHolidayMasterAccesses
+                .AnyAsync(a => a.EmployeeId == request.empId);
+            
+
+            if (!holidayAccessExists)
+            {
+                var transactionId = await _context.TransactionMasters
+                    .Where(t => t.TransactionType == "H")
+                    .OrderBy(t => t.TransactionId)
+                    .Select(t => t.TransactionId)
+                    .FirstOrDefaultAsync();
+
+                var empEntityIdsList = empEntityIds
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(long.Parse)
+                    .ToList();
+
+                var applicableHolidayIds = await _context.EntityApplicable00s
+                    .Where(e =>
+                                                e.TransactionId == transactionId &&
+                        (
+                            (e.LinkLevel == 1 && e.LinkId == parsedFirstEntityId) ||
+                            (e.LinkLevel == 15) ||
+                            (e.LinkLevel != 1 && empEntityIdsList.Contains(e.LinkId.Value))
+                        )
+
+                    )
+                    .Select(e => e.MasterId)
+                    .ToListAsync();
+
+                var holidaysToInsert = await _context.HolidaysMasters
+                    .Where(s => s.HolidayFromDate > joiningDate &&
+                                applicableHolidayIds.Contains(s.HolidayMasterId))
+                                       .Select(s => new HrmHolidayMasterAccess
+                                       {
+                                           EmployeeId = request.empId,
+                                           HolidayMasterId = s.HolidayMasterId,
+                                           IsCompanyLevel = 0,
+                                           Active = "Y",
+                                           CreatedBy = request.entryBy, // Fix: Convert string to int
+                                           CreatedDate = DateTime.UtcNow,
+                                           ValidDatefrom = joiningDate
+                                       })
+
+                    .ToListAsync();
+
+                if (holidaysToInsert.Any())
+                {
+                    await _context.HrmHolidayMasterAccesses.AddRangeAsync(holidaysToInsert);
+                    await _context.SaveChangesAsync();
+                }
+            }
+        }
+
+        public async Task AssignAttendancePolicyAccessAsync(AssignEmployeeAccessRequestDto request)
+        {
+           
+
+            if (request == null)
+                throw new Exception("Employee not found");
+
+            if (!long.TryParse(request.EmpFirstEntity, out var firstEntityId))
+                throw new Exception("Invalid FirstEntityId");
+
+            var empEntityIdsList = request.EmpEntity?
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(long.Parse)
+                .ToList() ?? new List<long>();
+
+
+            var alreadyHasAccess = await _context.AttendancepolicyMasterAccesses
+                .AnyAsync(a => a.EmployeeId == request.empId);
+
+            if (alreadyHasAccess)
+                return;
+            //using the getdefault method
+
+            var policyId = await GetDefaultAttendancePolicyAsync(request.empId); // Assume a function exists
+
+            if (policyId == 0)
+            {
+                var transactionId = await _context.TransactionMasters
+                    .Where(t => t.TransactionType == "AtnPolicy")
+                    .OrderBy(t => t.TransactionId)
+                    .Select(t => t.TransactionId)
+                    .FirstOrDefaultAsync();
+
+                var policyIdInt = await _context.EntityApplicable00s
+                    .Where(e =>
+                        e.TransactionId == transactionId &&
+                        (
+                            (e.LinkLevel == 1 && e.LinkId == firstEntityId) ||
+                            (e.LinkLevel == 15) ||
+                            (e.LinkLevel != 1 && empEntityIdsList.Contains(e.LinkId ?? 0))
+                        )
+                    )
+                    .Join(_context.Attendancepolicy00s,
+                        applicable => applicable.MasterId,
+                        policy => policy.AttendancePolicyId,
+                        (applicable, policy) => policy.AttendancePolicyId)
+                    .FirstOrDefaultAsync();
+
+                policyId = policyIdInt;
+            }
+
+
+            if (policyId != null && policyId > 0)
+            {
+                var newAccess = new AttendancepolicyMasterAccess
+                {
+                    EmployeeId = request.empId,
+                    PolicyId = policyId,
+                    IsCompanyLevel = 0,
+                    CreatedBy = request.entryBy,
+                    CreatedDate = DateTime.UtcNow,
+                    Active = "Y",
+                    ValidDatefrom = request.JoinDt
+                };
+
+                _context.AttendancepolicyMasterAccesses.Add(newAccess);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        //shift access
+        public async Task<int> GetDefaultCompanyParameterAsync(int employeeId, string parameterCode, string type)
+        {
+            if (employeeId == 0)
+                return 0;
+
+            string defaultValue = null;
+
+            // Step 1: Get ParameterControlDesc and IsMultiple
+            var controlInfo = await (from a in _context.CompanyParameters
+                                     join b in _context.ParameterControlTypes
+                                     on a.ControlType equals b.ParamControlId
+                                     where a.ParameterCode == parameterCode && a.Type == type
+                                     select new
+                                     {
+                                         b.ParamControlDesc,
+                                         IsMultiple = a.MultipleValues != null ? int.Parse(a.MultipleValues.ToString()) : 0
+                                     }).FirstOrDefaultAsync();
+
+            if (controlInfo == null)
+                return 0;
+
+            string controlType = controlInfo.ParamControlDesc;
+            bool isMultiple = controlInfo.IsMultiple == 1;
+
+            // STEP 2: Try employee-level (CompanyParameters02)
+            var empParam = await (from a in _context.CompanyParameters02s
+                                  join b in _context.CompanyParameters
+                                  on a.ParamId equals b.Id
+                                  where a.EmpId == employeeId && b.ParameterCode == parameterCode && b.Type == type
+                                  select new
+                                  {
+                                      Value = a.Value.ToString(),
+                                      Text = a.Text != null ? a.Text.ToString() : null,
+                                      Data = a.Data != null ? a.Data.ToString() : null,
+                                      MultipleValues = a.MultipleValues != null ? a.MultipleValues.ToString() : null
+                                  }).FirstOrDefaultAsync();
+
+
+            defaultValue = GetControlValue(empParam, controlType, isMultiple);
+            if (int.TryParse(defaultValue, out int result) && result != 0)
+                return result;
+
+            // STEP 3: Try entity-level (excluding LevelID = 1)
+            var emp = await _context.EmployeeDetails
+                .Where(e => e.EmpId == employeeId)
+                .Select(e => new { e.EmpEntity, e.EmpFirstEntity })
+                .FirstOrDefaultAsync();
+
+            if (emp != null && !string.IsNullOrEmpty(emp.EmpEntity))
+            {
+                var entityIds = emp.EmpEntity.Split(',').Select(long.Parse).ToList();
+
+                var entityParam = await (from a in _context.CompanyParameters01s
+                                         join b in _context.CompanyParameters on a.ParamId equals b.Id
+                                         where b.ParameterCode == parameterCode
+                                               && b.Type == type
+                                               && a.LevelId != 1
+                                               && entityIds.Contains(a.LinkId ?? 0)
+                                         orderby a.LevelId descending
+                                         select new
+                                         {
+                                             Value = a.Value.ToString(),
+                                             Text = a.Text != null ? a.Text.ToString() : null,
+                                             Data = a.Data != null ? a.Data.ToString() : null,
+                                             MultipleValues = a.MultipleValues != null ? a.MultipleValues.ToString() : null
+                                         }).FirstOrDefaultAsync();
+
+
+                defaultValue = GetControlValue(entityParam, controlType, isMultiple);
+                if (int.TryParse(defaultValue, out result) && result != 0)
+                    return result;
+            }
+
+            // STEP 4: Try first entity (LevelID = 1)
+            if (!string.IsNullOrEmpty(emp?.EmpFirstEntity))
+            {
+                var firstEntityParam = await (from a in _context.CompanyParameters01s
+                                              join b in _context.CompanyParameters on a.ParamId equals b.Id
+                                              where b.ParameterCode == parameterCode
+                                                    && b.Type == type
+                                                    && a.LevelId == 1
+                                                    && a.LinkId.ToString() == emp.EmpFirstEntity
+                                              orderby a.LevelId descending
+                                              select new
+                                              {
+                                                  Value = a.Value.ToString(),
+                                                  Text = a.Text != null ? a.Text.ToString() : null,
+                                                  Data = a.Data != null ? a.Data.ToString() : null,
+                                                  MultipleValues = a.MultipleValues != null ? a.MultipleValues.ToString() : null
+                                              }).FirstOrDefaultAsync();
+
+
+                defaultValue = GetControlValue(firstEntityParam, controlType, isMultiple);
+                if (int.TryParse(defaultValue, out result) && result != 0)
+                    return result;
+            }
+
+            // STEP 5: Company-level fallback
+            var companyParam = await _context.CompanyParameters
+                .Where(p => p.ParameterCode == parameterCode && p.Type == type)
+                .Select(p => new
+                {
+                    Value = p.Value.ToString(),
+                    Text = p.Text != null ? p.Text.ToString() : null,
+                    Data = p.Data != null ? p.Data.ToString() : null,
+                    MultipleValues = p.MultipleValues != null ? p.MultipleValues.ToString() : null
+                }).FirstOrDefaultAsync();
+
+
+            defaultValue = GetControlValue(companyParam, controlType, isMultiple);
+            return int.TryParse(defaultValue, out result) ? result : 0;
+        }
+
+
+
+        public async Task AssignShiftAccessAsync(AssignEmployeeAccessRequestDto request)
+        {
+            if (request == null)
+                throw new Exception("Employee not found");
+            // Step 1: Check if shift access already exists
+            var hasAccess = await _context.ShiftMasterAccesses
+                .AnyAsync(s => s.EmployeeId == request.empId);
+
+            if (hasAccess)
+                return;
+
+            // Step 2: Get default parameters
+            var defShiftId = await GetDefaultCompanyParameterAsync(request.empId, "DEFSHIFT", "EMP1");
+            var shiftStart = await GetDefaultCompanyParameterAsync(request.empId, "SHIFTSTART", "ATTN");
+
+            // Step 3: Get employee info
+           
+
+            
+
+            var shiftValidFrom = request.JoinDt;
+
+            if (shiftStart == 1)
+            {
+                if (request.JoinDt.HasValue)
+                {
+                    shiftValidFrom = new DateTime(request.JoinDt.Value.Year, request.JoinDt.Value.Month, 1);
+                }
+                else
+                {
+                    // Handle the case where JoinDt is null
+                    shiftValidFrom = DateTime.MinValue; // or any other default value
+                }
+            }
+
+            if (defShiftId > 0)
+            {
+                // Step 4: Insert default shift
+                var defaultAccess = new ShiftMasterAccess
+                {
+                    EmployeeId = request.empId,
+                    ShiftId = defShiftId,
+                    IsCompanyLevel = 0,
+                    CreatedBy = request.entryBy,
+                    CreatedDate = DateTime.UtcNow,
+                    Active = "Y",
+                    ValidDatefrom = shiftValidFrom,
+                    ApprovalStatus = "A"
+                };
+
+                _context.ShiftMasterAccesses.Add(defaultAccess);
+                await _context.SaveChangesAsync();
+                return;
+            }
+
+            // Step 5: Use entity-based mapping if no default shift
+            var transactionId = await _context.TransactionMasters
+                .Where(t => t.TransactionType == "Shift")
+                .Select(t => t.TransactionId)
+                .FirstOrDefaultAsync(); // Already returns smallest ID
+
+
+            var empEntityIds = request.EmpEntity?
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(long.Parse)
+                .ToList() ?? new List<long>();
+
+            if (!long.TryParse(request.EmpFirstEntity, out var firstEntityId))
+            {
+                firstEntityId = 0; // or log it
+            }
+
+
+            var applicableShiftId = await _context.EntityApplicable00s
+                .Where(e =>
+                    e.TransactionId == transactionId &&
+                    (
+                        (e.LinkLevel == 1 && e.LinkId == firstEntityId) ||
+                        (e.LinkLevel == 15) ||
+                        (e.LinkLevel != 1 && empEntityIds.Contains(e.LinkId ?? 0))
+                    )
+                )
+                .Join(_context.HrShift00s,
+                      ea => ea.MasterId,
+                      s => s.ShiftId,
+                      (ea, s) => s.ShiftId)
+                .FirstOrDefaultAsync();
+
+            if (applicableShiftId > 0)
+            {
+                var newAccess = new ShiftMasterAccess
+                {
+                    EmployeeId = request.empId,
+                    ShiftId = applicableShiftId,
+                    IsCompanyLevel = 0,
+                    CreatedBy = request.entryBy,
+                    CreatedDate = DateTime.UtcNow,
+                    Active = "Y",
+                    ValidDatefrom = shiftValidFrom,
+                    ApprovalStatus = "A"
+                };
+
+                _context.ShiftMasterAccesses.Add(newAccess);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+
+        //leave access
+        //helper
+        private List<long?> SplitStringToLongList(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return new List<long?>();
+
+            return input
+                .Replace(" ", ",")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => long.TryParse(x.Trim(), out var val) ? val : (long?)null)
+                .Where(x => x.HasValue)
+                .ToList();
+        }
+        //helper for GetDefaultLeavePolicyAsync
+        private async Task<int?> GetPolicyFromEntityAsync(List<long?> linkIds, bool excludeLevel1)
+        {
+            //if (!linkIds.Any()) return null;
+
+            var query = from cp01 in _context.CompanyParameters01s
+                        join cp in _context.CompanyParameters on cp01.ParamId equals cp.Id
+                        where linkIds.Contains((int)cp01.LinkId) &&
+                              cp.ParameterCode == "DEFLEAVEPOL" &&
+                              cp.Type == "EMP1"
+                        select new { cp01.Value, cp01.LevelId };
+
+
+            if (excludeLevel1)
+            {
+                query = query.Where(a => a.LevelId != 1);
+            }
+
+            return await query
+                .OrderByDescending(a => a.LevelId)
+                .Select(a => (int?)a.Value)
+                .FirstOrDefaultAsync();
+        }
+
+        //helper for LEAVE POLICY ACCESS
+        public async Task<int?> GetDefaultLeavePolicyAsync(int employeeId)
+        {
+            if (employeeId == 0) return 0;
+
+            var empValue = await (
+                from a in _context.CompanyParameters02s
+                join b in _context.CompanyParameters on a.ParamId equals b.Id
+                where b.ParameterCode == "DEFLEAVEPOL"
+                      && b.Type == "EMP1"
+                      && a.EmpId == employeeId
+                select a.Value)
+                    .FirstOrDefaultAsync();
+
+            if (empValue.HasValue && empValue.Value != 0)
+                return empValue.Value;
+
+            var empEntityInfo = await _context.EmployeeDetails
+                .Where(e => e.EmpId == employeeId)
+                .Select(e => new { e.EmpEntity, e.EmpFirstEntity })
+                .FirstOrDefaultAsync();
+
+            var entityIds = SplitStringToLongList(empEntityInfo?.EmpEntity);
+            var entityValue = await GetPolicyFromEntityAsync(entityIds, excludeLevel1: true);
+            if (entityValue is int val2 && val2 != 0)
+                return val2;
+
+            var firstEntityIds = SplitStringToLongList(empEntityInfo?.EmpFirstEntity);
+            var firstEntityValue = await GetPolicyFromEntityAsync(firstEntityIds, excludeLevel1: false);
+            if (firstEntityValue is int val3 && val3 != 0)
+                return val3;
+
+            var companyValue = await _context.CompanyParameters
+                .Where(p => p.ParameterCode == "DEFLEAVEPOL" && p.Type == "EMP1")
+                .Select(p => p.Value)
+                .FirstOrDefaultAsync();
+
+            if (companyValue is int val4 && val4 != 0)
+                return val4;
+
+            return null;
+        }
+
+
+        public async Task AssignLeavePolicyIfNotExistsAsync(AssignEmployeeAccessRequestDto request)
+        {
+           
+
+            var exists = await _context.LeavePolicyMasters
+             .AnyAsync(a => a.EmpId == request.empId);
+
+            if (exists)
+                return;
+
+            var leavePolicyMasterId = await GetDefaultLeavePolicyAsync(request.empId);
+
+            if (leavePolicyMasterId == null || leavePolicyMasterId == 0)
+            {
+                var transactionId = await _context.TransactionMasters
+                    .Where(t => t.TransactionType == "LeavePolicy")
+                    .Select(t => t.TransactionId)
+                    .FirstOrDefaultAsync();
+
+                var entityIdList = SplitStringToLongList(request.EmpEntity);
+
+
+                leavePolicyMasterId = await _context.LeavePolicyMasters
+                  .Where(lpm => _context.EntityApplicable00s
+                        .Where(ea =>
+                            (ea.LinkLevel == 1 && ea.LinkId == Convert.ToInt64(request.EmpFirstEntity) && ea.TransactionId == transactionId) ||
+                            (ea.LinkLevel == 15 && ea.TransactionId == transactionId) ||
+                            (ea.LinkLevel != 1 && entityIdList.Contains(ea.LinkId) && ea.TransactionId == transactionId)
+                        )
+
+                        .Select(ea => ea.MasterId)
+                        .Contains(lpm.LeavePolicyMasterId)
+                    )
+                    .Select(lpm => lpm.LeavePolicyMasterId)
+                    .FirstOrDefaultAsync();
+            }
+            if (leavePolicyMasterId != null && leavePolicyMasterId > 0)
+            {
+                var access = new LeavepolicyMasterAccess
+                {
+                    EmployeeId = request.empId,
+                    PolicyId = leavePolicyMasterId.Value,
+                    IsCompanyLevel = 0,
+                    CreatedBy = request.entryBy,
+                    CreatedDate = DateTime.UtcNow,
+                    Fromdate = request.JoinDt
+                };
+                _context.LeavepolicyMasterAccesses.Add(access);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task AssignEmployeeLeaveAccessAsync(AssignEmployeeAccessRequestDto request)
+        {
+            bool accessExists = await _context.HrmLeaveEmployeeleaveaccesses
+        .AnyAsync(x => x.EmployeeId == request.empId);
+
+
+        if (accessExists)
+            return;
+
+        var transactionId = await _context.TransactionMasters
+        .Where(t => t.TransactionType == "Leave")
+        .Select(t => t.TransactionId)
+        .FirstOrDefaultAsync();
+
+        if (transactionId == 0)
+            return;
+
+        var empEntityIdList = SplitStringToLongList(request.EmpFirstEntity);
+
+        var leaveMasterIds = await
+             (from lm in _context.HrmLeaveMasters
+                     where lm.Active == 1
+                     && (from ea in _context.EntityApplicable00s
+                         where ea.TransactionId == transactionId &&
+                                (
+                                    (ea.LinkLevel == 1 && ea.LinkId == Convert.ToInt64(request.EmpFirstEntity)) ||
+                                    (ea.LinkLevel == 15) ||
+                                    (ea.LinkLevel != 1 && empEntityIdList.Contains(ea.LinkId))
+                                )
+
+                         select ea.MasterId).Contains(lm.LeaveMasterId)
+                     select lm.LeaveMasterId).ToListAsync();
+
+        if (leaveMasterIds.Count == 0)
+                return;
+
+            var newAccess = leaveMasterIds.Select(masterId => new HrmLeaveEmployeeleaveaccess
+            {
+                EmployeeId = request.empId,
+                LeaveMaster = masterId,
+                IsCompanyLevel = 0,
+                CreatedBy = request.entryBy,
+                CreatedDate = DateTime.UtcNow,
+                Status = 1,
+                FromDate = request.JoinDt
+            }).ToList();
+            await _context.HrmLeaveEmployeeleaveaccesses.AddRangeAsync(newAccess);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task AssignLeaveBasicSettingsAccessAsync(AssignEmployeeAccessRequestDto request)
+        {
+            var exists = await _context.HrmLeaveBasicsettingsaccesses
+             .AnyAsync(x => x.EmployeeId == request.empId);
+
+            if (exists) return;
+
+           
+
+            var leaveTransactionId = await _context.TransactionMasters
+                .Where(x => x.TransactionType == "Leave")
+                .Select(x => x.TransactionId)
+                .FirstOrDefaultAsync();
+
+            var empEntityIdList = SplitStringToLongList(request.EmpEntity);
+
+            var applicableLeaveMasterIds = await GetApplicableMasterIds(leaveTransactionId, Convert.ToInt64(request.EmpFirstEntity), request.EmpEntity);
+
+            var activeLeaveMasterIds = await _context.HrmLeaveMasters
+                   .Where(l => l.Active ==1 && applicableLeaveMasterIds.Contains(l.LeaveMasterId))
+                   .Select(l => l.LeaveMasterId)
+                   .ToListAsync();
+            var leaveBsTransactionId = await _context.TransactionMasters
+                   .Where(x => x.TransactionType == "Leave_BS")
+                   .Select(x => x.TransactionId)
+                   .FirstOrDefaultAsync();
+
+
+            var settingsToInsert = await (from s in _context.HrmLeaveMasterandsettingsLinks
+                                          join a in _context.HrmLeaveMasters on s.LeaveMasterId equals a.LeaveMasterId
+                                          where a.Active ==1 &&
+                                                
+                                               
+                                                activeLeaveMasterIds.Contains(s.LeaveMasterId.Value) &&
+                                                applicableLeaveMasterIds.Contains(s.IdMasterandSettingsLink)
+
+                                                
+                                          select new HrmLeaveBasicsettingsaccess
+                                          {
+                                              EmployeeId = request.empId,
+                                              SettingsId = s.SettingsId,
+                                              LeaveMasterId = s.LeaveMasterId,
+                                              IsCompanyLevel = 0,
+                                              CreatedBy = request.entryBy,
+                                              CreatedDate = DateTime.UtcNow,
+                                              FromDateBs = request.JoinDt,
+                                              Laps = 1.00m
+                                          }).ToListAsync();
+            await  _context.HrmLeaveBasicsettingsaccesses.AddRangeAsync(settingsToInsert);
+            await _context.SaveChangesAsync();
+
+
+        }
+
+        public async Task AssignEmployeeAccessAsync(AssignEmployeeAccessRequestDto request)
+        {
+            var employee = await _context.HrEmpMasters
+                .Where(e => e.EmpId == request.empId)
+                .Select(e => new { e.EmpEntity, e.EmpFirstEntity, e.JoinDt })
+                .FirstOrDefaultAsync();
+
+            if (employee is not null)
+            {
+                request.EmpEntity = employee.EmpEntity;
+                request.EmpFirstEntity = employee.EmpFirstEntity;
+                request.JoinDt = employee.JoinDt;
+            }
+            //Holiday
+            await AssignHolidayAccessAsync(request);
+            //attendancePolicy
+            await AssignAttendancePolicyAccessAsync(request);
+            //shift access
+            await AssignShiftAccessAsync(request);
+            //leave policy
+            await AssignLeavePolicyIfNotExistsAsync(request);
+            //leave access
+            await AssignEmployeeLeaveAccessAsync(request);
+            //leave basic settings
+            await AssignLeaveBasicSettingsAccessAsync(request);
+        }
+        //helper FUNCTION FOR AssignLeaveBasicSettingsAccessAsync
+        private async Task<List<long?>> GetApplicableMasterIds(long transactionId, long firstEntityId, string empEntityIdsCsv)
+        {
+            var empEntityIdList = SplitStringToLongList(empEntityIdsCsv);
+
+            var applicableMasterIds = await _context.EntityApplicable00s
+                .Where(x =>
+                    x.TransactionId == transactionId &&
+                    (
+                        (x.LinkLevel == 1 && x.LinkId == firstEntityId) ||
+                        (x.LinkLevel == 15) ||
+                        (x.LinkLevel != 1 && empEntityIdList.Contains(x.LinkId))
+                    )
+                )
+                .Select(x => x.MasterId)
+                .ToListAsync();
+
+            return applicableMasterIds;
+        }
+
+        public async Task<int> SaveParamWorkflow(SaveParamWorkflowDto request)
+        {
+            var moduleIdList = SplitStringToLongList(request.ModuleIds);
+            var currentDate = DateTime.Now;
+
+            if (request.LinkLevel == 13)
+            {
+                var entries = moduleIdList.Select(item => new ParamWorkFlow02
+                {
+                    LinkEmpId = request.LinkId,
+                    TransactionId = (int?)item,
+                    WorkFlowId = request.WorkFlowId,
+                    LinkLevel = request.LinkLevel,
+                    CreatedBy = request.CreatedBy,
+                    CreatedDate = currentDate
+                }).ToList();
+
+                await _context.ParamWorkFlow02s.AddRangeAsync(entries);
+                await _context.SaveChangesAsync();
+                return 2; // ErrorID = 02
+            }
+            else
+            {
+                var entries = moduleIdList.Select(item => new ParamWorkFlow01
+                {
+                    LinkId = request.LinkId,
+                    TransactionId = (int?)item,
+                    WorkFlowId = request.WorkFlowId,
+                    LinkLevel = request.LinkLevel,
+                    CreatedBy = request.CreatedBy,
+                    CreatedDate = currentDate
+                }).ToList();
+
+                await _context.ParamWorkFlow01s.AddRangeAsync(entries); 
+                await _context.SaveChangesAsync();                      
+                return 1; // ErrorID = 1
+            }
+        }
+
+        public async Task<int> InsertRoleAsync(RoleInsertDTO roleInsertDto)
+        {
+            int errorId = 0;
+
+            if (roleInsertDto.LinkLevel == 13)
+            {
+                // Insert into ParamRole02
+                var paramRole02 = new ParamRole02
+                {
+                    LinkEmpId = roleInsertDto.LinkId,
+                    ParameterId = roleInsertDto.ParameterId,
+                    EmpId = roleInsertDto.EmpId,
+                    LinkLevel = roleInsertDto.LinkLevel,
+                    CreatedBy = roleInsertDto.CreatedBy,
+                    CreatedDate = DateTime.Now
+                };
+                _context.ParamRole02s.Add(paramRole02);
+                errorId = 2;
+            }
+            else
+            {
+                // Insert into ParamRole01
+                var paramRole01 = new ParamRole01
+                {
+                    LinkId = roleInsertDto.LinkId,
+                    ParameterId = roleInsertDto.ParameterId,
+                    EmpId = roleInsertDto.EmpId,
+                    LinkLevel = roleInsertDto.LinkLevel,
+                    CreatedBy = roleInsertDto.CreatedBy,
+                    CreatedDate = DateTime.Now
+                };
+                _context.ParamRole01s.Add(paramRole01);
+                errorId = 1;
+            }
+
+            await _context.SaveChangesAsync();
+            return errorId;
+        }
+
+        public async Task<List<RoleDetailsDTO>> GetRoleDetailsAsync(int linkId, int linkLevel)
+        {
+            IQueryable<RoleDetailsDTO> query;
+
+            if (linkLevel == 13)
+            {
+                // Query for ParamRole02
+                query = from a in _context.ParamRole02s
+                        join b in _context.Categorymasterparameters on a.ParameterId equals b.ParameterId
+                        join c in _context.EmployeeDetails on a.EmpId equals c.EmpId into employeeGroup
+                        from c in employeeGroup.DefaultIfEmpty() // Ensures a left join
+                        where a.LinkEmpId == linkId
+                        select new RoleDetailsDTO
+                        {
+                            ValueId = a.ValueId,
+                            ParamDescription = b.ParamDescription,
+                            EmployeeName = c.Name != null ? c.Name : "Not Assigned"
+
+                        };
+
+            }
+            else
+            {
+                // Query for ParamRole01
+                query = from a in _context.ParamRole01s
+                        join b in _context.Categorymasterparameters on a.ParameterId equals b.ParameterId
+                        join c in _context.EmployeeDetails on a.EmpId equals c.EmpId into employeeGroup
+                        from c in employeeGroup.DefaultIfEmpty() // Ensures a left join
+                        where a.LinkId == linkId
+                        select new RoleDetailsDTO
+                        {
+                            ValueId = a.ValueId,
+                            ParamDescription = b.ParamDescription,
+                            EmployeeName = c.Name != null ? c.Name : "Not Assigned"
+
+                        };
+
+            }
+
+            return await query.ToListAsync();
+        }
+
+        //public async Task<List<object>> GetGeoCoordinatesAsync(int geoSpacingType, int geoCriteria)
+        //{
+        //    return await _context.MasterGeotaggings
+        //        .Where(x => x.GeoSpaceType == geoSpacingType &&
+        //                    x.GeoCriteria == geoCriteria &&
+        //                    x.Status == 1)
+        //        .Select(x => new
+        //        {
+        //            Value = x.GeoMasterId,
+        //            Description = x.CoordinateName
+        //        })
+        //        .Cast<object>()
+        //        .ToListAsync();
+        //}
+
+        public async Task<List<object>> GetGeoSpacingCriteria()
+        {
+            return await _context.HrmValueTypes
+                .Where(x => x.Type == "GeoSpacingCriteria")
+                .Select(x => new
+                {
+                    x.Value,
+                    x.Description
+                })
+                .Cast<object>()
+                .ToListAsync();
+        }
+        public async Task<List<object>> GetGeoCoordinatesTabAsync(int geoSpacingType, int geoCriteria)
+        {
+            return await _context.MasterGeotaggings
+                .Where(x => x.GeoSpaceType == geoSpacingType &&
+                            x.GeoMasterId == geoCriteria &&
+                            x.Status == 1)
+                .Select(x => new
+                {
+                    Value = x.GeoMasterId,
+                    Description = x.CoordinateName
+                })
+                .Cast<object>()
+                .ToListAsync();
+        }
+        public async Task<string> SaveOrUpdateGeoLocationAsync(SaveGeoLocationRequestDTO dto)
+        {
+            var geoEmp = await _context.Geotagging02s.FirstOrDefaultAsync(x => x.EmpId == dto.EmpID);
+
+            if (geoEmp != null)
+            {
+                // Update existing Geotagging02
+                geoEmp.Geotype = dto.GeoSpacingType;
+                geoEmp.LiveTracking = dto.LiveTracking;
+                geoEmp.UpdatedBy = dto.EntryBy;
+                geoEmp.UpdatedDate = DateTime.UtcNow;
+
+                // Delete existing locations
+                var oldLocations = _context.Geotagging02As.Where(a => a.GeoEmpId == geoEmp.GeoEmpId);
+                _context.Geotagging02As.RemoveRange(oldLocations);
+
+                // Insert new
+                foreach (var spacing in dto.GeoSpacings)
+                {
+                    _context.Geotagging02As.Add(new Geotagging02A
+                    {
+                        GeoEmpId = geoEmp.GeoEmpId,
+                        GeoCriteria = spacing.GeoCriteria,
+                        Latitude = spacing.Latitude,
+                        Longitude = spacing.Longitude,
+                        Radius = spacing.Radius,
+                        LocationId = spacing.LocationId,
+                        Coordinates = spacing.Coordinates
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+                return "Updated Successfully";
+            }
+            else
+            {
+                // Insert new Geotagging02
+                var newGeoEmp = new Geotagging02
+                {
+                    EmpId = dto.EmpID,
+                    LevelId = 13,
+                    Geotype = dto.GeoSpacingType,
+                    LiveTracking = dto.LiveTracking,
+                    EntryBy = dto.EntryBy,
+                    EntryDate = DateTime.UtcNow
+                };
+                _context.Geotagging02s.Add(newGeoEmp);
+                await _context.SaveChangesAsync(); // Save to get GeoEmpID
+
+                foreach (var spacing in dto.GeoSpacings)
+                {
+                    _context.Geotagging02As.Add(new Geotagging02A
+                    {
+                        GeoEmpId = newGeoEmp.GeoEmpId,
+                        GeoCriteria = spacing.GeoCriteria,
+                        Latitude = spacing.Latitude,
+                        Longitude = spacing.Longitude,
+                        Radius = spacing.Radius,
+                        LocationId = spacing.LocationId,
+                        Coordinates = spacing.Coordinates
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+                return "Saved Successfully";
+            }
+        }
+        public async Task<IEnumerable<AssetCategoryCodeDto>> GetFilteredAssetCategoriesAsync(int varAssetTypeID)
+        {
+            var result = await _context.AssetcategoryCodes
+                .Where(a => a.Value == varAssetTypeID &&
+                            a.Status != "D" &&
+                            a.Status != "A" &&
+                            a.Status != "Dis" &&
+                            a.Status != "DA")
+                .OrderBy(a => a.Description)
+                .Select(a => new AssetCategoryCodeDto
+                {
+                    Id = a.Id,
+                    Code = a.Code,
+                    Description = a.Description,
+                    Value = a.Value,
+                    Createdby = a.Createdby,
+                    Status = a.Status,
+                    Assetclass = a.Assetclass,
+                    AssetModel = a.AssetModel
+                })
+                .ToListAsync();
+
+
+    
+
+
+            return result;
+        }
+        public async Task<IEnumerable<AssetCategoryCodeDto>> GetAssignedOrPendingAssetCategoriesAsync(int varAssetTypeID, string varAssignAssetStatus)
+        {
+            var result = await _context.AssetcategoryCodes
+                .Where(a => a.Value == varAssetTypeID &&
+                            a.Status != "D" &&
+                            (
+                                (a.AssetModel == varAssignAssetStatus && a.Status == "A") ||
+                                a.Status == "P"
+                            ))
+                .Select(a => new AssetCategoryCodeDto
+                {
+                    Id = a.Id,
+                    Code = a.Code,
+                    Description = a.Description,
+                    Value = a.Value,
+                    Createdby = a.Createdby,
+                    Status = a.Status,
+                    Assetclass = a.Assetclass,
+                    AssetModel = a.AssetModel
+                })
+                .ToListAsync();
+
+            return result;
+        }
+
+        public async Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code)
+        {
+            var result = await (from a in _context.ReasonMasters
+                                join b in _context.GeneralCategories
+                                on a.Type equals b.Description
+                                where b.Description == code
+                                select new ReasonDto
+                                {
+                                    Reason_Id = a.ReasonId,
+                                    Description = a.Description
+                                }).ToListAsync();
+
+            return result;
+        }
+
+        public async Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto request)
+        {
+            // Get latest Emp_Id
+            var latestEmpId = await _context.EmployeeDetails
+                .OrderByDescending(e => e.EmpId)
+                .Select(e => e.EmpId)
+                .FirstOrDefaultAsync();
+
+            var shiftAccess = new ShiftMasterAccess
+            {
+                EmployeeId = latestEmpId,
+                ShiftId = request.ShiftId,
+                IsCompanyLevel = 0,
+                CreatedBy = request.CreatedBy,
+                CreatedDate = DateTime.UtcNow,
+                ValidDatefrom = request.ValidDateFrom,
+                ValidDateTo = request.ValidDateTo,
+                Active = "Y",
+                WeekEndMasterId = request.WeekEndMasterId,
+                ShiftApprovalId = 0,
+                ApprovalStatus = "A",
+                ProjectId = null
+            };
+
+            _context.ShiftMasterAccesses.Add(shiftAccess);
+            await _context.SaveChangesAsync();
+
+            return "Saved";
+        }
+        public async Task<List<object>> GetLanguagesAsync()
+        {
+            return await _context.HrEmpLanguagemasters
+                .Select(lang => new
+                {
+                    lang.LanguageId,
+                    lang.Description
+                })
+                .Cast<object>()
+                .ToListAsync();
+        }
     }
 }
-

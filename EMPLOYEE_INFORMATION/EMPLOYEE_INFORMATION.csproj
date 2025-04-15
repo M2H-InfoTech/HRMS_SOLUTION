@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <Folder Include="Resoucres\" />
+    <Folder Include="scaffoldData\" />
   </ItemGroup>
 
 </Project>

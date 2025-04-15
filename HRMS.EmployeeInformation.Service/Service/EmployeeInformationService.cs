@@ -1,4 +1,6 @@
-﻿using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using Azure.Core;
+using EMPLOYEE_INFORMATION.Data;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
@@ -11,10 +13,12 @@ namespace HRMS.EmployeeInformation.Service.Service
 {
     public class EmployeeInformationService : IEmployeeInformationService
     {
+        
         private readonly IEmployeeRepository _employeeRepository;
+
         public EmployeeInformationService(IEmployeeRepository employeeRepository)
         {
-
+            
             _employeeRepository = employeeRepository;
         }
 
@@ -669,6 +673,62 @@ namespace HRMS.EmployeeInformation.Service.Service
         public async Task<int> EnableNewQualif(int empId)
         {
             return await _employeeRepository.EnableNewQualif(empId);
+        }
+        
+
+        public async  Task AssignEmployeeAccessService(AssignEmployeeAccessRequestDto request)
+        {
+            await _employeeRepository.AssignEmployeeAccessAsync(request);
+        }
+
+        public async Task InsertWorkFlow(SaveParamWorkflowDto request)
+        {
+            await _employeeRepository.SaveParamWorkflow( request);
+        }
+        public async Task<int> InsertRoleAsync(RoleInsertDTO roleInsertDto)
+        {
+            return await _employeeRepository.InsertRoleAsync(roleInsertDto);
+        }
+        public async Task<List<RoleDetailsDTO>> GetRoleDetailsAsync(int linkId, int linkLevel)
+        {
+            return await _employeeRepository.GetRoleDetailsAsync(linkId, linkLevel);
+
+        }
+        //public async Task<List<object>> GetGeoCoordinatesAsync(int geoSpacingType, int geoCriteria)
+        //{
+        //    return await _employeeRepository.GetGeoCoordinatesAsync(geoSpacingType, geoCriteria);
+        //}
+        public async Task<List<object>> GetGeoSpacingCriteriaAsync()
+        {
+            return await _employeeRepository.GetGeoSpacingCriteria();
+        }
+        public async Task<List<object>> GetGeoCoordinatesTabAsync(int geoSpacingType, int geoCriteria)
+        {
+            return await _employeeRepository.GetGeoCoordinatesTabAsync(geoSpacingType, geoCriteria);
+        }
+        public async Task<string> SaveGeoLocationAsync(SaveGeoLocationRequestDTO dto)
+        {
+            return await _employeeRepository.SaveOrUpdateGeoLocationAsync(dto);
+        }
+        public async Task<IEnumerable<AssetCategoryCodeDto>> GetFilteredAssetCategoriesAsync(int varAssetTypeID)
+        {
+            return await _employeeRepository.GetFilteredAssetCategoriesAsync(varAssetTypeID);
+        }
+        public async Task<IEnumerable<AssetCategoryCodeDto>> GetAssignedOrPendingAssetCategoriesAsync(int varAssetTypeID, string varAssignAssetStatus)
+        {
+            return await _employeeRepository.GetAssignedOrPendingAssetCategoriesAsync(varAssetTypeID, varAssignAssetStatus);
+        }
+        public async Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code)
+        {
+            return await _employeeRepository.GetGeneralSubCategoryAsync(code);
+        }
+        public async Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto request)
+        {
+            return await _employeeRepository.SaveShiftMasterAccessAsync(request);
+        }
+        public async Task<List<object>> GetLanguagesAsync()
+        {
+            return await _employeeRepository.GetLanguagesAsync();
         }
     }
 }
