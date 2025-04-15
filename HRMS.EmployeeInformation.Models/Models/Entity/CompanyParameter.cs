@@ -5,7 +5,7 @@ namespace EMPLOYEE_INFORMATION.Models.Entity;
 
 public partial class CompanyParameter
 {
-    public int? Id { get; set; }
+    public long? Id { get; set; }
 
     public int? CompanyId { get; set; }
 
