@@ -154,6 +154,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments (int EmployeeId);
         Task<List<DocumentDetailDto>> GetDocumentDetailsAsync (string status, int detailId);
         Task<int> GetSlabEnabledAsync (int enteredBy);
+        Task<int> EnableNewQualif(int empId);
 
     }
 }

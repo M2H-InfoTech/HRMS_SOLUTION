@@ -21,5 +21,8 @@ namespace MPLOYEE_INFORMATION.DTO.DTOs
         public string? PersonalEMail { get; set; }
 
         public string? Status { get; set; }
+        public string? emername { get; set; }
+        public string? emerrelation { get; set; }
+
     }
 }

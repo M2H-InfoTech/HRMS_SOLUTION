@@ -10188,7 +10188,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                               Phone = a.PhoneNo,
                               OfficePhone = a.AlterPhoneNo,
                               Mobile = a.MobileNo,
-
+                             emername=a.EmerName,
+                             emerrelation=a.EmerRelation,
                               // Hardcoded or unused fields
                               Status = "A",
                               Inst_Id = 0,
@@ -10557,6 +10558,15 @@ namespace HRMS.EmployeeInformation.Repository.Common
         //        return await result.ToListAsync ( );
         //    }
         //}
+
+        public async Task<int> EnableNewQualif(int empId)
+        {
+
+            int? optionenb = GetEmployeeParametersettingsNew(empId, "ENBQUALIF", "EMP1");
+            return optionenb ?? 0;
+
+        }
+
 
     }
 }

@@ -879,7 +879,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeCertifications = await _employeeInformation.GetEmployeeCertifications(employeeid);
             return Ok(employeeCertifications);
         }
-        [HttpDelete]
+        [HttpPost]
         public async Task<IActionResult> DeleteCertificate(int certificateid)
         {
             var deleteCertificate = await _employeeInformation.DeleteCertificate(certificateid);
@@ -1036,7 +1036,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok (DocumentDetailList);
         }
         [HttpGet]
-        public async Task<IActionResult> GetSlabEnabledAsync (int enteredBy)
+        public async Task<IActionResult> GetSlabEnabledAsync (int enteredBy) 
         {
             if (enteredBy == 0)
             {
@@ -1044,6 +1044,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
             }
             var DocumentDetailList = await _employeeInformation.GetSlabEnabledAsync (enteredBy);
             return Ok (DocumentDetailList);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EnableNewQualif(int empId)
+        {
+            var EnableNewQualif = await _employeeInformation.EnableNewQualif(empId);
+            return Ok(EnableNewQualif);
         }
 
     }
