@@ -438,12 +438,16 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
             {
                 if (submitAssetNewDto == null)
                     return "Invalid data provided.";
-
+                int reasonIds = int.Parse(submitAssetNewDto.Reason_id);
+                var typeValue = _context.GeneralCategories
+                    .Where(r => r.Id == reasonIds)
+                    .Select(r => r.Description)
+                    .FirstOrDefault();
                 // Step 1: Insert into ReasonMaster
                 var reasonMaster = new ReasonMaster
                 {
                     Description = submitAssetNewDto.Description,
-                    Type = submitAssetNewDto.Type,
+                    Type = typeValue,
                     EntryBy = submitAssetNewDto.EmpID,
                     EntryDate = DateTime.UtcNow,
                     Value = submitAssetNewDto.Value,
@@ -509,10 +513,8 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
                         .Select(category => new EmployeesAssetsAssign
                         {
                             EmpId = submitAssetNewDto.EmpID,
-                            AssetGroup = generalCategoryDict.TryGetValue(category.GcategoryID, out var assetGroupId)
-                                ? assetGroupId.ToString() : "0", // Convert int to string
-                            Asset = reasonMasterDict.TryGetValue(category.GcategoryID, out var reasonMasterId)
-                                ? reasonMasterId.ToString() : reasonId.ToString(), // Convert int to string
+                            AssetGroup = submitAssetNewDto.Reason_id, // Convert int to string
+                            Asset =  reasonId.ToString(), // Convert int to string
                             ReceivedDate = submitAssetNewDto.ReleaseDate,
                             Status = "Open",
                             EntryBy = submitAssetNewDto.Entryby,
