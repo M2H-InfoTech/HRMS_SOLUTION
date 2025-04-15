@@ -150,6 +150,26 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<DocumentDetailDto>> GetDocumentDetailsAsync (string status, int detailId);
         Task<int> GetSlabEnabledAsync (int enteredBy);
         Task<int> EnableNewQualif(int empId);
+        //Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
+        //Reassign
+        Task AssignEmployeeAccessService(AssignEmployeeAccessRequestDto request);
+        //InsertWorkFlowEL
+        Task InsertWorkFlow(SaveParamWorkflowDto request);
+        //SaveWorkFlowEmp  Mode : InsertRoleEL
+        Task<int> InsertRoleAsync(RoleInsertDTO roleInsertDto);
+
+        Task<List<RoleDetailsDTO>> GetRoleDetailsAsync(int linkId, int linkLevel);
+
+        //Task<List<object>> GetGeoCoordinatesAsync(int geoSpacingType, int geoCriteria);
+        Task<List<object>> GetGeoSpacingCriteriaAsync();
+        Task<List<object>> GetGeoCoordinatesTabAsync(int geoSpacingType, int geoCriteria);
+
+        Task<string> SaveGeoLocationAsync(SaveGeoLocationRequestDTO dto);
+        Task<IEnumerable<AssetCategoryCodeDto>> GetFilteredAssetCategoriesAsync(int varAssetTypeID);
+        Task<IEnumerable<AssetCategoryCodeDto>> GetAssignedOrPendingAssetCategoriesAsync(int varAssetTypeID, string varAssignAssetStatus);
+        Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code);
+        Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto request);
+        Task<List<object>> GetLanguagesAsync();
 
     }
 

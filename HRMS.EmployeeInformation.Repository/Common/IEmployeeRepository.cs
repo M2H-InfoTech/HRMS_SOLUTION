@@ -1,4 +1,5 @@
-﻿using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using EMPLOYEE_INFORMATION.Models.Entity;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Models;
 using Microsoft.AspNetCore.Http;
@@ -155,6 +156,47 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<DocumentDetailDto>> GetDocumentDetailsAsync (string status, int detailId);
         Task<int> GetSlabEnabledAsync (int enteredBy);
         Task<int> EnableNewQualif(int empId);
+       
+
+        Task<int> GetDefaultAttendancePolicyAsync(int empId);
+        string GetControlValue(dynamic param, string controlType, bool isMultiple);
+       // Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
+        Task AssignHolidayAccessAsync(AssignEmployeeAccessRequestDto request);
+        Task AssignAttendancePolicyAccessAsync(AssignEmployeeAccessRequestDto request);
+        //helper
+        
+        //
+        Task AssignShiftAccessAsync(AssignEmployeeAccessRequestDto request);
+        //helper for LEAVE POLICY ACCESS
+        Task<int?> GetDefaultLeavePolicyAsync(int employeeId);
+        //-- LEAVE POLICY ACCESS
+        Task AssignLeavePolicyIfNotExistsAsync(AssignEmployeeAccessRequestDto request);
+        //-- EMPLOYEE LEAVE ACCESS
+        Task AssignEmployeeLeaveAccessAsync(AssignEmployeeAccessRequestDto request);
+        // basic leave settings
+        Task AssignLeaveBasicSettingsAccessAsync(AssignEmployeeAccessRequestDto request);
+        //SaveWorkFlowMasterEMp   Mode : InsertWorkFlowEL  SP : WORKFLOW_ASSIGN
+        Task<int> SaveParamWorkflow(SaveParamWorkflowDto request);
+        //SaveWorkFlowEmp  Mode : InsertRoleEL
+        Task<int> InsertRoleAsync(RoleInsertDTO roleInsertDto);
+        //Mode : RoleRetrieveEL
+        Task<List<RoleDetailsDTO>> GetRoleDetailsAsync(int linkId, int linkLevel);
+
+        Task AssignEmployeeAccessAsync(AssignEmployeeAccessRequestDto request);
+        //Task<List<object>> GetGeoCoordinatesAsync(int geoSpacingType, int geoCriteria);
+
+        Task<List<object>> GetGeoSpacingCriteria();
+        Task<List<object>> GetGeoCoordinatesTabAsync(int geoSpacingType, int geoCriteria);
+
+        Task<string> SaveOrUpdateGeoLocationAsync(SaveGeoLocationRequestDTO dto);
+        Task<IEnumerable<AssetCategoryCodeDto>> GetFilteredAssetCategoriesAsync(int varAssetTypeID);
+
+        Task<IEnumerable<AssetCategoryCodeDto>> GetAssignedOrPendingAssetCategoriesAsync(int varAssetTypeID, string varAssignAssetStatus);
+        Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code);
+        //SaveEmployeeShift  Mode : InsertShiftEmpCreation  SP : ShiftAssignSettings
+        Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto dto);
+        //FillLanguageTypes  Mode : FillLanguageTypes  SP : EmployeeCreation
+        Task<List<object>> GetLanguagesAsync();
 
     }
 }
