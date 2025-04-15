@@ -1,5 +1,6 @@
 ﻿using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
 using HRMS.EmployeeInformation.Service.Interface;
 using Microsoft.AspNetCore.Http;
@@ -168,10 +169,11 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.TransferAndPromotionAsync(employeeid);
         }
-        public async Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeid, string status)
-        {
-            return await _employeeRepository.SalarySeriesAsync(employeeid, status);
-        }
+
+        //public async Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status)
+        //{
+        //    return await _employeeRepository.SalarySeriesAsync1(employeeId, status);
+        //}
         public async Task<List<AuditInformationDto>> AuditInformationAsync(string employeeIDs, int empId, int roleId, string? infotype, string? infoDesc, string? datefrom, string? dateto)
         {
             return await _employeeRepository.AuditInformationAsync(employeeIDs, empId, roleId, infotype, infoDesc, datefrom, dateto);
@@ -536,7 +538,11 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.GetProbationEffective(linkId);
         }
 
-        public async Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request)
+        //public async Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request)
+        //{
+        //    return await _employeeRepository.UpdateEditEmployeeDetailsAsync(request);
+        //}
+        public async Task<int> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request)
         {
             return await _employeeRepository.UpdateEditEmployeeDetailsAsync(request);
         }
@@ -569,16 +575,64 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.AddEmpModuleDetailsAsync(BiometricDto);
         }
-        public List<ParamWorkFlowViewDto> GetWorkFlowData (int linkLevel, int valueId)
+        public List<ParamWorkFlowViewDto> GetWorkFlowData(int linkLevel, int valueId)
         {
-            return _employeeRepository.GetWorkFlowData (linkLevel, valueId);
+            return _employeeRepository.GetWorkFlowData(linkLevel, valueId);
         }
-        public async Task<long> UpdateWorkFlowELAsync (ParamWorkFlow01s2sDto dto)
+        public async Task<long> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto)
         {
-            return await _employeeRepository.UpdateWorkFlowELAsync (dto);
+            return await _employeeRepository.UpdateWorkFlowELAsync(dto);
         }
 
-       
+        public async Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status)
+        {
+            return await _employeeRepository.SalarySeriesAsync1(employeeId, status);
+        }
+        public async Task<int> GetAgeLimitValue(int empId)
+        {
+            return await _employeeRepository.GetAgeLimitValue(empId);
+        }
 
+        public async Task<ProfessionalDto> GetUpdateProfessional(int empId, string updateType, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateProfessional(empId, updateType, Detailid);
+        }
+        public async Task<QualificationTableDto> GetUpdateQualification(int empId, string updateType, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateQualification(empId, updateType, Detailid);
+        }
+        public async Task<RewardAndRecognitionDto> GetEmployeeRewardsDetails(int empId)
+        {
+            return await _employeeRepository.GetEmployeeRewardsDetails(empId);
+        }
+        public async Task<SkillSetDto> GetUpdateTechnical(int empId, string updateType, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateTechnical(empId, updateType, Detailid);
+        }
+        public async Task<CommunicationTableDto> GetUpdateCommunication(int empId, string updateType, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateCommunication(empId, updateType, Detailid);
+        }
+        public async Task<CommunicationTableDto> GetUpdateCommunicationExtra(int empId, string updateType, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateCommunicationExtra(empId, updateType, Detailid);
+        }
+        public async Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId, int Detailid)
+        {
+            return await _employeeRepository.GetUpdateEmergencyExtra(empId, Detailid);
+        }
+        public async Task<ReferenceDto> GetUpdateReference(int Detailid)
+        {
+            return await _employeeRepository.GetUpdateReference(Detailid);
+        }
+        public async Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid)
+        {
+            return await _employeeRepository.RetrieveEmployeeLanguage(empId, Detailid);
+        }
+
+        public async Task<object> GetAccessLevelByRoleId(int? firstEntityId)
+        {
+            return await _employeeRepository.EmployeeCreationFilterAsync(firstEntityId);
+        }
     }
 }

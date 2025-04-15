@@ -31,7 +31,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(token);
         }
         [HttpPost]
-        public async Task<IActionResult> GetEmployeeById(EmployeeInformationParameters employeeInformationParameters)
+        public async Task<IActionResult> GetEmployeeBootTableData(EmployeeInformationParameters employeeInformationParameters)
         {
             var result = await _employeeInformation.GetEmpData(employeeInformationParameters);
             return Ok(result);
@@ -275,7 +275,9 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> SalarySeries(int employeeId, string status)
         {
-            var SalarySeries = await _employeeInformation.SalarySeriesAsync(employeeId, status);
+            //var SalarySeries = await _employeeInformation.SalarySeriesAsync1(employeeId, status);
+            //return Ok(SalarySeries);
+            var SalarySeries = await _employeeInformation.SalarySeriesAsync1(employeeId, status);
             return Ok(SalarySeries);
         }
 
@@ -851,7 +853,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> UpdateEditEmployeeDetailsAsync([FromBody] UpdateEmployeeRequestDto request)
         {
             var employeeProject = await _employeeInformation.UpdateEditEmployeeDetails(request);
-            return Ok(new { employeeProject.Item1, employeeProject.Item2 });
+            return Ok(employeeProject);
         }
         [HttpGet]
         public async Task<IActionResult> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria)
@@ -891,19 +893,86 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(biometrc);
         }
         [HttpGet]
-        public async Task<IActionResult> GetWorkFlowData (int linkLevel, int valueId)
+        public async Task<IActionResult> GetWorkFlowData(int linkLevel, int valueId)
         {
-            var result = _employeeInformation.GetWorkFlowData (linkLevel, valueId);
-            return Ok (result);
+            var result = _employeeInformation.GetWorkFlowData(linkLevel, valueId);
+            return Ok(result);
         }
         //WORK FLOW MASTER
         [HttpPost]
-        public async Task<IActionResult> UpdateWorkFlowELAsync ([FromBody]ParamWorkFlow01s2sDto dto)
+        public async Task<IActionResult> UpdateWorkFlowELAsync([FromBody] ParamWorkFlow01s2sDto dto)
         {
-            var WorkFlowResult = await _employeeInformation.UpdateWorkFlowELAsync (dto);
-            return Ok (WorkFlowResult);
+            var WorkFlowResult = await _employeeInformation.UpdateWorkFlowELAsync(dto);
+            return Ok(WorkFlowResult);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAgeLimitValue(int empId)
+        {
+            var employeeAgeLimit = await _employeeInformation.GetAgeLimitValue(empId);
+            return Ok(employeeAgeLimit);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetUpdateProfessional(int empId, string updateType, int Detailid)
+        {
+            var getUpdateProfessional = await _employeeInformation.GetUpdateProfessional(empId, updateType, Detailid);
+            return Ok(getUpdateProfessional);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetUpdateQualification(int empId, string updateType, int Detailid)
+        {
+            var getUpdateQualification = await _employeeInformation.GetUpdateQualification(empId, updateType, Detailid);
+            return Ok(getUpdateQualification);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeRewardsDetails(int empId)
+        {
+            var getEmployeeRewardsDetails = await _employeeInformation.GetEmployeeRewardsDetails(empId);
+            return Ok(getEmployeeRewardsDetails);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetUpdateTechnical(int empId, string updateType, int Detailid)
+        {
+            var getUpdateTechnical = await _employeeInformation.GetUpdateTechnical(empId, updateType, Detailid);
+            return Ok(getUpdateTechnical);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetUpdateCommunication(int empId, string updateType, int Detailid)
+        {
+            var getUpdateCommunication = await _employeeInformation.GetUpdateCommunication(empId, updateType, Detailid);
+            return Ok(getUpdateCommunication);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetUpdateCommunicationExtra(int empId, string updateType, int Detailid)
+        {
+            var getUpdateCommunication = await _employeeInformation.GetUpdateCommunicationExtra(empId, updateType, Detailid);
+            return Ok(getUpdateCommunication);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetUpdateEmergencyExtra(int empId, int Detailid)
+        {
+            var getUpdateEmergencyExtra = await _employeeInformation.GetUpdateEmergencyExtra(empId,
+                Detailid);
+            return Ok(getUpdateEmergencyExtra);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetUpdateReference(int Detailid)
+        {
+            var getUpdateReference = await _employeeInformation.GetUpdateReference(Detailid);
+            return Ok(getUpdateReference);
+        }
+        [HttpGet]
+        public async Task<IActionResult> RetrieveEmployeeLanguage(int empId, int Detailid)
+        {
+            var retrieveEmployeeLanguage = await _employeeInformation.RetrieveEmployeeLanguage(empId, Detailid);
+            return Ok(retrieveEmployeeLanguage);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAccessLevelByRoleId(int? firstEntityId)
+        {
+            var employeeCreationFilter = await _employeeInformation.GetAccessLevelByRoleId(firstEntityId);
+            return Ok(employeeCreationFilter);
+        }
 
     }
 }
