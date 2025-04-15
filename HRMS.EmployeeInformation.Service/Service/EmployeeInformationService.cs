@@ -579,7 +579,7 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return _employeeRepository.GetWorkFlowData(linkLevel, valueId);
         }
-        public async Task<long> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto)
+        public async Task<UpdateResult> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto)
         {
             return await _employeeRepository.UpdateWorkFlowELAsync(dto);
         }
@@ -633,6 +633,38 @@ namespace HRMS.EmployeeInformation.Service.Service
         public async Task<object> GetAccessLevelByRoleId(int? firstEntityId)
         {
             return await _employeeRepository.EmployeeCreationFilterAsync(firstEntityId);
+        }
+        public async Task<List<ParamRoleViewDto>> EditRoleELAsync (int linkLevel, int valueId)
+        {
+            return await _employeeRepository.EditRoleELAsync (linkLevel, valueId);
+        }
+        public async Task<UpdateResult> UpdateRoleEL (ParamRole01AND02Dto dto)
+        {
+            return await _employeeRepository.UpdateRoleEL (dto);
+        }
+        public async Task<CompanyParameterDto> EnableGeoCriteria ( )
+        {
+            return await _employeeRepository.EnableGeoCriteria ( );
+        }
+        public async Task<string> GetGeoCoordinateNameStatus (int EmployeeId)
+        {
+            return await _employeeRepository.GetGeoCoordinateNameStatus (EmployeeId);
+        }
+        public async Task<string> GetGeotaggingMasterStatus (int EmployeeId)
+        {
+            return await _employeeRepository.GetGeotaggingMasterStatus (EmployeeId);
+        }
+        public async Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments (int EmployeeId)
+        {
+            return await _employeeRepository.DownloadIndividualEmpDocuments (EmployeeId);
+        }
+        public async Task<List<DocumentDetailDto>> GetDocumentDetailsAsync (string status, int detailId)
+        {
+            return await _employeeRepository.GetDocumentDetailsAsync (status, detailId);
+        }
+        public async Task<int> GetSlabEnabledAsync (int enteredBy)
+        {
+            return await _employeeRepository.GetSlabEnabledAsync (enteredBy);
         }
     }
 }

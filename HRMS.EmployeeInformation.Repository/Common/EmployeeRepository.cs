@@ -9792,17 +9792,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
         }
 
-        public async Task<long> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto)
+        public async Task<UpdateResult> UpdateWorkFlowELAsync (ParamWorkFlow01s2sDto dto)
         {
             try
             {
                 if (dto.LinkLevel == 13)
                 {
-                    var entity = await _context.ParamWorkFlow02s
-                        .FirstOrDefaultAsync(p => p.ValueId == dto.ValueId);
-
-                    if (entity == null)
-                        return 0;
+                    var entity = await _context.ParamWorkFlow02s.AsNoTracking ( )
+                        .FirstOrDefaultAsync (p => p.ValueId == dto.ValueId);
 
                     entity.LinkEmpId = dto.LinkId;
                     entity.WorkFlowId = dto.WorkFlowId;
@@ -9810,27 +9807,24 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     entity.ModifiedBy = dto.ModifiedBy;
                     entity.ModifiedDate = DateTime.UtcNow;
 
-                    _context.ParamWorkFlow02s.Update(entity);
+                    _context.ParamWorkFlow02s.Update (entity);
+                    await _context.SaveChangesAsync ( );
+                    return new UpdateResult ("Updated Successfully", 200);
                 }
                 else
                 {
                     var entity = await _context.ParamWorkFlow01s
-                        .FirstOrDefaultAsync(p => p.ValueId == dto.ValueId);
-
-                    if (entity == null)
-                        return 0;
+                        .FirstOrDefaultAsync (p => p.ValueId == dto.ValueId);
 
                     entity.LinkId = dto.LinkId;
                     entity.WorkFlowId = dto.WorkFlowId;
                     entity.LinkLevel = dto.LinkLevel;
                     entity.ModifiedBy = dto.ModifiedBy;
                     entity.ModifiedDate = dto.ModifiedDate;
-
-                    _context.ParamWorkFlow01s.Update(entity);
+                    _context.ParamWorkFlow01s.Update (entity);
+                    await _context.SaveChangesAsync ( );
+                    return new UpdateResult ("Updated Successfully", 200);
                 }
-
-                await _context.SaveChangesAsync();
-                return dto.ValueId;
             }
             catch (DbUpdateConcurrencyException ex)
             {
@@ -10242,6 +10236,327 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Where(x => x.EmpId == empId && x.EmpLangId == detailId)
                 .ToListAsync();
         }
+        public async Task<List<ParamRoleViewDto>> EditRoleELAsync (int linkLevel, int valueId)
+        {
+            if (linkLevel == 13)
+            {
+                var result = from a in  _context.ParamRole02s.AsNoTracking ( )
+                             where a.ValueId == valueId
+                             join b in _context.Categorymasterparameters.AsNoTracking ( ) on a.ParameterId equals b.ParameterId
+                             join c in _context.EmployeeDetails.AsNoTracking ( ) on a.EmpId equals c.EmpId into empGroup
+                             from c in empGroup.DefaultIfEmpty ( ) // LEFT JOIN
+                             select new ParamRoleViewDto
+                             {
+                                 ValueId = a.ValueId,
+                                 ParamID = b.ParameterId,
+                                 ParamDescription = b.ParamDescription,
+                                 Emp_Id = c != null ? c.EmpId : null,
+                                 EmployeeName = c != null ? c.Name : null
+                             };
+                return await result.ToListAsync ( );
+            }
+            else
+            {
+                var result = from a in _context.ParamRole01s.AsNoTracking ( )
+                             where a.ValueId == valueId
+                             join b in _context.Categorymasterparameters.AsNoTracking ( ) on a.ParameterId equals b.ParameterId
+                             join c in _context.EmployeeDetails.AsNoTracking ( ) on a.EmpId equals c.EmpId into empGroup
+                             from c in empGroup.DefaultIfEmpty ( ) // LEFT JOIN
+                             select new ParamRoleViewDto
+                             {
+                                 ValueId = a.ValueId,
+                                 ParamID = b.ParameterId,
+                                 ParamDescription = b.ParamDescription,
+                                 Emp_Id = c != null ? c.EmpId : null,
+                                 EmployeeName = c != null ? c.Name : null
+                             };
+                return await result.ToListAsync ( );
+            }
+        }
+
+        public async Task<UpdateResult> UpdateRoleEL (ParamRole01AND02Dto dto)
+        {
+            try
+            {
+                if (dto.LinkLevel == 13)
+                {
+                    var entity = await _context.ParamRole02s.Where (x => x.ValueId == dto.ValueId).AsNoTracking ( ).FirstOrDefaultAsync ( );
+                    if (entity != null)
+                    {
+                        entity.LinkEmpId = dto.LinkEmpId;
+                        entity.EmpId = dto.EmpId;
+                        entity.ModifiedBy = dto.ModifiedBy;
+                        entity.ModifiedDate = dto.ModifiedDate;
+                        await _context.SaveChangesAsync ( );
+                        return new UpdateResult ("Updated Successfully", 200);
+                    }
+                    else
+                    {
+                        return new UpdateResult ("Not Updated: Record not found", 404);
+                    }
+                }
+                else
+                {
+                    var entity =await _context.ParamRole01s.AsNoTracking ( ).FirstOrDefaultAsync (x => x.ValueId == dto.ValueId);
+                    if (entity != null)
+                    {
+                        entity.LinkId = dto.LinkId;
+                        entity.EmpId = dto.EmpId;
+                        entity.LinkLevel = dto.LinkLevel;
+                        entity.ModifiedBy = dto.ModifiedBy;
+                        entity.ModifiedDate = dto.ModifiedDate;
+                        await _context.SaveChangesAsync ( );
+                        return new UpdateResult ("Updated Successfully", 200);
+                    }
+                    else
+                    {
+                        return new UpdateResult ("Not Updated: Record not found", 404);
+                    }
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                return new UpdateResult ("Not Updated: Database error", 400);
+            }
+            //catch (Exception ex)
+            //{
+            //    return new UpdateResult ("Not Updated: An unexpected error occurred ", 500);
+            //}
+        }
+
+        //public async Task<List<HrmValueTypeViewDto>> GetGeoType ( )
+        //{
+        //    var geotypes = from x in _context.HrmValueTypes
+        //                   where x.Type == "GeoSpacingType"
+        //                   select new HrmValueTypeViewDto
+        //                   {
+        //                       Value = x.Value,
+        //                       Description = x.Description
+        //                   };
+
+        //    return await geotypes.ToListAsync ( );
+        //}
+
+        public async Task<CompanyParameterDto> EnableGeoCriteria ( )
+        {
+
+            var geocriteria = await _context.CompanyParameters.Where (x => x.Description == "Enable Coordinate Naming in Geospatial").FirstOrDefaultAsync ( );
+            var geocriteriaDto = _mapper.Map<CompanyParameterDto> (geocriteria);
+            return geocriteriaDto;
+        }
+        public async Task<string> GetGeoCoordinateNameStatus (int EmployeeId)
+        {
+            var Status = await GetDefaultCompanyParameter (EmployeeId, "COORDINATENAMEGEO", "ATTN");
+            int status = int.Parse (Status);
+            if (status == 1)
+            {
+                return "Activated";
+            }
+            else
+            {
+                return "Disabled";
+            }
+        }
+
+        public async Task<string> GetGeotaggingMasterStatus (int EmployeeId)
+        {
+            var Status = await GetDefaultCompanyParameter (EmployeeId, "GEOTAGGINGMASTER", "EMP1");
+            int status = int.Parse (Status);
+            if (status == 1)
+            {
+                return "Activated";
+            }
+            else
+            {
+                return "Disabled";
+            }
+        }
+
+        public async Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments (int EmployeeId)
+        {
+            var result = from a in _context.HrmsEmpdocuments00s.AsNoTracking ( )
+                         join b in _context.HrmsEmpdocumentsApproved02s.AsNoTracking ( ) on a.DetailId equals b.DetailId
+                         join c in _context.HrmsDocument00s.AsNoTracking ( ) on a.DocId equals (int?)c.DocId
+                         join d in _context.HrEmpMasters.AsNoTracking ( ) on a.EmpId equals d.EmpId
+                         where a.EmpId == EmployeeId
+                         select new EmployeeDocumentListDto
+                         {
+                             DocID = a.DocId,
+                             EmpID = a.EmpId,
+                             Emp_Code = d.EmpCode,
+                             FileName = b.FileName,
+                             DocName = c.DocName,
+                             FolderName = c.FolderName
+                         };
+            return await result.ToListAsync ( );
+
+
+        }
+
+        public async Task<List<DocumentDetailDto>> GetDocumentDetailsAsync (string status, int detailId)
+        {
+            IQueryable<DocumentDetailDto> query;
+
+            if (status == "Pending")
+            {
+                query = from a in _context.HrmsEmpdocuments02s.AsNoTracking ( )
+                        join b in _context.HrmsEmpdocuments00s.AsNoTracking ( ) on a.DetailId equals b.DetailId
+                        join c in _context.HrmsDocument00s.AsNoTracking ( ) on a.DocId equals (int?)c.DocId
+                        where b.DetailId == detailId
+                        select new DocumentDetailDto
+                        {
+                            DocID = a.DocId,
+                            DetailID = a.DetailId,
+                            DocName = c.DocName,
+                            FileName = a.FileName
+                        };
+            }
+            else if (status == "Approved")
+            {
+                var result = _context.HrmsEmpdocumentsApproved02s.AsNoTracking ( ).Where (b => b.DetailId == detailId);
+                query = from a in _context.HrmsEmpdocumentsApproved02s.AsNoTracking ( )
+                        join b in _context.HrmsEmpdocumentsApproved00s.AsNoTracking ( ) on a.DetailId equals b.DetailId
+                        join c in _context.HrmsDocument00s.AsNoTracking ( ) on b.DocId equals (int?)c.DocId
+                        where b.DetailId == detailId
+                        select new DocumentDetailDto
+                        {
+                            DocID = a.DocId,
+                            DetailID = a.DetailId,
+                            //DocName = c.DocName,
+                            FileName = a.FileName
+                        };
+            }
+            else
+            {
+                throw new ArgumentException ("Invalid status. Use 'Pending' or 'Approved'.", nameof (status));
+            }
+
+            return await query.ToListAsync ( );
+        }
+
+        public async Task<int> GetSlabEnabledAsync (int enteredBy)
+        {
+            string? slabEnabled = await GetDefaultCompanyParameter (enteredBy, "PRLPayscaleSlab", "PRL");
+            return int.TryParse (slabEnabled, out int result) ? result : 0;
+        }
+
+        //public async Task<string> GetDefaultCompanyParameterAsync(int employeeId, string parameterCode, string type)
+        //{
+        //    if (employeeId == 0)
+        //    {
+        //        return "0";
+        //    }
+        //    else
+        //    {
+        //        var paramControl = await (from cp in _context.CompanyParameters
+        //                                  join pct in _context.ParameterControlTypes on cp.ControlType equals pct.ParamControlId
+        //                                  where cp.ParameterCode == parameterCode && cp.Type == type
+        //                                  select new
+        //                                  {
+        //                                      ParamControlDesc = pct.ParamControlDesc,
+        //                                      IsMultiple = pct.IsMultiple ?? 0
+        //                                  })
+        //                    .FirstOrDefaultAsync ( );
+        //    }
+        //}
+        //public async Task<List<GeoSpacingDto>> GetEmpGeoSpacingAsync (int empId)    
+        //{
+        //    bool useGeo02 = await _context.Geotagging02s.AnyAsync (x => x.EmpId == empId);
+        //    bool useGeo01 = !useGeo02 && await _context.HrEmpMasters
+        //        .Where (s => s.EmpId == empId)
+        //        .SelectMany (s => s.EmpEntity.Split (',', StringSplitOptions.RemoveEmptyEntries)
+        //            .Select (item => int.Parse (item)))
+        //        .Join (_context.Geotagging01s, f => f, b => b.LinkId, (f, b) => b)
+        //        .AnyAsync ( );
+
+        //    if (useGeo02)
+        //    {
+
+        //        var result = from a in _context.Geotagging02s
+        //                     where a.EmpId == empId
+        //                     join b in _context.Geotagging02As on a.GeoEmpId equals b.GeoEmpId
+        //                     join c in _context.HrmValueTypes on new { a.Geotype, Type = "GeoSpacingType" } equals new { Geotype = c.Value, c.Type }
+        //                     join d in _context.HrmValueTypes on new { b.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { GeoCriteria = d.Value, d.Type }
+        //                     select new GeoSpacingDto
+        //                     {
+        //                         GeoEmpId = a.GeoEmpId,
+        //                         GeoEmpAid = b.GeoEmpAid,
+        //                         EmpId = a.EmpId,
+        //                         LevelId = a.LevelId,
+        //                         Geotype = a.Geotype,
+        //                         GeotypeCode = c.Code,
+        //                         GeotypeDescription = c.Description,
+        //                         GeoCriteria = b.GeoCriteria,
+        //                         GeoCriteriaCode = d.Code,
+        //                         GeoCriteriaDescription = d.Description,
+        //                         Latitude = b.Latitude ?? "",
+        //                         Longitude = b.Longitude ?? "",
+        //                         Radius = b.Radius ?? "",
+        //                         LiveTracking = a.LiveTracking,
+        //                         LocationId = b.LocationId ?? -1,
+        //                         GeoCoordinates = b.Coordinates
+        //                     };
+
+        //        return await result.ToListAsync ( );
+        //    }
+        //    else if (useGeo01)
+        //    {
+        //        var result = from s in _context.HrEmpMasters
+        //                     where s.EmpId == empId
+        //                     from f in s.EmpEntity.Split (',', StringSplitOptions.RemoveEmptyEntries)
+        //                     join b in _context.Geotagging01s on int.Parse (f) equals b.LinkId
+        //                     join c in _context.Geotagging01As on b.GeoEntityId equals c.GeoEntityId
+        //                     join d in _context.HrmValueTypes on new { b.Geotype, Type = "GeoSpacingType" } equals new { Geotype = d.Value, d.Type }
+        //                     join e in _context.HrmValueTypes on new { c.GeoCriteria, Type = "GeoSpacingCriteria" } equals new { GeoCriteria = e.Value, e.Type }
+        //                     select new GeoSpacingDto
+        //                     {
+        //                         GeoEmpId = b.GeoEntityId,
+        //                         GeoEmpAid = c.GeoEntityAid,
+        //                         EmpId = s.EmpId,
+        //                         LevelId = b.LevelId,
+        //                         Geotype = b.Geotype,
+        //                         GeotypeCode = d.Code,
+        //                         GeotypeDescription = d.Description,
+        //                         GeoCriteria = c.GeoCriteria,
+        //                         GeoCriteriaCode = e.Code,
+        //                         GeoCriteriaDescription = e.Description,
+        //                         Latitude = c.Latitude ?? "",
+        //                         Longitude = c.Longitude ?? "",
+        //                         Radius = c.Radius ?? "",
+        //                         LiveTracking = b.LiveTracking,
+        //                         LocationId = c.LocationId ?? -1,
+        //                         GeoCoordinates = null
+        //                     };
+        //        return await result.ToListAsync ( );
+        //    }
+        //    else
+        //    {
+        //        var result = from G00 in _context.Geotagging00s
+        //                     join G00A in _context.Geotagging00As on G00.GeoCompId equals G00A.GeoCompId
+        //                     join H in _context.HrmValueTypes.Where (x => x.Type == "GeoSpacingType") on G00.Geotype equals H.Value
+        //                     join H2 in _context.HrmValueTypes.Where (x => x.Type == "GeoSpacingCriteria") on G00A.GeoCriteria equals H2.Value
+        //                     select new GeoSpacingDto
+        //                     {
+        //                         GeoEmpId = G00.GeoCompId,
+        //                         GeoEmpAid = null,
+        //                         EmpId = null,
+        //                         LevelId = G00.LevelId,
+        //                         Geotype = G00.Geotype,
+        //                         GeotypeCode = H.Code,
+        //                         GeotypeDescription = H.Description,
+        //                         GeoCriteria = G00A.GeoCriteria,
+        //                         GeoCriteriaCode = H2.Code,
+        //                         GeoCriteriaDescription = H2.Description,
+        //                         Latitude = G00A.Latitude ?? "",
+        //                         Longitude = G00A.Longitude ?? "",
+        //                         Radius = G00A.Radius ?? "",
+        //                         LiveTracking = G00.LiveTracking,
+        //                         LocationId = G00A.LocationId ?? -1,
+        //                         GeoCoordinates = null
+        //                     };
+        //        return await result.ToListAsync ( );
+        //    }
+        //}
 
     }
 }
