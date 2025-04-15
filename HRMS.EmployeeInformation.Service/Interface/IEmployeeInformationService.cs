@@ -128,7 +128,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
 
         Task<string?> AddEmpModuleDetailsAsync(BiometricDto BiometricDto);
         List<ParamWorkFlowViewDto> GetWorkFlowData(int linkLevel, int valueId);
-        Task<long> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto);
+        Task<UpdateResult> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto);
         Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status);
         Task<int> GetAgeLimitValue(int empId);
         Task<ProfessionalDto> GetUpdateProfessional(int empId, string updateType, int Detailid);
@@ -141,6 +141,14 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<ReferenceDto> GetUpdateReference(int Detailid);
         Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid);
         Task<object> GetAccessLevelByRoleId(int? firstEntityId);
+        Task<List<ParamRoleViewDto>> EditRoleELAsync (int linkLevel, int valueId);
+        Task<UpdateResult> UpdateRoleEL (ParamRole01AND02Dto dto);
+        Task<CompanyParameterDto> EnableGeoCriteria ( );
+        Task<string> GetGeoCoordinateNameStatus (int EmployeeId);
+        Task<string> GetGeotaggingMasterStatus (int EmployeeId);
+        Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments (int EmployeeId); //DOWNLOAD ALL OPTION IN DOCUMENTS
+        Task<List<DocumentDetailDto>> GetDocumentDetailsAsync (string status, int detailId);
+        Task<int> GetSlabEnabledAsync (int enteredBy);
         Task<int> EnableNewQualif(int empId);
 
     }

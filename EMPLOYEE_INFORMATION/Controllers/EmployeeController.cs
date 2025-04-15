@@ -974,6 +974,78 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(employeeCreationFilter);
         }
         [HttpGet]
+        public async Task<IActionResult> EditRoleELAsync (int linkLevel, int valueId)
+        {
+            var EditRoleELAsync = await _employeeInformation.EditRoleELAsync (linkLevel, valueId);
+            return Ok (EditRoleELAsync);
+        }
+        [HttpPost]
+        public async Task<IActionResult> UpdateRoleEL ([FromBody] ParamRole01AND02Dto dto)
+        {
+            var UpateStatus = await _employeeInformation.UpdateRoleEL (dto);
+            return Ok (UpateStatus);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EnableGeoCriteria ( )
+        {
+            var companyparamterDto = await _employeeInformation.EnableGeoCriteria ( );
+            return Ok (companyparamterDto);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetGeoCoordinateNameStatus (int EmployeeId)
+        {
+            if (EmployeeId == 0 || EmployeeId == null)
+            {
+                return BadRequest ("Please Provide An EmployeeId");
+            }
+            var EnableStatus = await _employeeInformation.GetGeoCoordinateNameStatus (EmployeeId);
+            return Ok (EnableStatus);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetGeotaggingMasterStatus (int EmployeeId)
+        {
+            if (EmployeeId == 0 || EmployeeId == null)
+            {
+                return BadRequest ("Please Provide An EmployeeId");
+            }
+            var EnableStatus = await _employeeInformation.GetGeotaggingMasterStatus (EmployeeId);
+            return Ok (EnableStatus);
+        }
+        [HttpGet]
+        public async Task<IActionResult> DownloadIndividualEmpDocuments (int EmployeeId)
+        {
+            if (EmployeeId == 0 || EmployeeId == null)
+            {
+                return BadRequest ("Please Provide An EmployeeId");
+            }
+            var DocumentsListByEmployeewise = await _employeeInformation.DownloadIndividualEmpDocuments (EmployeeId);
+            return Ok (DocumentsListByEmployeewise);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetDocumentDetailsAsync (string status, int detailId)
+        {
+            if (string.IsNullOrEmpty (status))
+            {
+                return BadRequest ("Please Provide An Status");
+            }
+            if (detailId == 0 || detailId == null)
+            {
+                return BadRequest ("Please Provide An EmployeeId");
+            }
+            var DocumentDetailList = await _employeeInformation.GetDocumentDetailsAsync (status, detailId);
+            return Ok (DocumentDetailList);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetSlabEnabledAsync (int enteredBy) 
+        {
+            if (enteredBy == 0)
+            {
+                return BadRequest ("Please Provide An EmployeeId");
+            }
+            var DocumentDetailList = await _employeeInformation.GetSlabEnabledAsync (enteredBy);
+            return Ok (DocumentDetailList);
+        }
+        [HttpGet]
         public async Task<IActionResult> EnableNewQualif(int empId)
         {
             var EnableNewQualif = await _employeeInformation.EnableNewQualif(empId);
