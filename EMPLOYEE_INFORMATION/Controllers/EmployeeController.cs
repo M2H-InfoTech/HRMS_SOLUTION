@@ -1166,5 +1166,31 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.GetLanguagesAsync();
             return Ok(result);
         }
+        [HttpGet]
+        public async Task<IActionResult> ProcessPayscaleRequest (int batchId, int employeeIds, int type)
+        {
+            if (batchId <= 0)
+                return BadRequest ("Invalid batchId");
+
+            if (employeeIds <= 0)
+                return BadRequest ("Invalid employeeIds");
+
+            if (type != 1 && type != 2)
+                return BadRequest ("Invalid type");
+            try
+            {
+                var result = await _employeeInformation.PayscaleComponentsListManual (batchId, employeeIds, type);
+
+                if (result == null)
+                    return NotFound ("Payscale data not found for the given parameters.");
+
+                return Ok (result);
+            }
+            catch (Exception ex)
+            {
+                // You can also log the exception here
+                return StatusCode (500, "An error occurred while processing the payscale request.");
+            }
+        }
     }
 }
