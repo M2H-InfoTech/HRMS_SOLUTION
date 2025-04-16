@@ -6774,8 +6774,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 {
                     // Check if the asset is already assigned and not returned
                     bool isAssetAssigned = await _context.EmployeesAssetsAssigns
-                        .AnyAsync(ea => ea.AssetNo == assetEdits.AssetNo &&
+                        .AnyAsync(ea => ea.AssetGroup == assetEdits.AssetGroup &&
                                         ea.AssignId != assetEdits.varAssestID &&
+                                        ea.EmpId==assetEdits.varEmpID &&
                                         (ea.ReturnDate == null || ea.ReturnDate >= assetEdits.ReceiveDate) &&
                                         ea.Status == "Open");
 

@@ -518,6 +518,7 @@ namespace HRMS.EmployeeInformation.Repository.Common.RepositoryB
                             ReceivedDate = submitAssetNewDto.ReleaseDate,
                             Status = "Open",
                             EntryBy = submitAssetNewDto.Entryby,
+                            EntryDate = DateTime.UtcNow,
                             Remarks = submitAssetNewDto.Remarks,
                             ReturnDate = submitAssetNewDto.ReturnDate,
                             IssueDate = submitAssetNewDto.ReleaseDate,

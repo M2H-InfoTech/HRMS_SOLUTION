@@ -583,7 +583,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(getassetedit);
         }
 
-        [HttpDelete]
+        [HttpPost]
         public async Task<IActionResult> AssetDelete(int varEmpID, int varAssestID)
         {
             var getassetdelete = await _employeeInformation.AssetDeleteAsync(varEmpID, varAssestID);
