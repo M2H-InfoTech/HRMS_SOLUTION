@@ -2,6 +2,7 @@
 {
     public class EmployeeInformationParameters
     {
+
         public int empId { get; set; }
         public int roleId { get; set; }
         public int userId { get; set; }
@@ -14,15 +15,9 @@
         public int probationStatus { get; set; }
         public int pageNumber { get; set; }
         public int pageSize { get; set; }
-
         public int draw { get; set; }
         public string? searchValue { get; set; }
+        public bool IsActive { get; set; }
 
-        //public bool linkLevelExists { get; set; }
-
-        //public string? ageFormat { get; set; }
-        //public string? currentStatusDesc { get; set; }
-
-        //public bool existsEmployee { get; set; }
     }
 }
