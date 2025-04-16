@@ -11571,7 +11571,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             a.Status != "D" &&
                             (
                                 (a.AssetModel == varAssignAssetStatus && a.Status == "A") ||
-                                a.Status == "P"
+                                a.Status == "P" || a.Status == "Pending"
                             ))
                 .Select(a => new AssetCategoryCodeDto
                 {
