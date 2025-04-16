@@ -11926,7 +11926,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var result = await (from a in _context.ReasonMasters
                                 join b in _context.GeneralCategories
                                 on a.Type equals b.Description
-                                where b.Description == code
+                                //where b.Description == code
                                 select new ReasonDto
                                 {
                                     Reason_Id = a.ReasonId,
@@ -11976,5 +11976,140 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Cast<object>()
                 .ToListAsync();
         }
+        public async Task DeleteEmpDetailsAsync(DeleteEmpDetailRequestDto request)
+        {
+            switch (request.TransactionType)
+            {
+                case "Profession":
+                    var prof = await _context.HrEmpProfdtlsApprls
+                        .FirstOrDefaultAsync(x => x.ProfId == request.DetailId && x.EmpId == request.EmpId);
+                    if (prof != null)
+                    {
+                        prof.Status = "D";
+                        prof.FlowStatus = "E";
+                    }
+
+                    var profWorkflow = await _context.ProfessionalRequestWorkFlowstatuses
+                        .FirstOrDefaultAsync(x => x.RequestId == request.DetailId);
+                    if (profWorkflow != null)
+                    {
+                        profWorkflow.ApprovalStatus = "D";
+                    }
+                    break;
+
+                case "Qualification":
+                    var qual = await _context.HrEmpQualificationApprls
+                        .FirstOrDefaultAsync(x => x.QlfId == request.DetailId && x.EmpId == request.EmpId);
+                    if (qual != null)
+                    {
+                        qual.Status = "D";
+                        qual.FlowStatus = "E";
+                    }
+
+                    var qualWorkflow = await _context.QualificationRequestWorkFlowstatuses
+                        .FirstOrDefaultAsync(x => x.RequestId == request.DetailId);
+                    if (qualWorkflow != null)
+                    {
+                        qualWorkflow.ApprovalStatus = "D";
+                    }
+                    break;
+
+                case "Technical":
+                    var tech = await _context.HrEmpTechnicalApprls
+                        .FirstOrDefaultAsync(x => x.TechId == request.DetailId && x.EmpId == request.EmpId);
+                    if (tech != null)
+                    {
+                        tech.Status = "D";
+                        tech.FlowStatus = "E";
+                    }
+
+                    var techWorkflow = await _context.SkillSetRequestWorkFlowstatuses
+                        .FirstOrDefaultAsync(x => x.RequestId == request.DetailId);
+                    if (techWorkflow != null)
+                    {
+                        techWorkflow.ApprovalStatus = "D";
+                    }
+                    break;
+
+                case "Statutory":
+                    var stat = await _context.HrmsEmpstatutory00s
+                        .FirstOrDefaultAsync(x => x.SatId == request.DetailId && x.EmpId == request.EmpId);
+                    if (stat != null)
+                    {
+                        stat.Status = "D";
+                    }
+                    break;
+
+                case "Communication":
+                    var comm = await _context.HrEmpAddressApprls
+                        .FirstOrDefaultAsync(x => x.AddId == request.DetailId && x.EmpId == request.EmpId);
+                    if (comm != null)
+                    {
+                        comm.Status = "D";
+                        comm.FlowStatus = "E";
+                    }
+
+                    var commWorkflow = await _context.CommunicationRequestWorkFlowstatuses
+                        .FirstOrDefaultAsync(x => x.RequestId == request.DetailId);
+                    if (commWorkflow != null)
+                    {
+                        commWorkflow.ApprovalStatus = "D";
+                    }
+                    break;
+
+                case "CommunicationExtra":
+                    var commExtra = await _context.HrEmpAddress01Apprls
+                        .FirstOrDefaultAsync(x => x.AddrId == request.DetailId && x.EmpId == request.EmpId);
+                    if (commExtra != null)
+                    {
+                        commExtra.Status = "D";
+                        commExtra.FlowStatus = "E";
+                    }
+
+                    var commExtraWorkflow = await _context.CommunicationAdditionalRequestWorkFlowstatuses
+                        .FirstOrDefaultAsync(x => x.RequestId == request.DetailId);
+                    if (commExtraWorkflow != null)
+                    {
+                        commExtraWorkflow.ApprovalStatus = "D";
+                    }
+                    break;
+
+                case "Reference":
+                    var reference = await _context.HrEmpreferences
+                        .FirstOrDefaultAsync(x => x.RefId == request.DetailId && x.EmpId == request.EmpId);
+                    if (reference != null)
+                    {
+                        reference.Status = "D";
+                    }
+                    break;
+
+                case "LanguageSkills":
+                    var langSkill = await _context.EmployeeLanguageSkills
+                        .FirstOrDefaultAsync(x => x.EmpId == request.EmpId && x.EmpLangId == request.DetailId);
+                    if (langSkill != null)
+                    {
+                        langSkill.Status = "D";
+                    }
+                    break;
+
+                default:
+                    throw new ArgumentException("Invalid TransactionType.");
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<HrmsDocumentField00>> GetDependentFieldsAsync()
+        {
+            var dataTypeId = await _context.GeneralCategories
+                .Where(x => x.Code == "DPNDNT")
+                .Select(x => x.DataTypeId)
+                .FirstOrDefaultAsync();
+
+            return await _context.HrmsDocumentField00s
+                .Where(x => x.DataTypeId == dataTypeId)
+                .ToListAsync();
+        }
     }
+
 }

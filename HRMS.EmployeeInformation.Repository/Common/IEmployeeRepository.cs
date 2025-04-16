@@ -197,6 +197,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto dto);
         //FillLanguageTypes  Mode : FillLanguageTypes  SP : EmployeeCreation
         Task<List<object>> GetLanguagesAsync();
-
+        //Mode : DeleteEmpDetails.SP : SaveUpdateEmployee
+        Task DeleteEmpDetailsAsync(DeleteEmpDetailRequestDto request);
+        //RetrieveDependentFieldsPrn @Mode = 'RetrieveDependentFields'
+        Task<List<HrmsDocumentField00>> GetDependentFieldsAsync();
     }
 }

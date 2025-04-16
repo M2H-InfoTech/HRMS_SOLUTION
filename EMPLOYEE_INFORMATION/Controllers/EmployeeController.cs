@@ -1166,5 +1166,31 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.GetLanguagesAsync();
             return Ok(result);
         }
+        [HttpPost]
+        public async Task<IActionResult> DeleteEmpDetail([FromBody] DeleteEmpDetailRequestDto request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.TransactionType) || request.DetailId <= 0 || request.EmpId <= 0)
+                return BadRequest("Invalid request.");
+
+            try
+            {
+                await _employeeInformation.DeleteEmpDetailsAsync(request);
+                return Ok(new { message = "Successfully Deleted" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred", details = ex.Message });
+            }
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetDependentFields()
+        {
+            var result = await _employeeInformation.GetDependentFieldsAsync();
+            return Ok(result);
+        }
     }
 }

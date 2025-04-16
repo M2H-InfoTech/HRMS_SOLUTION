@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using EMPLOYEE_INFORMATION.Data;
+using EMPLOYEE_INFORMATION.Models.Entity;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Models;
@@ -729,6 +730,14 @@ namespace HRMS.EmployeeInformation.Service.Service
         public async Task<List<object>> GetLanguagesAsync()
         {
             return await _employeeRepository.GetLanguagesAsync();
+        }
+        public async Task DeleteEmpDetailsAsync(DeleteEmpDetailRequestDto request)
+        {
+            await _employeeRepository.DeleteEmpDetailsAsync(request);
+        }
+        public async Task<List<HrmsDocumentField00>> GetDependentFieldsAsync()
+        {
+            return await _employeeRepository.GetDependentFieldsAsync();
         }
     }
 }

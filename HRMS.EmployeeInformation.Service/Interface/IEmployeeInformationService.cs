@@ -1,4 +1,5 @@
-﻿using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using EMPLOYEE_INFORMATION.Models.Entity;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
@@ -170,6 +171,10 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code);
         Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto request);
         Task<List<object>> GetLanguagesAsync();
+        //Mode : DeleteEmpDetails.SP : SaveUpdateEmployee
+        Task DeleteEmpDetailsAsync(DeleteEmpDetailRequestDto request);
+        //RetrieveDependentFieldsPrn  @Mode='RetrieveDependentFields'
+        Task<List<HrmsDocumentField00>> GetDependentFieldsAsync();
 
     }
 

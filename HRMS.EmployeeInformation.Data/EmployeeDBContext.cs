@@ -294,6 +294,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrmLeaveMaster> HrmLeaveMasters { get; set; }
     public virtual DbSet<HrmLeaveMasterandsettingsLink> HrmLeaveMasterandsettingsLinks { get; set; }
     public virtual DbSet<MasterGeotagging> MasterGeotaggings { get; set; }
+    public virtual DbSet<HrmsEmpstatutory00> HrmsEmpstatutory00s { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4437,6 +4438,21 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.UpdatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+        });
+        modelBuilder.Entity<HrmsEmpstatutory00>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("HRMS_EMPStatutory00");
+
+            entity.Property(e => e.EmpId).HasColumnName("EmpID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.SatId)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("SatID");
+            entity.Property(e => e.Status)
+                .HasMaxLength(5)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);
