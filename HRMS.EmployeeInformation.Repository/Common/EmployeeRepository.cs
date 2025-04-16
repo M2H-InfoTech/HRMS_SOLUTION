@@ -8780,51 +8780,116 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 LinkSelect = finalLinkSelect
             };
         }
+
+        //private async Task<List<HighLevelTableDto>> GetAccessLevel()
+        //{
+        //    // Step 1: Fetch raw data from the DB
+        //    var rawData = await _context.HighLevelViewTables
+        //        .AsNoTracking()
+        //        .ToListAsync();
+
+        //    // Step 2: Format it in memory using LINQ
+        //    var result = rawData.Select(h => new HighLevelTableDto
+        //    {
+        //        LevelOneId = h.LevelOneId,
+        //        LevelOneDescription = h.LevelOneDescription,
+
+        //        LevelTwoId = h.LevelTwoId,
+        //        LevelTwoDescription = $"{h.LevelTwoDescription} ({h.LevelOneDescription})",
+
+        //        LevelThreeId = h.LevelThreeId,
+        //        LevelThreeDescription = $"{h.LevelThreeDescription} ({h.LevelOneDescription}-{h.LevelTwoDescription})",
+
+        //        LevelFourId = h.LevelFourId,
+        //        LevelFourDescription = $"{h.LevelFourDescription} ({h.LevelThreeDescription})",
+
+        //        LevelFiveId = h.LevelFiveId,
+        //        LevelFiveDescription = $"{h.LevelFiveDescription} ({h.LevelThreeDescription}-{h.LevelFourDescription})",
+
+        //        LevelSixId = h.LevelSixId,
+        //        LevelSixDescription = $"{h.LevelSixDescription} ({h.LevelFourDescription}-{h.LevelFiveDescription})",
+
+        //        LevelSevenId = h.LevelSevenId,
+        //        LevelSevenDescription = $"{h.LevelSevenDescription} ({h.LevelThreeDescription}-{h.LevelSixDescription})",
+
+        //        LevelEightId = h.LevelEightId,
+        //        LevelEightDescription = $"{h.LevelEightDescription} ({h.LevelThreeDescription}-{h.LevelSevenDescription})",
+
+        //        LevelNineId = h.LevelNineId,
+        //        LevelNineDescription = $"{h.LevelNineDescription} ({h.LevelSevenDescription}-{h.LevelEightDescription})",
+
+        //        LevelTenId = h.LevelTenId,
+        //        LevelTenDescription = $"{h.LevelTenDescription} ({h.LevelEightDescription}-{h.LevelNineDescription})",
+
+        //        LevelElevenId = h.LevelElevenId,
+        //        LevelElevenDescription = $"{h.LevelElevenDescription} ({h.LevelNineDescription}-{h.LevelTenDescription})"
+
+        //    }).ToList();
+
+        //    return result;
+        //    //return new List<HighLevelTableDto>();
+        //}
+
+
+
+
         private async Task<List<HighLevelTableDto>> GetAccessLevel()
         {
-            return await _context.HighLevelViewTables
-             .AsNoTracking()
-             .Select(h => new HighLevelTableDto
-             {
-                 LevelOneId = h.LevelOneId,
-                 LevelOneDescription = h.LevelOneDescription,
-
-                 LevelTwoId = h.LevelTwoId,
-                 LevelTwoDescription = h.LevelTwoDescription + " (" + h.LevelOneDescription + ")",
-
-                 LevelThreeId = h.LevelThreeId,
-                 LevelThreeDescription = h.LevelThreeDescription + " (" + h.LevelOneDescription + "-" + h.LevelTwoDescription + ")",
-
-                 LevelFourId = h.LevelFourId,
-                 LevelFourDescription = h.LevelFourDescription + " (" + h.LevelThreeDescription + ")",
-
-                 LevelFiveId = h.LevelFiveId,
-                 LevelFiveDescription = h.LevelFiveDescription + " (" + h.LevelThreeDescription + "-" + h.LevelFourDescription + ")",
-
-                 LevelSixId = h.LevelSixId,
-                 LevelSixDescription = h.LevelSixDescription + " (" + h.LevelFourDescription + "-" + h.LevelFiveDescription + ")",
-
-                 LevelSevenId = h.LevelSevenId,
-                 LevelSevenDescription = h.LevelSevenDescription + " (" + h.LevelThreeDescription + "-" + h.LevelSixDescription + ")",
-
-                 LevelEightId = h.LevelEightId,
-                 LevelEightDescription = h.LevelEightDescription + " (" + h.LevelThreeDescription + "-" + h.LevelSevenDescription + ")",
-
-                 LevelNineId = h.LevelNineId,
-                 LevelNineDescription = h.LevelNineDescription + " (" + h.LevelSevenDescription + "-" + h.LevelEightDescription + ")",
-
-                 LevelTenId = h.LevelTenId,
-                 LevelTenDescription = h.LevelTenDescription + " (" + h.LevelEightDescription + "-" + h.LevelNineDescription + ")",
-
-                 LevelElevenId = h.LevelElevenId,
-                 LevelElevenDescription = h.LevelElevenDescription + " (" + h.LevelNineDescription + "-" + h.LevelTenDescription + ")"
-
-
-
-
-             })
-             .ToListAsync();
+            // Step 1: Fetch raw data from the DB
+            var rawData = await _context.HighLevelViewTables.AsNoTracking().ToListAsync();
+            var result = _mapper.Map<List<HighLevelTableDto>>(rawData);
+            return result;
         }
+
+
+
+
+
+        //private async Task<List<HighLevelTableDto>> GetAccessLevel()
+        //{
+        //    return await _context.HighLevelViewTables
+        //     .AsNoTracking()
+        //     .Select(h => new HighLevelTableDto
+        //     {
+        //         LevelOneId = h.LevelOneId,
+        //         LevelOneDescription = h.LevelOneDescription,
+
+        //         LevelTwoId = h.LevelTwoId,
+        //         LevelTwoDescription = h.LevelTwoDescription + " (" + h.LevelOneDescription + ")",
+
+        //         LevelThreeId = h.LevelThreeId,
+        //         LevelThreeDescription = h.LevelThreeDescription + " (" + h.LevelOneDescription + "-" + h.LevelTwoDescription + ")",
+
+        //         LevelFourId = h.LevelFourId,
+        //         LevelFourDescription = h.LevelFourDescription + " (" + h.LevelThreeDescription + ")",
+
+        //         LevelFiveId = h.LevelFiveId,
+        //         LevelFiveDescription = h.LevelFiveDescription + " (" + h.LevelThreeDescription + "-" + h.LevelFourDescription + ")",
+
+        //         LevelSixId = h.LevelSixId,
+        //         LevelSixDescription = h.LevelSixDescription + " (" + h.LevelFourDescription + "-" + h.LevelFiveDescription + ")",
+
+        //         LevelSevenId = h.LevelSevenId,
+        //         LevelSevenDescription = h.LevelSevenDescription + " (" + h.LevelThreeDescription + "-" + h.LevelSixDescription + ")",
+
+        //         LevelEightId = h.LevelEightId,
+        //         LevelEightDescription = h.LevelEightDescription + " (" + h.LevelThreeDescription + "-" + h.LevelSevenDescription + ")",
+
+        //         LevelNineId = h.LevelNineId,
+        //         LevelNineDescription = h.LevelNineDescription + " (" + h.LevelSevenDescription + "-" + h.LevelEightDescription + ")",
+
+        //         LevelTenId = h.LevelTenId,
+        //         LevelTenDescription = h.LevelTenDescription + " (" + h.LevelEightDescription + "-" + h.LevelNineDescription + ")",
+
+        //         LevelElevenId = h.LevelElevenId,
+        //         LevelElevenDescription = h.LevelElevenDescription + " (" + h.LevelNineDescription + "-" + h.LevelTenDescription + ")"
+
+
+
+
+        //     })
+        //     .ToListAsync();
+        //}
         public async Task<object> GetLevelAsync(int level)
         {
             var query = _context.HighLevelViewTables.AsQueryable();
@@ -9235,10 +9300,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             int linkselect = 0;  // Replace with actual value
             string lnk = "";
-            var lnkList = _context.Categorymasters
+            var lnkList = await _context.Categorymasters
                .Where(c => c.SortOrder >= linkselect || linkselect == 15)
                .Select(c => c.SortOrder.ToString()) // Convert SortOrder to string
-               .ToList();
+               .ToListAsync();
 
             // Concatenating SortOrder values into a single string
             lnk = string.Join(",", lnkList) + ",13";
@@ -9260,10 +9325,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Replace with actual value
             string lnk = "";
-            var lnkList = _context.Categorymasters
+            var lnkList = await _context.Categorymasters
                .Where(c => c.SortOrder >= linkselect || linkselect == 15)
                .Select(c => c.SortOrder.ToString()) // Convert SortOrder to string
-               .ToList();
+               .ToListAsync();
 
             // Concatenating SortOrder values into a single string
             lnk = string.Join(",", lnkList) + ",13";
