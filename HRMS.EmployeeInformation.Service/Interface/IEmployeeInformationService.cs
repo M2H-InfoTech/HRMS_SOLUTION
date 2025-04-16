@@ -1,5 +1,6 @@
 ﻿using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
 using Microsoft.AspNetCore.Http;
@@ -170,6 +171,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code);
         Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto request);
         Task<List<object>> GetLanguagesAsync();
+        Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
 
     }
 

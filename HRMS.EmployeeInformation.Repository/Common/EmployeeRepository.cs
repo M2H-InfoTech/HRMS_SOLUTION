@@ -7,6 +7,7 @@ using EMPLOYEE_INFORMATION.Models.Entity;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using HRMS.EmployeeInformation.Models.Models.EnumFolder;
@@ -12040,6 +12041,161 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 })
                 .Cast<object>()
                 .ToListAsync();
+        }
+        public async Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type)
+        {
+            var response = new PayscaleComponentsResponseDto ( );
+
+            // Call the equivalent of [dbo].[GetEmployeeParametersettings]
+            int enablePayscaleHourly = await GetEmployeeParameterSettingsAsync (1, "EmployeeReporting", "ENBLEPAYSCALEHRLY", "PRL");
+
+            if (enablePayscaleHourly == 1 && type == 1)
+            {
+                // Query 1: Employee hours and amount
+                var employeeHoursQuery = from pr in _context.PayscaleRequest01s.AsNoTracking ( )
+                                         where pr.PayRequest01Id == batchId && pr.EmployeeId == employeeIds
+                                         select new PayscaleHourlyDto
+                                         {
+                                             EmployeeId = pr.EmployeeId,
+                                             TotalHours = pr.TotalHours,
+                                             HourlyAmount = pr.HourlyAmount
+                                         };
+
+                response.HourlyComponents = await employeeHoursQuery.ToListAsync ( );
+
+                // Query 2: Employee details
+                var employeeDetailsQuery = from pr in _context.PayscaleRequest01s.AsNoTracking ( )
+                                           join emp in _context.EmployeeDetails.AsNoTracking ( ) on pr.EmployeeId equals emp.EmpId
+                                           join pr0 in _context.PayscaleRequest00s.AsNoTracking ( ) on pr.BatchId equals pr0.BatchId
+                                           join cm in _context.CurrencyMasters.AsNoTracking ( ) on pr0.CurrencyId equals cm.CurrencyId
+                                           join des in _context.DesignationDetails.AsNoTracking ( ) on emp.DesigId equals des.LinkId
+                                           where emp.EmpId == employeeIds
+                                           select new PayscaleEmployeeInfoDto
+                                           {
+                                               EmpId = emp.EmpId,
+                                               EmpCode = emp.EmpCode,
+                                               Name = emp.Name,
+                                               JoinDate = emp.JoinDt.HasValue ? emp.JoinDt.Value.ToString ("dd/MM/yyyy") : string.Empty,
+                                               Designation = des.Designation,
+                                               EffectiveDate = pr.EffectiveDate.HasValue ? pr.EffectiveDate.Value.ToString ("dd/MM/yyyy") : string.Empty,
+                                               CurrencyCode = cm.CurrencyCode
+                                           };
+
+                response.EmployeeInfo = await employeeDetailsQuery.FirstOrDefaultAsync ( );
+            }
+            else
+            {
+                // Query 1: Earnings components (PayType = 1)
+                var earningsQuery = from pr in _context.PayscaleRequest01s.AsNoTracking ( )
+                                    join pr2 in _context.PayscaleRequest02s.AsNoTracking ( ) on pr.PayRequest01Id equals pr2.PayRequestId01
+                                    join pcm in _context.PayCodeMaster01s.AsNoTracking ( ) on pr2.PayComponentId equals pcm.PayCodeId
+                                    where pr.PayRequest01Id == batchId && pr2.PayType == 1
+                                    select new PayscaleComponentDto
+                                    {
+                                        ComponentId = pr2.PayRequestId02,
+                                        Component = pcm.PayCode + " - " + pcm.PayCodeDescription,
+                                        Amount = (decimal)pr2.Amount,
+                                        TotalEarnings = pr.TotalEarnings,
+                                        TotalDeductions = pr.TotalDeductions
+                                    };
+
+                response.EarningsComponents = await earningsQuery.ToListAsync ( );
+
+                // Query 2: Deductions components (PayType = 2)
+                var deductionsQuery = from pr in _context.PayscaleRequest01s.AsNoTracking ( )
+                                      join pr2 in _context.PayscaleRequest02s.AsNoTracking ( ) on pr.PayRequest01Id equals pr2.PayRequestId01
+                                      join pcm in _context.PayCodeMaster01s.AsNoTracking ( ) on pr2.PayComponentId equals pcm.PayCodeId
+                                      where pr.PayRequest01Id == batchId && pr2.PayType == 2
+                                      select new PayscaleComponentDto
+                                      {
+                                          ComponentId = pr2.PayRequestId02,
+                                          Component = pcm.PayCode + " - " + pcm.PayCodeDescription,
+                                          Amount = (decimal)pr2.Amount,
+                                          TotalEarnings = pr.TotalEarnings,
+                                          TotalDeductions = pr.TotalDeductions
+                                      };
+
+                response.DeductionComponents = await deductionsQuery.ToListAsync ( );
+
+                // Query 3: Employee details
+                var employeeDetailsQuery = from pr in _context.PayscaleRequest01s.AsNoTracking ( )
+                                           join emp in _context.EmployeeDetails.AsNoTracking ( ) on pr.EmployeeId equals emp.EmpId
+                                           join pr0 in _context.PayscaleRequest00s.AsNoTracking ( ) on pr.BatchId equals pr0.BatchId
+                                           join cm in _context.CurrencyMasters.AsNoTracking ( ) on pr0.CurrencyId equals cm.CurrencyId
+                                           join des in _context.DesignationDetails.AsNoTracking ( ) on emp.DesigId equals des.LinkId
+                                           where emp.EmpId == employeeIds
+                                           select new PayscaleEmployeeInfoDto
+                                           {
+                                               EmpCode = emp.EmpCode,
+                                               Name = emp.Name,
+                                               JoinDate = emp.JoinDt.HasValue ? emp.JoinDt.Value.ToString ("dd/MM/yyyy") : string.Empty,
+                                               Designation = des.Designation,
+                                               EffectiveDate = pr.EffectiveDate.HasValue ? pr.EffectiveDate.Value.ToString ("dd/MM/yyyy") : string.Empty,
+                                               CurrencyCode = cm.CurrencyCode
+                                           };
+
+                response.EmployeeInfo = await employeeDetailsQuery.FirstOrDefaultAsync ( );
+            }
+
+            return response;
+        }
+
+
+
+        public async Task<int> GetEmployeeParameterSettingsAsync (int employeeId, string drpType = "", string parameterCode = "", string parameterType = "")
+        {
+            int? dailyRate = 0;
+
+            // First query: Check CompanyParameters02
+            var dailyRate1 = (from cp2 in _context.CompanyParameters02s
+                              join cp in _context.CompanyParameters on cp2.ParamId equals cp.Id
+                              select new
+                              {
+                                  a = cp.Id,
+                                  parameterCode = cp.ParameterCode,
+                                  parameterType = cp.Type,
+                                  EmpId = cp2.EmpId
+                              }).Where (x => x.parameterCode == parameterCode && x.parameterType == parameterType && x.EmpId == employeeId);
+
+            dailyRate = await dailyRate1.CountAsync ( );
+
+            if (dailyRate == 0 || string.IsNullOrEmpty (dailyRate.ToString ( )))
+            {
+                var entity = await _context.EmployeeDetails
+                    .Where (ed => ed.EmpId == employeeId)
+                    .Select (ed => ed.EmpEntity)
+                    .FirstOrDefaultAsync ( ) ?? "";
+                var entityItems = entity.Split (',');
+                var entityList = entity.Split (',').Select (s => long.Parse (s)).ToList ( );
+
+                // Second query: Check CompanyParameters01 with HRM_VALUE_TYPES
+                dailyRate = await (from cp1 in _context.CompanyParameters01s.AsNoTracking ( )
+                                   join cp in _context.CompanyParameters.AsNoTracking ( ) on cp1.ParamId equals cp.Id into cpJoin
+                                   from cp in cpJoin.DefaultIfEmpty ( )
+                                   join hvt in _context.HrmValueTypes.AsNoTracking ( )
+                                       on new { cp1.Value, Type = drpType } equals new { hvt.Value, hvt.Type } into hvtJoin
+                                   from hvt in hvtJoin.DefaultIfEmpty ( )
+                                   where cp1.LinkId.HasValue && entityList.Contains (cp1.LinkId.Value)
+                                         && cp != null && cp.ParameterCode == parameterCode
+                                         && cp.Type == parameterType
+                                   orderby cp1.LevelId descending
+                                   select hvt.Value).FirstOrDefaultAsync ( );
+            }
+
+            if (dailyRate == 0 || string.IsNullOrEmpty (dailyRate.ToString ( )))
+            {
+                // Third query: Fallback to CompanyParameters with HRM_VALUE_TYPES
+                dailyRate = await (from cp in _context.CompanyParameters
+                                   join hvt in _context.HrmValueTypes
+                                       on new { cp.Value, Type = drpType } equals new { hvt.Value, hvt.Type }
+                                   where cp.ParameterCode == parameterCode
+                                   && cp.Type == parameterType
+                                   select hvt.Value)
+                                  .FirstOrDefaultAsync ( );
+            }
+
+            dailyRate = int.TryParse (dailyRate?.ToString ( ), out int parsedValue) ? parsedValue : 0;
+            return (int)dailyRate;
         }
     }
 }

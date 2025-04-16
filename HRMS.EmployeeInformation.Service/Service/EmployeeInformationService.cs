@@ -2,6 +2,7 @@
 using EMPLOYEE_INFORMATION.Data;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
 using HRMS.EmployeeInformation.Service.Interface;
@@ -729,6 +730,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         public async Task<List<object>> GetLanguagesAsync()
         {
             return await _employeeRepository.GetLanguagesAsync();
+        }
+        public async Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type)
+        {
+            return await _employeeRepository.PayscaleComponentsListManual (batchId, employeeIds, type);
         }
     }
 }
