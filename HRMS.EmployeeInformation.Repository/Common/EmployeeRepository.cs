@@ -6776,7 +6776,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     bool isAssetAssigned = await _context.EmployeesAssetsAssigns
                         .AnyAsync(ea => ea.AssetGroup == assetEdits.AssetGroup &&
                                         ea.AssignId != assetEdits.varAssestID &&
-                                        ea.EmpId==assetEdits.varEmpID &&
+                                        ea.EmpId == assetEdits.varEmpID &&
                                         (ea.ReturnDate == null || ea.ReturnDate >= assetEdits.ReceiveDate) &&
                                         ea.Status == "Open");
 
@@ -12110,6 +12110,112 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Where(x => x.DataTypeId == dataTypeId)
                 .ToListAsync();
         }
-    }
 
+        //interface not created
+        public async Task<List<TempPayscale001Dto>> GetLatestPayscaleAsync(int employeeId)
+        {
+            // Step 1: Initialize variables
+            DateTime showFormDates = DateTime.UtcNow;
+            DateTime endDates = DateTime.UtcNow;
+
+            int btchId = 0;
+            int enablePayscaleHourly = 0;
+
+            // Step 2: Create your in-memory "temp table" as a list of TempPayscale001Dto
+
+
+            // Step 3: Get batch ID using repository method (equivalent to SELECT @btchid = dbo.GetEmployeeSchemeID)
+            int? batchId = await GetEmployeeSchemeID(employeeId, "ASSPAYCODE", "PRL"); // assuming sync, use async if needed
+
+
+            var ctcpayscale00 = await _context.Payscale00s
+                .Where(p => p.EmployeeId == employeeId &&
+                            p.EffectiveFrom.HasValue &&
+                            p.EffectiveFrom.Value.Date <= showFormDates.Date &&
+                            p.BatchId == batchId)
+                .GroupBy(p => p.EmployeeId)
+                .Select(g => g.OrderByDescending(p => p.EffectiveFrom).FirstOrDefault())
+                .Select(p => new TempPayscale001Dto
+                {
+                    PayScaleId = p.PayScaleId,
+                    PayRequest01Id = p.PayRequest01Id,
+                    EmployeeId = p.EmployeeId,
+                    BatchId = p.BatchId,
+                    EffectiveFrom = p.EffectiveFrom,
+                    EffectiveTo = p.EffectiveTo,
+                    PayRequestId = p.PayRequestId
+                })
+                .ToListAsync();
+
+            var ctcpayscale01 = await _context.Payscale00s
+                .Where(p =>
+                    p.EffectiveFrom.HasValue &&
+                    p.EffectiveFrom.Value.Date >= showFormDates.Date &&
+                    p.EffectiveFrom.Value.Date <= endDates.Date &&
+                    p.BatchId == batchId &&
+                    p.EmployeeId == employeeId)
+                .GroupBy(p => p.EmployeeId)
+                .Select(g => g.OrderByDescending(p => p.EffectiveFrom).FirstOrDefault())
+                .Select(p => new TempPayscale001Dto
+                {
+                    PayScaleId = p.PayScaleId,
+                    PayRequest01Id = p.PayRequest01Id,
+                    EmployeeId = p.EmployeeId,
+                    BatchId = p.BatchId,
+                    EffectiveFrom = p.EffectiveFrom,
+                    EffectiveTo = p.EffectiveTo,
+                    PayRequestId = p.PayRequestId
+                })
+                .ToListAsync();
+
+            var fromCTC00 = (from a in _context.Payscale00s
+                             join b in ctcpayscale00 on a.PayScaleId equals b.PayScaleId
+                             join c in _context.EmployeeDetails on a.EmployeeId equals c.EmpId
+                             select new TempPayscale001Dto
+                             {
+                                 PayScaleId = a.PayScaleId,
+                                 PayRequest01Id = a.PayRequest01Id,
+                                 PayRequestId = a.PayRequestId,
+                                 BatchId = a.BatchId,
+                                 EmployeeCode = c.EmpCode,
+                                 EmployeeId = a.EmployeeId,
+                                 EmployeeName = c.Name,
+                                 EmployeeStatus = c.EmpStatus,
+                                 EffectiveFrom = a.EffectiveFrom,
+                                 EffectiveTo = a.EffectiveTo
+                             }).ToList();
+
+            var fromCTC01 = (from a in _context.Payscale00s
+                             join b in ctcpayscale01 on a.PayScaleId equals b.PayScaleId
+                             join c in _context.EmployeeDetails on a.EmployeeId equals c.EmpId
+                             select new TempPayscale001Dto
+                             {
+                                 PayScaleId = a.PayScaleId,
+                                 PayRequest01Id = a.PayRequest01Id,
+                                 PayRequestId = a.PayRequestId,
+                                 BatchId = a.BatchId,
+                                 EmployeeCode = c.EmpCode,
+                                 EmployeeId = a.EmployeeId,
+                                 EmployeeName = c.Name,
+                                 EmployeeStatus = c.EmpStatus,
+                                 EffectiveFrom = a.EffectiveFrom,
+                                 EffectiveTo = a.EffectiveTo
+                             }).ToList();
+            var payscaleTempList = fromCTC00
+                            .Union(fromCTC01)
+                            .ToList();
+
+
+            var newFormat = await _context.CompanyParameters
+                           .Where(x => x.Type == "PRL" && x.ParameterCode == "PSCLMNLFRMT")
+                           .Select(x => x.Value)
+                           .Cast<int?>()
+                           .FirstOrDefaultAsync() ?? 0;
+            int chcekpayscalecount = payscaleTempList.Count;
+
+
+
+            return;
+        }
+    }
 }
