@@ -1228,5 +1228,26 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.EnableBatchOptionEmpwiseAsync(empid);
             return Ok(result);
         }
+       
+        [HttpGet]
+        public async Task<IActionResult> GetParameterShiftInEmp()
+        {
+            var result = await _employeeInformation.GetParameterShiftInEmpAsync();
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> RetrieveEmpparameters(int empid)
+        {
+            var result = await _employeeInformation.RetrieveEmpparametersAsync( empid);
+            return Ok(result);
+        }
+        
+        [HttpGet]
+        public async Task<IActionResult> ShowEntityLinkCheckBox(int roleid)
+        {
+            var result = await _employeeInformation.ShowEntityLinkCheckBoxAsync(roleid);
+            return Ok(result);
+        }
     }
 }
+                                                                                                                    

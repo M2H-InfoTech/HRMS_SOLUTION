@@ -207,10 +207,15 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<List<object>> FillbatchslabsEmpAsync(int batchid);
 
+        Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type);
+
         //Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
         Task<int> EnableBatchOptionEmpwiseAsync(int empid);
 
-
+        Task<List<object>> GetParameterShiftInEmpAsync();
+        Task<List<object>> RetrieveEmpparametersAsync(int empid);
+        Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid);
+       
 
     }
 }
