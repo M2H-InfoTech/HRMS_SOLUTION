@@ -1192,5 +1192,29 @@ namespace EMPLOYEE_INFORMATION.Controllers
                 return StatusCode (500, "An error occurred while processing the payscale request.");
             }
         }
+        [HttpGet]
+        public async Task<IActionResult> RetrieveShiftEmpCreation()
+        {
+            var result = await _employeeInformation.RetrieveShiftEmpCreationAsync();
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillWeekEndShiftEmpCreation()
+        {
+            var result = await _employeeInformation.FillWeekEndShiftEmpCreationAsync();
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillbatchslabsEmp(int batchid)
+        {
+            var result = await _employeeInformation.FillbatchslabsEmpAsync(batchid);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EnableBatchOptionEmpwise(int empid)
+        {
+            var result = await _employeeInformation.EnableBatchOptionEmpwiseAsync( empid);
+            return Ok(result);
+        }
     }
 }

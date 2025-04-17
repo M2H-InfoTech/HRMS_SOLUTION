@@ -1,7 +1,7 @@
 ﻿using EMPLOYEE_INFORMATION.HRMS.EmployeeInformation.Models.Models.Entity;
 using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.Entity;
-
+using EMPLOYEE_INFORMATION.Models.Models.Entity;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using Microsoft.EntityFrameworkCore;
@@ -294,7 +294,8 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrmLeaveMaster> HrmLeaveMasters { get; set; }
     public virtual DbSet<HrmLeaveMasterandsettingsLink> HrmLeaveMasterandsettingsLinks { get; set; }
     public virtual DbSet<MasterGeotagging> MasterGeotaggings { get; set; }
-
+    public virtual DbSet<WeekEndMaster> WeekEndMasters { get; set; }
+    public virtual DbSet<SpecialcomponentsBatchSlab> SpecialcomponentsBatchSlabs { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4438,7 +4439,33 @@ public partial class EmployeeDBContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
         });
+        modelBuilder.Entity<WeekEndMaster>(entity =>
+        {
+            entity.HasKey(e => e.WeekEndMasterId).HasName("PK__WeekEndM__EE87957BA8A1504B");
 
+            entity.ToTable("WeekEndMaster");
+
+            entity.Property(e => e.WeekEndMasterId).HasColumnName("WeekEndMasterID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.Name)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<SpecialcomponentsBatchSlab>(entity =>
+        {
+            entity.HasKey(e => e.SpecialcomponentsBatchSlab1)
+                .HasName("PK__Specialc__20D159421FBC7DD3")
+                .HasFillFactor(90);
+
+            entity.ToTable("SpecialcomponentsBatchSlab");
+
+            entity.Property(e => e.SpecialcomponentsBatchSlab1).HasColumnName("SpecialcomponentsBatchSlab");
+            entity.Property(e => e.BatchSlabDescripttion)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+        });
         OnModelCreatingPartial(modelBuilder);
     }
 

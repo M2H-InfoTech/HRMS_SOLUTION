@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using MPLOYEE_INFORMATION.DTO.DTOs;
+using System;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -5939,7 +5940,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                      cp.Type == type
                                orderby cp01.LevelId descending
                                select cp01.Value)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync() ?? 0;
 
 
             }
@@ -5956,7 +5957,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                      cp.Type == type
                                orderby cp01.LevelId descending
                                select cp01.Value)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync() ?? 0;
 
             }
 
@@ -12197,5 +12198,58 @@ namespace HRMS.EmployeeInformation.Repository.Common
             dailyRate = int.TryParse (dailyRate?.ToString ( ), out int parsedValue) ? parsedValue : 0;
             return (int)dailyRate;
         }
+        public async Task<List<object>> RetrieveShiftEmpCreationAsync()
+        {
+            var result = await _context.HrShift00s
+                .Select(s => new
+                {
+                    s.ShiftId,
+                    s.ShiftName
+                })
+                .ToListAsync<object>();
+
+            return result;
+        }
+        public async Task<List<object>> FillWeekEndShiftEmpCreationAsync()
+        {
+            var result = await _context.WeekEndMasters
+                .Select(w => new
+                {
+                    w.WeekEndMasterId,
+                    w.Name
+                   
+                 
+                })
+                .ToListAsync<object>();
+
+            return result;
+        }
+        public async Task<List<object>> FillbatchslabsEmpAsync(int batchId)
+        {
+            var result = await _context.SpecialcomponentsBatchSlabs
+                .Where(s => s.BatchId == batchId && (s.Active ==1)) // handles null as true
+                .Select(s => new
+                {
+                    s.SpecialcomponentsBatchSlab1,
+                    s.BatchId,
+                    s.BatchSlabDescripttion,
+                    s.EntryBy,
+                    s.EntryDate,
+                    s.Active
+                    // Add other fields you want to return
+                })
+                .ToListAsync<object>();
+
+            return result;
+        }
+        public async Task<int> EnableBatchOptionEmpwiseAsync(int empId)
+        {
+            var slabId = GetEmployeeSchemeID(empId, "ASSPAYCODE", "PRL").Result;  // Block the async call (NOT ideal)
+            return Convert.ToInt32(slabId);
+        }
+
+
+
+
     }
 }
