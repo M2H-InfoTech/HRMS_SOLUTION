@@ -142,14 +142,14 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<ReferenceDto> GetUpdateReference(int Detailid);
         Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid);
         Task<object> GetAccessLevelByRoleId(int? firstEntityId);
-        Task<List<ParamRoleViewDto>> EditRoleELAsync (int linkLevel, int valueId);
-        Task<UpdateResult> UpdateRoleEL (ParamRole01AND02Dto dto);
-        Task<CompanyParameterDto> EnableGeoCriteria ( );
-        Task<string> GetGeoCoordinateNameStatus (int EmployeeId);
-        Task<string> GetGeotaggingMasterStatus (int EmployeeId);
-        Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments (int EmployeeId); //DOWNLOAD ALL OPTION IN DOCUMENTS
-        Task<List<DocumentDetailDto>> GetDocumentDetailsAsync (string status, int detailId);
-        Task<int> GetSlabEnabledAsync (int enteredBy);
+        Task<List<ParamRoleViewDto>> EditRoleELAsync(int linkLevel, int valueId);
+        Task<UpdateResult> UpdateRoleEL(ParamRole01AND02Dto dto);
+        Task<CompanyParameterDto> EnableGeoCriteria();
+        Task<string> GetGeoCoordinateNameStatus(int EmployeeId);
+        Task<string> GetGeotaggingMasterStatus(int EmployeeId);
+        Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments(int EmployeeId); //DOWNLOAD ALL OPTION IN DOCUMENTS
+        Task<List<DocumentDetailDto>> GetDocumentDetailsAsync(string status, int detailId);
+        Task<int> GetSlabEnabledAsync(int enteredBy);
         Task<int> EnableNewQualif(int empId);
         //Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
         //Reassign
@@ -171,12 +171,16 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code);
         Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto request);
         Task<List<object>> GetLanguagesAsync();
+        Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type);
+        //Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
+        Task<List<HighLevelTableDto>> GetAccessLevel();
+        Task<object> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto);
         Task<List<object>> RetrieveShiftEmpCreationAsync();
 
         Task<List<object>> FillWeekEndShiftEmpCreationAsync();
         Task<List<object>> FillbatchslabsEmpAsync(int batchid);
 
-        Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
+        // Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
         Task<int> EnableBatchOptionEmpwiseAsync(int empid);
 
     }

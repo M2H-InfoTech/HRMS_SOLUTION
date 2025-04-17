@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace HRMS.EmployeeInformation.Models;
+﻿namespace HRMS.EmployeeInformation.Models;
 
 public partial class HrmsDocTypeMaster
 {
@@ -10,5 +7,5 @@ public partial class HrmsDocTypeMaster
     public string? DocType { get; set; }
 
     public string? Code { get; set; }
-    public bool IsAllowMultiple { get; set; }
-    }
+
+}

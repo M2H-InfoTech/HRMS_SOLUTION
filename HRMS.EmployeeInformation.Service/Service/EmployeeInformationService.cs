@@ -557,6 +557,16 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.GetGeoDetails(mode, geoSpacingType, geoCriteria);
         }
 
+        public async Task<List<HighLevelTableDto>> GetAccessLevel()
+        {
+            return await _employeeRepository.GetAccessLevel();
+        }
+
+        public async Task<object> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto)
+        {
+            return await _employeeRepository.AddEmployeeAsync(inserEmployeeDto);
+        }
+
         //public Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy)
         //{
         //    return _employeeRepository.DeleteSavedEmployee(empId, status, entryBy);
