@@ -1254,5 +1254,26 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.EnableDocEditAsync();
             return Ok(result);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetAccessibleGeoLocationsAsync (int roleId, int empId)
+        {
+            if (roleId <= 0)
+                return BadRequest ("Invalid roleId");
+
+            if (empId <= 0)
+                return BadRequest ("Invalid empId");
+            //var result = await _employeeInformation.GetAccessibleGeoLocationsAsync (roleId, empId);
+            //return Ok (result);
+            try
+            {
+                var result = await _employeeInformation.GetAccessibleGeoLocationsAsync (roleId, empId);
+                return Ok (result);
+            }
+            catch (Exception ex)
+            {
+                // You can also log the exception here
+                return StatusCode (500, "An error occurred while processing the GetAccessibleGeoLocations request.");
+            }
+        }
     }
 }
