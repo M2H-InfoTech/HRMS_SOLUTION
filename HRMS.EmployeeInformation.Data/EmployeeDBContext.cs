@@ -296,6 +296,11 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<MasterGeotagging> MasterGeotaggings { get; set; }
     public virtual DbSet<WeekEndMaster> WeekEndMasters { get; set; }
     public virtual DbSet<SpecialcomponentsBatchSlab> SpecialcomponentsBatchSlabs { get; set; }
+
+    public virtual DbSet<HrmPayscaleMasterAccess> HrmPayscaleMasterAccesses { get; set; }
+
+    public virtual DbSet<PayPeriodMasterAccess> PayPeriodMasterAccesses { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4308,6 +4313,39 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.Comments).IsUnicode(false);
             entity.Property(e => e.EmpId).HasColumnName("EmpID");
             entity.Property(e => e.EntryDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<HrmPayscaleMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.IdPayscaleMasterAccess).HasName("PK__HRM_PAYS__BCC3DB4F0A7DE68D");
+
+            entity.ToTable("HRM_PAYSCALE_MASTER_ACCESS");
+
+            entity.Property(e => e.IdPayscaleMasterAccess).HasColumnName("Id_PayscaleMasterAccess");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.PayscaleMasterId).HasColumnName("PayscaleMaster_id");
+            entity.Property(e => e.ValidDateTo).HasColumnType("datetime");
+            entity.Property(e => e.ValidDatefrom).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<PayPeriodMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.PayPeriodMasterAccessId).HasName("PK__PayPerio__72CF7FE05022B940");
+
+            entity.ToTable("PayPeriod_MasterAccess");
+
+            entity.Property(e => e.PayPeriodMasterAccessId).HasColumnName("PayPeriodMasterAccessID");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.PayrollPeriodId).HasColumnName("PayrollPeriodID");
+            entity.Property(e => e.ValidDateFrom).HasColumnType("datetime");
+            entity.Property(e => e.ValidDateTo).HasColumnType("datetime");
         });
         modelBuilder.Entity<HolidaysMaster>(entity =>
         {
