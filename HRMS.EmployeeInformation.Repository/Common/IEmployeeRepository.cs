@@ -1,6 +1,7 @@
 ﻿using EMPLOYEE_INFORMATION.Models.Entity;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
 using HRMS.EmployeeInformation.Models;
 using Microsoft.AspNetCore.Http;
 using MPLOYEE_INFORMATION.DTO.DTOs;
@@ -197,6 +198,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto dto);
         //FillLanguageTypes  Mode : FillLanguageTypes  SP : EmployeeCreation
         Task<List<object>> GetLanguagesAsync();
+        Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
+
         //Mode : DeleteEmpDetails.SP : SaveUpdateEmployee
         Task DeleteEmpDetailsAsync(DeleteEmpDetailRequestDto request);
         //RetrieveDependentFieldsPrn @Mode = 'RetrieveDependentFields'

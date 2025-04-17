@@ -57,6 +57,36 @@ namespace EMPLOYEE_INFORMATION.Services.Mapping
            .ForMember(dest => dest.MasterId, opt => opt.Ignore())
            .ReverseMap()
            .ForMember(dest => dest.ApprlId, opt => opt.Ignore()); // Extra in HrEmpProfdtl
+            CreateMap<HighLevelViewTable, HighLevelTableDto>()
+            .ForMember(dest => dest.LevelTwoDescription,
+                opt => opt.MapFrom(src => $"{src.LevelTwoDescription} ({src.LevelOneDescription})"))
+
+            .ForMember(dest => dest.LevelThreeDescription,
+                opt => opt.MapFrom(src => $"{src.LevelThreeDescription} ({src.LevelOneDescription}-{src.LevelTwoDescription})"))
+
+            .ForMember(dest => dest.LevelFourDescription,
+                opt => opt.MapFrom(src => $"{src.LevelFourDescription} ({src.LevelThreeDescription})"))
+
+            .ForMember(dest => dest.LevelFiveDescription,
+                opt => opt.MapFrom(src => $"{src.LevelFiveDescription} ({src.LevelThreeDescription}-{src.LevelFourDescription})"))
+
+            .ForMember(dest => dest.LevelSixDescription,
+                opt => opt.MapFrom(src => $"{src.LevelSixDescription} ({src.LevelFourDescription}-{src.LevelFiveDescription})"))
+
+            .ForMember(dest => dest.LevelSevenDescription,
+                opt => opt.MapFrom(src => $"{src.LevelSevenDescription} ({src.LevelThreeDescription}-{src.LevelSixDescription})"))
+
+            .ForMember(dest => dest.LevelEightDescription,
+                opt => opt.MapFrom(src => $"{src.LevelEightDescription} ({src.LevelThreeDescription}-{src.LevelSevenDescription})"))
+
+            .ForMember(dest => dest.LevelNineDescription,
+                opt => opt.MapFrom(src => $"{src.LevelNineDescription} ({src.LevelSevenDescription}-{src.LevelEightDescription})"))
+
+            .ForMember(dest => dest.LevelTenDescription,
+                opt => opt.MapFrom(src => $"{src.LevelTenDescription} ({src.LevelEightDescription}-{src.LevelNineDescription})"))
+
+            .ForMember(dest => dest.LevelElevenDescription,
+                opt => opt.MapFrom(src => $"{src.LevelElevenDescription} ({src.LevelNineDescription}-{src.LevelTenDescription})"));
 
         }
     }
