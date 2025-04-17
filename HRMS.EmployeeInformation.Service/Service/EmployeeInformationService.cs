@@ -731,6 +731,20 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetLanguagesAsync();
         }
+        public async Task<List<object>> RetrieveShiftEmpCreationAsync()
+        {
+            return await _employeeRepository.RetrieveShiftEmpCreationAsync();
+        }
+        public async Task<List<object>> FillWeekEndShiftEmpCreationAsync()
+        {
+            return await _employeeRepository.FillWeekEndShiftEmpCreationAsync();
+        }
+        public async Task<List<object>> FillbatchslabsEmpAsync(int batchid)
+        {
+            return await _employeeRepository.FillbatchslabsEmpAsync(batchid);
+        }
+       
+
         public async Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type)
         {
             return await _employeeRepository.PayscaleComponentsListManual (batchId, employeeIds, type);

@@ -171,6 +171,12 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code);
         Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto request);
         Task<List<object>> GetLanguagesAsync();
+        Task<List<object>> RetrieveShiftEmpCreationAsync();
+
+        Task<List<object>> FillWeekEndShiftEmpCreationAsync();
+        Task<List<object>> FillbatchslabsEmpAsync(int batchid);
+
+       
         Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
 
     }

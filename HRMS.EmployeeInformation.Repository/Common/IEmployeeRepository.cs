@@ -198,6 +198,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto dto);
         //FillLanguageTypes  Mode : FillLanguageTypes  SP : EmployeeCreation
         Task<List<object>> GetLanguagesAsync();
+        Task<List<object>> RetrieveShiftEmpCreationAsync();
+
+        Task<List<object>> FillWeekEndShiftEmpCreationAsync();
+
+        Task<List<object>> FillbatchslabsEmpAsync(int batchid);
+       
         Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
 
     }
