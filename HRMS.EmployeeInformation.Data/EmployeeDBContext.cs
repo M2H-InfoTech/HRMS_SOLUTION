@@ -1,7 +1,7 @@
 ﻿using EMPLOYEE_INFORMATION.HRMS.EmployeeInformation.Models.Models.Entity;
 using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.Entity;
-
+using EMPLOYEE_INFORMATION.Models.Models.Entity;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using Microsoft.EntityFrameworkCore;
@@ -294,6 +294,12 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrmLeaveMaster> HrmLeaveMasters { get; set; }
     public virtual DbSet<HrmLeaveMasterandsettingsLink> HrmLeaveMasterandsettingsLinks { get; set; }
     public virtual DbSet<MasterGeotagging> MasterGeotaggings { get; set; }
+    public virtual DbSet<WeekEndMaster> WeekEndMasters { get; set; }
+    public virtual DbSet<SpecialcomponentsBatchSlab> SpecialcomponentsBatchSlabs { get; set; }
+
+    public virtual DbSet<HrmPayscaleMasterAccess> HrmPayscaleMasterAccesses { get; set; }
+
+    public virtual DbSet<PayPeriodMasterAccess> PayPeriodMasterAccesses { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4308,6 +4314,39 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.EmpId).HasColumnName("EmpID");
             entity.Property(e => e.EntryDate).HasColumnType("datetime");
         });
+        modelBuilder.Entity<HrmPayscaleMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.IdPayscaleMasterAccess).HasName("PK__HRM_PAYS__BCC3DB4F0A7DE68D");
+
+            entity.ToTable("HRM_PAYSCALE_MASTER_ACCESS");
+
+            entity.Property(e => e.IdPayscaleMasterAccess).HasColumnName("Id_PayscaleMasterAccess");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.PayscaleMasterId).HasColumnName("PayscaleMaster_id");
+            entity.Property(e => e.ValidDateTo).HasColumnType("datetime");
+            entity.Property(e => e.ValidDatefrom).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<PayPeriodMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.PayPeriodMasterAccessId).HasName("PK__PayPerio__72CF7FE05022B940");
+
+            entity.ToTable("PayPeriod_MasterAccess");
+
+            entity.Property(e => e.PayPeriodMasterAccessId).HasColumnName("PayPeriodMasterAccessID");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.PayrollPeriodId).HasColumnName("PayrollPeriodID");
+            entity.Property(e => e.ValidDateFrom).HasColumnType("datetime");
+            entity.Property(e => e.ValidDateTo).HasColumnType("datetime");
+        });
         modelBuilder.Entity<HolidaysMaster>(entity =>
         {
             entity.HasKey(e => e.HolidayMasterId).HasName("PK__HOLIDAYS__349E6B295D6BCD1E");
@@ -4438,7 +4477,33 @@ public partial class EmployeeDBContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
         });
+        modelBuilder.Entity<WeekEndMaster>(entity =>
+        {
+            entity.HasKey(e => e.WeekEndMasterId).HasName("PK__WeekEndM__EE87957BA8A1504B");
 
+            entity.ToTable("WeekEndMaster");
+
+            entity.Property(e => e.WeekEndMasterId).HasColumnName("WeekEndMasterID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.Name)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<SpecialcomponentsBatchSlab>(entity =>
+        {
+            entity.HasKey(e => e.SpecialcomponentsBatchSlab1)
+                .HasName("PK__Specialc__20D159421FBC7DD3")
+                .HasFillFactor(90);
+
+            entity.ToTable("SpecialcomponentsBatchSlab");
+
+            entity.Property(e => e.SpecialcomponentsBatchSlab1).HasColumnName("SpecialcomponentsBatchSlab");
+            entity.Property(e => e.BatchSlabDescripttion)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+        });
         OnModelCreatingPartial(modelBuilder);
     }
 

@@ -20,7 +20,7 @@ namespace HRMS.EmployeeInformation.Models.Models.EnumFolder
         DesigType,
 
         [Description("COMPANY")]
-        CompanyType,
+        CompanyType
 
 
     }
