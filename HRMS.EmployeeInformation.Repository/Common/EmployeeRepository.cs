@@ -15,6 +15,7 @@ using HRMS.EmployeeInformation.Repository.Common.RepositoryC;
 using HRMS.EmployeeInformation.Repository.Helpers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -13430,9 +13431,68 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
         public async Task<int> EnableBatchOptionEmpwiseAsync(int empId)
         {
-            var slabId = GetEmployeeSchemeID(empId, "ASSPAYCODE", "PRL").Result;  // Block the async call (NOT ideal)
+            var slabId = GetEmployeeSchemeID(empId, "ASSPAYCODE", "PRL").Result;
             return Convert.ToInt32(slabId);
         }
+
+        public async Task<List<object>> GetParameterShiftInEmpAsync()
+        {
+            var result = await _context.CompanyParameters
+                .Where(p => p.ParameterCode == "ENBLSHFTINEMPCREATION" && p.Type == "ATTN")
+                .Select(p => new { p.Value })
+                .ToListAsync<object>();
+
+            return result;
+        }
+        public async Task<List<object>> RetrieveEmpparametersAsync(int empId)
+        {
+            var autoCode = await GetDefaultCompanyParameter(empId, "EMPSS", "EMP1");
+
+        
+            if (!int.TryParse(autoCode, out int autoCodeInt))
+            {
+                return new List<object>();
+            }
+
+            var result = await _context.HrmValueTypes
+                .Where(v => v.Type == "CompanyParameters" && v.Value == autoCodeInt)
+                .Select(v => new { v.Code })
+                .ToListAsync<object>();
+
+            return result;
+        }
+
+        public async Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleId)
+        {
+           
+            var paramValue = await _context.CompanyParameters
+                .Where(p => p.ParameterCode == "EMPLINKADD" && p.Type == "EMP1")
+                .Select(p => p.Value)
+                .FirstOrDefaultAsync();
+
+         
+            var accessId = await _context.TabAccessRights
+                .Join(
+                    _context.TabMasters,
+                    a => a.TabId.HasValue ? (long)a.TabId.Value : 0, // Cast TabId to long
+                    b => b.TabId,
+                    (a, b) => new { a, b }
+                )
+                .Where(x => x.a.RoleId == roleId && x.b.Code == "EnableEntityLinkInEmployeeCreation")
+                .Select(x => x.a.AccessId)
+                .FirstOrDefaultAsync(); 
+
+           
+            var result = new List<object>();
+
+            result.Add(new { ParameterValue = paramValue });
+
+            if (accessId != 0) 
+                result.Add(new { AccessId = accessId });
+
+            return result;
+        }
+
 
 
 
