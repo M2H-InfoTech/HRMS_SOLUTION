@@ -122,10 +122,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> FillEmpProject(int empId);
         Task<string> DeleteEmployeeDetails(string empIds, int entryBy);
         Task<object> GetProbationEffective(string linkId);
-        //Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy);
+
         Task<int> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
 
-        //Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
+
         Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria);
         Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
 
@@ -160,7 +160,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<int> GetDefaultAttendancePolicyAsync(int empId);
         string GetControlValue(dynamic param, string controlType, bool isMultiple);
-        // Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
         Task AssignHolidayAccessAsync(AssignEmployeeAccessRequestDto request);
         Task AssignAttendancePolicyAccessAsync(AssignEmployeeAccessRequestDto request);
         //helper
@@ -183,7 +182,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<RoleDetailsDTO>> GetRoleDetailsAsync(int linkId, int linkLevel);
 
         Task AssignEmployeeAccessAsync(AssignEmployeeAccessRequestDto request);
-        //Task<List<object>> GetGeoCoordinatesAsync(int geoSpacingType, int geoCriteria);
+
 
         Task<List<object>> GetGeoSpacingCriteria();
         Task<List<object>> GetGeoCoordinatesTabAsync(int geoSpacingType, int geoCriteria);
@@ -193,12 +192,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<IEnumerable<AssetCategoryCodeDto>> GetAssignedOrPendingAssetCategoriesAsync(int varAssetTypeID, string varAssignAssetStatus);
         Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code);
-        //SaveEmployeeShift  Mode : InsertShiftEmpCreation  SP : ShiftAssignSettings
+
         Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto dto);
-        //FillLanguageTypes  Mode : FillLanguageTypes  SP : EmployeeCreation
+
         Task<List<object>> GetLanguagesAsync();
         Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type);
-        // Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
+
         Task<List<HighLevelTableDto>> GetAccessLevel();
         Task<object> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto);
         Task<List<object>> RetrieveShiftEmpCreationAsync();
@@ -207,15 +206,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<List<object>> FillbatchslabsEmpAsync(int batchid);
 
-        Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type);
 
-        //Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
         Task<int> EnableBatchOptionEmpwiseAsync(int empid);
 
         Task<List<object>> GetParameterShiftInEmpAsync();
         Task<List<object>> RetrieveEmpparametersAsync(int empid);
         Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid);
-       
+
 
     }
 }
