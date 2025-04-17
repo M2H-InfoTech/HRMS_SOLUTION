@@ -178,7 +178,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> RetrieveEmpparametersAsync(int empid);
         Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid);
         Task<List<object>> EnableDocEditAsync();
-
+        Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync (int roleId, int empId); // Created By Shan Lal k
 
     }
 

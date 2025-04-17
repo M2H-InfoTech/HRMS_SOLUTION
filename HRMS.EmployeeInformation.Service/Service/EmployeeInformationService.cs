@@ -779,7 +779,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.EnableDocEditAsync();
         }
-
+        public async Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync (int roleId, int empId)
+        {
+            return await _employeeRepository.GetAccessibleGeoLocationsAsync (roleId, empId);
+        }
 
     }
 }

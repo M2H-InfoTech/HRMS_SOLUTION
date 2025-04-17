@@ -213,6 +213,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<object>> RetrieveEmpparametersAsync(int empid);
         Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid);
         Task<List<object>> EnableDocEditAsync();
+        Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync (int roleId, int empId); // Created By Shan Lal K
 
     }
 }

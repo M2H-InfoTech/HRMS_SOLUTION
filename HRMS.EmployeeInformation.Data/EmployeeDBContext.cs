@@ -2,6 +2,7 @@
 using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.Entity;
 using EMPLOYEE_INFORMATION.Models.Models.Entity;
+using EMPLOYEE_INFORMATION.Resource;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using Microsoft.EntityFrameworkCore;
@@ -300,6 +301,8 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrmPayscaleMasterAccess> HrmPayscaleMasterAccesses { get; set; }
 
     public virtual DbSet<PayPeriodMasterAccess> PayPeriodMasterAccesses { get; set; }
+    public virtual DbSet<Geolocation01> Geolocation01s { get; set; }
+    public virtual DbSet<Geolocation00> Geolocation00s { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4504,7 +4507,40 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.EntryDate).HasColumnType("datetime");
         });
-        OnModelCreatingPartial(modelBuilder);
+        //Shan Lal Created On 16/04/2025
+        modelBuilder.Entity<Geolocation01> (entity =>
+        {
+            entity.HasKey (e => e.GeoLocationId).HasName ("PK__Geolocat__81B966A30E9AD974");
+
+            entity.ToTable ("Geolocation01");
+
+            entity.Property (e => e.Latitude)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+            entity.Property (e => e.Location)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+            entity.Property (e => e.Longitude)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+            entity.Property (e => e.Radius)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+        });
+        //Shan Lal Created On 16/04/2025
+        modelBuilder.Entity<Geolocation00> (entity =>
+        {
+            entity.HasKey (e => e.GeoBatchId).HasName ("PK__Geolocat__E6A04005652B06E5");
+
+            entity.ToTable ("Geolocation00");
+
+            entity.Property (e => e.EntryDate).HasColumnType ("datetime");
+            entity.Property (e => e.GeoBatchDescription)
+                .HasMaxLength (50)
+                .IsUnicode (false);
+            entity.Property (e => e.UpdatedDate).HasColumnType ("datetime");
+        });
+        OnModelCreatingPartial (modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
