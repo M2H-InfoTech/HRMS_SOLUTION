@@ -119,8 +119,6 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<object> FillEmpProject(int empId);
         Task<string> DeleteEmployeeDetails(string empIds, int entryBy);
         Task<object> GetProbationEffective(string linkId);
-        //Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy);
-        //Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
         Task<int> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
         Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria);
         Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
@@ -151,7 +149,6 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<DocumentDetailDto>> GetDocumentDetailsAsync(string status, int detailId);
         Task<int> GetSlabEnabledAsync(int enteredBy);
         Task<int> EnableNewQualif(int empId);
-        //Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
         //Reassign
         Task AssignEmployeeAccessService(AssignEmployeeAccessRequestDto request);
         //InsertWorkFlowEL
@@ -160,8 +157,6 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<int> InsertRoleAsync(RoleInsertDTO roleInsertDto);
 
         Task<List<RoleDetailsDTO>> GetRoleDetailsAsync(int linkId, int linkLevel);
-
-        //Task<List<object>> GetGeoCoordinatesAsync(int geoSpacingType, int geoCriteria);
         Task<List<object>> GetGeoSpacingCriteriaAsync();
         Task<List<object>> GetGeoCoordinatesTabAsync(int geoSpacingType, int geoCriteria);
 
@@ -172,21 +167,17 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto request);
         Task<List<object>> GetLanguagesAsync();
         Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type);
-        //Task<(int, string)> UpdateEditEmployeeDetails(UpdateEmployeeRequestDto request);
         Task<List<HighLevelTableDto>> GetAccessLevel();
         Task<object> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto);
         Task<List<object>> RetrieveShiftEmpCreationAsync();
 
         Task<List<object>> FillWeekEndShiftEmpCreationAsync();
         Task<List<object>> FillbatchslabsEmpAsync(int batchid);
-
-        Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type);
-        // Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
         Task<int> EnableBatchOptionEmpwiseAsync(int empid);
         Task<List<object>> GetParameterShiftInEmpAsync();
         Task<List<object>> RetrieveEmpparametersAsync(int empid);
         Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid);
-      
+
     }
 
 }
