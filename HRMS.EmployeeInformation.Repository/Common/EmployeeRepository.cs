@@ -13448,7 +13448,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             var autoCode = await GetDefaultCompanyParameter(empId, "EMPSS", "EMP1");
 
-        
+
             if (!int.TryParse(autoCode, out int autoCodeInt))
             {
                 return new List<object>();
@@ -13464,13 +13464,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         public async Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleId)
         {
-           
+
             var paramValue = await _context.CompanyParameters
                 .Where(p => p.ParameterCode == "EMPLINKADD" && p.Type == "EMP1")
                 .Select(p => p.Value)
                 .FirstOrDefaultAsync();
 
-         
+
             var accessId = await _context.TabAccessRights
                 .Join(
                     _context.TabMasters,
@@ -13480,15 +13480,24 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 )
                 .Where(x => x.a.RoleId == roleId && x.b.Code == "EnableEntityLinkInEmployeeCreation")
                 .Select(x => x.a.AccessId)
-                .FirstOrDefaultAsync(); 
+                .FirstOrDefaultAsync();
 
-           
+
             var result = new List<object>();
 
             result.Add(new { ParameterValue = paramValue });
 
-            if (accessId != 0) 
+            if (accessId != 0)
                 result.Add(new { AccessId = accessId });
+
+            return result;
+        }
+        public async Task<List<object>> EnableDocEditAsync()
+        {
+            var result = await _context.CompanyParameters
+                .Where(p => p.Description == "Enable Document Edit")
+                .Select(p => new { p.Value })
+                .ToListAsync<object>();
 
             return result;
         }

@@ -769,13 +769,17 @@ namespace HRMS.EmployeeInformation.Service.Service
         }
         public async Task<List<object>> RetrieveEmpparametersAsync(int empid)
         {
-            return await _employeeRepository.RetrieveEmpparametersAsync( empid);
+            return await _employeeRepository.RetrieveEmpparametersAsync(empid);
         }
         public async Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid)
         {
             return await _employeeRepository.ShowEntityLinkCheckBoxAsync(roleid);
         }
-      
+        public async Task<List<object>> EnableDocEditAsync()
+        {
+            return await _employeeRepository.EnableDocEditAsync();
+        }
+
 
     }
 }
