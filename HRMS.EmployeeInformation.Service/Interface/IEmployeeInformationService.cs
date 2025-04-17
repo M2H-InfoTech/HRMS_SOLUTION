@@ -177,6 +177,8 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> GetParameterShiftInEmpAsync();
         Task<List<object>> RetrieveEmpparametersAsync(int empid);
         Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid);
+        Task<List<object>> EnableDocEditAsync();
+
 
     }
 

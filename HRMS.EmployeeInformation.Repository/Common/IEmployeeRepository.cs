@@ -212,7 +212,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<object>> GetParameterShiftInEmpAsync();
         Task<List<object>> RetrieveEmpparametersAsync(int empid);
         Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid);
-
+        Task<List<object>> EnableDocEditAsync();
 
     }
 }

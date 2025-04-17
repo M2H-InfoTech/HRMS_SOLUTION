@@ -1228,7 +1228,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.EnableBatchOptionEmpwiseAsync(empid);
             return Ok(result);
         }
-       
+
         [HttpGet]
         public async Task<IActionResult> GetParameterShiftInEmp()
         {
@@ -1238,16 +1238,21 @@ namespace EMPLOYEE_INFORMATION.Controllers
         [HttpGet]
         public async Task<IActionResult> RetrieveEmpparameters(int empid)
         {
-            var result = await _employeeInformation.RetrieveEmpparametersAsync( empid);
+            var result = await _employeeInformation.RetrieveEmpparametersAsync(empid);
             return Ok(result);
         }
-        
+
         [HttpGet]
         public async Task<IActionResult> ShowEntityLinkCheckBox(int roleid)
         {
             var result = await _employeeInformation.ShowEntityLinkCheckBoxAsync(roleid);
             return Ok(result);
         }
+        [HttpGet]
+        public async Task<IActionResult> EnableDocEdit()
+        {
+            var result = await _employeeInformation.EnableDocEditAsync();
+            return Ok(result);
+        }
     }
 }
-                                                                                                                    
