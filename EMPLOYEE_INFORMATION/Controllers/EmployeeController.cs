@@ -1210,6 +1210,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.FillbatchslabsEmpAsync(batchid);
             return Ok(result);
         }
-        
+        [HttpGet]
+        public async Task<IActionResult> EnableBatchOptionEmpwise(int empid)
+        {
+            var result = await _employeeInformation.EnableBatchOptionEmpwiseAsync( empid);
+            return Ok(result);
+        }
     }
 }

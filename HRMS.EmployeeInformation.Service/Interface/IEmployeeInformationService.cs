@@ -176,8 +176,8 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> FillWeekEndShiftEmpCreationAsync();
         Task<List<object>> FillbatchslabsEmpAsync(int batchid);
 
-       
         Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
+        Task<int> EnableBatchOptionEmpwiseAsync(int empid);
 
     }
 

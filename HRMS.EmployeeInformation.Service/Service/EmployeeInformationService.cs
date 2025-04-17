@@ -749,5 +749,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.PayscaleComponentsListManual (batchId, employeeIds, type);
         }
+        public async Task<int> EnableBatchOptionEmpwiseAsync(int empid)
+        {
+            return await _employeeRepository.EnableBatchOptionEmpwiseAsync( empid);
+        }
+
     }
 }

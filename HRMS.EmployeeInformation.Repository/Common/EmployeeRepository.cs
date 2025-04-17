@@ -5940,7 +5940,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                      cp.Type == type
                                orderby cp01.LevelId descending
                                select cp01.Value)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync() ?? 0;
 
 
             }
@@ -5957,7 +5957,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                      cp.Type == type
                                orderby cp01.LevelId descending
                                select cp01.Value)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync() ?? 0;
 
             }
 
@@ -12242,6 +12242,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
+        public async Task<int> EnableBatchOptionEmpwiseAsync(int empId)
+        {
+            var slabId = GetEmployeeSchemeID(empId, "ASSPAYCODE", "PRL").Result;  // Block the async call (NOT ideal)
+            return Convert.ToInt32(slabId);
+        }
+
 
 
 
