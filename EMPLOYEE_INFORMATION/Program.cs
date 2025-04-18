@@ -3,6 +3,7 @@ using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.Helpers;
 using EMPLOYEE_INFORMATION.Services.Mapping;
 using HRMS.EmployeeInformation.Repository.Common;
+using HRMS.EmployeeInformation.Repository.Common.DocUpload;
 using HRMS.EmployeeInformation.Repository.Common.RepositoryA;
 using HRMS.EmployeeInformation.Repository.Common.RepositoryB;
 using HRMS.EmployeeInformation.Repository.Common.RepositoryC;
@@ -48,6 +49,7 @@ internal class Program
         builder.Services.Configure<EmployeeSettings>(builder.Configuration.GetSection("EmployeeSettings"));
         builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<EmployeeSettings>>().Value);
         builder.Services.AddAutoMapper(typeof(EmployeeMapper));
+        builder.Services.AddScoped<IDocUploadRepository, DocUploadRepository>();
         builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         builder.Services.AddAuthentication(options =>
         {
