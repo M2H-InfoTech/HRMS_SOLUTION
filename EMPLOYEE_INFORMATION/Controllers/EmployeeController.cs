@@ -2,6 +2,7 @@
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Repository.Common;
+using HRMS.EmployeeInformation.Repository.Common.DocUpload;
 using HRMS.EmployeeInformation.Service.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -16,13 +17,15 @@ namespace EMPLOYEE_INFORMATION.Controllers
     {
         private readonly IEmployeeInformationService _employeeInformation;
         private readonly EmployeeSettings _employeeSettings;
+        private readonly IDocUploadRepository _empDocumentService;
 
         private readonly TokenService _tokenService;
-        public EmployeeController(IEmployeeInformationService employeeInformation, TokenService tokenService, IOptions<EmployeeSettings> employeeSettings)
+        public EmployeeController(IEmployeeInformationService employeeInformation, TokenService tokenService, IOptions<EmployeeSettings> employeeSettings, IDocUploadRepository empDocumentService)
         {
             _employeeInformation = employeeInformation;
             _tokenService = tokenService;
             _employeeSettings = employeeSettings.Value;
+            _empDocumentService = empDocumentService;
         }
         [HttpGet]
         public IActionResult Index()
@@ -634,17 +637,23 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(FieldDetails);
         }
 
+        //[HttpPost]
+        //public async Task<IActionResult> SetEmpDocuments([FromBody] TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)   //InsertOrUpdate document & bank upload file
+        //{
+        //    var SetEmpDocuments = await _employeeInformation.SetEmpDocumentsAsync(DocumentBankField, DetailID, Status, In_EntryBy);
+
+        //    if (SetEmpDocuments == null || !SetEmpDocuments.Any())
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return Ok(SetEmpDocuments);
+        //}
         [HttpPost]
-        public async Task<IActionResult> SetEmpDocuments([FromBody] TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)   //InsertOrUpdate document & bank upload file
+        public async Task<IActionResult> SetEmpDocuments(IFormFile file, int detailId, string folderPath)
         {
-            var SetEmpDocuments = await _employeeInformation.SetEmpDocumentsAsync(DocumentBankField, DetailID, Status, In_EntryBy);
-
-            if (SetEmpDocuments == null || !SetEmpDocuments.Any())
-            {
-                return NotFound();
-            }
-
-            return Ok(SetEmpDocuments);
+            string result = await _empDocumentService.UploadAndInsertEmployeeDocumentAsync(file, detailId, folderPath);
+            return Ok(result);
         }
         [HttpPost]
         public async Task<IActionResult> InsertLetterTypeRequest([FromBody] LetterInsertUpdateDto LetterInsertUpdateDtos)
@@ -1255,24 +1264,24 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(result);
         }
         [HttpGet]
-        public async Task<IActionResult> GetAccessibleGeoLocationsAsync (int roleId, int empId)
+        public async Task<IActionResult> GetAccessibleGeoLocationsAsync(int roleId, int empId)
         {
             if (roleId <= 0)
-                return BadRequest ("Invalid roleId");
+                return BadRequest("Invalid roleId");
 
             if (empId <= 0)
-                return BadRequest ("Invalid empId");
+                return BadRequest("Invalid empId");
             //var result = await _employeeInformation.GetAccessibleGeoLocationsAsync (roleId, empId);
             //return Ok (result);
             try
             {
-                var result = await _employeeInformation.GetAccessibleGeoLocationsAsync (roleId, empId);
-                return Ok (result);
+                var result = await _employeeInformation.GetAccessibleGeoLocationsAsync(roleId, empId);
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 // You can also log the exception here
-                return StatusCode (500, "An error occurred while processing the GetAccessibleGeoLocations request.");
+                return StatusCode(500, "An error occurred while processing the GetAccessibleGeoLocations request.");
             }
         }
     }
