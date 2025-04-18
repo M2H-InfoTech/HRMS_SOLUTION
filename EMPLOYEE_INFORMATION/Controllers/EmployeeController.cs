@@ -1284,5 +1284,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
                 return StatusCode(500, "An error occurred while processing the GetAccessibleGeoLocations request.");
             }
         }
+        [HttpGet]
+        public async Task<IActionResult> CheckLiabilityPending(int empid)
+        {
+            var result = await _employeeInformation.CheckLiabilityPending(empid);
+            return Ok(result);
+        }
     }
 }
