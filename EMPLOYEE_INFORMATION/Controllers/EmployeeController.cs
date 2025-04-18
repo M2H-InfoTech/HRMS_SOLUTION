@@ -1290,5 +1290,29 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.CheckLiabilityPending(empid);
             return Ok(result);
         }
+        [HttpGet]
+        public async Task<IActionResult> DownloadSingleDocuments(int DetailID, string status)
+        {
+            var result = await _employeeInformation.DownloadSingleDocumentsAsync(DetailID, status);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> DownloadEmpDocuments(int DetailID, string status)
+        {
+            var result = await _employeeInformation.DownloadEmpDocumentsAsync(DetailID, status);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Fillcordinates(int value)
+        {
+            var result = await _employeeInformation.FillcordinateAsync(value);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Getcordinates(int GeoMasterID, int GeoSpaceType)
+        {
+            var result = await _employeeInformation.GetcordinatesAsync(GeoMasterID, GeoSpaceType);
+            return Ok(result);
+        }
     }
 }
