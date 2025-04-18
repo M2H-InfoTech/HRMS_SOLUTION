@@ -20,6 +20,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using MPLOYEE_INFORMATION.DTO.DTOs;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Collections.Generic;
+using HRMS.EmployeeInformation.DTO;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -13797,5 +13800,143 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
+
+        public async Task<List<DocumentsDownoaldDto>> DownloadSingleDocumentsAsync(int DetailID, string status)
+        {
+            if (status == "Pending")
+            {
+                var result = await (from a in _context.HrmsEmpdocuments02s
+                                    join b in _context.HrmsEmpdocuments00s on a.DetailId equals b.DetailId
+                                    join c in _context.HrmsDocument00s on (long)b.DocId equals c.DocId
+                                    where a.DocId == DetailID
+                                    select new DocumentsDownoaldDto
+                                    {
+                                        DocID = a.DocId,
+                                        DetailID = b.DetailId,
+                                        FileName = a.FileName,
+                                        FileType = a.FileType,
+                                        FileData = a.FileData,
+                                        FolderName = c.FolderName
+                                    }).ToListAsync();
+
+                return result;
+            }
+            else if (status == "Approved")
+            {
+                var result = await (from a in _context.HrmsEmpdocumentsApproved02s
+                                    join b in _context.HrmsEmpdocumentsApproved00s on a.DetailId equals b.DetailId
+                                    join c in _context.HrmsDocument00s  on(long)b.DocId equals c.DocId
+                                    where a.DocId == DetailID
+                                    select new DocumentsDownoaldDto
+                                    {
+                                        DocID = a.DocId,
+                                        DetailID = (int)b.DetailId,
+                                        FileName = a.FileName,
+                                        FileType = a.FileType,
+                                        FileData = a.FileData,
+                                        FolderName = c.FolderName
+                                    }).ToListAsync();
+
+                return result;
+            }
+
+            return new List<DocumentsDownoaldDto>();
+        }
+
+        public async Task<List<DocumentsDownoaldDto>> DownloadEmpDocumentsAsync(int DetailID, string status)
+        {
+            if (status == "Pending")
+            {
+                var result = await (from a in _context.HrmsEmpdocuments02s
+                                    join b in _context.HrmsEmpdocuments00s on a.DetailId equals b.DetailId
+                                    join c in _context.HrmsDocument00s on (long)b.DocId equals c.DocId
+                                    where a.DetailId == DetailID
+                                    select new DocumentsDownoaldDto
+                                    {
+                                        DocID = a.DocId,
+                                        DetailID = b.DetailId,
+                                        FileName = a.FileName,
+                                        FileType = a.FileType,
+                                        FileData = a.FileData,
+                                        FolderName = c.FolderName
+                                    }).ToListAsync();
+
+                return result;
+            }
+            else if (status == "Approved")
+            {
+                var result = await (from a in _context.HrmsEmpdocumentsApproved02s
+                                    join b in _context.HrmsEmpdocumentsApproved00s on a.DetailId equals b.DetailId
+                                    join c in _context.HrmsDocument00s on (long)b.DocId equals c.DocId
+                                    where a.DetailId == DetailID
+                                    select new DocumentsDownoaldDto
+                                    {
+                                        DocID = a.DocId,
+                                        DetailID = (int)b.DetailId,
+                                        FileName = a.FileName,
+                                        FileType = a.FileType,
+                                        FileData = a.FileData,
+                                        FolderName = c.FolderName
+                                    }).ToListAsync();
+
+                return result;
+            }
+
+            return new List<DocumentsDownoaldDto>();
+        }
+
+        public async Task<List<CoordinateDto>> FillcordinateAsync(int value)
+        {
+            var result = await (from a in _context.Geolocation01s
+                                join b in _context.Geolocation00s on a.GeoBatchId equals b.GeoBatchId
+                                where a.GeoLocationId == value && a.Status == 1 && b.Status == 1
+                                select new CoordinateDto
+                                {
+                                    GeoLocationId = a.GeoLocationId,
+                                    GeoBatchId01 =(a.GeoBatchId),
+                                    Location = a.Location,
+                                    Latitude = a.Latitude,
+                                    Longitude = a.Longitude,
+                                    Radius = a.Radius,
+                                    Status01 = a.Status,
+                                    EntryDate = b.EntryDate,
+                                    EntryBy = b.EntryBy,
+                                    UpdatedDate = b.UpdatedDate,
+                                    UpdatedBy = b.UpdatedBy,
+
+                                    GeoBatchId00 = b.GeoBatchId,
+                                    GeoBatchDescription = b.GeoBatchDescription,
+                                    Status00 = b.Status
+                                }).ToListAsync();
+
+            return result;
+        }
+        public async Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType)
+        {
+            var result = await _context.MasterGeotaggings
+             .Where(g => g.GeoMasterId == GeoMasterID
+                      && g.GeoSpaceType == GeoSpaceType
+                      && g.Status == 1)
+             .Select(g => new GeocoordinatesDto
+             {
+                 GeoMasterId = g.GeoMasterId,
+                 GeoCriteria = g.GeoCriteria,
+                 GeoSpaceType = g.GeoSpaceType,
+                 CoordinateName = g.CoordinateName,
+                 Latitude = g.Latitude,
+                 Longitude = g.Longitude,
+                 Radius = g.Radius,
+                 LocationId = g.LocationId,
+                 EntryBy = g.EntryBy,
+                 Status = g.Status,
+                 EntryDate = g.EntryDate,
+                 UpdatedDate = g.UpdatedDate
+             })
+             .ToListAsync();
+
+            return result;
+        }
+        
+
     }
 }

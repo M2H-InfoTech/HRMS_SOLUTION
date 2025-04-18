@@ -1,4 +1,5 @@
-﻿using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using HRMS.EmployeeInformation.DTO;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
 using HRMS.EmployeeInformation.Models;
@@ -213,8 +214,15 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<object>> RetrieveEmpparametersAsync(int empid);
         Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid);
         Task<List<object>> EnableDocEditAsync();
-        Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync (int roleId, int empId); // Created By Shan Lal K
+        Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync(int roleId, int empId); // Created By Shan Lal K
 
         Task<int> CheckLiabilityPending(int empid);
+        Task<List<DocumentsDownoaldDto>> DownloadSingleDocumentsAsync(int DetailID, string status);
+        Task<List<DocumentsDownoaldDto>> DownloadEmpDocumentsAsync(int DetailID, string status);
+          
+        Task<List<CoordinateDto>> FillcordinateAsync(int value);
+
+        Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType);
+        
     }
 }

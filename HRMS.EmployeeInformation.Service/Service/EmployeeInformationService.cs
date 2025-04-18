@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using EMPLOYEE_INFORMATION.Data;
+using HRMS.EmployeeInformation.DTO;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
@@ -787,6 +788,25 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.CheckLiabilityPending(empid);
         }
+
+        public async Task<List<DocumentsDownoaldDto>> DownloadSingleDocumentsAsync(int DetailID, string status)
+        {
+            return await _employeeRepository.DownloadSingleDocumentsAsync(DetailID, status);
+        }
+        public async Task<List<DocumentsDownoaldDto>> DownloadEmpDocumentsAsync(int DetailID, string status)
+        {
+            return await _employeeRepository.DownloadEmpDocumentsAsync(DetailID, status);
+        }
+
+        public async Task<List<CoordinateDto>> FillcordinateAsync(int value)
+        {
+            return await _employeeRepository.FillcordinateAsync( value);
+        }
+        public async Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType)
+        {
+            return await _employeeRepository.GetcordinatesAsync(GeoMasterID,  GeoSpaceType);
+        }
+     
 
     }
 }

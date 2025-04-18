@@ -1,9 +1,11 @@
-﻿using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using HRMS.EmployeeInformation.DTO;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Service.Interface
@@ -180,7 +182,15 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> EnableDocEditAsync();
         Task<int> CheckLiabilityPending(int empid);
 
-        Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync (int roleId, int empId); // Created By Shan Lal k
+        Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync(int roleId, int empId);// Created By Shan Lal k
+
+        Task<List<DocumentsDownoaldDto>> DownloadSingleDocumentsAsync(int DetailID, string status);
+
+        Task<List<DocumentsDownoaldDto>> DownloadEmpDocumentsAsync(int DetailID, string status);
+
+        Task<List<CoordinateDto>> FillcordinateAsync(int value);
+        
+        Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType);
 
     }
 
