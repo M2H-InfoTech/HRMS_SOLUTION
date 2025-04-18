@@ -783,6 +783,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetAccessibleGeoLocationsAsync (roleId, empId);
         }
+        public async Task<int> CheckLiabilityPending(int empid)
+        {
+            return await _employeeRepository.CheckLiabilityPending(empid);
+        }
 
     }
 }

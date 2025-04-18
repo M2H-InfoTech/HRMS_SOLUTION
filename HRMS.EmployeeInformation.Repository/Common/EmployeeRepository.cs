@@ -13748,9 +13748,54 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
         }
 
+        public async Task<int> CheckLiabilityPending(int empid)
+        {
+            int result = 0;
 
+            var letterCount = await (
+                from a in _context.AssignedLetterTypes
+                join b in _context.AssignedLetterTypes
+                    on (int?)a.LetterReqId equals b.LiabilityReqId into gj
+                from b in gj.DefaultIfEmpty()
+                where a.LetterTypeId == 4
+                      && a.EmpId == empid
+                      && (b == null || (b.ApprovalStatus ?? "C") != "A")
+                      && (a.ApprovalStatus ?? "C") != "R"
+                      && a.IsLiability == null
+                      && a.Active == true
+                select a
+            ).CountAsync();
 
+            if (letterCount > 0)
+            {
+                result = 1;
 
+                var liabilityCount = await (
+                    from a in _context.AssignedLetterTypes
+                    join b in _context.AssignedLetterTypes
+                        on (int?)a.LetterReqId equals b.LiabilityReqId into gj
+                    from b in gj.DefaultIfEmpty()
+                    where a.LetterTypeId == 4
+                          && a.EmpId == empid
+                          && b != null
+                          && (b.ApprovalStatus ?? "C") == "A"
+                          && b.IsLiability != null
+                          && b.LiabilityReqId != null
+                          && a.Active == true
+                    select a
+                ).CountAsync();
 
+                if (liabilityCount > 0)
+                {
+                    result = 0;
+                }
+            }
+            else
+            {
+                result = 0;
+            }
+
+            return result;
+        }
     }
 }
