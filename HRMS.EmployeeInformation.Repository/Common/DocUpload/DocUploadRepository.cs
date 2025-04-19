@@ -28,7 +28,9 @@ namespace HRMS.EmployeeInformation.Repository.Common.DocUpload
             {
                 // Upload file to dynamic folder path
                 string webRootPath = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                string fullPath = Path.Combine(webRootPath, folderPath, detailId.ToString());
+                //string fullPath = Path.Combine(webRootPath, folderPath, detailId.ToString());
+                //string fullPath = Path.Combine(folderPath, detailId.ToString());
+                string fullPath = Path.Combine(folderPath);
 
                 if (!Directory.Exists(fullPath))
                     Directory.CreateDirectory(fullPath);
