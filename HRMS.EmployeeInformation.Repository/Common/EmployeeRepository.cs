@@ -3210,7 +3210,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .Select(a => a.TransactionId)
                 .FirstOrDefaultAsync();
 
-            return GetSequence(empId, transactionID, "", 0);
+            return GetSequenceAPI(empId, transactionID, "", 0);
         }
         //public async Task<string?> GetLastSequence(string codeId)
         //{
@@ -14425,50 +14425,50 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             var ctcPayscale00 = await _context.Payscale00s
-    .Where(p =>
-        p.EffectiveFrom != null &&
-        p.EffectiveFrom.Value.Date <= showFormDates.Date &&
-        p.BatchId == batchId &&
-        p.EmployeeId == employeeId)
-    .GroupBy(p => p.EmployeeId)
-    .Select(g => g
-        .OrderByDescending(p => p.EffectiveFrom)
-        .Select(p => new TempPayscale001Dto
-        {
-            PayScaleId = p.PayScaleId,
-            PayRequest01Id = p.PayRequest01Id,
-            EmployeeId = p.EmployeeId,
-            BatchId = p.BatchId,
-            EffectiveFrom = p.EffectiveFrom,
-            EffectiveTo = p.EffectiveTo,
-            PayRequestId = p.PayRequestId
-        })
-        .FirstOrDefault())
-    .ToListAsync();
+                      .Where(p =>
+                          p.EffectiveFrom != null &&
+                          p.EffectiveFrom.Value.Date <= showFormDates.Date &&
+                          p.BatchId == batchId &&
+                          p.EmployeeId == employeeId)
+                      .GroupBy(p => p.EmployeeId)
+                      .Select(g => g
+                          .OrderByDescending(p => p.EffectiveFrom)
+                          .Select(p => new TempPayscale001Dto
+                          {
+                              PayScaleId = p.PayScaleId,
+                              PayRequest01Id = p.PayRequest01Id,
+                              EmployeeId = p.EmployeeId,
+                              BatchId = p.BatchId,
+                              EffectiveFrom = p.EffectiveFrom,
+                              EffectiveTo = p.EffectiveTo,
+                              PayRequestId = p.PayRequestId
+                          })
+                          .FirstOrDefault())
+                      .ToListAsync();
 
 
 
-            var ctcPayscale01 = await _context.Payscale00s
-     .Where(p => p.EffectiveFrom != null &&
-                 p.EffectiveFrom.Value.Date >= showFormDates.Date &&
-                 p.EffectiveFrom.Value.Date <= endDates.Date &&
-                 p.BatchId == batchId &&
-                 p.EmployeeId == employeeId)
-     .GroupBy(p => p.EmployeeId)
-     .Select(g => g
-         .OrderByDescending(p => p.EffectiveFrom)
-         .Select(p => new TempPayscale001Dto
-         {
-             PayScaleId = p.PayScaleId,
-             PayRequest01Id = p.PayRequest01Id,
-             EmployeeId = p.EmployeeId,
-             BatchId = p.BatchId,
-             EffectiveFrom = p.EffectiveFrom,
-             EffectiveTo = p.EffectiveTo,
-             PayRequestId = p.PayRequestId
-         })
-         .FirstOrDefault())
-     .ToListAsync();
+                              var ctcPayscale01 = await _context.Payscale00s
+                       .Where(p => p.EffectiveFrom != null &&
+                                   p.EffectiveFrom.Value.Date >= showFormDates.Date &&
+                                   p.EffectiveFrom.Value.Date <= endDates.Date &&
+                                   p.BatchId == batchId &&
+                                   p.EmployeeId == employeeId)
+                       .GroupBy(p => p.EmployeeId)
+                       .Select(g => g
+                           .OrderByDescending(p => p.EffectiveFrom)
+                           .Select(p => new TempPayscale001Dto
+                           {
+                               PayScaleId = p.PayScaleId,
+                               PayRequest01Id = p.PayRequest01Id,
+                               EmployeeId = p.EmployeeId,
+                               BatchId = p.BatchId,
+                               EffectiveFrom = p.EffectiveFrom,
+                               EffectiveTo = p.EffectiveTo,
+                               PayRequestId = p.PayRequestId
+                           })
+                           .FirstOrDefault())
+                       .ToListAsync();
 
 
             var payscale001FromCTCPayscale00 =
