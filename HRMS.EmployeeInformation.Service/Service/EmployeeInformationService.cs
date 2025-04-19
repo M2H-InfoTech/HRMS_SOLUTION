@@ -1,6 +1,4 @@
-﻿using Azure.Core;
-using EMPLOYEE_INFORMATION.Data;
-using HRMS.EmployeeInformation.DTO;
+﻿using HRMS.EmployeeInformation.DTO;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
@@ -780,9 +778,9 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.EnableDocEditAsync();
         }
-        public async Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync (int roleId, int empId)
+        public async Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync(int roleId, int empId)
         {
-            return await _employeeRepository.GetAccessibleGeoLocationsAsync (roleId, empId);
+            return await _employeeRepository.GetAccessibleGeoLocationsAsync(roleId, empId);
         }
         public async Task<int> CheckLiabilityPending(int empid)
         {
@@ -800,13 +798,16 @@ namespace HRMS.EmployeeInformation.Service.Service
 
         public async Task<List<CoordinateDto>> FillcordinateAsync(int value)
         {
-            return await _employeeRepository.FillcordinateAsync( value);
+            return await _employeeRepository.FillcordinateAsync(value);
         }
         public async Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType)
         {
-            return await _employeeRepository.GetcordinatesAsync(GeoMasterID,  GeoSpaceType);
+            return await _employeeRepository.GetcordinatesAsync(GeoMasterID, GeoSpaceType);
         }
-     
+        public async Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto employeeModuleSetupDto)
+        {
+            return await _employeeRepository.UpdateEmpStatusAsync(employeeModuleSetupDto);
+        }
 
     }
 }

@@ -1314,5 +1314,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.GetcordinatesAsync(GeoMasterID, GeoSpaceType);
             return Ok(result);
         }
+        [HttpPost]
+        public async Task<IActionResult> UpdateEmpStatus([FromBody] UpdateEmployeeStatusDto employeeModuleSetupDto)
+        {
+            var result = await _employeeInformation.UpdateEmpStatusAsync(employeeModuleSetupDto);
+            return Ok(result);
+        }
     }
 }

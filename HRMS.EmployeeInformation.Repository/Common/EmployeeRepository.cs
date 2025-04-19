@@ -5,6 +5,7 @@ using EMPLOYEE_INFORMATION.HRMS.EmployeeInformation.Models.Models.Entity;
 using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.Entity;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
+using HRMS.EmployeeInformation.DTO;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.AccessLevel;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
@@ -20,9 +21,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using MPLOYEE_INFORMATION.DTO.DTOs;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Collections.Generic;
-using HRMS.EmployeeInformation.DTO;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -13825,7 +13823,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 var result = await (from a in _context.HrmsEmpdocumentsApproved02s
                                     join b in _context.HrmsEmpdocumentsApproved00s on a.DetailId equals b.DetailId
-                                    join c in _context.HrmsDocument00s  on(long)b.DocId equals c.DocId
+                                    join c in _context.HrmsDocument00s on (long)b.DocId equals c.DocId
                                     where a.DocId == DetailID
                                     select new DocumentsDownoaldDto
                                     {
@@ -13893,7 +13891,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                 select new CoordinateDto
                                 {
                                     GeoLocationId = a.GeoLocationId,
-                                    GeoBatchId01 =(a.GeoBatchId),
+                                    GeoBatchId01 = (a.GeoBatchId),
                                     Location = a.Location,
                                     Latitude = a.Latitude,
                                     Longitude = a.Longitude,
@@ -13936,7 +13934,346 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-        
+        public async Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto employeeModuleSetupDto)
+        {
+            var empIdList = employeeModuleSetupDto.EmpIDs
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(id => int.Parse(id.Trim()))
+                .ToList();
+
+            if (employeeModuleSetupDto.Status is "7" or "8")
+            {
+                int newStatus = int.Parse(employeeModuleSetupDto.Status);
+
+                var updatedCount = await _context.HrEmpMasters
+                    .Where(e => empIdList.Contains(e.EmpId))
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(e => e.CurrentStatus, newStatus)
+                    );
+
+                return updatedCount > 0
+                    ? $"{updatedCount} employee status(es) updated successfully."
+                    : "No employee records were updated.";
+            }
+            else
+            {
+                int processed = 0;
+                foreach (var empId in empIdList)
+                {
+                    var emp = await _context.HrEmpMasters
+                        .Where(e => e.EmpId == empId)
+                        .Select(e => new { e.EmpEntity, e.EmpFirstEntity, e.IsVerified })
+                        .FirstOrDefaultAsync();
+
+                    if (emp == null) continue;
+
+                    var entityIds = emp.EmpEntity?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(int.Parse)
+                        .ToList() ?? new();
+                    var firstEntityId = emp.EmpFirstEntity;
+                    var isVerified = emp.IsVerified;
+
+                    // Leave
+                    if (employeeModuleSetupDto.IsLeaveMod == "Y" && isVerified == 0)
+                        await SetupLeaveModuleAsync(empId, employeeModuleSetupDto.EntryBy, employeeModuleSetupDto.ValidFrom, entityIds, employeeModuleSetupDto.FirstEntityID);
+
+                    // Attendance
+                    if (employeeModuleSetupDto.IsAttendMod == "Y" && isVerified == 0)
+                        await SetupAttendanceModuleAsync(empId, employeeModuleSetupDto.EntryBy, employeeModuleSetupDto.ValidFrom, entityIds, employeeModuleSetupDto.FirstEntityID);
+
+                    // Holiday
+                    if (employeeModuleSetupDto.IsHolydayMod == "Y" && isVerified == 0)
+                        await SetupHolidayModuleAsync(empId, employeeModuleSetupDto.EntryBy, employeeModuleSetupDto.ValidFrom, entityIds, employeeModuleSetupDto.FirstEntityID);
+
+                    processed++;
+                }
+
+                // Update IsVerified = 1 for all processed employees
+                var verifiedUpdateCount = await _context.HrEmpMasters
+                    .Where(e => empIdList.Contains(e.EmpId))
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(e => e.IsVerified, 1));
+
+                return processed > 0
+                    ? $"Updated {verifiedUpdateCount} record(s)."
+                    : "No valid employee records processed.";
+            }
+        }
+
+        private async Task SetupHolidayModuleAsync(int empId, int entryBy, DateTime validFrom, List<int> entityIds, int firstEntityID)
+        {
+            // Check if the employee already has holiday access entries
+            var alreadyExists = await _context.HrmHolidayMasterAccesses
+                .AnyAsync(x => x.EmployeeId == empId);
+
+            if (!alreadyExists)
+            {
+                // Get the employee's joining date
+                var joiningDate = await _context.EmployeeDetails
+                    .Where(e => e.EmpId == empId)
+                    .Select(e => e.JoinDt)
+                    .FirstOrDefaultAsync();
+
+                // Get the transaction ID for holiday module
+                var transactionId = await _context.TransactionMasters
+                    .Where(t => t.TransactionType == "H")
+                    .Select(t => t.TransactionId)
+                    .FirstOrDefaultAsync();
+
+                // Get applicable HolidayMaster IDs based on joining date and entity access
+                var applicableHolidayMasterIds = await (
+                    from s in _context.HolidaysMasters
+                    join t in _context.HolidaysMasterDaysCounts
+                        on s.HolidayMasterId equals t.HolidayMasterId
+                    where t.HolidayDate > joiningDate
+                    && (
+                        from ea in _context.EntityApplicable00s
+                        where ea.TransactionId == transactionId &&
+                              (
+                                  (ea.LinkLevel == 1 && ea.LinkId == firstEntityID) ||
+                                  (ea.LinkLevel == 15) ||
+                                  (ea.LinkLevel != 1 && entityIds.Contains((int)ea.LinkId))
+                              )
+                        select ea.MasterId
+                    ).Contains(s.HolidayMasterId)
+                    select s.HolidayMasterId
+                ).Distinct().ToListAsync();
+
+                // Insert new records if any holiday master IDs are found
+                if (applicableHolidayMasterIds.Any())
+                {
+                    var holidayAccessList = applicableHolidayMasterIds.Select(hmId => new HrmHolidayMasterAccess
+                    {
+                        EmployeeId = empId,
+                        HolidayMasterId = hmId,
+                        IsCompanyLevel = 0,
+                        Active = "1",
+                        CreatedBy = entryBy,
+                        CreatedDate = DateTime.UtcNow,
+                        ValidDatefrom = validFrom
+                    });
+
+                    await _context.HrmHolidayMasterAccesses.AddRangeAsync(holidayAccessList);
+                }
+            }
+        }
+        private async Task SetupLeaveModuleAsync(int empId, int entryBy, DateTime validFrom, List<int> entityIds, int firstEntityId)
+        {
+            var hasLeaveAccess = await _context.HrmLeaveEmployeeleaveaccesses.AnyAsync(x => x.EmployeeId == empId);
+            if (!hasLeaveAccess)
+            {
+
+                var transactionId = await _context.TransactionMasters
+                .Where(t => t.TransactionType == "Leave")
+                .Select(t => t.TransactionId)
+                .FirstOrDefaultAsync();
+
+                var leaveMasterIds = await _context.HrmLeaveMasters
+                    .Where(s => s.Active == 1 && entityIds.Contains(s.LeaveMasterId))
+                    .Select(s => s.LeaveMasterId)
+                    .ToListAsync();
+
+                if (leaveMasterIds.Any())
+                {
+                    // LEAVE ACCESS
+                    await _context.HrmLeaveEmployeeleaveaccesses.AddRangeAsync(
+                        leaveMasterIds.Select(leaveMasterId => new HrmLeaveEmployeeleaveaccess
+                        {
+                            EmployeeId = empId,
+                            LeaveMaster = leaveMasterId,
+                            IsCompanyLevel = 0,
+                            CreatedBy = entryBy,
+                            CreatedDate = DateTime.UtcNow,
+                            Status = 1, // Active
+                            FromDate = validFrom
+                        })
+                    );
+                }
+
+                // LEAVE POLICY ACCESS
+                var leavePolicyMasterId = await _context.LeavePolicyMasters
+                    .Where(l => l.EmpId == empId)
+                    .Select(l => l.LeavePolicyMasterId)
+                    .FirstOrDefaultAsync();
+
+                if (leavePolicyMasterId == 0)
+                {
+                    leavePolicyMasterId = await _context.LeavePolicyMasters
+                        .Where(lp => entityIds.Contains(lp.LeavePolicyMasterId))
+                        .Select(lp => lp.LeavePolicyMasterId)
+                        .FirstOrDefaultAsync();
+                }
+
+                if (leavePolicyMasterId > 0)
+                {
+                    await _context.LeavepolicyMasterAccesses.AddAsync(new LeavepolicyMasterAccess
+                    {
+                        EmployeeId = empId,
+                        PolicyId = leavePolicyMasterId,
+                        IsCompanyLevel = 0,
+                        CreatedBy = entryBy,
+                        CreatedDate = DateTime.UtcNow,
+                        Fromdate = validFrom
+                    });
+                }
+            }
+
+        }
+        private async Task<int?> GetDefaultShift(int employeeId)
+        {
+            if (employeeId == 0)
+            {
+                return 0;
+            }
+
+            int? defaultShift = null;
+
+            // Check Employee-specific shift (DEFSHIFT)
+            defaultShift = await (from a in _context.CompanyParameters02s
+                                  join b in _context.CompanyParameters on a.ParamId equals b.Id
+                                  where a.EmpId == employeeId
+                                        && b.ParameterCode == "DEFSHIFT"
+                                        && b.Type == "EMP1"
+                                  select a.Value).FirstOrDefaultAsync();
+
+            if (defaultShift > 0)
+            {
+                // Get Entity from EmployeeDetails
+                var entity = await _context.EmployeeDetails
+                                    .Where(e => e.EmpId == employeeId)
+                                    .Select(e => e.EmpEntity)
+                                    .FirstOrDefaultAsync();
+
+                // Check Entity-specific shift
+                defaultShift = await (from a in _context.CompanyParameters01s
+                                      join b in _context.CompanyParameters on a.ParamId equals b.Id
+                                      where a.LinkId != 1
+                                            && Split(entity).Contains((int)a.LinkId)  // Use Contains to check if LinkId is in the split list
+                                            && b.ParameterCode == "DEFSHIFT"
+                                            && b.Type == "EMP1"
+                                      orderby a.LevelId descending
+                                      select a.Value).FirstOrDefaultAsync();
+            }
+
+            if (defaultShift > 0)
+            {
+                // Get First Entity from EmployeeDetails
+                var firstEntity = await _context.EmployeeDetails
+                                         .Where(e => e.EmpId == employeeId)
+                                         .Select(e => e.EmpFirstEntity)
+                                         .FirstOrDefaultAsync();
+
+                // Check First Entity-specific shift
+                defaultShift = await (from a in _context.CompanyParameters01s
+                                      join b in _context.CompanyParameters on a.ParamId equals b.Id
+                                      where a.LinkId == Convert.ToInt32(firstEntity)
+                                            && b.ParameterCode == "DEFSHIFT"
+                                            && b.Type == "EMP1"
+                                      orderby a.LevelId descending
+                                      select a.Value).FirstOrDefaultAsync();
+            }
+
+            if (defaultShift > 0)
+            {
+                // Check Company-level shift
+                defaultShift = await (from cp in _context.CompanyParameters
+                                      where cp.ParameterCode == "DEFSHIFT"
+                                            && cp.Type == "EMP1"
+                                      select cp.Value).FirstOrDefaultAsync();
+            }
+
+            return defaultShift;  // Return default if no value is found
+        }
+
+        public List<int> Split(string input)
+        {
+            return input.Split(',')
+                        .Select(int.Parse)
+                        .ToList();
+        }
+        private async Task SetupAttendanceModuleAsync(int empId, int entryBy, DateTime validFrom, List<int> entityIds, int firstEntityId)
+        {
+            var hasShiftAccess = await _context.ShiftMasterAccesses.AnyAsync(s => s.EmployeeId == empId);
+            if (!hasShiftAccess)
+            {
+                var defaultShiftId = await GetDefaultShift(empId);
+                int? shiftId = defaultShiftId;
+
+                if (shiftId == 0)
+                {
+                    var shiftTxnId = await _context.TransactionMasters
+                        .Where(t => t.TransactionType == "Shift")
+                        .Select(t => t.TransactionId)
+                        .FirstOrDefaultAsync();
+
+                    shiftId = await (from ea in _context.EntityApplicable00s
+                                     where ea.TransactionId == shiftTxnId &&
+                                           (
+                                               (ea.LinkLevel == 1 && ea.LinkId == firstEntityId) ||
+                                               (ea.LinkLevel == 15) ||
+                                               (ea.LinkLevel != 1 && entityIds.Contains((int)ea.LinkId))
+                                           )
+                                     join hs in _context.HrShift00s on ea.MasterId equals hs.ShiftId
+                                     select hs.ShiftId)
+                                     .FirstOrDefaultAsync();
+                }
+
+                if (shiftId > 0)
+                {
+                    await _context.ShiftMasterAccesses.AddAsync(new ShiftMasterAccess
+                    {
+                        EmployeeId = empId,
+                        ShiftId = shiftId,
+                        IsCompanyLevel = 0,
+                        CreatedBy = entryBy,
+                        CreatedDate = DateTime.UtcNow,
+                        Active = "1",
+                        ValidDatefrom = validFrom,
+                        ApprovalStatus = "A"
+                    });
+                }
+            }
+
+            var hasAttendanceAccess = await _context.AttendancepolicyMasterAccesses
+                .AnyAsync(a => a.EmployeeId == empId);
+
+            if (!hasAttendanceAccess)
+            {
+                var attendancePolicyMasterId = await GetDefaultAttendancePolicyAsync(empId);
+
+                if (attendancePolicyMasterId == 0)
+                {
+                    var attnTxnId = await _context.TransactionMasters
+                        .Where(t => t.TransactionType == "AtnPolicy")
+                        .Select(t => t.TransactionId)
+                        .FirstOrDefaultAsync();
+
+                    attendancePolicyMasterId = await (from ea in _context.EntityApplicable00s
+                                                      where ea.TransactionId == attnTxnId &&
+                                                            (
+                                                                (ea.LinkLevel == 1 && ea.LinkId == firstEntityId) ||
+                                                                (ea.LinkLevel == 15) ||
+                                                                (ea.LinkLevel != 1 && entityIds.Contains((int)ea.LinkId))
+                                                            )
+                                                      join ap in _context.Attendancepolicy00s on ea.MasterId equals ap.AttendancePolicyId
+                                                      select ap.AttendancePolicyId)
+                                               .FirstOrDefaultAsync();
+                }
+
+                if (attendancePolicyMasterId > 0)
+                {
+                    await _context.AttendancepolicyMasterAccesses.AddAsync(new AttendancepolicyMasterAccess
+                    {
+                        EmployeeId = empId,
+                        PolicyId = attendancePolicyMasterId,
+                        IsCompanyLevel = 0,
+                        CreatedBy = entryBy,
+                        CreatedDate = DateTime.UtcNow,
+                        Active = "1",
+                        ValidDatefrom = validFrom
+                    });
+                }
+            }
+        }
 
     }
 }
