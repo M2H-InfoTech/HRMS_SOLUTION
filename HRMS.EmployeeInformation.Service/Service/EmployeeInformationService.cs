@@ -1,4 +1,5 @@
-﻿using HRMS.EmployeeInformation.DTO;
+﻿using EMPLOYEE_INFORMATION.Models.Entity;
+using HRMS.EmployeeInformation.DTO;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
@@ -813,6 +814,14 @@ namespace HRMS.EmployeeInformation.Service.Service
         public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmpRoleReporteesAsync(int SecondEntityId, int FirstEntityId, string Prefix)
         {
             return await _employeeRepository.FillEmpRoleReporteesAsync(SecondEntityId, FirstEntityId, Prefix);
+        }
+        public async Task<List<HrmsDocumentField00>> GetDependentFieldsAsync()
+        {
+            return await _employeeRepository.GetDependentFieldsAsync();
+        }
+        public async Task<PayscaleResultDto> GetLatestPayscaleAsync(int employeeId, int? type)
+        {
+            return await _employeeRepository.GetLatestPayscaleAsync(employeeId, type);
         }
     }
 }
