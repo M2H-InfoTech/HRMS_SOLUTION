@@ -1347,5 +1347,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.GetlastEntityByRoleId(roleId, EntityLimit);
             return Ok(result);
         }
+
+        //Shan Lal Created
+        [HttpPost]
+        public async Task<IActionResult> SaveManualEmpPayscaleOldFormat (SaveManualEmpPayscaleOldFormatDto dto)
+        {
+            var result = await _employeeInformation.SaveManualEmpPayscaleOldFormat (dto);
+            return Ok (result);
+        }
     }
 }

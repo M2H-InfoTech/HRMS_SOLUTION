@@ -1,4 +1,5 @@
 ﻿using EMPLOYEE_INFORMATION.HRMS.EmployeeInformation.Models.Models.Entity;
+using EMPLOYEE_INFORMATION.MODDDD;
 using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.Entity;
 using EMPLOYEE_INFORMATION.Models.Models.Entity;
@@ -305,6 +306,10 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<Geolocation00> Geolocation00s { get; set; }
     public virtual DbSet<HolidaysMasterDaysCount> HolidaysMasterDaysCounts { get; set; }
     public virtual DbSet<Payscale01> Payscale01s { get; set; }
+
+    public virtual DbSet<Payroll01> Payroll01s { get; set; }
+    public virtual DbSet<ProcessPayRoll01> ProcessPayRoll01s { get; set; }
+    public virtual DbSet<PayscaleCalculationValue> PayscaleCalculationValues { get; set; } // Created By Shan Lal K
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4559,7 +4564,77 @@ public partial class EmployeeDBContext : DbContext
             entity.ToTable("Payscale01");
             entity.Property(e => e.PayScale01Id).HasColumnName("PayScale01ID");
         });
-        OnModelCreatingPartial(modelBuilder);
+        //Shan Lal Created On 18/04/2025
+        modelBuilder.Entity<Payroll01> (entity =>
+        {
+            entity.HasKey (e => e.PayrollPeriodSubId).HasName ("PK__Payroll0__1E3CFDE5996492DA");
+
+            entity.ToTable ("Payroll01");
+
+            entity.Property (e => e.PayrollPeriodSubId).HasColumnName ("PayrollPeriodSubID");
+            entity.Property (e => e.DeadlineDate).HasColumnType ("datetime");
+            entity.Property (e => e.Description)
+                .HasMaxLength (100)
+                .IsUnicode (false);
+            entity.Property (e => e.EndDate).HasColumnType ("datetime");
+            entity.Property (e => e.EndMidDate).HasColumnType ("datetime");
+            entity.Property (e => e.IsClose).HasColumnName ("isClose");
+            entity.Property (e => e.PayrollPeriodId).HasColumnName ("PayrollPeriodID");
+            entity.Property (e => e.ShowFromDate).HasColumnType ("datetime");
+            entity.Property (e => e.ShowToDate).HasColumnType ("datetime");
+            entity.Property (e => e.StartDate).HasColumnType ("datetime");
+            entity.Property (e => e.StartMidDate).HasColumnType ("datetime");
+        });
+
+        //Shan Lal Created On 18/4/2025
+        modelBuilder.Entity<ProcessPayRoll01> (entity =>
+        {
+            entity.HasKey (e => e.ProcessPayRoll01Id).HasName ("PK__ProcessP__7ABDF0B5B3683C8B");
+
+            entity.ToTable ("ProcessPayRoll01");
+
+            entity.Property (e => e.ProcessPayRoll01Id).HasColumnName ("ProcessPayRoll01ID");
+            entity.Property (e => e.BatchId).HasColumnName ("BatchID");
+            entity.Property (e => e.EmployeeId).HasColumnName ("EmployeeID");
+            entity.Property (e => e.Esibasic).HasColumnName ("ESIBasic");
+            entity.Property (e => e.FinalsettlementRemark).IsUnicode (false);
+            entity.Property (e => e.HolidayWeekendOtdays).HasColumnName ("HolidayWeekendOTDays");
+            entity.Property (e => e.Leavedays).HasColumnName ("leavedays");
+            entity.Property (e => e.Leavefromdate)
+                .HasColumnType ("datetime")
+                .HasColumnName ("leavefromdate");
+            entity.Property (e => e.Leavetodate)
+                .HasColumnType ("datetime")
+                .HasColumnName ("leavetodate");
+            entity.Property (e => e.Lop).HasColumnName ("LOP");
+            entity.Property (e => e.Lopamount).HasColumnName ("LOPAmount");
+            entity.Property (e => e.Othrs).HasColumnName ("OTHrs");
+            entity.Property (e => e.PayRollPeriodId).HasColumnName ("PayRollPeriodID");
+            entity.Property (e => e.PayRollPeriodSubId).HasColumnName ("PayRollPeriodSubID");
+            entity.Property (e => e.ProcessPayRollId).HasColumnName ("ProcessPayRollID");
+            entity.Property (e => e.RejectDate).HasColumnType ("datetime");
+            entity.Property (e => e.RejectReason)
+                .HasMaxLength (1000)
+                .IsUnicode (false);
+            entity.Property (e => e.RevisionDate).HasColumnType ("datetime");
+            entity.Property (e => e.Status)
+                .HasMaxLength (1)
+                .IsUnicode (false)
+                .IsFixedLength ( );
+            entity.Property (e => e.UpdatedcurrentlpAmount).HasColumnName ("updatedcurrentlpAmount");
+            entity.Property (e => e.Updatedcurrentlpcount).HasColumnName ("updatedcurrentlpcount");
+            entity.Property (e => e.UpdatedlopAmount).HasColumnName ("updatedlopAmount");
+            entity.Property (e => e.Updatedlopcount).HasColumnName ("updatedlopcount");
+            entity.Property (e => e.UpdatedprevlpAmount).HasColumnName ("updatedprevlpAmount");
+            entity.Property (e => e.Updatedprevlpcount).HasColumnName ("updatedprevlpcount");
+        });
+
+        //Shan lal Created On 19/04/2025
+        modelBuilder.Entity<PayscaleCalculationValue> (entity =>
+        {
+            entity.HasKey (e => e.PayscaleManualId);
+        });
+        OnModelCreatingPartial (modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
