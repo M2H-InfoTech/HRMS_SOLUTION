@@ -13934,70 +13934,83 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return result;
         }
-        public async Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto employeeModuleSetupDto)
+        public async Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto dto)
         {
-            var empIdList = employeeModuleSetupDto.EmpIDs
+            var empIdList = dto.EmpIDs
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
                 .Select(id => int.Parse(id.Trim()))
                 .ToList();
 
-            if (employeeModuleSetupDto.Status is "7" or "8")
-            {
-                int newStatus = int.Parse(employeeModuleSetupDto.Status);
+            if (empIdList.Count == 0)
+                return "No employee IDs provided.";
 
+            var newStatus = int.Parse(dto.Status);
+
+            // Handle status 7 or 8: Bulk update
+            if (dto.Status is "7" or "8")
+            {
                 var updatedCount = await _context.HrEmpMasters
                     .Where(e => empIdList.Contains(e.EmpId))
                     .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(e => e.CurrentStatus, newStatus)
-                    );
+                        .SetProperty(e => e.CurrentStatus, newStatus));
 
                 return updatedCount > 0
                     ? $"{updatedCount} employee status(es) updated successfully."
                     : "No employee records were updated.";
             }
-            else
+
+            // Handle status 5: per-employee processing
+            if (dto.Status == "5")
             {
+                var employees = await _context.HrEmpMasters
+                    .Where(e => empIdList.Contains(e.EmpId))
+                    .Select(e => new
+                    {
+                        e.EmpId,
+                        e.EmpEntity,
+                        e.EmpFirstEntity,
+                        e.IsVerified
+                    })
+                    .ToListAsync();
+
                 int processed = 0;
-                foreach (var empId in empIdList)
+
+                foreach (var emp in employees)
                 {
-                    var emp = await _context.HrEmpMasters
-                        .Where(e => e.EmpId == empId)
-                        .Select(e => new { e.EmpEntity, e.EmpFirstEntity, e.IsVerified })
-                        .FirstOrDefaultAsync();
-
-                    if (emp == null) continue;
-
                     var entityIds = emp.EmpEntity?.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(int.Parse)
-                        .ToList() ?? new();
+                        .Select(int.Parse).ToList() ?? new();
                     var firstEntityId = emp.EmpFirstEntity;
-                    var isVerified = emp.IsVerified;
 
-                    // Leave
-                    if (employeeModuleSetupDto.IsLeaveMod == "Y" && isVerified == 0)
-                        await SetupLeaveModuleAsync(empId, employeeModuleSetupDto.EntryBy, employeeModuleSetupDto.ValidFrom, entityIds, employeeModuleSetupDto.FirstEntityID);
+                    if (emp.IsVerified == 0)
+                    {
+                        if (dto.IsLeaveMod == "Y")
+                            await SetupLeaveModuleAsync(emp.EmpId, dto.EntryBy, dto.ValidFrom, entityIds, dto.FirstEntityID);
 
-                    // Attendance
-                    if (employeeModuleSetupDto.IsAttendMod == "Y" && isVerified == 0)
-                        await SetupAttendanceModuleAsync(empId, employeeModuleSetupDto.EntryBy, employeeModuleSetupDto.ValidFrom, entityIds, employeeModuleSetupDto.FirstEntityID);
+                        if (dto.IsAttendMod == "Y")
+                            await SetupAttendanceModuleAsync(emp.EmpId, dto.EntryBy, dto.ValidFrom, entityIds, dto.FirstEntityID);
 
-                    // Holiday
-                    if (employeeModuleSetupDto.IsHolydayMod == "Y" && isVerified == 0)
-                        await SetupHolidayModuleAsync(empId, employeeModuleSetupDto.EntryBy, employeeModuleSetupDto.ValidFrom, entityIds, employeeModuleSetupDto.FirstEntityID);
+                        if (dto.IsHolydayMod == "Y")
+                            await SetupHolidayModuleAsync(emp.EmpId, dto.EntryBy, dto.ValidFrom, entityIds, dto.FirstEntityID);
+                    }
 
                     processed++;
                 }
 
-                // Update IsVerified = 1 for all processed employees
-                var verifiedUpdateCount = await _context.HrEmpMasters
+                // Bulk update status and IsVerified
+                var updatedCount = await _context.HrEmpMasters
                     .Where(e => empIdList.Contains(e.EmpId))
-                    .ExecuteUpdateAsync(setters => setters.SetProperty(e => e.IsVerified, 1));
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(e => e.CurrentStatus, newStatus)
+                        .SetProperty(e => e.IsVerified, 1));
 
                 return processed > 0
-                    ? $"Updated {verifiedUpdateCount} record(s)."
+                    ? $"Updated {updatedCount} record(s)."
                     : "No valid employee records processed.";
             }
+
+            return "Invalid status code.";
         }
+
 
         private async Task SetupHolidayModuleAsync(int empId, int entryBy, DateTime validFrom, List<int> entityIds, int firstEntityID)
         {
@@ -14280,7 +14293,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
 
-              
+
             // Step 1: Fetch data first, then apply SplitStrings_XML in memory
             var entityAccessRights = await _context.EntityAccessRights02s
                 .Where(s => s.RoleId == FirstEntityId)
@@ -14371,8 +14384,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             applicableHierarchyLevels.Contains(d.EmpId) ||
                             reportsToSecondEntity.Contains(d.EmpId) ||
                             hierarchicalEmpIds.Contains(d.EmpId)) // Corrected usage
-                            && (d.SeperationStatus == 0 
-                           // || d.SeperationStatus == -1
+                            && (d.SeperationStatus == 0
+                            // || d.SeperationStatus == -1
                             )
                             && !d.IsDelete
                             && d.IsSave == 0
@@ -14386,9 +14399,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             return await query.ToListAsync();
-        
 
-    }
+
+        }
 
     }
 }
