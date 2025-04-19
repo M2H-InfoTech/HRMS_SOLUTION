@@ -14709,5 +14709,97 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return (PayscaleResult);
         }
+        public List<EntityDetail> GetHardcodedEntityDetails()
+        {
+            return new List<EntityDetail>
+            {
+            new EntityDetail { EntityID = 1, Description = "GROUP COMPANY" },
+            new EntityDetail { EntityID = 1, Description = "BUSINESS VERTICAL" },
+            new EntityDetail { EntityID = 3, Description = "COUNTRY" },
+            new EntityDetail { EntityID = 6, Description = "BRANCH" },
+            new EntityDetail { EntityID = 13, Description = "LOCATION" },
+            new EntityDetail { EntityID = 27, Description = "CLUSTER" },
+            new EntityDetail { EntityID = 60, Description = "DEPARTMENT" },
+            new EntityDetail { EntityID = 139, Description = "DIVISION" },
+            new EntityDetail { EntityID = 242, Description = "SECTION" },
+            new EntityDetail { EntityID = 401, Description = "GRADE" },
+            new EntityDetail { EntityID = 938, Description = "DESIGNATION" }
+            };
+        }
+        public async Task<int> GetlastEntityByRoleId(int roleId, int EntityLimit)
+        {
+            //List<CategoryEntity> entityList = await GetCategoryMasterDetailsAsyncC(roleId);//   GetHardcodedEntityDetails();
+
+            var entityList = GetHardcodedEntityDetails();
+
+            int LastEntity = 0;
+
+            // Call GetCategoryMasterDetailsAsync to get strongly typed result
+            CategoryMasterResult result = await GetCategoryMasterDetailsAsyncB(roleId);
+
+            // Get the categoryMaster details from the result
+            var categoryMaster = result.CategoryMaster;
+
+            // Perform the Join using LINQ
+            var joinResult = (from cat in categoryMaster
+                              join ent in entityList
+                              on cat.Description.Trim() equals ent.Description
+                              select new
+                              {
+                                  cat.SortOrder,
+                                  cat.Value,
+                                  cat.Code,
+                                  cat.Description,
+                                  EntityID = ent
+                              }).ToList();
+
+            // Find LastEntity based on SortOrder
+            var match = joinResult.FirstOrDefault(x => x.SortOrder == EntityLimit);
+            if (match != null)
+            {
+                LastEntity = Convert.ToInt32(match.EntityID.EntityID);
+            }
+
+            return LastEntity;
+        }
+        private async Task<CategoryMasterResult> GetCategoryMasterDetailsAsyncB(int roleId)
+        {
+            // Assuming you return this type
+            var categoryMaster = await _context.Categorymasters
+                .Join(_context.HrmValueTypes
+                         .Where(b => b.Type == typeof(CatTrxType).Name),
+                    a => a.CatTrxTypeId,
+                    b => b.Value,
+                    (a, b) => new CategoryMaster
+                    {
+                        SortOrder = a.SortOrder,
+                        Description = a.Description,
+                        Value = b.Value,
+                        Code = b.Code.Trim()
+                    })
+                .ToListAsync();
+
+            // Return it inside a result class
+            return new CategoryMasterResult
+            {
+                CategoryMaster = categoryMaster
+            };
+        }
+    }
+    public class EntityDetail
+    {
+        public int EntityID { get; set; }
+        public string Description { get; set; }
+    }
+    public class CategoryMaster
+    {
+        public int? SortOrder { get; set; }
+        public int? Value { get; set; }
+        public string Code { get; set; }
+        public string Description { get; set; }
+    }
+    public class CategoryMasterResult
+    {
+        public List<CategoryMaster> CategoryMaster { get; set; }
     }
 }
