@@ -1314,6 +1314,14 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.GetcordinatesAsync(GeoMasterID, GeoSpaceType);
             return Ok(result);
         }
+        //secondentity=empid ,firsentity =roleid ,prefix=searchvalue
+        [HttpGet]
+        public async Task<IActionResult> FillEmpRoleReportees(int SecondEntityId, int FirstEntityId,string Prefix)
+        {
+            var result = await _employeeInformation.FillEmpRoleReporteesAsync(SecondEntityId, FirstEntityId, Prefix);
+            return Ok(result);
+        }
+        
         [HttpPost]
         public async Task<IActionResult> UpdateEmpStatus([FromBody] UpdateEmployeeStatusDto employeeModuleSetupDto)
         {
