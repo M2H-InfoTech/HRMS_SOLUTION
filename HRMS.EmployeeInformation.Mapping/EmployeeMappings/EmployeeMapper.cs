@@ -86,7 +86,9 @@ namespace EMPLOYEE_INFORMATION.Services.Mapping
                 opt => opt.MapFrom(src => $"{src.LevelTenDescription} ({src.LevelEightDescription}-{src.LevelNineDescription})"))
 
             .ForMember(dest => dest.LevelElevenDescription,
-                opt => opt.MapFrom(src => $"{src.LevelElevenDescription} ({src.LevelNineDescription}-{src.LevelTenDescription})"));
+                opt => opt.MapFrom(src => $"{src.LevelElevenDescription} ({src.LevelNineDescription}-{src.LevelTenDescription})"))
+             .ForMember(dest => dest.LevelTwelveDescription,
+                opt => opt.MapFrom(src => $"{src.LevelTwelveDescription} ({src.LevelTenDescription}-{src.LevelElevenDescription})"));
 
         }
     }

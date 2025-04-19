@@ -1,4 +1,4 @@
-﻿using EMPLOYEE_INFORMATION.Models.Entity;
+﻿using HRMS.EmployeeInformation.DTO;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
 using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
@@ -123,10 +123,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> FillEmpProject(int empId);
         Task<string> DeleteEmployeeDetails(string empIds, int entryBy);
         Task<object> GetProbationEffective(string linkId);
-        //Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy);
+
         Task<int> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
 
-        //Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
+
         Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria);
         Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
 
@@ -148,24 +148,23 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<ReferenceDto> GetUpdateReference(int Detailid);
         Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid);
         Task<object> EmployeeCreationFilterAsync(int? firstEntityId);
-        Task<List<ParamRoleViewDto>> EditRoleELAsync (int linkLevel, int valueId);
-        Task<UpdateResult> UpdateRoleEL (ParamRole01AND02Dto dto);
-        Task<CompanyParameterDto> EnableGeoCriteria ( );
-        Task<string> GetGeoCoordinateNameStatus (int EmployeeId);
-        Task<string> GetGeotaggingMasterStatus (int EmployeeId);
-        Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments (int EmployeeId);
-        Task<List<DocumentDetailDto>> GetDocumentDetailsAsync (string status, int detailId);
-        Task<int> GetSlabEnabledAsync (int enteredBy);
+        Task<List<ParamRoleViewDto>> EditRoleELAsync(int linkLevel, int valueId);
+        Task<UpdateResult> UpdateRoleEL(ParamRole01AND02Dto dto);
+        Task<CompanyParameterDto> EnableGeoCriteria();
+        Task<string> GetGeoCoordinateNameStatus(int EmployeeId);
+        Task<string> GetGeotaggingMasterStatus(int EmployeeId);
+        Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments(int EmployeeId);
+        Task<List<DocumentDetailDto>> GetDocumentDetailsAsync(string status, int detailId);
+        Task<int> GetSlabEnabledAsync(int enteredBy);
         Task<int> EnableNewQualif(int empId);
-       
+
 
         Task<int> GetDefaultAttendancePolicyAsync(int empId);
         string GetControlValue(dynamic param, string controlType, bool isMultiple);
-       // Task<(int, string)> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
         Task AssignHolidayAccessAsync(AssignEmployeeAccessRequestDto request);
         Task AssignAttendancePolicyAccessAsync(AssignEmployeeAccessRequestDto request);
         //helper
-        
+
         //
         Task AssignShiftAccessAsync(AssignEmployeeAccessRequestDto request);
         //helper for LEAVE POLICY ACCESS
@@ -184,7 +183,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<RoleDetailsDTO>> GetRoleDetailsAsync(int linkId, int linkLevel);
 
         Task AssignEmployeeAccessAsync(AssignEmployeeAccessRequestDto request);
-        //Task<List<object>> GetGeoCoordinatesAsync(int geoSpacingType, int geoCriteria);
+
 
         Task<List<object>> GetGeoSpacingCriteria();
         Task<List<object>> GetGeoCoordinatesTabAsync(int geoSpacingType, int geoCriteria);
@@ -194,10 +193,41 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<IEnumerable<AssetCategoryCodeDto>> GetAssignedOrPendingAssetCategoriesAsync(int varAssetTypeID, string varAssignAssetStatus);
         Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code);
-        //SaveEmployeeShift  Mode : InsertShiftEmpCreation  SP : ShiftAssignSettings
+
         Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto dto);
-        //FillLanguageTypes  Mode : FillLanguageTypes  SP : EmployeeCreation
+
         Task<List<object>> GetLanguagesAsync();
+        Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type);
+
+        Task<List<HighLevelTableDto>> GetAccessLevel();
+        Task<object> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto);
+        Task<List<object>> RetrieveShiftEmpCreationAsync();
+
+        Task<List<object>> FillWeekEndShiftEmpCreationAsync();
+
+        Task<List<object>> FillbatchslabsEmpAsync(int batchid);
+
+
+        Task<int> EnableBatchOptionEmpwiseAsync(int empid);
+
+        Task<List<object>> GetParameterShiftInEmpAsync();
+        Task<List<object>> RetrieveEmpparametersAsync(int empid);
+        Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid);
+        Task<List<object>> EnableDocEditAsync();
+        Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync(int roleId, int empId); // Created By Shan Lal K
+
+        Task<int> CheckLiabilityPending(int empid);
+        Task<List<DocumentsDownoaldDto>> DownloadSingleDocumentsAsync(int DetailID, string status);
+        Task<List<DocumentsDownoaldDto>> DownloadEmpDocumentsAsync(int DetailID, string status);
+
+        Task<List<CoordinateDto>> FillcordinateAsync(int value);
+
+        Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType);
+        Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto employeeModuleSetupDto);
+
+
+        Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmpRoleReporteesAsync(int SecondEntityId, int FirstEntityId, string Prefix);
+       
         Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type);
 
         //Mode : DeleteEmpDetails.SP : SaveUpdateEmployee

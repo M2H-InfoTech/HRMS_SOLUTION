@@ -1,7 +1,8 @@
 ﻿using EMPLOYEE_INFORMATION.HRMS.EmployeeInformation.Models.Models.Entity;
 using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.Entity;
-
+using EMPLOYEE_INFORMATION.Models.Models.Entity;
+using EMPLOYEE_INFORMATION.Resource;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using Microsoft.EntityFrameworkCore;
@@ -294,7 +295,16 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrmLeaveMaster> HrmLeaveMasters { get; set; }
     public virtual DbSet<HrmLeaveMasterandsettingsLink> HrmLeaveMasterandsettingsLinks { get; set; }
     public virtual DbSet<MasterGeotagging> MasterGeotaggings { get; set; }
+    public virtual DbSet<WeekEndMaster> WeekEndMasters { get; set; }
+    public virtual DbSet<SpecialcomponentsBatchSlab> SpecialcomponentsBatchSlabs { get; set; }
     public virtual DbSet<HrmsEmpstatutory00> HrmsEmpstatutory00s { get; set; }
+
+    public virtual DbSet<HrmPayscaleMasterAccess> HrmPayscaleMasterAccesses { get; set; }
+
+    public virtual DbSet<PayPeriodMasterAccess> PayPeriodMasterAccesses { get; set; }
+    public virtual DbSet<Geolocation01> Geolocation01s { get; set; }
+    public virtual DbSet<Geolocation00> Geolocation00s { get; set; }
+    public virtual DbSet<HolidaysMasterDaysCount> HolidaysMasterDaysCounts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4309,6 +4319,39 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.EmpId).HasColumnName("EmpID");
             entity.Property(e => e.EntryDate).HasColumnType("datetime");
         });
+        modelBuilder.Entity<HrmPayscaleMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.IdPayscaleMasterAccess).HasName("PK__HRM_PAYS__BCC3DB4F0A7DE68D");
+
+            entity.ToTable("HRM_PAYSCALE_MASTER_ACCESS");
+
+            entity.Property(e => e.IdPayscaleMasterAccess).HasColumnName("Id_PayscaleMasterAccess");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.PayscaleMasterId).HasColumnName("PayscaleMaster_id");
+            entity.Property(e => e.ValidDateTo).HasColumnType("datetime");
+            entity.Property(e => e.ValidDatefrom).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<PayPeriodMasterAccess>(entity =>
+        {
+            entity.HasKey(e => e.PayPeriodMasterAccessId).HasName("PK__PayPerio__72CF7FE05022B940");
+
+            entity.ToTable("PayPeriod_MasterAccess");
+
+            entity.Property(e => e.PayPeriodMasterAccessId).HasColumnName("PayPeriodMasterAccessID");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.PayrollPeriodId).HasColumnName("PayrollPeriodID");
+            entity.Property(e => e.ValidDateFrom).HasColumnType("datetime");
+            entity.Property(e => e.ValidDateTo).HasColumnType("datetime");
+        });
         modelBuilder.Entity<HolidaysMaster>(entity =>
         {
             entity.HasKey(e => e.HolidayMasterId).HasName("PK__HOLIDAYS__349E6B295D6BCD1E");
@@ -4416,7 +4459,7 @@ public partial class EmployeeDBContext : DbContext
         modelBuilder.Entity<MasterGeotagging>(entity =>
         {
             entity.HasKey(e => e.GeoMasterId).HasName("PK__Master_G__5873EF327F84BE55");
-        
+
             entity.ToTable("Master_Geotagging");
 
             entity.Property(e => e.GeoMasterId).HasColumnName("GeoMaster_ID");
@@ -4439,6 +4482,18 @@ public partial class EmployeeDBContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
         });
+        modelBuilder.Entity<WeekEndMaster>(entity =>
+        {
+            entity.HasKey(e => e.WeekEndMasterId).HasName("PK__WeekEndM__EE87957BA8A1504B");
+
+            entity.ToTable("WeekEndMaster");
+
+            entity.Property(e => e.WeekEndMasterId).HasColumnName("WeekEndMasterID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.Name)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+        });
         modelBuilder.Entity<HrmsEmpstatutory00>(entity =>
         {
             entity
@@ -4455,6 +4510,64 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false);
         });
 
+        modelBuilder.Entity<SpecialcomponentsBatchSlab>(entity =>
+        {
+            entity.HasKey(e => e.SpecialcomponentsBatchSlab1)
+                .HasName("PK__Specialc__20D159421FBC7DD3")
+                .HasFillFactor(90);
+
+            entity.ToTable("SpecialcomponentsBatchSlab");
+
+            entity.Property(e => e.SpecialcomponentsBatchSlab1).HasColumnName("SpecialcomponentsBatchSlab");
+            entity.Property(e => e.BatchSlabDescripttion)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+        });
+        //Shan Lal Created On 16/04/2025
+        modelBuilder.Entity<Geolocation01>(entity =>
+        {
+            entity.HasKey(e => e.GeoLocationId).HasName("PK__Geolocat__81B966A30E9AD974");
+
+            entity.ToTable("Geolocation01");
+
+            entity.Property(e => e.Latitude)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Location)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Longitude)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Radius)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+        //Shan Lal Created On 16/04/2025
+        modelBuilder.Entity<Geolocation00>(entity =>
+        {
+            entity.HasKey(e => e.GeoBatchId).HasName("PK__Geolocat__E6A04005652B06E5");
+
+            entity.ToTable("Geolocation00");
+
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.GeoBatchDescription)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<HolidaysMasterDaysCount>(entity =>
+        {
+            entity.HasKey(e => e.HolidayMasterDaysCountId).HasName("PK__HOLIDAYS__4C63F5522E81B185");
+
+            entity.ToTable("HOLIDAYS_MASTER_DAYS_COUNT");
+
+            entity.Property(e => e.HolidayMasterDaysCountId).HasColumnName("HolidayMasterDaysCountID");
+            entity.Property(e => e.HolidayDate).HasColumnType("datetime");
+            entity.Property(e => e.HolidayMasterId).HasColumnName("HolidayMaster_id");
+            entity.Property(e => e.InstId).HasColumnName("inst_ID");
+        });
         OnModelCreatingPartial(modelBuilder);
     }
 

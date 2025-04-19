@@ -1,4 +1,5 @@
-﻿using Azure.Core;
+﻿using HRMS.EmployeeInformation.DTO;
+using Azure.Core;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.Models.Entity;
 using HRMS.EmployeeInformation.DTO.DTOs;
@@ -15,12 +16,12 @@ namespace HRMS.EmployeeInformation.Service.Service
 {
     public class EmployeeInformationService : IEmployeeInformationService
     {
-        
+
         private readonly IEmployeeRepository _employeeRepository;
 
         public EmployeeInformationService(IEmployeeRepository employeeRepository)
         {
-            
+
             _employeeRepository = employeeRepository;
         }
 
@@ -558,6 +559,16 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.GetGeoDetails(mode, geoSpacingType, geoCriteria);
         }
 
+        public async Task<List<HighLevelTableDto>> GetAccessLevel()
+        {
+            return await _employeeRepository.GetAccessLevel();
+        }
+
+        public async Task<object> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto)
+        {
+            return await _employeeRepository.AddEmployeeAsync(inserEmployeeDto);
+        }
+
         //public Task<(int errorID, string errorMessage)> DeleteSavedEmployeeAsync(int empId, string status, int entryBy)
         //{
         //    return _employeeRepository.DeleteSavedEmployee(empId, status, entryBy);
@@ -640,52 +651,52 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.EmployeeCreationFilterAsync(firstEntityId);
         }
-        public async Task<List<ParamRoleViewDto>> EditRoleELAsync (int linkLevel, int valueId)
+        public async Task<List<ParamRoleViewDto>> EditRoleELAsync(int linkLevel, int valueId)
         {
-            return await _employeeRepository.EditRoleELAsync (linkLevel, valueId);
+            return await _employeeRepository.EditRoleELAsync(linkLevel, valueId);
         }
-        public async Task<UpdateResult> UpdateRoleEL (ParamRole01AND02Dto dto)
+        public async Task<UpdateResult> UpdateRoleEL(ParamRole01AND02Dto dto)
         {
-            return await _employeeRepository.UpdateRoleEL (dto);
+            return await _employeeRepository.UpdateRoleEL(dto);
         }
-        public async Task<CompanyParameterDto> EnableGeoCriteria ( )
+        public async Task<CompanyParameterDto> EnableGeoCriteria()
         {
-            return await _employeeRepository.EnableGeoCriteria ( );
+            return await _employeeRepository.EnableGeoCriteria();
         }
-        public async Task<string> GetGeoCoordinateNameStatus (int EmployeeId)
+        public async Task<string> GetGeoCoordinateNameStatus(int EmployeeId)
         {
-            return await _employeeRepository.GetGeoCoordinateNameStatus (EmployeeId);
+            return await _employeeRepository.GetGeoCoordinateNameStatus(EmployeeId);
         }
-        public async Task<string> GetGeotaggingMasterStatus (int EmployeeId)
+        public async Task<string> GetGeotaggingMasterStatus(int EmployeeId)
         {
-            return await _employeeRepository.GetGeotaggingMasterStatus (EmployeeId);
+            return await _employeeRepository.GetGeotaggingMasterStatus(EmployeeId);
         }
-        public async Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments (int EmployeeId)
+        public async Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments(int EmployeeId)
         {
-            return await _employeeRepository.DownloadIndividualEmpDocuments (EmployeeId);
+            return await _employeeRepository.DownloadIndividualEmpDocuments(EmployeeId);
         }
-        public async Task<List<DocumentDetailDto>> GetDocumentDetailsAsync (string status, int detailId)
+        public async Task<List<DocumentDetailDto>> GetDocumentDetailsAsync(string status, int detailId)
         {
-            return await _employeeRepository.GetDocumentDetailsAsync (status, detailId);
+            return await _employeeRepository.GetDocumentDetailsAsync(status, detailId);
         }
-        public async Task<int> GetSlabEnabledAsync (int enteredBy)
+        public async Task<int> GetSlabEnabledAsync(int enteredBy)
         {
-            return await _employeeRepository.GetSlabEnabledAsync (enteredBy);
+            return await _employeeRepository.GetSlabEnabledAsync(enteredBy);
         }
         public async Task<int> EnableNewQualif(int empId)
         {
             return await _employeeRepository.EnableNewQualif(empId);
         }
-        
 
-        public async  Task AssignEmployeeAccessService(AssignEmployeeAccessRequestDto request)
+
+        public async Task AssignEmployeeAccessService(AssignEmployeeAccessRequestDto request)
         {
             await _employeeRepository.AssignEmployeeAccessAsync(request);
         }
 
         public async Task InsertWorkFlow(SaveParamWorkflowDto request)
         {
-            await _employeeRepository.SaveParamWorkflow( request);
+            await _employeeRepository.SaveParamWorkflow(request);
         }
         public async Task<int> InsertRoleAsync(RoleInsertDTO roleInsertDto)
         {
@@ -732,9 +743,79 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetLanguagesAsync();
         }
-        public async Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual (int batchId, int employeeIds, int type)
+        public async Task<List<object>> RetrieveShiftEmpCreationAsync()
         {
-            return await _employeeRepository.PayscaleComponentsListManual (batchId, employeeIds, type);
+            return await _employeeRepository.RetrieveShiftEmpCreationAsync();
+        }
+        public async Task<List<object>> FillWeekEndShiftEmpCreationAsync()
+        {
+            return await _employeeRepository.FillWeekEndShiftEmpCreationAsync();
+        }
+        public async Task<List<object>> FillbatchslabsEmpAsync(int batchid)
+        {
+            return await _employeeRepository.FillbatchslabsEmpAsync(batchid);
+        }
+
+
+        public async Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type)
+        {
+            return await _employeeRepository.PayscaleComponentsListManual(batchId, employeeIds, type);
+        }
+        public async Task<int> EnableBatchOptionEmpwiseAsync(int empid)
+        {
+            return await _employeeRepository.EnableBatchOptionEmpwiseAsync(empid);
+        }
+        public async Task<List<object>> GetParameterShiftInEmpAsync()
+        {
+            return await _employeeRepository.GetParameterShiftInEmpAsync();
+        }
+        public async Task<List<object>> RetrieveEmpparametersAsync(int empid)
+        {
+            return await _employeeRepository.RetrieveEmpparametersAsync(empid);
+        }
+        public async Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid)
+        {
+            return await _employeeRepository.ShowEntityLinkCheckBoxAsync(roleid);
+        }
+        public async Task<List<object>> EnableDocEditAsync()
+        {
+            return await _employeeRepository.EnableDocEditAsync();
+        }
+        public async Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync(int roleId, int empId)
+        {
+            return await _employeeRepository.GetAccessibleGeoLocationsAsync(roleId, empId);
+        }
+        public async Task<int> CheckLiabilityPending(int empid)
+        {
+            return await _employeeRepository.CheckLiabilityPending(empid);
+        }
+
+        public async Task<List<DocumentsDownoaldDto>> DownloadSingleDocumentsAsync(int DetailID, string status)
+        {
+            return await _employeeRepository.DownloadSingleDocumentsAsync(DetailID, status);
+        }
+        public async Task<List<DocumentsDownoaldDto>> DownloadEmpDocumentsAsync(int DetailID, string status)
+        {
+            return await _employeeRepository.DownloadEmpDocumentsAsync(DetailID, status);
+        }
+
+        public async Task<List<CoordinateDto>> FillcordinateAsync(int value)
+        {
+            return await _employeeRepository.FillcordinateAsync(value);
+        }
+        public async Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType)
+        {
+            return await _employeeRepository.GetcordinatesAsync(GeoMasterID, GeoSpaceType);
+        }
+        public async Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto employeeModuleSetupDto)
+        {
+            return await _employeeRepository.UpdateEmpStatusAsync(employeeModuleSetupDto);
+        }
+
+
+        public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmpRoleReporteesAsync(int SecondEntityId, int FirstEntityId, string Prefix)
+        {
+            return await _employeeRepository.FillEmpRoleReporteesAsync(SecondEntityId, FirstEntityId, Prefix);
         }
         public async Task DeleteEmpDetailsAsync(DeleteEmpDetailRequestDto request)
         {

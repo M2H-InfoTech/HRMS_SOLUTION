@@ -2,6 +2,7 @@
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Repository.Common;
+using HRMS.EmployeeInformation.Repository.Common.DocUpload;
 using HRMS.EmployeeInformation.Service.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -16,13 +17,15 @@ namespace EMPLOYEE_INFORMATION.Controllers
     {
         private readonly IEmployeeInformationService _employeeInformation;
         private readonly EmployeeSettings _employeeSettings;
+        private readonly IDocUploadRepository _empDocumentService;
 
         private readonly TokenService _tokenService;
-        public EmployeeController(IEmployeeInformationService employeeInformation, TokenService tokenService, IOptions<EmployeeSettings> employeeSettings)
+        public EmployeeController(IEmployeeInformationService employeeInformation, TokenService tokenService, IOptions<EmployeeSettings> employeeSettings, IDocUploadRepository empDocumentService)
         {
             _employeeInformation = employeeInformation;
             _tokenService = tokenService;
             _employeeSettings = employeeSettings.Value;
+            _empDocumentService = empDocumentService;
         }
         [HttpGet]
         public IActionResult Index()
@@ -634,17 +637,23 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(FieldDetails);
         }
 
+        //[HttpPost]
+        //public async Task<IActionResult> SetEmpDocuments([FromBody] TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)   //InsertOrUpdate document & bank upload file
+        //{
+        //    var SetEmpDocuments = await _employeeInformation.SetEmpDocumentsAsync(DocumentBankField, DetailID, Status, In_EntryBy);
+
+        //    if (SetEmpDocuments == null || !SetEmpDocuments.Any())
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return Ok(SetEmpDocuments);
+        //}
         [HttpPost]
-        public async Task<IActionResult> SetEmpDocuments([FromBody] TmpFileUpDto DocumentBankField, int DetailID, string Status, int In_EntryBy)   //InsertOrUpdate document & bank upload file
+        public async Task<IActionResult> SetEmpDocuments(IFormFile file, int detailId, string folderPath)
         {
-            var SetEmpDocuments = await _employeeInformation.SetEmpDocumentsAsync(DocumentBankField, DetailID, Status, In_EntryBy);
-
-            if (SetEmpDocuments == null || !SetEmpDocuments.Any())
-            {
-                return NotFound();
-            }
-
-            return Ok(SetEmpDocuments);
+            string result = await _empDocumentService.UploadAndInsertEmployeeDocumentAsync(file, detailId, folderPath);
+            return Ok(result);
         }
         [HttpPost]
         public async Task<IActionResult> InsertLetterTypeRequest([FromBody] LetterInsertUpdateDto LetterInsertUpdateDtos)
@@ -861,6 +870,18 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeProject = await _employeeInformation.GetGeoDetails(mode, geoSpacingType, geoCriteria);
             return Ok(employeeProject);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetAccessLevel()
+        {
+            var accessLevel = await _employeeInformation.GetAccessLevel();
+            return Ok(accessLevel);
+        }
+        [HttpPost]
+        public async Task<IActionResult> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto)
+        {
+            var accessLevel = await _employeeInformation.AddEmployeeAsync(inserEmployeeDto);
+            return Ok(accessLevel);
+        }
         //[HttpDelete]
         //public async Task<IActionResult> DeleteSavedEmployee(int empId, string status, int entryBy)
         //{
@@ -974,76 +995,76 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(employeeCreationFilter);
         }
         [HttpGet]
-        public async Task<IActionResult> EditRoleELAsync (int linkLevel, int valueId)
+        public async Task<IActionResult> EditRoleELAsync(int linkLevel, int valueId)
         {
-            var EditRoleELAsync = await _employeeInformation.EditRoleELAsync (linkLevel, valueId);
-            return Ok (EditRoleELAsync);
+            var EditRoleELAsync = await _employeeInformation.EditRoleELAsync(linkLevel, valueId);
+            return Ok(EditRoleELAsync);
         }
         [HttpPost]
-        public async Task<IActionResult> UpdateRoleEL ([FromBody] ParamRole01AND02Dto dto)
+        public async Task<IActionResult> UpdateRoleEL([FromBody] ParamRole01AND02Dto dto)
         {
-            var UpateStatus = await _employeeInformation.UpdateRoleEL (dto);
-            return Ok (UpateStatus);
+            var UpateStatus = await _employeeInformation.UpdateRoleEL(dto);
+            return Ok(UpateStatus);
         }
         [HttpGet]
-        public async Task<IActionResult> EnableGeoCriteria ( )
+        public async Task<IActionResult> EnableGeoCriteria()
         {
-            var companyparamterDto = await _employeeInformation.EnableGeoCriteria ( );
-            return Ok (companyparamterDto);
+            var companyparamterDto = await _employeeInformation.EnableGeoCriteria();
+            return Ok(companyparamterDto);
         }
         [HttpGet]
-        public async Task<IActionResult> GetGeoCoordinateNameStatus (int EmployeeId)
+        public async Task<IActionResult> GetGeoCoordinateNameStatus(int EmployeeId)
         {
             if (EmployeeId == 0 || EmployeeId == null)
             {
-                return BadRequest ("Please Provide An EmployeeId");
+                return BadRequest("Please Provide An EmployeeId");
             }
-            var EnableStatus = await _employeeInformation.GetGeoCoordinateNameStatus (EmployeeId);
-            return Ok (EnableStatus);
+            var EnableStatus = await _employeeInformation.GetGeoCoordinateNameStatus(EmployeeId);
+            return Ok(EnableStatus);
         }
         [HttpGet]
-        public async Task<IActionResult> GetGeotaggingMasterStatus (int EmployeeId)
+        public async Task<IActionResult> GetGeotaggingMasterStatus(int EmployeeId)
         {
             if (EmployeeId == 0 || EmployeeId == null)
             {
-                return BadRequest ("Please Provide An EmployeeId");
+                return BadRequest("Please Provide An EmployeeId");
             }
-            var EnableStatus = await _employeeInformation.GetGeotaggingMasterStatus (EmployeeId);
-            return Ok (EnableStatus);
+            var EnableStatus = await _employeeInformation.GetGeotaggingMasterStatus(EmployeeId);
+            return Ok(EnableStatus);
         }
         [HttpGet]
-        public async Task<IActionResult> DownloadIndividualEmpDocuments (int EmployeeId)
+        public async Task<IActionResult> DownloadIndividualEmpDocuments(int EmployeeId)
         {
             if (EmployeeId == 0 || EmployeeId == null)
             {
-                return BadRequest ("Please Provide An EmployeeId");
+                return BadRequest("Please Provide An EmployeeId");
             }
-            var DocumentsListByEmployeewise = await _employeeInformation.DownloadIndividualEmpDocuments (EmployeeId);
-            return Ok (DocumentsListByEmployeewise);
+            var DocumentsListByEmployeewise = await _employeeInformation.DownloadIndividualEmpDocuments(EmployeeId);
+            return Ok(DocumentsListByEmployeewise);
         }
         [HttpGet]
-        public async Task<IActionResult> GetDocumentDetailsAsync (string status, int detailId)
+        public async Task<IActionResult> GetDocumentDetailsAsync(string status, int detailId)
         {
-            if (string.IsNullOrEmpty (status))
+            if (string.IsNullOrEmpty(status))
             {
-                return BadRequest ("Please Provide An Status");
+                return BadRequest("Please Provide An Status");
             }
             if (detailId == 0 || detailId == null)
             {
-                return BadRequest ("Please Provide An EmployeeId");
+                return BadRequest("Please Provide An EmployeeId");
             }
-            var DocumentDetailList = await _employeeInformation.GetDocumentDetailsAsync (status, detailId);
-            return Ok (DocumentDetailList);
+            var DocumentDetailList = await _employeeInformation.GetDocumentDetailsAsync(status, detailId);
+            return Ok(DocumentDetailList);
         }
         [HttpGet]
-        public async Task<IActionResult> GetSlabEnabledAsync (int enteredBy) 
+        public async Task<IActionResult> GetSlabEnabledAsync(int enteredBy)
         {
             if (enteredBy == 0)
             {
-                return BadRequest ("Please Provide An EmployeeId");
+                return BadRequest("Please Provide An EmployeeId");
             }
-            var DocumentDetailList = await _employeeInformation.GetSlabEnabledAsync (enteredBy);
-            return Ok (DocumentDetailList);
+            var DocumentDetailList = await _employeeInformation.GetSlabEnabledAsync(enteredBy);
+            return Ok(DocumentDetailList);
         }
         [HttpGet]
         public async Task<IActionResult> EnableNewQualif(int empId)
@@ -1062,7 +1083,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
             try
             {
-                await _employeeInformation.AssignEmployeeAccessService( request);
+                await _employeeInformation.AssignEmployeeAccessService(request);
                 return Ok(new { message = "Employee access assigned successfully." });
             }
             catch (Exception ex)
@@ -1085,13 +1106,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
             }
             catch (Exception ex)
             {
-                
+
                 return StatusCode(500, new { error = "An error occurred.", details = ex.Message });
             }
         }
         //SaveWorkFlowEmp  Mode : InsertRoleEL
         [HttpPost]
-        public async Task<IActionResult> InsertRole( RoleInsertDTO roleInsertDto)
+        public async Task<IActionResult> InsertRole(RoleInsertDTO roleInsertDto)
         {
             if (roleInsertDto == null)
             {
@@ -1113,8 +1134,8 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
             return Ok(roleDetails);
         }
-         
-        
+
+
         [HttpGet]
         public async Task<IActionResult> GetGeoSpacingCriteria()
         {
@@ -1147,7 +1168,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var data = await _employeeInformation.GetAssignedOrPendingAssetCategoriesAsync(varAssetTypeID, varAssignAssetStatus);
             return Ok(data);
         }
-        [HttpGet]    
+        [HttpGet]
         public async Task<IActionResult> GetGeneralSubCategory([FromQuery] string code)
         {
             var result = await _employeeInformation.GetGeneralSubCategoryAsync(code);
@@ -1167,30 +1188,145 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(result);
         }
         [HttpGet]
-        public async Task<IActionResult> ProcessPayscaleRequest (int batchId, int employeeIds, int type)
+        public async Task<IActionResult> ProcessPayscaleRequest(int batchId, int employeeIds, int type)
         {
             if (batchId <= 0)
-                return BadRequest ("Invalid batchId");
+                return BadRequest("Invalid batchId");
 
             if (employeeIds <= 0)
-                return BadRequest ("Invalid employeeIds");
+                return BadRequest("Invalid employeeIds");
 
             if (type != 1 && type != 2)
-                return BadRequest ("Invalid type");
+                return BadRequest("Invalid type");
             try
             {
-                var result = await _employeeInformation.PayscaleComponentsListManual (batchId, employeeIds, type);
+                var result = await _employeeInformation.PayscaleComponentsListManual(batchId, employeeIds, type);
 
                 if (result == null)
-                    return NotFound ("Payscale data not found for the given parameters.");
+                    return NotFound("Payscale data not found for the given parameters.");
 
-                return Ok (result);
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 // You can also log the exception here
-                return StatusCode (500, "An error occurred while processing the payscale request.");
+                return StatusCode(500, "An error occurred while processing the payscale request.");
             }
+        }
+        [HttpGet]
+        public async Task<IActionResult> RetrieveShiftEmpCreation()
+        {
+            var result = await _employeeInformation.RetrieveShiftEmpCreationAsync();
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillWeekEndShiftEmpCreation()
+        {
+            var result = await _employeeInformation.FillWeekEndShiftEmpCreationAsync();
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillbatchslabsEmp(int batchid)
+        {
+            var result = await _employeeInformation.FillbatchslabsEmpAsync(batchid);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EnableBatchOptionEmpwise(int empid)
+        {
+            var result = await _employeeInformation.EnableBatchOptionEmpwiseAsync(empid);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetParameterShiftInEmp()
+        {
+            var result = await _employeeInformation.GetParameterShiftInEmpAsync();
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> RetrieveEmpparameters(int empid)
+        {
+            var result = await _employeeInformation.RetrieveEmpparametersAsync(empid);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ShowEntityLinkCheckBox(int roleid)
+        {
+            var result = await _employeeInformation.ShowEntityLinkCheckBoxAsync(roleid);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EnableDocEdit()
+        {
+            var result = await _employeeInformation.EnableDocEditAsync();
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAccessibleGeoLocationsAsync(int roleId, int empId)
+        {
+            if (roleId <= 0)
+                return BadRequest("Invalid roleId");
+
+            if (empId <= 0)
+                return BadRequest("Invalid empId");
+            //var result = await _employeeInformation.GetAccessibleGeoLocationsAsync (roleId, empId);
+            //return Ok (result);
+            try
+            {
+                var result = await _employeeInformation.GetAccessibleGeoLocationsAsync(roleId, empId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // You can also log the exception here
+                return StatusCode(500, "An error occurred while processing the GetAccessibleGeoLocations request.");
+            }
+        }
+        [HttpGet]
+        public async Task<IActionResult> CheckLiabilityPending(int empid)
+        {
+            var result = await _employeeInformation.CheckLiabilityPending(empid);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> DownloadSingleDocuments(int DetailID, string status)
+        {
+            var result = await _employeeInformation.DownloadSingleDocumentsAsync(DetailID, status);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> DownloadEmpDocuments(int DetailID, string status)
+        {
+            var result = await _employeeInformation.DownloadEmpDocumentsAsync(DetailID, status);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Fillcordinates(int value)
+        {
+            var result = await _employeeInformation.FillcordinateAsync(value);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Getcordinates(int GeoMasterID, int GeoSpaceType)
+        {
+            var result = await _employeeInformation.GetcordinatesAsync(GeoMasterID, GeoSpaceType);
+            return Ok(result);
+        }
+        //secondentity=empid ,firsentity =roleid ,prefix=searchvalue
+        [HttpGet]
+        public async Task<IActionResult> FillEmpRoleReportees(int SecondEntityId, int FirstEntityId,string Prefix)
+        {
+            var result = await _employeeInformation.FillEmpRoleReporteesAsync(SecondEntityId, FirstEntityId, Prefix);
+            return Ok(result);
+        }
+        
+        [HttpPost]
+        public async Task<IActionResult> UpdateEmpStatus([FromBody] UpdateEmployeeStatusDto employeeModuleSetupDto)
+        {
+            var result = await _employeeInformation.UpdateEmpStatusAsync(employeeModuleSetupDto);
+            return Ok(result);
         }
         [HttpPost]
         public async Task<IActionResult> DeleteEmpDetail([FromBody] DeleteEmpDetailRequestDto request)
