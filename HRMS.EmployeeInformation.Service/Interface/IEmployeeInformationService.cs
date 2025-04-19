@@ -192,6 +192,8 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType);
         Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto employeeModuleSetupDto);
 
+        Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmpRoleReporteesAsync(int SecondEntityId, int FirstEntityId, string Prefix);
+        
     }
 
 }

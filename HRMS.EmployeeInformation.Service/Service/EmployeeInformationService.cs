@@ -809,5 +809,10 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.UpdateEmpStatusAsync(employeeModuleSetupDto);
         }
 
+
+        public async Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmpRoleReporteesAsync(int SecondEntityId, int FirstEntityId, string Prefix)
+        {
+            return await _employeeRepository.FillEmpRoleReporteesAsync(SecondEntityId, FirstEntityId, Prefix);
+        }
     }
 }
