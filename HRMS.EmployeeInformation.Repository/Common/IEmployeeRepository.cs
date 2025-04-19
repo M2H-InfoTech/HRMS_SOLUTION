@@ -230,5 +230,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmpRoleReporteesAsync(int SecondEntityId, int FirstEntityId, string Prefix);
         Task<List<HrmsDocumentField00>> GetDependentFieldsAsync();
         Task<PayscaleResultDto> GetLatestPayscaleAsync(int employeeId, int? type);
+        Task<int> GetlastEntityByRoleId(int roleId, int EntityLimit);
     }
 }

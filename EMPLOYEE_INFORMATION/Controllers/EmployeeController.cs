@@ -1316,12 +1316,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
         }
         //secondentity=empid ,firsentity =roleid ,prefix=searchvalue
         [HttpGet]
-        public async Task<IActionResult> FillEmpRoleReportees(int SecondEntityId, int FirstEntityId,string Prefix)
+        public async Task<IActionResult> FillEmpRoleReportees(int SecondEntityId, int FirstEntityId, string Prefix)
         {
             var result = await _employeeInformation.FillEmpRoleReporteesAsync(SecondEntityId, FirstEntityId, Prefix);
             return Ok(result);
         }
-        
+
         [HttpPost]
         public async Task<IActionResult> UpdateEmpStatus([FromBody] UpdateEmployeeStatusDto employeeModuleSetupDto)
         {
@@ -1339,6 +1339,12 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public async Task<IActionResult> GetLatestPayscaleAsync(int employeeId, int? type)
         {
             var result = await _employeeInformation.GetLatestPayscaleAsync(employeeId, type);
+            return Ok(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetlastEntityByRoleId(int roleId, int EntityLimit)
+        {
+            var result = await _employeeInformation.GetlastEntityByRoleId(roleId, EntityLimit);
             return Ok(result);
         }
     }
