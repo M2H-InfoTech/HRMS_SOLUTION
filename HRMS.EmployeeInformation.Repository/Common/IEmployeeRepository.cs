@@ -219,10 +219,11 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<int> CheckLiabilityPending(int empid);
         Task<List<DocumentsDownoaldDto>> DownloadSingleDocumentsAsync(int DetailID, string status);
         Task<List<DocumentsDownoaldDto>> DownloadEmpDocumentsAsync(int DetailID, string status);
-          
+
         Task<List<CoordinateDto>> FillcordinateAsync(int value);
 
         Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType);
-        
+        Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto employeeModuleSetupDto);
+
     }
 }

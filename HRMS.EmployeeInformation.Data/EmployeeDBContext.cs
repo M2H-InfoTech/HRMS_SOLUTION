@@ -303,6 +303,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<PayPeriodMasterAccess> PayPeriodMasterAccesses { get; set; }
     public virtual DbSet<Geolocation01> Geolocation01s { get; set; }
     public virtual DbSet<Geolocation00> Geolocation00s { get; set; }
+    public virtual DbSet<HolidaysMasterDaysCount> HolidaysMasterDaysCounts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4457,7 +4458,7 @@ public partial class EmployeeDBContext : DbContext
         modelBuilder.Entity<MasterGeotagging>(entity =>
         {
             entity.HasKey(e => e.GeoMasterId).HasName("PK__Master_G__5873EF327F84BE55");
-        
+
             entity.ToTable("Master_Geotagging");
 
             entity.Property(e => e.GeoMasterId).HasColumnName("GeoMaster_ID");
@@ -4508,39 +4509,50 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.EntryDate).HasColumnType("datetime");
         });
         //Shan Lal Created On 16/04/2025
-        modelBuilder.Entity<Geolocation01> (entity =>
+        modelBuilder.Entity<Geolocation01>(entity =>
         {
-            entity.HasKey (e => e.GeoLocationId).HasName ("PK__Geolocat__81B966A30E9AD974");
+            entity.HasKey(e => e.GeoLocationId).HasName("PK__Geolocat__81B966A30E9AD974");
 
-            entity.ToTable ("Geolocation01");
+            entity.ToTable("Geolocation01");
 
-            entity.Property (e => e.Latitude)
-                .HasMaxLength (50)
-                .IsUnicode (false);
-            entity.Property (e => e.Location)
-                .HasMaxLength (50)
-                .IsUnicode (false);
-            entity.Property (e => e.Longitude)
-                .HasMaxLength (50)
-                .IsUnicode (false);
-            entity.Property (e => e.Radius)
-                .HasMaxLength (50)
-                .IsUnicode (false);
+            entity.Property(e => e.Latitude)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Location)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Longitude)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Radius)
+                .HasMaxLength(50)
+                .IsUnicode(false);
         });
         //Shan Lal Created On 16/04/2025
-        modelBuilder.Entity<Geolocation00> (entity =>
+        modelBuilder.Entity<Geolocation00>(entity =>
         {
-            entity.HasKey (e => e.GeoBatchId).HasName ("PK__Geolocat__E6A04005652B06E5");
+            entity.HasKey(e => e.GeoBatchId).HasName("PK__Geolocat__E6A04005652B06E5");
 
-            entity.ToTable ("Geolocation00");
+            entity.ToTable("Geolocation00");
 
-            entity.Property (e => e.EntryDate).HasColumnType ("datetime");
-            entity.Property (e => e.GeoBatchDescription)
-                .HasMaxLength (50)
-                .IsUnicode (false);
-            entity.Property (e => e.UpdatedDate).HasColumnType ("datetime");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.GeoBatchDescription)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
         });
-        OnModelCreatingPartial (modelBuilder);
+        modelBuilder.Entity<HolidaysMasterDaysCount>(entity =>
+        {
+            entity.HasKey(e => e.HolidayMasterDaysCountId).HasName("PK__HOLIDAYS__4C63F5522E81B185");
+
+            entity.ToTable("HOLIDAYS_MASTER_DAYS_COUNT");
+
+            entity.Property(e => e.HolidayMasterDaysCountId).HasColumnName("HolidayMasterDaysCountID");
+            entity.Property(e => e.HolidayDate).HasColumnType("datetime");
+            entity.Property(e => e.HolidayMasterId).HasColumnName("HolidayMaster_id");
+            entity.Property(e => e.InstId).HasColumnName("inst_ID");
+        });
+        OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

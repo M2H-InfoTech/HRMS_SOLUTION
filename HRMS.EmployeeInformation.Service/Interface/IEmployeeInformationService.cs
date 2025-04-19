@@ -5,7 +5,6 @@ using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Service.Interface
@@ -189,8 +188,9 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<DocumentsDownoaldDto>> DownloadEmpDocumentsAsync(int DetailID, string status);
 
         Task<List<CoordinateDto>> FillcordinateAsync(int value);
-        
+
         Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType);
+        Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto employeeModuleSetupDto);
 
     }
 
