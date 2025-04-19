@@ -1328,5 +1328,18 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.UpdateEmpStatusAsync(employeeModuleSetupDto);
             return Ok(result);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetDependentFields()
+        {
+            var result = await _employeeInformation.GetDependentFieldsAsync();
+            return Ok(result);
+
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetLatestPayscaleAsync(int employeeId, int? type)
+        {
+            var result = await _employeeInformation.GetLatestPayscaleAsync(employeeId, type);
+            return Ok(result);
+        }
     }
 }

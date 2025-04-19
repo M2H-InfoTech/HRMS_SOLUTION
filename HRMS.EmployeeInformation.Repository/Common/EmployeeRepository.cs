@@ -14403,5 +14403,311 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         }
 
+        public async Task<List<HrmsDocumentField00>> GetDependentFieldsAsync()
+        {
+            var dataTypeId = await _context.GeneralCategories
+                .Where(x => x.Code == "DPNDNT")
+                .Select(x => x.DataTypeId)
+                .FirstOrDefaultAsync();
+
+            return await _context.HrmsDocumentField00s
+                .Where(x => x.DataTypeId == dataTypeId)
+                .ToListAsync();
+        }
+        public async Task<PayscaleResultDto> GetLatestPayscaleAsync(int employeeId, int? type)
+        {
+            var PayscaleResult = new PayscaleResultDto();
+            // Step 1: Initialize variables
+            DateTime showFormDates = DateTime.UtcNow;
+            DateTime endDates = DateTime.UtcNow;
+
+            var batchId = await GetEmployeeSchemeID(employeeId, "ASSPAYCODE", "PRL"); // assuming sync, use async if needed
+
+
+            var ctcPayscale00 = await _context.Payscale00s
+    .Where(p =>
+        p.EffectiveFrom != null &&
+        p.EffectiveFrom.Value.Date <= showFormDates.Date &&
+        p.BatchId == batchId &&
+        p.EmployeeId == employeeId)
+    .GroupBy(p => p.EmployeeId)
+    .Select(g => g
+        .OrderByDescending(p => p.EffectiveFrom)
+        .Select(p => new TempPayscale001Dto
+        {
+            PayScaleId = p.PayScaleId,
+            PayRequest01Id = p.PayRequest01Id,
+            EmployeeId = p.EmployeeId,
+            BatchId = p.BatchId,
+            EffectiveFrom = p.EffectiveFrom,
+            EffectiveTo = p.EffectiveTo,
+            PayRequestId = p.PayRequestId
+        })
+        .FirstOrDefault())
+    .ToListAsync();
+
+
+
+            var ctcPayscale01 = await _context.Payscale00s
+     .Where(p => p.EffectiveFrom != null &&
+                 p.EffectiveFrom.Value.Date >= showFormDates.Date &&
+                 p.EffectiveFrom.Value.Date <= endDates.Date &&
+                 p.BatchId == batchId &&
+                 p.EmployeeId == employeeId)
+     .GroupBy(p => p.EmployeeId)
+     .Select(g => g
+         .OrderByDescending(p => p.EffectiveFrom)
+         .Select(p => new TempPayscale001Dto
+         {
+             PayScaleId = p.PayScaleId,
+             PayRequest01Id = p.PayRequest01Id,
+             EmployeeId = p.EmployeeId,
+             BatchId = p.BatchId,
+             EffectiveFrom = p.EffectiveFrom,
+             EffectiveTo = p.EffectiveTo,
+             PayRequestId = p.PayRequestId
+         })
+         .FirstOrDefault())
+     .ToListAsync();
+
+
+            var payscale001FromCTCPayscale00 =
+                (from b in ctcPayscale00
+                 join a in _context.Payscale00s on b.PayScaleId equals a.PayScaleId
+                 join c in _context.EmployeeDetails on a.EmployeeId equals c.EmpId
+                 select new TempPayscale001Dto
+                 {
+                     PayScaleId = a.PayScaleId,
+                     PayRequest01Id = a.PayRequest01Id,
+                     PayRequestId = a.PayRequestId,
+                     BatchId = a.BatchId,
+                     EmployeeCode = c.EmpCode,
+                     EmployeeId = a.EmployeeId,
+                     EmployeeName = c.Name,
+                     EmployeeStatus = c.EmpStatus,
+                     EffectiveFrom = a.EffectiveFrom,
+                     EffectiveTo = a.EffectiveTo
+                 });
+
+            var payscale001FromCTCPayscale01 =
+     (from b in ctcPayscale01
+      join a in _context.Payscale00s on b.PayScaleId equals a.PayScaleId
+      join c in _context.EmployeeDetails on a.EmployeeId equals c.EmpId
+      select new TempPayscale001Dto
+      {
+          PayScaleId = a.PayScaleId,
+          PayRequest01Id = a.PayRequest01Id,
+          PayRequestId = a.PayRequestId,
+          BatchId = a.BatchId,
+          EmployeeCode = c.EmpCode,
+          EmployeeId = a.EmployeeId,
+          EmployeeName = c.Name,
+          EmployeeStatus = c.EmpStatus,
+          EffectiveFrom = a.EffectiveFrom,
+          EffectiveTo = a.EffectiveTo
+      });// Using ToList to execute the query and materialize the results into a list
+
+
+
+
+
+            var combinedPayscale001 = payscale001FromCTCPayscale00
+                .Concat(payscale001FromCTCPayscale01)
+                .ToList();
+
+            //1.FirstTable---------------------------------------------------------------------------------------------------------
+
+            var newFormat = _context.CompanyParameters
+                .Where(p => p.Type == "PRL" && p.ParameterCode == "PSCLMNLFRMT")
+                .Select(p => p.Value ?? 0)
+                .FirstOrDefault();
+            PayscaleResult.NewFormat = newFormat;
+
+            int checkPayscaleCount = combinedPayscale001.Count;
+            int enablePayscaleHourly = await GetEmployeeParameterSettingsAsync(1, "EmployeeReporting", "ENBLEPAYSCALEHRLY", "PRL");
+
+            //-- SECTION 5: Hourly Payscale Handling
+            object hourlyResult;
+            if (enablePayscaleHourly == 1 && type == 1)
+            {
+
+                if (combinedPayscale001 == null || !combinedPayscale001.Any())
+                {
+                    hourlyResult = new HourlyPayscaleResult
+                    {
+                        HourlyAmount = 0,
+                        TotalHours = 0,
+                        TotalAmount = 0
+                    };
+                }
+                else
+                {
+                    hourlyResult = (from a in combinedPayscale001
+                                    join b in _context.Payscale00s on new { a.PayRequestId, a.PayRequest01Id } equals new { b.PayRequestId, b.PayRequest01Id }
+                                    join c in _context.PayscaleRequest01s on b.PayRequest01Id equals c.PayRequest01Id
+                                    select new HourlyPayscaleResult
+                                    {
+                                        HourlyAmount = b.HourlyAmount ?? 0,
+                                        TotalHours = c.TotalHours ?? 0,
+                                        TotalAmount = (b.HourlyAmount ?? 0) * (c.TotalHours ?? 0)
+                                    }).FirstOrDefault();
+                }
+
+            }
+            else // SECTION 6: Regular Payscale Handling
+            {
+
+                if (combinedPayscale001 == null || !combinedPayscale001.Any())
+                {
+                    var earnings = await _context.PayCodeMaster01s
+                           .Where(x => x.PayCodeMasterId == batchId
+                                       && x.Type == 1
+                                       && x.ApplicableValue.Substring(29, 1) != "1") // Index 29 = 30th character (0-based)
+                           .Select(x => new PayComponentDto
+                           {
+                               EarnPayCode = x.PayCode,
+                               PayCodeDescription = x.PayCodeDescription,
+                               PayCodeId = x.PayCodeId,
+                               Type = x.Type,
+                               Amount = 0.00
+                           }).ToListAsync();
+
+                    var deductions = await _context.PayCodeMaster01s
+                            .Where(x => x.PayCodeMasterId == batchId
+                                        && x.Type == 2
+                                        && x.ApplicableValue.Substring(29, 1) != "1")
+                            .Select(x => new PayComponentDto
+                            {
+                                EarnPayCode = x.PayCode,
+                                PayCodeDescription = x.PayCodeDescription,
+                                PayCodeId = x.PayCodeId,
+                                Type = x.Type,
+                                Amount = 0.00
+                            }).ToListAsync();
+
+                    PayscaleResult.Earnings = earnings;
+                    PayscaleResult.Deductions = deductions;
+                }
+                else //-- SECTION 6A: Earnings Components
+                {
+                    var earnings = (from c in _context.PayCodeMaster01s
+                                    join b in _context.Payscale00s on c.PayCodeMasterId equals b.BatchId
+                                    where c.Type == 1
+                                          && c.ApplicableValue.Substring(30, 1) != "1"
+                                          && combinedPayscale001.Select(dto => dto.PayRequestId).Contains(b.PayRequestId)
+                                          && b.EmployeeId == employeeId
+                                    select new
+                                    {
+                                        EarnPayCode = c.PayCode,
+                                        PayCodeDescription = c.PayCodeDescription,
+                                        PayCodeId = c.PayCodeId,
+                                        Type = c.Type,
+                                        PayRequestId = b.PayRequestId // Ensure this is available for the next query
+                                    })
+                                    .ToList() // Execute the query first
+                                    .GroupJoin(_context.Payscale01s,
+                                        c => c.PayCodeId,
+                                        p => p.PayComponentId,
+                                        (c, ps1) => new
+                                        {
+                                            c,
+                                            ps1 = ps1.Where(x => combinedPayscale001
+                                                .Select(dto => dto.PayRequest01Id)
+                                                .Contains(x.PayRequestId01))
+                                        })
+                                    .SelectMany(g => g.ps1.DefaultIfEmpty(), (g, p) => new PayComponentDto
+                                    {
+                                        EarnPayCode = g.c.EarnPayCode,
+                                        PayCodeDescription = g.c.PayCodeDescription,
+                                        PayCodeId = g.c.PayCodeId,
+                                        Type = g.c.Type,
+                                        Amount = p != null ? p.Amount : 0
+                                    })
+                                    .ToList();
+
+                    var payscaleIds = combinedPayscale001
+                        .Select(p => p.PayRequestId)
+                        .ToHashSet();
+
+                    var payRequest01Ids = combinedPayscale001
+                        .Select(p => p.PayRequest01Id)
+                        .ToHashSet();
+
+                    var deductions = (from c in _context.PayCodeMaster01s
+                                      join b in _context.Payscale00s on c.PayCodeMasterId equals b.BatchId
+                                      where c.Type == 2
+                                            && c.ApplicableValue.Substring(30, 1) != "1"
+                                            && payscaleIds.Contains(b.PayRequestId)
+                                            && b.EmployeeId == employeeId
+                                      select new
+                                      {
+                                          EarnPayCode = c.PayCode,
+                                          PayCodeDescription = c.PayCodeDescription,
+                                          PayCodeId = c.PayCodeId,
+                                          Type = c.Type
+                                      })
+                                     .GroupJoin(_context.Payscale01s,
+                                          c => c.PayCodeId,
+                                          p => p.PayComponentId,
+                                          (c, ps1) => new
+                                          {
+                                              c,
+                                              ps1 = ps1.Where(x => payRequest01Ids.Contains(x.PayRequestId01))
+                                          })
+                                     .SelectMany(g => g.ps1.DefaultIfEmpty(), (g, p) => new PayComponentDto
+                                     {
+                                         EarnPayCode = g.c.EarnPayCode,
+                                         PayCodeDescription = g.c.PayCodeDescription,
+                                         PayCodeId = g.c.PayCodeId,
+                                         Type = g.c.Type,
+                                         Amount = p != null ? p.Amount : 0
+                                     })
+                                     .ToList();
+
+
+                    PayscaleResult.Earnings = earnings;
+                    PayscaleResult.Deductions = deductions;
+
+                }
+
+            }
+            var proposedPayTypes = await _context.HrmValueTypes.Where(x => x.Type == "ProposedPayType").ToListAsync();
+            var incrementTypes = await _context.HrmValueTypes.Where(x => x.Type == "IncrementType").ToListAsync();
+
+
+            PayscaleResult.ProposedPayTypes = proposedPayTypes;
+            PayscaleResult.IncrementTypes = incrementTypes;
+            var effectiveDate = _context.HrEmpMasters
+                .Where(emp => emp.EmpId == employeeId)
+                .AsEnumerable()
+                .Select(emp =>
+                {
+                    var ps = combinedPayscale001.FirstOrDefault(x => x.EmployeeId == emp.EmpId);
+                    return new PayscaleEffectiveDateDto
+                    {
+                        EmpId = emp.EmpId,
+                        EffectiveDate = ps?.EffectiveFrom?.ToString("dd/MM/yyyy")
+                            ?? emp.JoinDt?.ToString("dd/MM/yyyy")
+                    };
+
+                })
+                .FirstOrDefault();
+
+            PayscaleResult.EffectiveDate = effectiveDate;
+
+
+            //var payscaleDetails = new PayscaleResultDto
+            //{
+            //    NewFormat = newFormat,
+            //    Earnings = earnings,
+            //    Deductions = deductions,
+            //    ProposedPayTypes = proposedPayTypes,
+            //    IncrementTypes = incrementTypes,
+            //    EffectiveDate = effectiveDate,
+            //    TotalHours = payscale?.TotalHours
+            //};
+
+            return (PayscaleResult);
+        }
     }
 }

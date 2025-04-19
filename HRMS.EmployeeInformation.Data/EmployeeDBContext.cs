@@ -304,6 +304,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<Geolocation01> Geolocation01s { get; set; }
     public virtual DbSet<Geolocation00> Geolocation00s { get; set; }
     public virtual DbSet<HolidaysMasterDaysCount> HolidaysMasterDaysCounts { get; set; }
+    public virtual DbSet<Payscale01> Payscale01s { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4551,6 +4552,12 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.HolidayDate).HasColumnType("datetime");
             entity.Property(e => e.HolidayMasterId).HasColumnName("HolidayMaster_id");
             entity.Property(e => e.InstId).HasColumnName("inst_ID");
+        });
+        modelBuilder.Entity<Payscale01>(entity =>
+        {
+            entity.HasKey(e => e.PayScale01Id).HasName("PK__Payscale__A093FB508E2C8293");
+            entity.ToTable("Payscale01");
+            entity.Property(e => e.PayScale01Id).HasColumnName("PayScale01ID");
         });
         OnModelCreatingPartial(modelBuilder);
     }
