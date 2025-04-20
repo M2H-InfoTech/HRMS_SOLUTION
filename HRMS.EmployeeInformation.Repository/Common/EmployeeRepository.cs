@@ -13207,7 +13207,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         public async Task<int> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto)
         {
-
+            int empID = 0;
             bool employeeExists = await _context.HrEmpMasters.AnyAsync(emp =>
                                         emp.SeperationStatus == 0 &&
                                         (emp.IsDelete == false || emp.IsDelete == null) &&
@@ -13431,7 +13431,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     await _context.HrEmpMasters.AddAsync(empMaster);
                     await _context.SaveChangesAsync();
 
-                    var empID = empMaster.EmpId;
+                    empID = empMaster.EmpId;
 
                     var empAddress = new HrEmpAddress// no missing columns
                     {
@@ -13918,8 +13918,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     await _context.SaveChangesAsync();
 
                 }
-                return 1;
+
             }
+            return empID > 0 ? empID : 0;
         }
 
 
