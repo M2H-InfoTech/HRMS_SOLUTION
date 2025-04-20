@@ -170,7 +170,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<object>> GetLanguagesAsync();
         Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type);
         Task<List<HighLevelTableDto>> GetAccessLevel();
-        Task<object> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto);
+        Task<int> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto);
         Task<List<object>> RetrieveShiftEmpCreationAsync();
 
         Task<List<object>> FillWeekEndShiftEmpCreationAsync();
@@ -197,7 +197,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<HrmsDocumentField00>> GetDependentFieldsAsync();
         Task<PayscaleResultDto> GetLatestPayscaleAsync(int employeeId, int? type);
         Task<int> GetlastEntityByRoleId(int roleId, int EntityLimit);
-        Task<int> SaveManualEmpPayscaleOldFormat (SaveManualEmpPayscaleOldFormatDto dto); //Created By Shan Lal
+        Task<int> SaveManualEmpPayscaleOldFormat(SaveManualEmpPayscaleOldFormatDto dto); //Created By Shan Lal
     }
 
 }
