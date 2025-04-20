@@ -16197,6 +16197,168 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return defaultResult;
         }
 
+        public async Task<bool> DeleteEmpRewardAsync(int rewardId)
+        {
+            var reward = await _context.EmpRewards.FirstOrDefaultAsync(r => r.RewardId == rewardId);
+
+            if (reward == null)
+                return false;
+
+            reward.Status = "D";
+            _context.EmpRewards.Update(reward);
+
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int deviceId)
+        {
+            var currentDate = DateTime.UtcNow;
+            string resultMessage = "Failed";
+
+            bool isDocDeleted = await IsDocumentSoftDeletedAsync(detailId);
+            bool isApprovedDeleted = await IsApprovedDocSoftDeletedAsync(detailId);
+
+            if (isDocDeleted && isApprovedDeleted)
+            {
+                Console.WriteLine("Documents are already deleted. Exiting operation.");
+                resultMessage = "Documents already deleted";
+                return resultMessage;
+            }
+
+            var (empId, docId, latestDocHisId) = await InsertHistoryRecordsAsync(detailId, entryBy, currentDate);
+            await InsertFileHistoryAsync(detailId, deviceId, latestDocHisId);
+            await SoftDeleteDocumentsAsync(detailId, entryBy, currentDate);
+
+
+
+            if (isDocDeleted && isApprovedDeleted)
+            {
+                await EnsureDocumentAccessAsync(empId, docId, entryBy, currentDate);
+                resultMessage = "Deleted";
+            }
+
+            return resultMessage;
+        }
+
+
+        //helper  of function InsertDocumentHistoryAndDeleteAsync method
+        private async Task<(int empId, int docId, int latestDocHisId)> InsertHistoryRecordsAsync(int detailId, int entryBy, DateTime currentDate)
+        {
+            var approvedDocs = await _context.HrmsEmpdocumentsApproved00s
+                .Where(x => x.DetailId == detailId)
+                .ToListAsync();
+
+            var historyRecords = approvedDocs.Select(doc => new HrmsEmpdocumentsHistory00
+            {
+                DocApprovedId = doc.DocApprovedId,
+                DetailId = doc.DetailId,
+                DocId = doc.DocId,
+                EmpId = doc.EmpId,
+                Status = "D",
+                RequestId = doc.RequestId,
+                DateFrom = currentDate,
+                EntryBy = entryBy,
+                EntryDate = currentDate
+            }).ToList();
+
+            _context.HrmsEmpdocumentsHistory00s.AddRange(historyRecords);
+            await _context.SaveChangesAsync();
+
+            var latestDocHisId = historyRecords.Last().DocHistId;
+            int empId = historyRecords.First().EmpId ?? 0;
+            int docId = historyRecords.First().DocId ?? 0;
+
+            return (empId, docId, latestDocHisId);
+        }
+
+        //helper  of function InsertDocumentHistoryAndDeleteAsync method
+        private async Task InsertFileHistoryAsync(int detailId, int deviceId, int docHisId)
+        {
+            var approvedFiles = await _context.HrmsEmpdocumentsApproved02s
+                .Where(x => x.DetailId == deviceId && x.DocId == detailId)
+                .ToListAsync();
+            if (!approvedFiles.Any())
+            {
+                // No file data, but continue rest of delete
+                return;
+            }
+
+
+            var historyFiles = approvedFiles.Select(doc => new HrmsEmpdocumentsHistory02
+            {
+                DocHisId = docHisId,
+                DetailId = doc.DetailId,
+                FileName = null,
+                FileType = null,
+                FileData = null,
+                OldFileName = doc.FileName
+            }).ToList();
+
+            _context.HrmsEmpdocumentsHistory02s.AddRange(historyFiles);
+            await _context.SaveChangesAsync();
+        }
+
+        //helper  of function InsertDocumentHistoryAndDeleteAsync method
+        private async Task SoftDeleteDocumentsAsync(int detailId, int entryBy, DateTime currentDate)
+        {
+            var empDoc = await _context.HrmsEmpdocuments00s.FirstOrDefaultAsync(x => x.DetailId == detailId);
+            if (empDoc != null)
+            {
+                empDoc.Status = "D";
+                empDoc.UpdatedBy = entryBy;
+                empDoc.UpdatedDate = currentDate;
+            }
+
+            var approvedDoc = await _context.HrmsEmpdocumentsApproved00s.FirstOrDefaultAsync(x => x.DetailId == detailId);
+            if (approvedDoc != null)
+            {
+                approvedDoc.Status = "D";
+                approvedDoc.UpdatedBy = entryBy;
+                approvedDoc.UpdatedDate = currentDate;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        //helper  of function InsertDocumentHistoryAndDeleteAsync method
+        private async Task<bool> IsDocumentSoftDeletedAsync(int detailId)
+        {
+            return await _context.HrmsEmpdocuments00s
+                .AnyAsync(x => x.DetailId == detailId && x.Status == "D");
+        }
+
+        //helper  of function InsertDocumentHistoryAndDeleteAsync method
+        private async Task<bool> IsApprovedDocSoftDeletedAsync(int detailId)
+        {
+            return await _context.HrmsEmpdocumentsApproved00s
+                .AnyAsync(x => x.DetailId == detailId && x.Status == "D");
+        }
+
+        //helper  of function InsertDocumentHistoryAndDeleteAsync method
+        private async Task EnsureDocumentAccessAsync(int empId, int docId, int entryBy, DateTime currentDate)
+        {
+            bool exists = await _context.EmpDocumentAccesses
+                .AnyAsync(x => x.EmpId == empId && x.DocId == docId);
+
+            if (!exists)
+            {
+                var access = new EmpDocumentAccess
+                {
+                    InstId = 1,
+                    EmpId = empId,
+                    DocId = docId,
+                    ValidFrom = currentDate.Date,
+                    ValidTo = null,
+                    IsCompanyLevel = 0,
+                    Status = 0,
+                    CreatedBy = entryBy,
+                    CreatedDate = currentDate
+                };
+
+                _context.EmpDocumentAccesses.Add(access);
+                await _context.SaveChangesAsync();
+            }
+        }
 
     }
 

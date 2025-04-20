@@ -1361,5 +1361,40 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.DdlIsprobationAsync(FirstEntityID, LinkID);
             return Ok(result);
         }
+        [HttpDelete]
+        public async Task<IActionResult> DeleteEmpReward(int rewardId)
+        {
+            var success = await _employeeInformation.DeleteEmpRewardAsync(rewardId);
+            if (!success)
+                return NotFound(new { message = "Reward not found" });
+
+            return Ok(new { message = "Reward soft deleted successfully" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteEmployeeIndividualDocuments(int detailId, int entryBy, int deviceId)
+        {
+
+            if (detailId <= 0)
+                return BadRequest(new { success = false, message = "Invalid detailId." });
+
+
+            var result = await _employeeInformation.InsertDocumentHistoryAndDeleteAsync(detailId, entryBy, deviceId);
+
+
+            if (result == "Deleted")
+            {
+                return Ok(new { success = true, message = "Document deleted successfully." });
+            }
+
+
+            if (result == "Documents already deleted")
+            {
+                return Ok(new { success = true, message = "Document was already deleted." });
+            }
+
+
+            return StatusCode(400, new { success = false, message = "Document deletion failed." });
+        }
     }
 }

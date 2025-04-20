@@ -233,5 +233,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<int> GetlastEntityByRoleId(EntityRoleRequestDto customEntityList);
         Task<int> SaveManualEmpPayscaleOldFormat(SaveManualEmpPayscaleOldFormatDto dto); //Created By Shan Lal K
         Task<List<string>> DdlIsprobationAsync(int FirstEntityID, string LinkID);
+        Task<bool> DeleteEmpRewardAsync(int rewardId);
+
+        Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int deviceId);
     }
 }

@@ -836,5 +836,14 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.DdlIsprobationAsync(FirstEntityID, LinkID);
         }
+        public async Task<bool> DeleteEmpRewardAsync(int rewardId)
+        {
+            return await _employeeRepository.DeleteEmpRewardAsync(rewardId);
+        }
+
+        public async Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int deviceId)
+        {
+            return await _employeeRepository.InsertDocumentHistoryAndDeleteAsync(detailId, entryBy, deviceId);
+        }
     }
 }
