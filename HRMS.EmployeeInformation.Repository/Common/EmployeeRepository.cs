@@ -19,6 +19,7 @@ using HRMS.EmployeeInformation.Repository.Common.RepositoryC;
 using HRMS.EmployeeInformation.Repository.Helpers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -15436,33 +15437,32 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return (PayscaleResult);
         }
-        public List<EntityDetail> GetHardcodedEntityDetails()
+        public List<EntityDetailDto> GetHardcodedEntityDetails()
         {
-            return new List<EntityDetail>
+            return new List<EntityDetailDto>
             {
-            new EntityDetail { EntityID = 1, Description = "GROUP COMPANY" },
-            new EntityDetail { EntityID = 1, Description = "BUSINESS VERTICAL" },
-            new EntityDetail { EntityID = 3, Description = "COUNTRY" },
-            new EntityDetail { EntityID = 6, Description = "BRANCH" },
-            new EntityDetail { EntityID = 13, Description = "LOCATION" },
-            new EntityDetail { EntityID = 27, Description = "CLUSTER" },
-            new EntityDetail { EntityID = 60, Description = "DEPARTMENT" },
-            new EntityDetail { EntityID = 139, Description = "DIVISION" },
-            new EntityDetail { EntityID = 242, Description = "SECTION" },
-            new EntityDetail { EntityID = 401, Description = "GRADE" },
-            new EntityDetail { EntityID = 938, Description = "DESIGNATION" }
+            new EntityDetailDto { EntityID = 1, Description = "GROUP COMPANY" },
+            new EntityDetailDto { EntityID = 1, Description = "BUSINESS VERTICAL" },
+            new EntityDetailDto { EntityID = 3, Description = "COUNTRY" },
+            new EntityDetailDto { EntityID = 6, Description = "BRANCH" },
+            new EntityDetailDto { EntityID = 13, Description = "LOCATION" },
+            new EntityDetailDto { EntityID = 27, Description = "CLUSTER" },
+            new EntityDetailDto { EntityID = 60, Description = "DEPARTMENT" },
+            new EntityDetailDto { EntityID = 139, Description = "DIVISION" },
+            new EntityDetailDto { EntityID = 242, Description = "SECTION" },
+            new EntityDetailDto { EntityID = 401, Description = "GRADE" },
+            new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
             };
         }
-        public async Task<int> GetlastEntityByRoleId(int roleId, int EntityLimit)
+        public async Task<int> GetlastEntityByRoleId([FromBody] EntityRoleRequestDto customEntityList)
         {
-            //List<CategoryEntity> entityList = await GetCategoryMasterDetailsAsyncC(roleId);//   GetHardcodedEntityDetails();
-
-            var entityList = GetHardcodedEntityDetails();
+            // Use the provided customEntityList if it's not null, otherwise fallback to hardcoded list
+            var entityList = customEntityList.CustomEntityList;
 
             int LastEntity = 0;
 
             // Call GetCategoryMasterDetailsAsync to get strongly typed result
-            CategoryMasterResult result = await GetCategoryMasterDetailsAsyncB(roleId);
+            CategoryMasterResult result = await GetCategoryMasterDetailsAsyncB(customEntityList.RoleId);
 
             // Get the categoryMaster details from the result
             var categoryMaster = result.CategoryMaster;
@@ -15481,7 +15481,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                               }).ToList();
 
             // Find LastEntity based on SortOrder
-            var match = joinResult.FirstOrDefault(x => x.SortOrder == EntityLimit);
+            var match = joinResult.FirstOrDefault(x => x.SortOrder == customEntityList.EntityLimit);
             if (match != null)
             {
                 LastEntity = Convert.ToInt32(match.EntityID.EntityID);
@@ -16210,7 +16210,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                          .Where(b => b.Type == typeof(CatTrxType).Name),
                     a => a.CatTrxTypeId,
                     b => b.Value,
-                    (a, b) => new CategoryMaster
+                    (a, b) => new CategoryMasterDto
                     {
                         SortOrder = a.SortOrder,
                         Description = a.Description,
@@ -16272,20 +16272,5 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
     }
-    public class EntityDetail
-    {
-        public int EntityID { get; set; }
-        public string Description { get; set; }
-    }
-    public class CategoryMaster
-    {
-        public int? SortOrder { get; set; }
-        public int? Value { get; set; }
-        public string Code { get; set; }
-        public string Description { get; set; }
-    }
-    public class CategoryMasterResult
-    {
-        public List<CategoryMaster> CategoryMaster { get; set; }
-    }
+
 }

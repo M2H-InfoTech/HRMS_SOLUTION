@@ -6,6 +6,7 @@ using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Repository.Common;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace HRMS.EmployeeInformation.Service.Interface
@@ -196,9 +197,10 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmpRoleReporteesAsync(int SecondEntityId, int FirstEntityId, string Prefix);
         Task<List<HrmsDocumentField00>> GetDependentFieldsAsync();
         Task<PayscaleResultDto> GetLatestPayscaleAsync(int employeeId, int? type);
-        Task<int> GetlastEntityByRoleId(int roleId, int EntityLimit);
         Task<int> SaveManualEmpPayscaleOldFormat(SaveManualEmpPayscaleOldFormatDto dto); //Created By Shan Lal
         Task<List<string>> DdlIsprobationAsync(int FirstEntityID, string LinkID);
+        Task<int> GetlastEntityByRoleId([FromBody] EntityRoleRequestDto customEntityList);
+
     }
 
 }
