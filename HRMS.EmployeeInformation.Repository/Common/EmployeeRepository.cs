@@ -2,6 +2,7 @@
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.DTO.DTOs;
 using EMPLOYEE_INFORMATION.HRMS.EmployeeInformation.Models.Models.Entity;
+using EMPLOYEE_INFORMATION.MODDDD;
 using EMPLOYEE_INFORMATION.Models;
 using EMPLOYEE_INFORMATION.Models.Entity;
 using EMPLOYEE_INFORMATION.Models.EnumFolder;
@@ -21,6 +22,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using MPLOYEE_INFORMATION.DTO.DTOs;
+using System.Xml.Linq;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -14762,6 +14764,719 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             return LastEntity;
         }
+
+        public async Task<int> SaveManualEmpPayscaleOldFormat (SaveManualEmpPayscaleOldFormatDto dto)
+        {
+            var transactionId = 0;
+            var codeId = 0;
+            var empEntityIds = "";
+            var empId = 0;
+            var firstEntityId = 0;
+            var xmldataArrear1 = string.IsNullOrEmpty (dto.XmlStringArrear) ? null : XElement.Parse (dto.XmlStringArrear);
+            var prlArrear2 = await GetDefaultCompanyParameterAsync (dto.EntryBy, "PRLPayscaleArrear", "PRL");
+            var latestPayscaleEntries = _context.PayscaleRequest01s.Where (p => p.EmployeeStatus != "R" && p.EmployeeStatus != "C").GroupBy (p => p.EmployeeId).Select (g => g.OrderByDescending (x => x.EffectiveDate).FirstOrDefault ( )).ToList ( ); // Materialize here
+
+            var tempWithoutSalarySeries = latestPayscaleEntries
+                .Where (x => x != null)
+                .Select (x => new
+                {
+                    x.EmployeeId,
+                    x.EffectiveDate
+                })
+                .Distinct ( )
+                .ToList ( );
+
+            var formattedDate = dto.EffectiveDate?.ToString ("dd/MM/yyyy");
+            var exists = await _context.PayscaleRequest01s
+                .AnyAsync (p => p.EmployeeId == dto.EmployeeId
+                    && p.EffectiveDate == dto.EffectiveDate
+                    && p.EmployeeStatus != "R"
+                    && p.EmployeeStatus != "C"
+                    && dto.Status != "U");
+
+            // Materialized tempWithoutSalarySeries
+            var tempWithoutSalarySeries1 = await _context.PayscaleRequest01s
+                .Where (p => p.EmployeeStatus != "R" && p.EmployeeStatus != "C")
+                .GroupBy (p => p.EmployeeId)
+                .Select (g => g.OrderByDescending (x => x.EffectiveDate).FirstOrDefault ( ))
+                .ToListAsync ( );
+
+            var prlAppr = (prlArrear2 == 0 || prlArrear2 == 2) ? 0 : (prlArrear2 == 1 ? 1 : 0);
+            var tempWithoutSalarySeriesList = tempWithoutSalarySeries.ToList ( );
+
+            // First query (d.EffectiveDate == dto.EffectiveDate)
+            var firstQuery = (from c in _context.EmployeeDetails
+                              where c.EmpId == dto.EmployeeId
+                              select c)
+                  .AsEnumerable ( )
+                  .Join (tempWithoutSalarySeriesList,
+                        c => c.EmpId,
+                        d => d.EmployeeId,
+                        (c, d) => new { c, d })
+                  .Where (cd => cd.d.EffectiveDate == dto.EffectiveDate)
+                  .Select (cd => new EmployeePayscaleResult
+                  {
+                      EmployeeId = cd.c.EmpId,
+                      EmpCode = cd.c.EmpCode,
+                      EffectiveDate = formattedDate,
+                      RawEffectiveDate = cd.d.EffectiveDate,
+                      Data = -1,
+                      PrlAppr = prlAppr
+                  })
+                  .ToList ( );
+
+            // Second query (dto.EffectiveDate < d.EffectiveDate)
+            var secondQuery = (from c in _context.EmployeeDetails
+                               join e in _context.PayscaleRequest01s
+                                    on new { EmployeeId = (int?)c.EmpId, dto.EffectiveDate }
+                                    equals new { EmployeeId = e.EmployeeId, e.EffectiveDate }
+                               where e.EmployeeStatus != "R"
+                                     && c.EmpId == dto.EmployeeId
+                               select new { c })
+                              .AsEnumerable ( ) // force client-side join
+                              .GroupJoin (tempWithoutSalarySeriesList,
+                                         x => x.c.EmpId,
+                                         d => d.EmployeeId,
+                                         (x, dGroup) => new { x.c, dGroup })
+                              .SelectMany (
+                                  cd => cd.dGroup.DefaultIfEmpty ( ), // left join
+                                  (cd, d) => new { cd.c, d }
+                              )
+                              .Where (cd => cd.d == null || dto.EffectiveDate < cd.d.EffectiveDate)
+                              .Select (cd => new EmployeePayscaleResult
+                              {
+                                  EmployeeId = cd.c.EmpId,
+                                  EmpCode = cd.c.EmpCode,
+                                  EffectiveDate = formattedDate,
+                                  RawEffectiveDate = cd.d?.EffectiveDate,
+                                  Data = -2,
+                                  PrlAppr = prlAppr
+                              })
+                              .ToList ( );
+
+
+
+            var results = firstQuery.Union (secondQuery).ToList ( );
+
+            //Else IF
+            if (dto.Status != "U" && prlArrear2 == 1)
+            {
+                var existsRecord = (
+                    from d in _context.ProcessPayRoll01s
+                    join e in _context.Payroll01s
+                        on d.PayRollPeriodSubId equals e.PayrollPeriodSubId
+                    where d.EmployeeId == dto.EmployeeId
+                          && dto.EffectiveDate >= e.ShowFromDate
+                          && dto.EffectiveDate <= e.ShowToDate
+                          && d.Status != "D"
+                          && d.Status != "R"
+                    select -1
+                ).Any ( );
+
+                if (existsRecord)
+                {
+                    var rawResults = (from b in _context.HrEmpMasters
+                                      join c in _context.ProcessPayRoll01s on b.EmpId equals c.EmployeeId
+                                      join d in _context.Payroll01s on c.PayRollPeriodSubId equals d.PayrollPeriodSubId
+                                      where c.Status != "D"
+                                            && c.Status != "R"
+                                            && dto.EffectiveDate >= d.ShowFromDate
+                                            && dto.EffectiveDate <= d.ShowToDate
+                                            && c.EmployeeId == dto.EmployeeId
+                                      select new
+                                      {
+                                          b.EmpId,
+                                          b.EmpCode,
+                                          EffectiveDateRaw = dto.EffectiveDate
+                                      })
+                   .AsEnumerable ( )
+                   .Select (x => new EmployeePayscaleResult
+                   {
+                       EmployeeId = x.EmpId,
+                       EmpCode = x.EmpCode,
+                       EffectiveDate = x.EffectiveDateRaw != null
+                           ? x.EffectiveDateRaw.Value.ToString ("dd/MM/yyyy")
+                           : string.Empty,
+                       RawEffectiveDate = x.EffectiveDateRaw,
+                       Data = -3,
+                       PrlAppr = (prlArrear2 == 1) ? 1 : 0
+                   })
+                   .ToList ( );
+                    results.AddRange (rawResults);
+                }
+            }
+
+            //ELSE
+
+            else
+            {
+
+                // Get TransactionID
+                transactionId = _context.TransactionMasters
+                                        .Where (t => t.TransactionType == "Payscale")
+                                        .Select (t => t.TransactionId)
+                                        .FirstOrDefault ( );
+
+                // Assume GetSequence is implemented in C# as a method
+                var codeId1 = int.Parse (GetSequenceAPI (dto.EmployeeId, transactionId, null, firstEntityId));
+                //int codeId = 0;
+                // Get LastSequence as RequestID
+                var requestId = _context.AdmCodegenerationmasters
+                                    .Where (c => c.CodeId == codeId1)
+                                    .Select (c => c.LastSequence)
+                                    .FirstOrDefault ( );
+
+                int? batchId = GetEmployeeSchemeID (dto.EmployeeId, "ASSPAYCODE", "PRL").Result;
+                var payCode = _context.PayCodeMaster00s
+                                .Where (c => c.PayCodeMasterId == batchId)
+                                .Select (c => new PayscaleRequest00
+                                {
+                                    BatchId = c.PayCodeMasterId,
+                                    CurrencyId = c.CurrencyId,
+                                    TotalEarnings = 0,
+                                    TotalDeductions = 0,
+                                    TotalPay = 0,
+                                    EmployeeIds = dto.EmployeeIDs,
+                                    BatchStatus = "O",
+                                    RejectStatus = "P",
+                                    EffectiveDate = dto.EffectiveDate,
+                                    Type = 3,
+                                    EntryBy = dto.EntryBy,
+                                    EntryDate = DateTime.UtcNow,
+                                    FlowStatus = "P",
+                                    PayReqCode = requestId,
+                                    Payrolltype = dto.PayrollType,
+                                    PayscaleRemarks = dto.Remarks
+                                }).FirstOrDefault ( );
+                long insertedId = 0;
+                if (payCode != null)
+                {
+                    _context.PayscaleRequest00s.Add (payCode);
+                    await _context.SaveChangesAsync ( );
+
+                    insertedId = payCode.PayRequestId;
+                }
+
+                var totalEarnings = (dto.earnDtos ?? new List<EarnDto> ( ))
+                    .Join (_context.PayCodeMaster01s,
+                          a => a.EarnId,
+                          e => e.PayCodeId,
+                          (a, e) => new { a, e })
+                    .Where (x => x.e.PayCodeMasterId == batchId)
+                    .Sum (x => x.a.EarnNewAmount ?? 0);
+
+                var totalDeductions = (dto.dededDtos ?? new List<DedDto> ( ))
+                                      .Join (_context.PayCodeMaster01s,
+                                            a => a.DedId,
+                                            e => e.PayCodeId,
+                                            (a, e) => new { a, e })
+                                      .Where (x => x.e.PayCodeMasterId == batchId)
+                                      .Sum (x => x.a.DedNewAmount ?? 0);
+
+                var payscaleRequest01 = new PayscaleRequest01
+                {
+                    PayRequestId = insertedId,
+                    BatchId = batchId,
+                    EmployeeId = dto.EmployeeId,
+                    TotalEarnings = totalEarnings,
+                    TotalDeductions = totalDeductions,
+                    TotalPay = 0,
+                    EmployeeStatus = "P",
+                    PayscaleEmpRemarks = dto.Remarks,
+                    EffectiveDate = dto.EffectiveDate,
+                    Payrolltype = dto.PayrollType,
+                    OverrideStatus = 1,
+                    CalculateArrear = 1
+                };
+
+                _context.PayscaleRequest01s.Add (payscaleRequest01);
+                _context.SaveChanges ( );
+
+                long idtwo = payscaleRequest01.PayRequest01Id; // Assuming Id is the identity/PK
+                if (prlArrear2 == 1)
+                {
+                    var match = (from a in _context.PayscaleRequest01s
+                                 join tl in tempWithoutSalarySeries on a.EmployeeId equals tl.EmployeeId
+                                 where a.EmployeeId == dto.EmployeeId
+                                       && a.PayRequest01Id == idtwo
+                                       && a.EffectiveDate < tl.EffectiveDate
+                                 select a).FirstOrDefault ( );
+                    if (match != null)
+                    {
+                        match.CalculateArrear = 1;
+                        _context.SaveChanges ( );
+                    }
+                }
+
+                if (dto.Status == "U")
+                {
+                    var xml = XDocument.Parse (dto.XmlStringArrear);
+
+                    var empNode = xml.Descendants ("EmpArrear")
+                                     .FirstOrDefault (x => (int?)x.Element ("EmpId") == dto.EmployeeId);
+
+                    if (empNode != null)
+                    {
+                        int statusUpdate = (int?)empNode.Element ("StatusUpdate") ?? 0;
+
+                        // First Update: EffectiveDate = dto.EffectiveDate and status 1 or 3
+                        if (statusUpdate == 1 || statusUpdate == 3)
+                        {
+                            var updateRecords = _context.PayscaleRequest01s
+                                .Where (a =>
+                                    a.EffectiveDate == dto.EffectiveDate &&
+                                    a.EmployeeStatus != "R" &&
+                                    a.EmployeeId == dto.EmployeeId &&
+                                    a.PayRequest01Id != idtwo)
+                                .ToList ( );
+
+                            foreach (var record in updateRecords)
+                            {
+                                record.EmployeeStatus = "R";
+                                record.OverrideId = (int?)idtwo;
+                            }
+                        }
+
+                        // Second Update: EffectiveDate >= dto.EffectiveDate and status 2 or 4
+                        if (statusUpdate == 2 || statusUpdate == 4)
+                        {
+                            var updateFutureRecords = _context.PayscaleRequest01s
+                                .Where (a =>
+                                    a.EffectiveDate >= dto.EffectiveDate &&
+                                    a.EmployeeStatus != "R" &&
+                                    a.EmployeeId == dto.EmployeeId &&
+                                    a.PayRequest01Id != idtwo)
+                                .ToList ( );
+
+                            foreach (var record in updateFutureRecords)
+                            {
+                                record.EmployeeStatus = "R";
+                                record.OverrideId = (int?)idtwo;
+                            }
+                        }
+
+                        // Third Update: CalculateArrear = 1 for current effective payroll period
+                        var processRecord = _context.ProcessPayRoll01s
+                            .Join (_context.Payroll01s,
+                                c => c.PayRollPeriodSubId,
+                                d => d.PayrollPeriodSubId,
+                                (c, d) => new { c, d })
+                            .Where (joined =>
+                                joined.c.EmployeeId == dto.EmployeeId &&
+                                joined.c.Status != "D" &&
+                                joined.c.Status != "R" &&
+                                dto.EffectiveDate >= joined.d.ShowFromDate &&
+                                dto.EffectiveDate <= joined.d.ShowToDate)
+                            .FirstOrDefault ( );
+
+                        if (processRecord != null)
+                        {
+                            var recordToUpdate = _context.PayscaleRequest01s
+                                .FirstOrDefault (a => a.PayRequest01Id == idtwo);
+
+                            if (recordToUpdate != null)
+                            {
+                                recordToUpdate.CalculateArrear = 1;
+                            }
+                        }
+
+                        _context.SaveChanges ( );
+                    }
+                }
+
+                bool exists1 = _context.PayscaleRequest01s.Any (x => x.PayRequestId == insertedId && x.TotalDeductions == null);
+                if (exists1)
+                {
+                    // 1. Update TotalDeductions to 0 where it's null
+                    await _context.PayscaleRequest01s
+                        .Where (x => x.PayRequestId == insertedId && x.TotalDeductions == null)
+                        .ExecuteUpdateAsync (setters => setters
+                            .SetProperty (x => x.TotalDeductions, x => 0)
+                        );
+
+                    // 2. Update TotalPay = TotalEarnings - TotalDeductions
+                    await _context.PayscaleRequest01s
+                        .Where (x => x.PayRequestId == insertedId)
+                        .ExecuteUpdateAsync (setters => setters
+                            .SetProperty (x => x.TotalPay, x => (x.TotalEarnings ?? 0) - (x.TotalDeductions ?? 0))
+                        );
+
+                }
+
+                else
+                {
+                    await _context.PayscaleRequest01s.Where (x => x.PayRequestId == insertedId).ExecuteUpdateAsync (setters => setters.SetProperty (x => x.TotalPay, x => (x.TotalEarnings ?? 0) - (x.TotalDeductions ?? 0)));
+                }
+
+
+
+                var totalEarning = _context.PayscaleRequest01s.Where (p => p.PayRequestId == insertedId).Sum (p => (double?)p.TotalEarnings) ?? 0;
+
+                var totalDeduction = _context.PayscaleRequest01s
+                    .Where (p => p.PayRequestId == insertedId)
+                    .Sum (p => (double?)p.TotalDeductions) ?? 0;
+
+                var totalPay = totalEarning - totalDeduction;
+
+                var payscaleRequest00 = _context.PayscaleRequest00s
+                    .FirstOrDefault (p => p.PayRequestId == insertedId);
+
+                if (payscaleRequest00 != null)
+                {
+                    payscaleRequest00.TotalEarnings = totalEarning;
+                    payscaleRequest00.TotalDeductions = totalDeduction;
+                    payscaleRequest00.TotalPay = totalPay;
+                }
+
+                var earnComponents = from e in dto.earnDtos
+                                     join f in _context.PayCodeMaster01s
+                                     on e.EarnId equals f.PayCodeId
+                                     where f.Type == 1 && f.PayCodeMasterId == batchId
+                                     join h in _context.PayscaleRequest01s
+                                     on dto.EmployeeId equals h.EmployeeId
+                                     where h.PayRequestId == insertedId && (e.EarnNewAmount ?? 0) != 0
+                                     select new PayscaleRequest02
+                                     {
+                                         PayRequestId01 = h.PayRequest01Id,
+                                         PayRequestId = h.PayRequestId,
+                                         PayType = f.Type,
+                                         PayComponentId = f.PayCodeId,
+                                         Amount = e.EarnNewAmount ?? 0
+                                     };
+
+                if (dto.dededDtos != null)
+                {
+                    var dedComponents = from e in dto.dededDtos
+                                        join f in _context.PayCodeMaster01s
+                                        on e.DedId equals f.PayCodeId
+                                        where f.Type == 2 && f.PayCodeMasterId == batchId
+                                        join h in _context.PayscaleRequest01s
+                                        on dto.EmployeeId equals h.EmployeeId
+                                        where h.PayRequestId == insertedId && (e.DedNewAmount ?? 0) != 0
+                                        select new PayscaleRequest02
+                                        {
+                                            PayRequestId01 = h.PayRequest01Id,
+                                            PayRequestId = h.PayRequestId,
+                                            PayType = f.Type,
+                                            PayComponentId = f.PayCodeId,
+                                            Amount = e.DedNewAmount ?? 0
+                                        };
+                    _context.PayscaleRequest02s.AddRange (dedComponents);
+                }
+
+
+                _context.PayscaleRequest02s.AddRange (earnComponents);
+                await _context.SaveChangesAsync ( );
+                //_context.PayscaleRequest02s.AddRange (dedComponents);
+
+                var payRequest02List = await _context.PayscaleRequest02s.Where (x => x.PayRequestId == insertedId).ToListAsync ( );
+
+                var calcValues = payRequest02List.Select (x => new PayscaleCalculationValue
+                {
+                    CalcType = 3,
+                    BatchId = batchId,
+                    PayscaleRequest01Id = (int?)x.PayRequestId01,
+                    PaycodeId = x.PayComponentId,
+                    ComponentType = x.PayType,
+                    Amount = x.Amount,
+                    SortOrder = 0,
+                    Type = 3
+                }).ToList ( );
+
+                _context.PayscaleCalculationValues.AddRange (calcValues);
+
+                _context.SaveChanges ( );
+                // Fetch the entry based on codeID
+                var codeGen = _context.AdmCodegenerationmasters
+                                     .FirstOrDefault (x => x.CodeId == codeId); // @codeID
+
+                if (codeGen != null)
+                {
+                    // Step 1: Update CurrentCodeValue
+                    var maxCurrentCodeValue = _context.AdmCodegenerationmasters
+                                                      .Where (x => x.CodeId == codeId)
+                                                      .Max (x => (int?)x.CurrentCodeValue) ?? 0;
+
+                    codeGen.CurrentCodeValue = maxCurrentCodeValue + 1;
+
+                    // Step 2: Calculate length and prefix
+                    var currentCodeStr = codeGen.CurrentCodeValue.ToString ( );
+                    var numberFormatStr = codeGen.NumberFormat ?? "";
+
+                    int length = numberFormatStr.Length - currentCodeStr.Length;
+                    string seq = length > 0 ? numberFormatStr.Substring (0, length) : "";
+
+                    // Step 3: Build final value
+                    string final = (codeGen.Code ?? "") + seq + currentCodeStr;
+
+                    // Step 4: Update LastSequence
+                    codeGen.LastSequence = final;
+                }
+
+                // Step 1: Count the PayscaleRequest01 records for the given request ID
+                int cnts1 = _context.PayscaleRequest01s
+                                   .Count (x => x.PayRequestId == insertedId);
+
+                if (cnts1 == 1)
+                {
+                    // Step 2: Fetch the EmployeeId
+                    var employeeId = _context.PayscaleRequest01s
+                                             .Where (x => x.PayRequestId == insertedId)
+                                             .Select (x => x.EmployeeId)
+                                             .FirstOrDefault ( );
+
+                    // Step 3: Call the workflow (assuming it's a method)
+                    await ExecuteWorkFlowActivityFlow (dto.EmployeeId, "Payscale", insertedId.ToString ( ), dto.EntryBy.ToString ( ));
+
+                    // Step 4: Update PayscaleRequest00
+                    var payscaleRequest001 = _context.PayscaleRequest00s
+                                                    .FirstOrDefault (x => x.PayRequestId == insertedId);
+                    if (payscaleRequest00 != null)
+                    {
+                        payscaleRequest00.BatchStatus = "P";
+                        _context.PayscaleRequest00s.Update (payscaleRequest00);
+                    }
+
+                    // Step 5: Update PayscaleRequest01 status
+                    var payscaleRequest01List = _context.PayscaleRequest01s
+                                                        .Where (x => x.PayRequestId == insertedId)
+                                                        .ToList ( );
+                    foreach (var request in payscaleRequest01List)
+                    {
+                        request.EmployeeStatus = "P";
+                    }
+
+                    // Save all changes
+                    _context.SaveChanges ( );
+                }
+                //var result = new
+                //{
+                //    Data = insertedId,
+                //};
+
+
+                return (int)insertedId;
+
+
+            }
+
+
+
+            //if (await _context.PayscaleRequest01s.AnyAsync (x =>
+            //    x.EmployeeId == dto.EmployeeId &&
+            //    x.EffectiveDate == dto.EffectiveDate &&
+            //    x.EmployeeStatus != "R" && x.EmployeeStatus != "C" &&
+            //    dto.Status != "U"))
+            //{
+            //    var result = (
+            //        from c in _context.EmployeeDetails
+            //        join d in tempWithoutSalarySeries on c.EmpId equals d.EmployeeId
+            //        where d.EffectiveDate == dto.EffectiveDate && c.EmpId == dto.EmployeeId
+            //        select new
+            //        {
+            //            c.EmpId,
+            //            c.EmpCode,
+            //            EffectiveDate = dto.EffectiveDate.HasValue ? dto.EffectiveDate.Value.ToString ("dd/MM/yyyy") : null,
+            //    //d.EffectiveDate,
+            //    Data = -1,
+            //            //PrlAppr = prlArrear2 switch { 1 => 1, _ => 0 }
+            //        }).ToList ( );
+
+            //    result.AddRange (
+            //        from c in _context.EmployeeDetails
+            //        join e in _context.PayscaleRequest01s on new { c.EmpId, dto.EffectiveDate } equals new { Emp_Id = e.EmployeeId, effectiveDate = e.EffectiveDate }
+            //        join d in tempWithoutSalarySeries on c.Emp_Id equals d.EmployeeId into lj
+            //        from d in lj.DefaultIfEmpty ( )
+            //        where e.EmployeeStatus != "R" && dto.EffectiveDate < d.EffectiveDate && c.Emp_Id == dto.EmployeeId
+            //        select new
+            //        {
+            //            c.Emp_Id,
+            //            c.Emp_Code,
+            //            EffectiveDate = dto.EffectiveDate.HasValue ? dto.EffectiveDate.Value.ToString ("dd/MM/yyyy") : null,
+            //    //d.EffectiveDate,
+            //    Data = -2,
+            //            PrlAppr = prlArrear2 switch { 1 => 1, _ => 0 }
+            //        });
+
+            //    return -1;
+            //}
+            //else if (await (
+            //    from d in _context.ProcessPayRoll01s
+            //    join e in _context.Payroll01s on d.PayRollPeriodSubId equals e.PayrollPeriodSubId
+            //    where d.EmployeeId == dto.EmployeeId &&
+            //          dto.EffectiveDate >= e.ShowFromDate &&
+            //          dto.EffectiveDate <= e.ShowToDate &&
+            //          d.Status != "D" && d.Status != "R" &&
+            //          dto.Status != "U" && prlArrear2 == 1
+            //    select d).AnyAsync ( ))
+            //{
+            //    var result = (
+            //        from b in _context.HrEmpMasters
+            //        join c in _context.ProcessPayRoll01s on b.EmpId equals c.EmployeeId
+            //        join d in _context.Payroll01s on c.PayRollPeriodSubId equals d.PayrollPeriodSubId
+            //        where c.Status != "D" && c.Status != "R" &&
+            //              dto.EffectiveDate >= d.ShowFromDate &&
+            //              dto.EffectiveDate <= d.ShowToDate &&
+            //              c.EmployeeId == dto.EmployeeId
+            //        select new
+            //        {
+            //            b.EmpId,
+            //            b.EmpCode,
+            //            EffectiveDate = dto.EffectiveDate.HasValue ? dto.EffectiveDate.Value.ToString ("dd/MM/yyyy") : null,
+            //            Data = -3,
+            //            PrlAppr = prlArrear2 switch { 1 => 1, _ => 0 }
+            //        }).ToList ( );
+
+            //    return -3;
+            //}
+
+            //empId = await _context.EmployeeDetails
+            //    .Where (e => e.EmpId == dto.EmployeeId)
+            //    .Select (e => e.EmpId)
+            //    .FirstOrDefaultAsync ( );
+
+            //transactionId = await _context.TransactionMasters
+            //    .Where (x => x.TransactionType == "Payscale")
+            //    .Select (x => x.TransactionId)
+            //    .FirstOrDefaultAsync ( );
+
+            //codeId = int.Parse (GetSequence (empId, transactionId, empEntityIds, firstEntityId));
+
+            //var requestID = await _context.AdmCodegenerationmasters
+            //    .Where (c => c.CodeId == codeId)
+            //    .Select (c => c.LastSequence)
+            //    .FirstOrDefaultAsync ( );
+
+            //var batchId = await GetEmployeeSchemeID (employeeid, "ASSPAYCODE", "PRL");
+
+            //var payCode = await _context.PayCodeMaster00s.FirstOrDefaultAsync (x => x.PayCodeMasterId == batchId);
+
+            //var payscaleRequest00 = new PayscaleRequest00
+            //{
+            //    BatchId = payCode.PayCodeMasterId,
+            //    CurrencyId = payCode.CurrencyId,
+            //    TotalEarnings = 0,
+            //    TotalDeductions = 0,
+            //    TotalPay = 0,
+            //    EmployeeIds = employeeid.ToString ( ),
+            //    BatchStatus = "O",
+            //    RejectStatus = "P",
+            //    EffectiveDate = effectiveDate,
+            //    Type = 3,
+            //    EntryBy = entryBy,
+            //    EntryDate = DateTime.UtcNow,
+            //    FlowStatus = "P",
+            //    PayReqCode = requestID,
+            //    Payrolltype = payrolltype,
+            //    PayscaleRemarks = remarks
+            //};
+
+            //_context.PayscaleRequest00s.Add (payscaleRequest00);
+            //await _context.SaveChangesAsync ( );
+
+            //var payRequestId = payscaleRequest00.PayRequestId;
+
+            //// Assuming you’ve populated #TmpTableEarn and #TmpTableDed as in-memory collections
+            //float totalEarnings = tmpTableEarn.Where (e => e.EarnId == payCode.PayCodeMasterId).Sum (e => e.EarnNewAmount ?? 0);
+            //float totalDeductions = tmpTableDed.Where (d => d.DedId == payCode.PayCodeMasterId).Sum (d => d.DedNewAmount ?? 0);
+
+            //var arrearStatus = xmldataArrear1?.Descendants ("EmpArrear")
+            //    .Where (x => (int)x.Element ("EmpId") == employeeid)
+            //    .Select (x => (int?)x.Element ("StatusUpdate"))
+            //    .FirstOrDefault ( ) ?? 0;
+
+            //var payscaleRequest01 = new PayscaleRequest01
+            //{
+            //    PayRequestId = payRequestId,
+            //    BatchId = batchId,
+            //    EmployeeId = employeeid,
+            //    TotalEarnings = totalEarnings,
+            //    TotalDeductions = totalDeductions,
+            //    TotalPay = 0,
+            //    EmployeeStatus = "P",
+            //    PayscaleEmpRemarks = remarks,
+            //    EffectiveDate = effectiveDate,
+            //    Payrolltype = payrolltype,
+            //    OverrideStatus = arrearStatus,
+            //    CalculateArrear = arrearStatus is 2 or 4 ? 1 : 0
+            //};
+
+            //_context.PayscaleRequest01s.Add (payscaleRequest01);
+            //await _context.SaveChangesAsync ( );
+
+            //var payRequest01Id = payscaleRequest01.PayRequest01Id;
+
+            //if (prlArrear2 == 1)
+            //{
+            //    var hasEarlier = tempWithoutSalarySeries.Any (t => t.EmployeeId == employeeid && effectiveDate < t.EffectiveDate);
+            //    if (hasEarlier)
+            //    {
+            //        payscaleRequest01.CalculateArrear = 1;
+            //        await _context.SaveChangesAsync ( );
+            //    }
+            //}
+
+            //if (status == "U")
+            //{
+            //    var overrideStatusUpdates = new[] { 1, 3 };
+            //    var overrideEntries = _context.PayscaleRequest01s
+            //        .Where (p => p.EffectiveDate == effectiveDate && p.EmployeeId == employeeid && p.EmployeeStatus != "R")
+            //        .ToList ( );
+
+            //    foreach (var p in overrideEntries)
+            //    {
+            //        p.EmployeeStatus = "R";
+            //        p.OverrideId = (int?)payRequest01Id;
+            //    }
+
+            //    var futureOverrides = _context.PayscaleRequest01s
+            //        .Where (p => p.EffectiveDate >= effectiveDate && p.EmployeeId == employeeid && p.EmployeeStatus != "R")
+            //        .ToList ( );
+
+            //    foreach (var p in futureOverrides)
+            //    {
+            //        p.EmployeeStatus = "R";
+            //        p.OverrideId = (int?)payRequest01Id;
+            //    }
+
+            //    var overlapWithPayroll = await (
+            //        from b in _context.HrEmpMasters
+            //        join c in _context.ProcessPayRoll01s on b.EmpId equals c.EmployeeId
+            //        join d in _context.Payroll01s on c.PayRollPeriodSubId equals d.PayrollPeriodSubId
+            //        where c.Status != "D" && c.Status != "R" &&
+            //              effectiveDate >= d.ShowFromDate && effectiveDate <= d.ShowToDate &&
+            //              b.EmpId == employeeid
+            //        select c).AnyAsync ( );
+
+            //    if (overlapWithPayroll)
+            //    {
+            //        payscaleRequest01.CalculateArrear = 1;
+            //        await _context.SaveChangesAsync ( );
+            //    }
+            //}
+
+            //payscaleRequest01.TotalPay = totalEarnings - totalDeductions;
+            //await _context.SaveChangesAsync ( );
+
+            //payscaleRequest00.TotalEarnings = totalEarnings;
+            //payscaleRequest00.TotalDeductions = totalDeductions;
+            //payscaleRequest00.TotalPay = totalEarnings - totalDeductions;
+            //await _context.SaveChangesAsync ( );
+
+            ////Insert into PayscaleRequest02 and PayscaleCalculationValues here similarly...
+
+            //var count = await _context.PayscaleRequest01s.CountAsync (p => p.PayRequestId == payRequestId);
+            //if (count == 1)
+            //{
+            //    ////await WorkFlowActivityFlow (employeeid, "Payscale", payRequestId, entryBy);
+            //    payscaleRequest00.BatchStatus = "P";
+            //    payscaleRequest01.EmployeeStatus = "P";
+            //    await _context.SaveChangesAsync ( );
+            //}
+            return 0;
+            //return (int)payRequestId;
+        }
+
         private async Task<CategoryMasterResult> GetCategoryMasterDetailsAsyncB(int roleId)
         {
             // Assuming you return this type
