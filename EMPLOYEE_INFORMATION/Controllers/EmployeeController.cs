@@ -1361,7 +1361,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.DdlIsprobationAsync(FirstEntityID, LinkID);
             return Ok(result);
         }
-        [HttpDelete]
+        [HttpPost]
         public async Task<IActionResult> DeleteEmpReward(int rewardId)
         {
             var success = await _employeeInformation.DeleteEmpRewardAsync(rewardId);
