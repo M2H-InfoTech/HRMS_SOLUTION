@@ -201,6 +201,9 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<string>> DdlIsprobationAsync(int FirstEntityID, string LinkID);
         Task<int> GetlastEntityByRoleId([FromBody] EntityRoleRequestDto customEntityList);
 
+        Task<bool> DeleteEmpRewardAsync(int rewardId);
+        Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int deviceId);
+
     }
 
 }
