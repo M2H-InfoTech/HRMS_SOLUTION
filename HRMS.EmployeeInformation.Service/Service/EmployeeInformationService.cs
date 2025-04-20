@@ -832,5 +832,9 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.SaveManualEmpPayscaleOldFormat(dto);
         }
+        public async Task<List<string>> DdlIsprobationAsync(int FirstEntityID, string LinkID)
+        {
+            return await _employeeRepository.DdlIsprobationAsync(FirstEntityID, LinkID);
+        }
     }
 }

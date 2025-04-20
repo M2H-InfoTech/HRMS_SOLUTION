@@ -232,5 +232,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<PayscaleResultDto> GetLatestPayscaleAsync(int employeeId, int? type);
         Task<int> GetlastEntityByRoleId(int roleId, int EntityLimit);
         Task<int> SaveManualEmpPayscaleOldFormat(SaveManualEmpPayscaleOldFormatDto dto); //Created By Shan Lal K
+        Task<List<string>> DdlIsprobationAsync(int FirstEntityID, string LinkID);
     }
 }

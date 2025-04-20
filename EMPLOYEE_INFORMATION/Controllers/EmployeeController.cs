@@ -1355,5 +1355,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.SaveManualEmpPayscaleOldFormat (dto);
             return Ok (result);
         }
+        [HttpGet]
+        public async Task<IActionResult> DdlIsprobation(int FirstEntityID, string LinkID)
+        {
+            var result = await _employeeInformation.DdlIsprobationAsync(FirstEntityID, LinkID);
+            return Ok(result);
+        }
     }
 }

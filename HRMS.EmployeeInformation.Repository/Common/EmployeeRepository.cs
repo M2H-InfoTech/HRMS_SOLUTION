@@ -16225,6 +16225,52 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 CategoryMaster = categoryMaster
             };
         }
+        public async Task<List<string>> DdlIsprobationAsync(int firstEntityId, string linkIdCsv)
+        {
+            // Handle nullable LinkIds
+            var linkIds = linkIdCsv
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => long.TryParse(x.Trim(), out var val) ? (long?)val : null)
+                .Where(x => x.HasValue)
+                .ToList(); // This is now List<long?>
+
+            // Case 1
+            var case1 = await (from a in _context.CompanyParameters
+                               join b in _context.CompanyParameters01s on a.Id equals b.ParamId
+                               where linkIds.Contains(b.LinkId) &&
+                                     a.ParameterCode == "EMPNOTCEONPROB" &&
+                                     b.LevelId != 1
+                               orderby b.LevelId descending
+                               select b.Text).FirstOrDefaultAsync();
+
+            if (!string.IsNullOrEmpty(case1))
+            {
+                return new List<string> { case1 };
+            }
+
+            // Case 2
+            var case2 = await (from a in _context.CompanyParameters
+                               join b in _context.CompanyParameters01s on a.Id equals b.ParamId
+                               where b.LinkId == firstEntityId &&
+                                     a.ParameterCode == "EMPNOTCEONPROB" &&
+                                     b.LevelId == 1
+                               select b.Text).FirstOrDefaultAsync();
+
+            if (!string.IsNullOrEmpty(case2))
+            {
+                return new List<string> { case2 };
+            }
+
+            // Case 3
+            var defaultResult = await _context.CompanyParameters
+                .Where(a => a.ParameterCode == "EMPNOTCEONPROB" && a.Type == "EMP1")
+                .Select(a => a.Text)
+                .ToListAsync();
+
+            return defaultResult;
+        }
+
+
     }
     public class EntityDetail
     {
