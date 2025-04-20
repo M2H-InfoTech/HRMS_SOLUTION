@@ -12480,6 +12480,731 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         #region SaveEmployee
 
+        //public async Task<int> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto)
+        //{
+
+        //    bool employeeExists = await _context.HrEmpMasters.AnyAsync(emp =>
+        //                                emp.SeperationStatus == 0 &&
+        //                                (emp.IsDelete == false || emp.IsDelete == null) &&
+        //                                emp.FirstName == inserEmployeeDto.FirstName &&
+        //                                EF.Functions.DateDiffDay(emp.JoinDt, inserEmployeeDto.JoinDt) == 0 &&
+        //                                EF.Functions.DateDiffDay(emp.EntryDt, inserEmployeeDto.EntryDt) == 0 &&
+        //                                EF.Functions.DateDiffDay(emp.DateOfBirth, inserEmployeeDto.DateOfBirth) == 0);
+
+        //    if (employeeExists)
+        //    {
+        //        return 0;
+        //    }
+        //    else
+        //    {
+        //        //var transactionId = await _context.TransactionMasters.Where(t => t.TransactionType == "EmpCode").Select(t => t.TransactionId).FirstOrDefaultAsync();
+
+
+        //        var EmpCodeTransactionId = await GetTransactionIdByTransactionType("EmpCode");
+
+        //        var record = await _context.HighLevelViewTables.FirstOrDefaultAsync(x => x.LastEntityId == inserEmployeeDto.LastEntity);
+
+        //        if (record != null)
+        //        {
+        //            int chkEmpFirst = (int)record.LevelOneId;
+
+        //            // Collect non-zero level values (from LevelTwo to LevelTwelve)
+        //            var levels = new List<int?>
+        //                        {
+        //                            record.LevelTwoId,
+        //                            record.LevelThreeId,
+        //                            record.LevelFourId,
+        //                            record.LevelFiveId,
+        //                            record.LevelSixId,
+        //                            record.LevelSevenId,
+        //                            record.LevelEightId,
+        //                            record.LevelNineId,
+        //                            record.LevelTenId,
+        //                            record.LevelElevenId,
+        //                            record.LevelTwelveId
+        //                        };
+
+        //            string chkEmpEntities = string.Join(",", levels.Where(id => id != 0));
+
+        //            //---- Till this code -- logic is correct------------------
+
+        //            int empId = 0;
+
+
+        //            // Output holders
+        //            string employeeCode = string.Empty;
+        //            string seqNumber = string.Empty;
+        //            string seqWithPrefix = string.Empty;
+        //            string seqWithSuffix = string.Empty;
+        //            string seqPrefixSuffix = string.Empty;
+
+        //            string? codeId = null;
+        //            int? errorId = null;
+        //            string errorMessage = string.Empty;
+
+        //            if (inserEmployeeDto.IsAutoCode == "Y")
+        //            {
+
+        //                codeId = GetSequenceAPI(empId, EmpCodeTransactionId, chkEmpEntities, chkEmpFirst);
+        //                if (codeId == null)
+        //                {
+        //                    errorId = 0;
+        //                    errorMessage = "-2"; // Sequence not generated
+
+        //                }
+
+        //                // Get code formatting (equivalent to dbo.GetSequencePrefixSuffixFormat)
+        //                employeeCode = GetSequencePrefixSuffixFormat_API(Convert.ToInt32(codeId));
+
+        //                var codeGenMaster = await _context.AdmCodegenerationmasters
+        //                    .FirstOrDefaultAsync(x => x.CodeId == Convert.ToInt32(codeId));
+
+        //                if (codeGenMaster == null)
+        //                {
+        //                    // Unexpected: CodeGen entry not found
+
+        //                }
+
+        //                string yearStr = DateTime.UtcNow.Year.ToString();
+        //                string finalCodeWithNoSeq = codeGenMaster.FinalCodeWithNoSeq;
+
+        //                // Prefix logic
+        //                seqWithPrefix = codeGenMaster.PrefixFormatId switch
+        //                {
+        //                    1 => yearStr + finalCodeWithNoSeq,
+        //                    2 => (codeGenMaster.Code ?? "") + finalCodeWithNoSeq,
+        //                    _ => finalCodeWithNoSeq
+        //                };
+
+        //                // Suffix logic
+        //                seqWithSuffix = codeGenMaster.SuffixFormatId switch
+        //                {
+        //                    1 => finalCodeWithNoSeq + yearStr,
+        //                    2 => finalCodeWithNoSeq + (codeGenMaster.Suffix ?? ""),
+        //                    _ => finalCodeWithNoSeq
+        //                };
+
+        //                // Combined Prefix + Suffix logic
+        //                seqPrefixSuffix = (codeGenMaster.PrefixFormatId, codeGenMaster.SuffixFormatId) switch
+        //                {
+        //                    (1, 1) => yearStr + finalCodeWithNoSeq + yearStr,
+        //                    (1, 2) => yearStr + finalCodeWithNoSeq + (codeGenMaster.Suffix ?? ""),
+        //                    (2, 1) => (codeGenMaster.Code ?? "") + finalCodeWithNoSeq + yearStr,
+        //                    (2, 2) => (codeGenMaster.Code ?? "") + finalCodeWithNoSeq + (codeGenMaster.Suffix ?? ""),
+        //                    _ => finalCodeWithNoSeq
+        //                };
+
+        //                // Check for existing employee code
+        //                bool codeExists = await _context.HrEmpMasters
+        //                    .AnyAsync(emp => EF.Functions.Like(emp.EmpCode.Trim(), employeeCode.Trim()) && (emp.IsDelete ?? false) == false);
+
+        //                if (codeExists)
+        //                {
+        //                    errorId = 0;
+        //                    errorMessage = "-3"; // Duplicate EmpCode
+
+        //                }
+
+        //                // Increment CurrentCodeValue
+        //                codeGenMaster.CurrentCodeValue = (codeGenMaster.CurrentCodeValue ?? 0) + 1;
+        //                await _context.SaveChangesAsync();
+
+        //                // Update FinalCodeWithNoSeq and LastSequence
+        //                string paddedValue = codeGenMaster.CurrentCodeValue.Value.ToString().PadLeft(codeGenMaster.NumberFormat.Length, '0');
+        //                codeGenMaster.FinalCodeWithNoSeq = paddedValue;
+        //                codeGenMaster.LastSequence = (codeGenMaster.Code ?? "") + paddedValue;
+
+        //                await _context.SaveChangesAsync();
+
+        //                // Set output
+        //                seqNumber = paddedValue;
+        //            }
+        //            else
+        //            {
+        //                // Manual code assignment fallback
+        //                seqNumber = employeeCode;
+        //                seqWithPrefix = employeeCode;
+        //                seqWithSuffix = employeeCode;
+        //                seqPrefixSuffix = employeeCode;
+        //            }
+        //            var mapping = await GetCategoryMapperData();
+
+        //            int branchMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.BranchType))?.SortOrder ?? 0;
+        //            int depMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.DepartmentType))?.SortOrder ?? 0;
+        //            int bandMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.BandType))?.SortOrder ?? 0;
+        //            int designationMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.DesigType))?.SortOrder ?? 0;
+        //            int countryMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.CompanyType))?.SortOrder ?? 0;
+        //            int gradeIdMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.GradeType))?.SortOrder ?? 0;
+
+        //            var sortOrder = await _context.LicensedCompanyDetails.Select(x => x.EntityLimit).FirstOrDefaultAsync();
+
+
+
+        //            var highLevelEntity = await _context.HighLevelViewTables
+        //                .FirstOrDefaultAsync(x => x.LastEntityId == inserEmployeeDto.LastEntity);
+
+
+        //            var BranchId = GetMappedLevelId(highLevelEntity, branchMapId);
+        //            var DepId = GetMappedLevelId(highLevelEntity, depMapId);
+        //            var BandId = GetMappedLevelId(highLevelEntity, bandMapId);
+        //            var GradeId = GetMappedLevelId(highLevelEntity, gradeIdMapId);
+        //            var DesigId = GetMappedLevelId(highLevelEntity, designationMapId);
+
+        //            var currentDateTime = DateTime.UtcNow;
+
+        //            var empMaster = new HrEmpMaster
+        //            {
+        //                InstId = inserEmployeeDto.InstId,
+        //                EmpCode = inserEmployeeDto.empCode,
+        //                FirstName = inserEmployeeDto.FirstName,
+        //                MiddleName = inserEmployeeDto.MiddleName,
+        //                LastName = inserEmployeeDto.LastName,
+        //                GuardiansName = inserEmployeeDto.GuardiansName,
+        //                JoinDt = inserEmployeeDto.JoinDt,
+        //                EntryBy = inserEmployeeDto.EntryBy,
+        //                EntryDt = inserEmployeeDto.EntryDt,
+        //                EmpStatus = inserEmployeeDto.EmpStatus,
+        //                ReviewDt = inserEmployeeDto.ReviewDt,
+        //                NoticePeriod = inserEmployeeDto.NoticePeriod ?? 0,
+        //                IsProbation = inserEmployeeDto.IsProbation,
+        //                ProbationDt = inserEmployeeDto.ProbationDt,
+        //                DateOfBirth = inserEmployeeDto.DateOfBirth,
+        //                NationalIdNo = inserEmployeeDto.NationalIdNo,
+        //                PassportNo = inserEmployeeDto.PassportNo,
+        //                BranchId = BranchId,//  inserEmployeeDto.BranchId,
+        //                DepId = DepId,// inserEmployeeDto.DepId,
+        //                BandId = BandId,// inserEmployeeDto.BandId,
+        //                GradeId = GradeId,// inserEmployeeDto.GradeId,
+        //                DesigId = DesigId,// inserEmployeeDto.DesigId,
+        //                LastEntity = inserEmployeeDto.LastEntity,
+        //                Gender = inserEmployeeDto.Gender,
+        //                CurrentStatus = inserEmployeeDto.CurrentStatus,
+        //                SeperationStatus = inserEmployeeDto.SeperationStatus ?? 0,
+        //                CountryOfBirth = inserEmployeeDto.CountryOfBirth,
+        //                Ishra = inserEmployeeDto.Ishra,
+        //                GratuityStrtDate = inserEmployeeDto.GratuityStrtDate,
+        //                FirstEntryDate = inserEmployeeDto.FirstEntryDate,
+        //                IsExpat = inserEmployeeDto.IsExpat,
+        //                PublicHoliday = false,
+        //                CompanyConveyance = inserEmployeeDto.CompanyConveyance,
+        //                CompanyVehicle = inserEmployeeDto.CompanyVehicle,
+        //                InitialDate = inserEmployeeDto.InitialDate,
+        //                ModifiedDate = currentDateTime,
+        //                MealAllowanceDeduct = inserEmployeeDto.MealAllowanceDeduct,
+        //                InitialPaymentPending = inserEmployeeDto.InitialPaymentPending,
+        //                UpdatedBy = inserEmployeeDto.EntryBy,
+        //                UpdatedDate = currentDateTime,
+        //                EmpFileNumber = inserEmployeeDto.EmpFileNumber,
+        //                PayrollMode = inserEmployeeDto.PayrollMode,
+        //                DailyRateTypeId = inserEmployeeDto.DailyRateTypeId,
+        //                CanteenRequest = inserEmployeeDto.CanteenRequest == true ? 1 : 0,
+        //                EmpFirstEntity = chkEmpFirst.ToString(),// Not sure about its logic,
+
+        //            };
+
+        //            await _context.HrEmpMasters.AddAsync(empMaster);
+        //            await _context.SaveChangesAsync();
+
+        //            var empID = empMaster.EmpId;
+
+        //            var empAddress = new HrEmpAddress// no missing columns
+        //            {
+        //                InstId = inserEmployeeDto.InstId,
+        //                Add1 = inserEmployeeDto.Add1,
+        //                EmpId = empID,
+        //                Country = inserEmployeeDto.CountryID,
+        //                Pbno = inserEmployeeDto.PBNo,
+        //                PersonalEmail = inserEmployeeDto.PersonalEmail,
+        //                OfficialEmail = inserEmployeeDto.EmailId,
+        //                Phone = inserEmployeeDto.Phone,
+        //                Mobile = inserEmployeeDto.Mobile,
+        //                OfficePhone = inserEmployeeDto.OfficePhone,
+        //                HomeCountryPhone = inserEmployeeDto.HomeCountryPhone,
+        //                EntryBy = inserEmployeeDto.EntryBy,
+        //                EntryDt = currentDateTime,
+        //            };
+
+        //            await _context.HrEmpAddresses.AddAsync(empAddress);
+
+        //            var empPersonal = new HrEmpPersonal// no missing values into table
+        //            {
+        //                InstId = inserEmployeeDto.InstId,
+        //                EmpId = empID,
+        //                Dob = inserEmployeeDto.DateOfBirth,
+        //                Gender = inserEmployeeDto.Gender,
+        //                MaritalStatus = inserEmployeeDto.MaritalStatus,
+        //                Religion = inserEmployeeDto.ReligionID,
+        //                BloodGrp = inserEmployeeDto.BloodGrp,
+        //                Nationality = inserEmployeeDto.NationalityID,
+        //                Country = inserEmployeeDto.CountryID,
+        //                IdentMark = inserEmployeeDto.IdentMark,
+        //                EntryBy = inserEmployeeDto.EntryBy,
+        //                EntryDt = currentDateTime,
+        //                CountryOfBirth = inserEmployeeDto.CountryOfBirth,
+        //                Height = inserEmployeeDto.Height,
+        //                Weight = inserEmployeeDto.Weight,
+        //                WeddingDate = inserEmployeeDto.WeddingDate,
+        //            };
+
+        //            await _context.HrEmpPersonals.AddAsync(empPersonal);
+
+        //            var empReporting = new HrEmpReporting
+        //            {
+        //                InstId = inserEmployeeDto.InstId,
+        //                EmpId = empID,
+        //                ReprotToWhome = inserEmployeeDto.ReprotToWhome,
+        //                EffectDate = inserEmployeeDto.EffectDate,
+        //                Active = inserEmployeeDto.Active,
+        //                EntryBy = inserEmployeeDto.EntryBy,
+        //                EntryDate = currentDateTime,
+        //            };
+
+        //            await _context.HrEmpReportings.AddAsync(empReporting);
+
+        //            //-------------Testing need to be done 08 April 2025-----------Start--------
+
+        //            if (inserEmployeeDto.IsAutoCode == "Y")
+        //            {
+
+
+        //                var userIDTypeCode = await (from a in _context.CompanyParameters
+        //                                            join b in _context.HrmValueTypes
+        //                                            on a.Value equals b.Value
+        //                                            where a.ParameterCode == "USERIDMAPPING" && b.Type == "UserIDMapping"
+        //                                            select b.Code).FirstOrDefaultAsync();
+
+        //                // Get Employee Reporting Setting
+        //                var reportingSetting = await (from a in _context.CompanyParameters
+        //                                              join b in _context.HrmValueTypes
+        //                                              on a.Value equals b.Value
+        //                                              where a.ParameterCode == "ACTUSREMPCR" && b.Type == "EmployeeReporting"
+        //                                              select b.Code).FirstOrDefaultAsync();
+
+        //                // Determine active status
+        //                var active = (reportingSetting == "Yes") ? "Y" : "N";
+
+        //                // Get employee details
+        //                var employee2 = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == empID);
+        //                if (employee2 == null)
+        //                {
+        //                    return 0;
+        //                }
+
+        //                // Determine UserName based on type
+        //                string userName = userIDTypeCode switch
+        //                {
+        //                    "UDP" => seqWithPrefix,// seqNumberWithPrefix,
+        //                    "UDNP" => seqNumber,
+        //                    "UDWS" => seqWithSuffix,// seqNumberWithSuffix,
+        //                    "UDWPS" => seqPrefixSuffix,// seqNumberPrefixSuffix,
+        //                    _ => employee2.EmpCode
+        //                };
+
+        //                // Determine Need_App value
+        //                //var needApp = (reportingSetting == "Yes") ? true : false;
+
+        //                // Create user entity
+        //                var user = new AdmUserMaster
+        //                {
+        //                    UserName = userName,
+        //                    DetailedName = $"{employee2.FirstName} {employee2.MiddleName} {employee2.LastName}",
+        //                    Password = "kohNZpjfnsZdZdiqvYllow==", // You should encrypt this securely
+        //                    EntryDate = employee2.EntryDt,
+        //                    Active = active,
+        //                    Status = "Y",
+        //                    Email = inserEmployeeDto.EmailId,
+        //                    NeedApp = inserEmployeeDto.MobileAppNeeded == 1 ? true : false,
+        //                };
+
+        //                // Insert and save
+        //                await _context.AdmUserMasters.AddAsync(user);
+        //                await _context.SaveChangesAsync();
+
+        //                // Set output UserID (if needed)
+        //                int newUserId = user.UserId; // Assuming UserId is an identity PK in ADM_User_Master
+        //            }
+        //            else
+        //            {
+        //                var employee1 = await _context.HrEmpMasters.Where(e => e.EmpId == empID)
+        //                                    .Select(e => new
+        //                                    {
+        //                                        e.InstId,
+        //                                        e.EmpId,
+        //                                        e.EmpCode,
+        //                                        e.FirstName,
+        //                                        e.MiddleName,
+        //                                        e.LastName,
+        //                                        e.EntryDt,
+        //                                        e.EntryBy
+        //                                    })
+        //                                    .FirstOrDefaultAsync();
+
+        //                if (employee1 == null)
+        //                {
+
+        //                }
+
+        //                // Create and insert ADM_User_Master
+        //                var newUser = new AdmUserMaster
+        //                {
+        //                    UserName = employee1.EmpCode,
+        //                    DetailedName = $"{employee1.FirstName} {employee1.MiddleName} {employee1.LastName}",
+        //                    Password = "kohNZpjfnsZdZdiqvYllow==", // Replace with proper encryption
+        //                    EntryDate = employee1.EntryDt,
+        //                    Active = "Y",
+        //                    Status = "Y",
+        //                    Email = inserEmployeeDto.EmailId,
+        //                    NeedApp = inserEmployeeDto.MobileAppNeeded == 1 ? true : false
+        //                };
+
+        //                await _context.AdmUserMasters.AddAsync(newUser);
+        //                await _context.SaveChangesAsync(); // to generate UserID (identity column)
+
+        //                int newUserId = newUser.UserId;
+
+        //                // Insert HR_EMPLOYEE_USER_RELATION
+        //                var empUserRelation = new HrEmployeeUserRelation// HR_EMPLOYEE_USER_RELATION
+        //                {
+        //                    InstId = employee1.InstId,
+        //                    UserId = newUserId,
+        //                    EmpId = employee1.EmpId,
+        //                    EntryBy = employee1.EntryBy,
+        //                    EntryDt = employee1.EntryDt
+        //                };
+        //                await _context.HrEmployeeUserRelations.AddAsync(empUserRelation);
+
+        //                // Get default image from DB function
+        //                string imageUrl = DefaultImage.GetDefaultImages();
+
+        //                // Insert HR_EMP_IMAGES
+        //                var empImage = new HrEmpImage
+        //                {
+        //                    InstId = employee1.InstId,
+        //                    EmpId = employee1.EmpId,
+        //                    ImageUrl = "default.jpg",
+        //                    Active = "Y",
+        //                    FingerUrl = "default.jpg",
+        //                    EmpImage = imageUrl
+        //                };
+        //                await _context.HrEmpImages.AddAsync(empImage);
+
+        //                // Insert into ADM_UserRoleMaster
+        //                var userRole = new AdmUserRoleMaster
+        //                {
+        //                    InstId = employee1.InstId,
+        //                    RoleId = inserEmployeeDto.UserRole,//userRoleId, // This should be passed or available from context
+        //                    UserId = newUserId,
+        //                    Acess = 1
+        //                };
+        //                await _context.AdmUserRoleMasters.AddAsync(userRole);
+
+        //                // Update HR_EMP_MASTER
+        //                var empToUpdate = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == empID);
+        //                if (empToUpdate != null)
+        //                {
+        //                    empToUpdate.EmpEntity = chkEmpEntities;
+        //                    empToUpdate.EmpFirstEntity = chkEmpFirst.ToString();
+        //                }
+
+        //                await _context.SaveChangesAsync();
+        //            }
+
+
+        //            int? deviceID = 0;
+        //            var currentUTC = DateTime.UtcNow;
+
+        //            // Get common employee data once
+        //            var emp = await _context.HrEmpMasters
+        //                .Where(e => e.EmpId == empID)
+        //                .Select(e => new
+        //                {
+        //                    e.EmpId,
+        //                    e.EmpCode,
+        //                    e.EmpFirstEntity,
+        //                    e.EmpEntity,
+        //                    e.Ishra,
+        //                    e.CompanyConveyance,
+        //                    e.CompanyVehicle
+        //                })
+        //                .FirstOrDefaultAsync();
+
+        //            if (emp == null) return 0;
+
+        //            // Handle Biometric Device ID and UserId
+        //            if (inserEmployeeDto.IsAutoCode == "Y")
+        //            {
+        //                var typeID = await _context.CompanyParameters
+        //                    .Join(_context.HrmValueTypes,
+        //                          a => a.Value,
+        //                          b => b.Value,
+        //                          (a, b) => new { a, b })
+        //                    .Where(x => x.a.ParameterCode == "BIOMAPPING" && x.b.Type == "BiometricMapping")
+        //                    .Select(x => x.b.Code)
+        //                    .FirstOrDefaultAsync();
+
+        //                if (typeID is "SEC" or "SECN" or "SECS" or "SECPS")
+        //                {
+        //                    var empEntityList = (emp.EmpFirstEntity + "," + emp.EmpEntity).Split(',').ToList();
+
+        //                    deviceID = await (from a in _context.CompanyParameters
+        //                                      join b in _context.CompanyParameters01s on a.Id equals b.ParamId
+        //                                      where a.ParameterCode == "DEVICEID" && empEntityList.Contains(b.LinkId.ToString())
+        //                                      orderby b.LevelId
+        //                                      select b.Value)
+        //                                      .FirstOrDefaultAsync();
+
+        //                    deviceID ??= await _context.CompanyParameters
+        //                                      .Where(p => p.ParameterCode == "DEVICEID")
+        //                                      .Select(p => p.Value)
+        //                                      .FirstOrDefaultAsync();
+
+        //                    var userID = typeID switch
+        //                    {
+        //                        "SECN" => seqNumber,
+        //                        "SEC" => seqWithPrefix,
+        //                        "SECS" => seqWithSuffix,
+        //                        "SECPS" => seqPrefixSuffix,
+        //                        _ => null
+        //                    };
+
+        //                    if (!string.IsNullOrEmpty(userID))
+        //                    {
+        //                        await _context.BiometricsDtls.AddAsync(new BiometricsDtl
+        //                        {
+        //                            CompanyId = inserEmployeeDto.InstId,
+        //                            EmployeeId = empID,
+        //                            DeviceId = Convert.ToInt32(deviceID),
+        //                            UserId = userID,
+        //                            EntryBy = inserEmployeeDto.EntryBy,
+        //                            EntryDt = currentUTC
+        //                        });
+        //                        await _context.SaveChangesAsync();
+        //                    }
+        //                }
+        //            }
+        //            else
+        //            {
+        //                await _context.BiometricsDtls.AddAsync(new BiometricsDtl
+        //                {
+        //                    CompanyId = inserEmployeeDto.InstId,
+        //                    EmployeeId = emp.EmpId,
+        //                    DeviceId = (int)deviceID,
+        //                    UserId = emp.EmpCode,
+        //                    EntryBy = inserEmployeeDto.EntryBy,
+        //                    EntryDt = currentUTC
+        //                });
+        //                await _context.SaveChangesAsync();
+        //            }
+
+        //            // Auto-assign PayrollPeriod and Payscale if setting enabled
+        //            var typeId = await (from a in _context.CompanyParameters
+        //                                join b in _context.HrmValueTypes on a.Value equals b.Value
+        //                                where a.ParameterCode == "ATASGNPAY" && b.Type == "EmployeeReporting"
+        //                                select b.Code).FirstOrDefaultAsync();
+
+        //            if (typeId == "Yes")
+        //            {
+        //                var empEntityIdlist = SplitAndParseEntityIds(emp.EmpEntity);
+        //                var firstEntityId = emp.EmpFirstEntity;
+
+        //                var payrollTransactionId = await _context.TransactionMasters
+        //                    .Where(t => t.TransactionType == "PayrollPeriod")
+        //                    .Select(t => t.TransactionId)
+        //                    .FirstOrDefaultAsync();
+
+        //                var payrollPeriodId = await _context.Payroll00s
+        //                    .Where(p => _context.EntityApplicable00s.Any(e =>
+        //                        e.TransactionId == payrollTransactionId &&
+        //                        ((e.LinkLevel == 1 && e.LinkId == Convert.ToInt64(firstEntityId)) ||
+        //                         (e.LinkLevel == 15) ||
+        //                         (e.LinkLevel != 1 && empEntityIdlist.Contains((int)e.LinkId)))))
+        //                    .Select(p => p.PayrollPeriodId)
+        //                    .FirstOrDefaultAsync();
+
+        //                if (payrollPeriodId is > 0)
+        //                {
+        //                    await _context.PayPeriodMasterAccesses.AddAsync(new PayPeriodMasterAccess
+        //                    {
+        //                        EmployeeId = emp.EmpId,
+        //                        PayrollPeriodId = payrollPeriodId,
+        //                        IsCompanyLevel = 1,
+        //                        CreatedBy = 1,
+        //                        CreatedDate = currentUTC,
+        //                        Active = "Y",
+        //                        ValidDateFrom = currentUTC
+        //                    });
+        //                    await _context.SaveChangesAsync();
+        //                }
+
+        //                var payCodeTransactionId = await _context.TransactionMasters
+        //                    .Where(t => t.TransactionType == "PayCodeBatch")
+        //                    .Select(t => t.TransactionId)
+        //                    .FirstOrDefaultAsync();
+
+        //                var payCodeMasterId = _context.PayCodeMaster00s
+        //                    .Where(p => _context.EntityApplicable00s.Any(e =>
+        //                        e.TransactionId == payCodeTransactionId &&
+        //                        ((e.LinkLevel == 1 && e.LinkId == Convert.ToInt64(firstEntityId)) ||
+        //                         (e.LinkLevel == 15) ||
+        //                         (e.LinkLevel != 1 && empEntityIdlist.Contains((int)e.LinkId)))))
+        //                    .Select(p => p.PayCodeMasterId)
+        //                    .FirstOrDefault();
+
+        //                if (payCodeMasterId is > 0)
+        //                {
+        //                    await _context.HrmPayscaleMasterAccesses.AddAsync(new HrmPayscaleMasterAccess
+        //                    {
+        //                        EmployeeId = emp.EmpId,
+        //                        PayscaleMasterId = payCodeMasterId,
+        //                        IsCompanyLevel = 1,
+        //                        CreatedBy = 1,
+        //                        CreatedDate = currentUTC,
+        //                        Active = "Y",
+        //                        ValidDatefrom = currentUTC
+        //                    });
+        //                    await _context.SaveChangesAsync();
+        //                }
+        //            }
+
+        //            // Insert initial records (HRA, Conveyance, Vehicle)
+        //            await _context.HraHistories.AddAsync(new HraHistory
+        //            {
+        //                EmployeeId = emp.EmpId,
+        //                IsHra = emp.Ishra,
+        //                FromDate = inserEmployeeDto.JoinDt,
+        //                Entryby = inserEmployeeDto.EntryBy,
+        //                Initial = 1
+        //            });
+
+        //            await _context.CompanyConveyanceHistories.AddAsync(new CompanyConveyanceHistory
+        //            {
+        //                EmployeeId = emp.EmpId,
+        //                CompanyConveyance = emp.CompanyConveyance,
+        //                FromDate = inserEmployeeDto.JoinDt,
+        //                EntryBy = inserEmployeeDto.EntryBy,
+        //                Initial = 1
+        //            });
+
+        //            await _context.CompanyVehicleHistories.AddAsync(new CompanyVehicleHistory
+        //            {
+        //                EmployeeId = emp.EmpId,
+        //                CompanyVehicle = emp.CompanyVehicle,
+        //                FromDate = inserEmployeeDto.JoinDt,
+        //                EntryBy = inserEmployeeDto.EntryBy,
+        //                Initial = 1
+        //            });
+
+        //            await _context.SaveChangesAsync();
+
+
+        //            var currentUtc = DateTime.UtcNow;
+
+        //            // Get transaction IDs where TransactionType is 'Document'
+        //            var documentTransactionIds = _context.TransactionMasters
+        //                .Where(tm => tm.TransactionType == "Document")
+        //                .Select(tm => tm.TransactionId)
+        //                .ToList();
+
+        //            // Get employee
+        //            var employee = _context.HrEmpMasters
+        //                .FirstOrDefault(e => e.EmpId == empID);
+        //            var empEntityIds = SplitAndParseEntityIds(emp.EmpEntity);
+        //            if (employee != null)
+        //            {
+
+
+        //                // Get b1: LinkLevel != 1
+        //                var b1 = _context.EntityApplicable00s
+        //                    .Where(ea => documentTransactionIds.Contains((int)ea.TransactionId) && ea.LinkLevel != 1)
+        //                    .ToList();
+
+        //                // Get b2: LinkLevel == 1
+        //                var b2 = _context.EntityApplicable00s
+        //                    .Where(ea => documentTransactionIds.Contains((int)ea.TransactionId) && ea.LinkLevel == 1)
+        //                    .ToList();
+
+        //                var activeDocs = _context.HrmsDocument00s
+        //                    .Where(doc => doc.Active == true)
+        //                    .ToList();
+
+        //                var docTypeMasters = _context.HrmsDocTypeMasters
+        //                    .ToList();
+
+        //                var accessEntries = (
+        //                    from doc in activeDocs
+        //                    join dt in docTypeMasters on doc.DocType equals Convert.ToInt32(dt.DocTypeId)
+        //                    where
+        //                        (
+        //                            (b1.Any(x => empEntityIds.Contains((int)x.LinkId) && x.MasterId == doc.DocId)) ||
+        //                            (b2.Any(x => x.LinkId == Convert.ToInt32(employee.EmpFirstEntity) && x.MasterId == doc.DocId))
+        //                        )
+        //                    select new EmpDocumentAccess
+        //                    {
+        //                        InstId = 1,
+        //                        EmpId = empID,
+        //                        DocId = (int?)doc.DocId,
+        //                        ValidFrom = currentUtc,
+        //                        IsCompanyLevel = 0,
+        //                        Status = 0,
+        //                        CreatedBy = inserEmployeeDto.EntryBy,
+        //                        CreatedDate = currentUtc
+        //                    }
+        //                ).Distinct().ToList();
+
+        //                _context.EmpDocumentAccesses.AddRange(accessEntries);
+        //                _context.SaveChanges();
+        //            }
+        //            var leaveTransactionId = await GetTransactionIdByTransactionType("Leave");
+
+        //            // Step 2: Get all applicable LeaveMasterIds
+        //            var applicableLeaveMasterIds = await _context.EntityApplicable00s
+        //                .Where(ea =>
+        //                    ea.TransactionId == leaveTransactionId &&
+        //                    (
+        //                        (ea.LinkLevel == 1 && ea.LinkId == inserEmployeeDto.empFirstEntiry) ||
+        //                        ea.LinkLevel == 15 ||
+        //                        (ea.LinkLevel != 1 && empEntityIds.Contains((int)ea.LinkId))
+        //                    )
+        //                )
+        //                .Select(ea => ea.MasterId)
+        //                .Distinct()
+        //                .ToListAsync();
+
+        //            // Step 3: Get active leave masters matching the IDs
+        //            var leaveMasters = await _context.HrmLeaveMasters
+        //                .Where(lm => lm.Active == 1 && applicableLeaveMasterIds.Contains(lm.LeaveMasterId))
+        //                .ToListAsync();
+
+        //            //Step 4: Create LeaveAccess entries
+        //            var leaveAccessEntries = leaveMasters.Select(lm => new HrmLeaveEmployeeleaveaccess
+        //            {
+        //                EmployeeId = empID,
+        //                LeaveMaster = lm.LeaveMasterId,
+        //                IsCompanyLevel = 0,
+        //                CreatedBy = inserEmployeeDto.EntryBy,
+        //                CreatedDate = DateTime.UtcNow,
+        //                Status = 1,
+        //                FromDate = inserEmployeeDto.JoinDt
+        //            }).ToList();
+
+        //            // Step 5: Insert to DB
+        //            _context.HrmLeaveEmployeeleaveaccesses.AddRange(leaveAccessEntries);
+        //            await _context.SaveChangesAsync();
+
+
+
+
+        //            await _context.SaveChangesAsync();
+
+
+
+
+
+        //        }
+        //        return 1;
+        //    }
+        //}
+
         public async Task<int> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto)
         {
 
@@ -12655,7 +13380,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     var empMaster = new HrEmpMaster
                     {
                         InstId = inserEmployeeDto.InstId,
-                        EmpCode = inserEmployeeDto.empCode,
+                        //EmpCode =  inserEmployeeDto.empCode,
+                        EmpCode = inserEmployeeDto.IsAutoCode == "Y" ? employeeCode : inserEmployeeDto.empCode,
                         FirstName = inserEmployeeDto.FirstName,
                         MiddleName = inserEmployeeDto.MiddleName,
                         LastName = inserEmployeeDto.LastName,
@@ -13191,813 +13917,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     _context.HrmLeaveEmployeeleaveaccesses.AddRange(leaveAccessEntries);
                     await _context.SaveChangesAsync();
 
-
-
-
-                    await _context.SaveChangesAsync();
-
-
-
-
-
                 }
                 return 1;
             }
         }
 
-        //public async Task<object> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto)
-        //{
 
-        //    bool employeeExists = await _context.HrEmpMasters.AnyAsync(emp =>
-        //                                emp.SeperationStatus == 0 &&
-        //                                (emp.IsDelete == false || emp.IsDelete == null) &&
-        //                                emp.FirstName == inserEmployeeDto.FirstName &&
-        //                                EF.Functions.DateDiffDay(emp.JoinDt, inserEmployeeDto.JoinDt) == 0 &&
-        //                                EF.Functions.DateDiffDay(emp.EntryDt, inserEmployeeDto.EntryDt) == 0 &&
-        //                                EF.Functions.DateDiffDay(emp.DateOfBirth, inserEmployeeDto.DateOfBirth) == 0);
-
-        //    if (employeeExists)
-        //    {
-        //        return "NotSaved";
-        //    }
-        //    else
-        //    {
-        //        //var transactionId = await _context.TransactionMasters.Where(t => t.TransactionType == "EmpCode").Select(t => t.TransactionId).FirstOrDefaultAsync();
-
-
-        //        var EmpCodeTransactionId = await GetTransactionIdByTransactionType("EmpCode");
-
-        //        var record = await _context.HighLevelViewTables.FirstOrDefaultAsync(x => x.LastEntityId == inserEmployeeDto.LastEntity);
-
-        //        if (record != null)
-        //        {
-        //            int chkEmpFirst = (int)record.LevelOneId;
-
-        //            // Collect non-zero level values (from LevelTwo to LevelTwelve)
-        //            var levels = new List<int?>
-        //                        {
-        //                            record.LevelTwoId,
-        //                            record.LevelThreeId,
-        //                            record.LevelFourId,
-        //                            record.LevelFiveId,
-        //                            record.LevelSixId,
-        //                            record.LevelSevenId,
-        //                            record.LevelEightId,
-        //                            record.LevelNineId,
-        //                            record.LevelTenId,
-        //                            record.LevelElevenId,
-        //                            record.LevelTwelveId
-        //                        };
-
-        //            string chkEmpEntities = string.Join(",", levels.Where(id => id != 0));
-
-        //            //---- Till this code -- logic is correct------------------
-
-        //            // Inputs (normally passed in or derived elsewhere)
-
-        //            int empId = 0;
-        //            //int transactionId = 21;
-        //            //string chkEmpEntities = "1,3,5,13211,21291,21431,21573,21638,21788,22088";
-        //            //int chkEmpFirst = 1;
-
-        //            // Output holders
-        //            string employeeCode = string.Empty;
-        //            string seqNumber = string.Empty;
-        //            string seqWithPrefix = string.Empty;
-        //            string seqWithSuffix = string.Empty;
-        //            string seqPrefixSuffix = string.Empty;
-
-        //            string? codeId = null;
-        //            int? errorId = null;
-        //            string errorMessage = string.Empty;
-
-        //            if (inserEmployeeDto.IsAutoCode == "Y")
-        //            {
-
-        //                codeId = GetSequenceAPI(empId, EmpCodeTransactionId, chkEmpEntities, chkEmpFirst);
-        //                if (codeId == null)
-        //                {
-        //                    errorId = 0;
-        //                    errorMessage = "-2"; // Sequence not generated
-
-        //                }
-
-        //                // Get code formatting (equivalent to dbo.GetSequencePrefixSuffixFormat)
-        //                employeeCode = GetSequencePrefixSuffixFormat_API(Convert.ToInt32(codeId));
-
-        //                var codeGenMaster = await _context.AdmCodegenerationmasters
-        //                    .FirstOrDefaultAsync(x => x.CodeId == Convert.ToInt32(codeId));
-
-        //                if (codeGenMaster == null)
-        //                {
-        //                    // Unexpected: CodeGen entry not found
-
-        //                }
-
-        //                string yearStr = DateTime.UtcNow.Year.ToString();
-        //                string finalCodeWithNoSeq = codeGenMaster.FinalCodeWithNoSeq;
-
-        //                // Prefix logic
-        //                seqWithPrefix = codeGenMaster.PrefixFormatId switch
-        //                {
-        //                    1 => yearStr + finalCodeWithNoSeq,
-        //                    2 => (codeGenMaster.Code ?? "") + finalCodeWithNoSeq,
-        //                    _ => finalCodeWithNoSeq
-        //                };
-
-        //                // Suffix logic
-        //                seqWithSuffix = codeGenMaster.SuffixFormatId switch
-        //                {
-        //                    1 => finalCodeWithNoSeq + yearStr,
-        //                    2 => finalCodeWithNoSeq + (codeGenMaster.Suffix ?? ""),
-        //                    _ => finalCodeWithNoSeq
-        //                };
-
-        //                // Combined Prefix + Suffix logic
-        //                seqPrefixSuffix = (codeGenMaster.PrefixFormatId, codeGenMaster.SuffixFormatId) switch
-        //                {
-        //                    (1, 1) => yearStr + finalCodeWithNoSeq + yearStr,
-        //                    (1, 2) => yearStr + finalCodeWithNoSeq + (codeGenMaster.Suffix ?? ""),
-        //                    (2, 1) => (codeGenMaster.Code ?? "") + finalCodeWithNoSeq + yearStr,
-        //                    (2, 2) => (codeGenMaster.Code ?? "") + finalCodeWithNoSeq + (codeGenMaster.Suffix ?? ""),
-        //                    _ => finalCodeWithNoSeq
-        //                };
-
-        //                // Check for existing employee code
-        //                bool codeExists = await _context.HrEmpMasters
-        //                    .AnyAsync(emp => EF.Functions.Like(emp.EmpCode.Trim(), employeeCode.Trim()) && (emp.IsDelete ?? false) == false);
-
-        //                if (codeExists)
-        //                {
-        //                    errorId = 0;
-        //                    errorMessage = "-3"; // Duplicate EmpCode
-
-        //                }
-
-        //                // Increment CurrentCodeValue
-        //                codeGenMaster.CurrentCodeValue = (codeGenMaster.CurrentCodeValue ?? 0) + 1;
-        //                await _context.SaveChangesAsync();
-
-        //                // Update FinalCodeWithNoSeq and LastSequence
-        //                string paddedValue = codeGenMaster.CurrentCodeValue.Value.ToString().PadLeft(codeGenMaster.NumberFormat.Length, '0');
-        //                codeGenMaster.FinalCodeWithNoSeq = paddedValue;
-        //                codeGenMaster.LastSequence = (codeGenMaster.Code ?? "") + paddedValue;
-
-        //                await _context.SaveChangesAsync();
-
-        //                // Set output
-        //                seqNumber = paddedValue;
-        //            }
-        //            else
-        //            {
-        //                // Manual code assignment fallback
-        //                seqNumber = employeeCode;
-        //                seqWithPrefix = employeeCode;
-        //                seqWithSuffix = employeeCode;
-        //                seqPrefixSuffix = employeeCode;
-        //            }
-        //            var mapping = await GetCategoryMapperData();
-
-        //            int branchMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.BranchType))?.SortOrder ?? 0;
-        //            int depMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.DepartmentType))?.SortOrder ?? 0;
-        //            int bandMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.BandType))?.SortOrder ?? 0;
-        //            int designationMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.DesigType))?.SortOrder ?? 0;
-        //            int countryMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.CompanyType))?.SortOrder ?? 0;
-        //            int gradeIdMapId = mapping.FirstOrDefault(m => m.Code == GetCode(CatTrxType.GradeType))?.SortOrder ?? 0;
-
-        //            var sortOrder = await _context.LicensedCompanyDetails.Select(x => x.EntityLimit).FirstOrDefaultAsync();
-
-
-
-        //            var highLevelEntity = await _context.HighLevelViewTables
-        //                .FirstOrDefaultAsync(x => x.LastEntityId == inserEmployeeDto.LastEntity);
-
-
-        //            //inserEmployeeDto.BranchId = GetMappedLevelId(highLevelEntity, branchMapId);
-        //            //inserEmployeeDto.DepId = GetMappedLevelId(highLevelEntity, depMapId);
-        //            //inserEmployeeDto.BandId = GetMappedLevelId(highLevelEntity, bandMapId);
-        //            //inserEmployeeDto.GradeId = GetMappedLevelId(highLevelEntity, gradeIdMapId);
-        //            //inserEmployeeDto.DesigId = GetMappedLevelId(highLevelEntity, designationMapId);
-
-
-        //            var BranchId = GetMappedLevelId(highLevelEntity, branchMapId);
-        //            var DepId = GetMappedLevelId(highLevelEntity, depMapId);
-        //            var BandId = GetMappedLevelId(highLevelEntity, bandMapId);
-        //            var GradeId = GetMappedLevelId(highLevelEntity, gradeIdMapId);
-        //            var DesigId = GetMappedLevelId(highLevelEntity, designationMapId);
-
-        //            var currentDateTime = DateTime.UtcNow;
-
-        //            var empMaster = new HrEmpMaster
-        //            {
-        //                InstId = inserEmployeeDto.InstId,
-        //                EmpCode = inserEmployeeDto.empCode,
-        //                FirstName = inserEmployeeDto.FirstName,
-        //                MiddleName = inserEmployeeDto.MiddleName,
-        //                LastName = inserEmployeeDto.LastName,
-        //                GuardiansName = inserEmployeeDto.GuardiansName,
-        //                JoinDt = inserEmployeeDto.JoinDt,
-        //                EntryBy = inserEmployeeDto.EntryBy,
-        //                EntryDt = inserEmployeeDto.EntryDt,
-        //                EmpStatus = inserEmployeeDto.EmpStatus,
-        //                ReviewDt = inserEmployeeDto.ReviewDt,
-        //                NoticePeriod = inserEmployeeDto.NoticePeriod ?? 0,
-        //                IsProbation = inserEmployeeDto.IsProbation,
-        //                ProbationDt = inserEmployeeDto.ProbationDt,
-        //                DateOfBirth = inserEmployeeDto.DateOfBirth,
-        //                NationalIdNo = inserEmployeeDto.NationalIdNo,
-        //                PassportNo = inserEmployeeDto.PassportNo,
-        //                BranchId = BranchId,//  inserEmployeeDto.BranchId,
-        //                DepId = DepId,// inserEmployeeDto.DepId,
-        //                BandId = BandId,// inserEmployeeDto.BandId,
-        //                GradeId = GradeId,// inserEmployeeDto.GradeId,
-        //                DesigId = DesigId,// inserEmployeeDto.DesigId,
-        //                LastEntity = inserEmployeeDto.LastEntity,
-        //                Gender = inserEmployeeDto.Gender,
-        //                CurrentStatus = inserEmployeeDto.CurrentStatus,
-        //                SeperationStatus = inserEmployeeDto.SeperationStatus ?? 0,
-        //                CountryOfBirth = inserEmployeeDto.CountryOfBirth,
-        //                Ishra = inserEmployeeDto.Ishra,
-        //                GratuityStrtDate = inserEmployeeDto.GratuityStrtDate,
-        //                FirstEntryDate = inserEmployeeDto.FirstEntryDate,
-        //                IsExpat = inserEmployeeDto.IsExpat,
-        //                PublicHoliday = false,
-        //                CompanyConveyance = inserEmployeeDto.CompanyConveyance,
-        //                CompanyVehicle = inserEmployeeDto.CompanyVehicle,
-        //                InitialDate = inserEmployeeDto.InitialDate,
-        //                ModifiedDate = currentDateTime,
-        //                MealAllowanceDeduct = inserEmployeeDto.MealAllowanceDeduct,
-        //                InitialPaymentPending = inserEmployeeDto.InitialPaymentPending,
-        //                UpdatedBy = inserEmployeeDto.EntryBy,
-        //                UpdatedDate = currentDateTime,
-        //                EmpFileNumber = inserEmployeeDto.EmpFileNumber,
-        //                PayrollMode = inserEmployeeDto.PayrollMode,
-        //                DailyRateTypeId = inserEmployeeDto.DailyRateTypeId,
-        //                CanteenRequest = inserEmployeeDto.CanteenRequest == true ? 1 : 0,
-        //                EmpFirstEntity = chkEmpFirst.ToString(),// Not sure about its logic,
-
-        //            };
-
-        //            await _context.HrEmpMasters.AddAsync(empMaster);
-        //            await _context.SaveChangesAsync();
-
-        //            var empID = empMaster.EmpId;
-
-        //            var empAddress = new HrEmpAddress// no missing columns
-        //            {
-        //                InstId = inserEmployeeDto.InstId,
-        //                Add1 = inserEmployeeDto.Add1,
-        //                EmpId = empID,
-        //                Country = inserEmployeeDto.CountryID,
-        //                Pbno = inserEmployeeDto.PBNo,
-        //                PersonalEmail = inserEmployeeDto.PersonalEmail,
-        //                OfficialEmail = inserEmployeeDto.EmailId,
-        //                Phone = inserEmployeeDto.Phone,
-        //                Mobile = inserEmployeeDto.Mobile,
-        //                OfficePhone = inserEmployeeDto.OfficePhone,
-        //                HomeCountryPhone = inserEmployeeDto.HomeCountryPhone,
-        //                EntryBy = inserEmployeeDto.EntryBy,
-        //                EntryDt = currentDateTime,
-        //            };
-
-        //            await _context.HrEmpAddresses.AddAsync(empAddress);
-
-        //            var empPersonal = new HrEmpPersonal// no missing values into table
-        //            {
-        //                InstId = inserEmployeeDto.InstId,
-        //                EmpId = empID,
-        //                Dob = inserEmployeeDto.DateOfBirth,
-        //                Gender = inserEmployeeDto.Gender,
-        //                MaritalStatus = inserEmployeeDto.MaritalStatus,
-        //                Religion = inserEmployeeDto.ReligionID,
-        //                BloodGrp = inserEmployeeDto.BloodGrp,
-        //                Nationality = inserEmployeeDto.NationalityID,
-        //                Country = inserEmployeeDto.CountryID,
-        //                IdentMark = inserEmployeeDto.IdentMark,
-        //                EntryBy = inserEmployeeDto.EntryBy,
-        //                EntryDt = currentDateTime,
-        //                CountryOfBirth = inserEmployeeDto.CountryOfBirth,
-        //                Height = inserEmployeeDto.Height,
-        //                Weight = inserEmployeeDto.Weight,
-        //                WeddingDate = inserEmployeeDto.WeddingDate,
-        //            };
-
-        //            await _context.HrEmpPersonals.AddAsync(empPersonal);
-
-        //            var empReporting = new HrEmpReporting
-        //            {
-        //                InstId = inserEmployeeDto.InstId,
-        //                EmpId = empID,
-        //                ReprotToWhome = inserEmployeeDto.ReprotToWhome,
-        //                EffectDate = inserEmployeeDto.EffectDate,
-        //                Active = inserEmployeeDto.Active,
-        //                EntryBy = inserEmployeeDto.EntryBy,
-        //                EntryDate = currentDateTime,
-        //            };
-
-        //            await _context.HrEmpReportings.AddAsync(empReporting);
-
-        //            //-------------Testing need to be done 08 April 2025-----------Start--------
-
-        //            if (inserEmployeeDto.IsAutoCode == "Y")
-        //            {
-
-
-        //                var userIDTypeCode = await (from a in _context.CompanyParameters
-        //                                            join b in _context.HrmValueTypes
-        //                                            on a.Value equals b.Value
-        //                                            where a.ParameterCode == "USERIDMAPPING" && b.Type == "UserIDMapping"
-        //                                            select b.Code).FirstOrDefaultAsync();
-
-        //                // Get Employee Reporting Setting
-        //                var reportingSetting = await (from a in _context.CompanyParameters
-        //                                              join b in _context.HrmValueTypes
-        //                                              on a.Value equals b.Value
-        //                                              where a.ParameterCode == "ACTUSREMPCR" && b.Type == "EmployeeReporting"
-        //                                              select b.Code).FirstOrDefaultAsync();
-
-        //                // Determine active status
-        //                var active = (reportingSetting == "Yes") ? "Y" : "N";
-
-        //                // Get employee details
-        //                var employee2 = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == empID);
-        //                if (employee2 == null)
-        //                {
-        //                    return "NotSaved";
-        //                }
-
-        //                // Determine UserName based on type
-        //                string userName = userIDTypeCode switch
-        //                {
-        //                    "UDP" => seqWithPrefix,// seqNumberWithPrefix,
-        //                    "UDNP" => seqNumber,
-        //                    "UDWS" => seqWithSuffix,// seqNumberWithSuffix,
-        //                    "UDWPS" => seqPrefixSuffix,// seqNumberPrefixSuffix,
-        //                    _ => employee2.EmpCode
-        //                };
-
-        //                // Determine Need_App value
-        //                //var needApp = (reportingSetting == "Yes") ? true : false;
-
-        //                // Create user entity
-        //                var user = new AdmUserMaster
-        //                {
-        //                    UserName = userName,
-        //                    DetailedName = $"{employee2.FirstName} {employee2.MiddleName} {employee2.LastName}",
-        //                    Password = "kohNZpjfnsZdZdiqvYllow==", // You should encrypt this securely
-        //                    EntryDate = employee2.EntryDt,
-        //                    Active = active,
-        //                    Status = "Y",
-        //                    Email = inserEmployeeDto.EmailId,
-        //                    NeedApp = inserEmployeeDto.MobileAppNeeded == 1 ? true : false,
-        //                };
-
-        //                // Insert and save
-        //                await _context.AdmUserMasters.AddAsync(user);
-        //                await _context.SaveChangesAsync();
-
-        //                // Set output UserID (if needed)
-        //                int newUserId = user.UserId; // Assuming UserId is an identity PK in ADM_User_Master
-        //            }
-        //            else
-        //            {
-        //                var employee1 = await _context.HrEmpMasters.Where(e => e.EmpId == empID)
-        //                                    .Select(e => new
-        //                                    {
-        //                                        e.InstId,
-        //                                        e.EmpId,
-        //                                        e.EmpCode,
-        //                                        e.FirstName,
-        //                                        e.MiddleName,
-        //                                        e.LastName,
-        //                                        e.EntryDt,
-        //                                        e.EntryBy
-        //                                    })
-        //                                    .FirstOrDefaultAsync();
-
-        //                if (employee1 == null)
-        //                {
-
-        //                }
-
-        //                // Create and insert ADM_User_Master
-        //                var newUser = new AdmUserMaster
-        //                {
-        //                    UserName = employee1.EmpCode,
-        //                    DetailedName = $"{employee1.FirstName} {employee1.MiddleName} {employee1.LastName}",
-        //                    Password = "kohNZpjfnsZdZdiqvYllow==", // Replace with proper encryption
-        //                    EntryDate = employee1.EntryDt,
-        //                    Active = "Y",
-        //                    Status = "Y",
-        //                    Email = inserEmployeeDto.EmailId,
-        //                    NeedApp = inserEmployeeDto.MobileAppNeeded == 1 ? true : false
-        //                };
-
-        //                await _context.AdmUserMasters.AddAsync(newUser);
-        //                await _context.SaveChangesAsync(); // to generate UserID (identity column)
-
-        //                int newUserId = newUser.UserId;
-
-        //                // Insert HR_EMPLOYEE_USER_RELATION
-        //                var empUserRelation = new HrEmployeeUserRelation// HR_EMPLOYEE_USER_RELATION
-        //                {
-        //                    InstId = employee1.InstId,
-        //                    UserId = newUserId,
-        //                    EmpId = employee1.EmpId,
-        //                    EntryBy = employee1.EntryBy,
-        //                    EntryDt = employee1.EntryDt
-        //                };
-        //                await _context.HrEmployeeUserRelations.AddAsync(empUserRelation);
-
-        //                // Get default image from DB function
-        //                string imageUrl = DefaultImage.GetDefaultImages();
-
-        //                // Insert HR_EMP_IMAGES
-        //                var empImage = new HrEmpImage
-        //                {
-        //                    InstId = employee1.InstId,
-        //                    EmpId = employee1.EmpId,
-        //                    ImageUrl = "default.jpg",
-        //                    Active = "Y",
-        //                    FingerUrl = "default.jpg",
-        //                    EmpImage = imageUrl
-        //                };
-        //                await _context.HrEmpImages.AddAsync(empImage);
-
-        //                // Insert into ADM_UserRoleMaster
-        //                var userRole = new AdmUserRoleMaster
-        //                {
-        //                    InstId = employee1.InstId,
-        //                    RoleId = inserEmployeeDto.UserRole,//userRoleId, // This should be passed or available from context
-        //                    UserId = newUserId,
-        //                    Acess = 1
-        //                };
-        //                await _context.AdmUserRoleMasters.AddAsync(userRole);
-
-        //                // Update HR_EMP_MASTER
-        //                var empToUpdate = _context.HrEmpMasters.FirstOrDefault(e => e.EmpId == empID);
-        //                if (empToUpdate != null)
-        //                {
-        //                    empToUpdate.EmpEntity = chkEmpEntities;
-        //                    empToUpdate.EmpFirstEntity = chkEmpFirst.ToString();
-        //                }
-
-        //                await _context.SaveChangesAsync();
-        //            }
-
-
-        //            int? deviceID = 0;
-        //            var currentUTC = DateTime.UtcNow;
-
-        //            // Get common employee data once
-        //            var emp = await _context.HrEmpMasters
-        //                .Where(e => e.EmpId == empID)
-        //                .Select(e => new
-        //                {
-        //                    e.EmpId,
-        //                    e.EmpCode,
-        //                    e.EmpFirstEntity,
-        //                    e.EmpEntity,
-        //                    e.Ishra,
-        //                    e.CompanyConveyance,
-        //                    e.CompanyVehicle
-        //                })
-        //                .FirstOrDefaultAsync();
-
-        //            if (emp == null) return "No";
-
-        //            // Handle Biometric Device ID and UserId
-        //            if (inserEmployeeDto.IsAutoCode == "Y")
-        //            {
-        //                var typeID = await _context.CompanyParameters
-        //                    .Join(_context.HrmValueTypes,
-        //                          a => a.Value,
-        //                          b => b.Value,
-        //                          (a, b) => new { a, b })
-        //                    .Where(x => x.a.ParameterCode == "BIOMAPPING" && x.b.Type == "BiometricMapping")
-        //                    .Select(x => x.b.Code)
-        //                    .FirstOrDefaultAsync();
-
-        //                if (typeID is "SEC" or "SECN" or "SECS" or "SECPS")
-        //                {
-        //                    var empEntityList = (emp.EmpFirstEntity + "," + emp.EmpEntity).Split(',').ToList();
-
-        //                    deviceID = await (from a in _context.CompanyParameters
-        //                                      join b in _context.CompanyParameters01s on a.Id equals b.ParamId
-        //                                      where a.ParameterCode == "DEVICEID" && empEntityList.Contains(b.LinkId.ToString())
-        //                                      orderby b.LevelId
-        //                                      select b.Value)
-        //                                      .FirstOrDefaultAsync();
-
-        //                    deviceID ??= await _context.CompanyParameters
-        //                                      .Where(p => p.ParameterCode == "DEVICEID")
-        //                                      .Select(p => p.Value)
-        //                                      .FirstOrDefaultAsync();
-
-        //                    var userID = typeID switch
-        //                    {
-        //                        "SECN" => seqNumber,
-        //                        "SEC" => seqWithPrefix,
-        //                        "SECS" => seqWithSuffix,
-        //                        "SECPS" => seqPrefixSuffix,
-        //                        _ => null
-        //                    };
-
-        //                    if (!string.IsNullOrEmpty(userID))
-        //                    {
-        //                        await _context.BiometricsDtls.AddAsync(new BiometricsDtl
-        //                        {
-        //                            CompanyId = inserEmployeeDto.InstId,
-        //                            EmployeeId = empID,
-        //                            DeviceId = Convert.ToInt32(deviceID),
-        //                            UserId = userID,
-        //                            EntryBy = inserEmployeeDto.EntryBy,
-        //                            EntryDt = currentUTC
-        //                        });
-        //                        await _context.SaveChangesAsync();
-        //                    }
-        //                }
-        //            }
-        //            else
-        //            {
-        //                await _context.BiometricsDtls.AddAsync(new BiometricsDtl
-        //                {
-        //                    CompanyId = inserEmployeeDto.InstId,
-        //                    EmployeeId = emp.EmpId,
-        //                    DeviceId = (int)deviceID,
-        //                    UserId = emp.EmpCode,
-        //                    EntryBy = inserEmployeeDto.EntryBy,
-        //                    EntryDt = currentUTC
-        //                });
-        //                await _context.SaveChangesAsync();
-        //            }
-
-        //            // Auto-assign PayrollPeriod and Payscale if setting enabled
-        //            var typeId = await (from a in _context.CompanyParameters
-        //                                join b in _context.HrmValueTypes on a.Value equals b.Value
-        //                                where a.ParameterCode == "ATASGNPAY" && b.Type == "EmployeeReporting"
-        //                                select b.Code).FirstOrDefaultAsync();
-
-        //            if (typeId == "Yes")
-        //            {
-        //                var empEntityIdlist = SplitAndParseEntityIds(emp.EmpEntity);
-        //                var firstEntityId = emp.EmpFirstEntity;
-
-        //                var payrollTransactionId = await _context.TransactionMasters
-        //                    .Where(t => t.TransactionType == "PayrollPeriod")
-        //                    .Select(t => t.TransactionId)
-        //                    .FirstOrDefaultAsync();
-
-        //                var payrollPeriodId = await _context.Payroll00s
-        //                    .Where(p => _context.EntityApplicable00s.Any(e =>
-        //                        e.TransactionId == payrollTransactionId &&
-        //                        ((e.LinkLevel == 1 && e.LinkId == Convert.ToInt64(firstEntityId)) ||
-        //                         (e.LinkLevel == 15) ||
-        //                         (e.LinkLevel != 1 && empEntityIdlist.Contains((int)e.LinkId)))))
-        //                    .Select(p => p.PayrollPeriodId)
-        //                    .FirstOrDefaultAsync();
-
-        //                if (payrollPeriodId is > 0)
-        //                {
-        //                    await _context.PayPeriodMasterAccesses.AddAsync(new PayPeriodMasterAccess
-        //                    {
-        //                        EmployeeId = emp.EmpId,
-        //                        PayrollPeriodId = payrollPeriodId,
-        //                        IsCompanyLevel = 1,
-        //                        CreatedBy = 1,
-        //                        CreatedDate = currentUTC,
-        //                        Active = "Y",
-        //                        ValidDateFrom = currentUTC
-        //                    });
-        //                    await _context.SaveChangesAsync();
-        //                }
-
-        //                var payCodeTransactionId = await _context.TransactionMasters
-        //                    .Where(t => t.TransactionType == "PayCodeBatch")
-        //                    .Select(t => t.TransactionId)
-        //                    .FirstOrDefaultAsync();
-
-        //                var payCodeMasterId = _context.PayCodeMaster00s
-        //                    .Where(p => _context.EntityApplicable00s.Any(e =>
-        //                        e.TransactionId == payCodeTransactionId &&
-        //                        ((e.LinkLevel == 1 && e.LinkId == Convert.ToInt64(firstEntityId)) ||
-        //                         (e.LinkLevel == 15) ||
-        //                         (e.LinkLevel != 1 && empEntityIdlist.Contains((int)e.LinkId)))))
-        //                    .Select(p => p.PayCodeMasterId)
-        //                    .FirstOrDefault();
-
-        //                if (payCodeMasterId is > 0)
-        //                {
-        //                    await _context.HrmPayscaleMasterAccesses.AddAsync(new HrmPayscaleMasterAccess
-        //                    {
-        //                        EmployeeId = emp.EmpId,
-        //                        PayscaleMasterId = payCodeMasterId,
-        //                        IsCompanyLevel = 1,
-        //                        CreatedBy = 1,
-        //                        CreatedDate = currentUTC,
-        //                        Active = "Y",
-        //                        ValidDatefrom = currentUTC
-        //                    });
-        //                    await _context.SaveChangesAsync();
-        //                }
-        //            }
-
-        //            // Insert initial records (HRA, Conveyance, Vehicle)
-        //            await _context.HraHistories.AddAsync(new HraHistory
-        //            {
-        //                EmployeeId = emp.EmpId,
-        //                IsHra = emp.Ishra,
-        //                FromDate = inserEmployeeDto.JoinDt,
-        //                Entryby = inserEmployeeDto.EntryBy,
-        //                Initial = 1
-        //            });
-
-        //            await _context.CompanyConveyanceHistories.AddAsync(new CompanyConveyanceHistory
-        //            {
-        //                EmployeeId = emp.EmpId,
-        //                CompanyConveyance = emp.CompanyConveyance,
-        //                FromDate = inserEmployeeDto.JoinDt,
-        //                EntryBy = inserEmployeeDto.EntryBy,
-        //                Initial = 1
-        //            });
-
-        //            await _context.CompanyVehicleHistories.AddAsync(new CompanyVehicleHistory
-        //            {
-        //                EmployeeId = emp.EmpId,
-        //                CompanyVehicle = emp.CompanyVehicle,
-        //                FromDate = inserEmployeeDto.JoinDt,
-        //                EntryBy = inserEmployeeDto.EntryBy,
-        //                Initial = 1
-        //            });
-
-        //            await _context.SaveChangesAsync();
-
-
-        //            var currentUtc = DateTime.UtcNow;
-
-        //            // Get transaction IDs where TransactionType is 'Document'
-        //            var documentTransactionIds = _context.TransactionMasters
-        //                .Where(tm => tm.TransactionType == "Document")
-        //                .Select(tm => tm.TransactionId)
-        //                .ToList();
-
-        //            // Get employee
-        //            var employee = _context.HrEmpMasters
-        //                .FirstOrDefault(e => e.EmpId == empID);
-        //            var empEntityIds = SplitAndParseEntityIds(emp.EmpEntity);
-        //            if (employee != null)
-        //            {
-        //                // var empEntities = SplitStrings_XML(employee.EmpEntity, default); // Assume returns List<string>
-
-
-
-        //                //var empEntityIds = empEntities.Select(int.Parse).ToList();
-
-
-
-        //                // Get b1: LinkLevel != 1
-        //                var b1 = _context.EntityApplicable00s
-        //                    .Where(ea => documentTransactionIds.Contains((int)ea.TransactionId) && ea.LinkLevel != 1)
-        //                    .ToList();
-
-        //                // Get b2: LinkLevel == 1
-        //                var b2 = _context.EntityApplicable00s
-        //                    .Where(ea => documentTransactionIds.Contains((int)ea.TransactionId) && ea.LinkLevel == 1)
-        //                    .ToList();
-
-        //                var activeDocs = _context.HrmsDocument00s
-        //                    .Where(doc => doc.Active == true)
-        //                    .ToList();
-
-        //                var docTypeMasters = _context.HrmsDocTypeMasters
-        //                    .ToList();
-
-        //                var accessEntries = (
-        //                    from doc in activeDocs
-        //                    join dt in docTypeMasters on doc.DocType equals Convert.ToInt32(dt.DocTypeId)
-        //                    where
-        //                        (
-        //                            (b1.Any(x => empEntityIds.Contains((int)x.LinkId) && x.MasterId == doc.DocId)) ||
-        //                            (b2.Any(x => x.LinkId == Convert.ToInt32(employee.EmpFirstEntity) && x.MasterId == doc.DocId))
-        //                        )
-        //                    select new EmpDocumentAccess
-        //                    {
-        //                        InstId = 1,
-        //                        EmpId = empID,
-        //                        DocId = (int?)doc.DocId,
-        //                        ValidFrom = currentUtc,
-        //                        IsCompanyLevel = 0,
-        //                        Status = 0,
-        //                        CreatedBy = inserEmployeeDto.EntryBy,
-        //                        CreatedDate = currentUtc
-        //                    }
-        //                ).Distinct().ToList();
-
-        //                _context.EmpDocumentAccesses.AddRange(accessEntries);
-        //                _context.SaveChanges();
-        //            }
-        //            var leaveTransactionId = await GetTransactionIdByTransactionType("Leave");
-
-        //            // Step 2: Get all applicable LeaveMasterIds
-        //            var applicableLeaveMasterIds = await _context.EntityApplicable00s
-        //                .Where(ea =>
-        //                    ea.TransactionId == leaveTransactionId &&
-        //                    (
-        //                        (ea.LinkLevel == 1 && ea.LinkId == inserEmployeeDto.empFirstEntiry) ||
-        //                        ea.LinkLevel == 15 ||
-        //                        (ea.LinkLevel != 1 && empEntityIds.Contains((int)ea.LinkId))
-        //                    )
-        //                )
-        //                .Select(ea => ea.MasterId)
-        //                .Distinct()
-        //                .ToListAsync();
-
-        //            // Step 3: Get active leave masters matching the IDs
-        //            var leaveMasters = await _context.HrmLeaveMasters
-        //                .Where(lm => lm.Active == 1 && applicableLeaveMasterIds.Contains(lm.LeaveMasterId))
-        //                .ToListAsync();
-
-        //            //Step 4: Create LeaveAccess entries
-        //            var leaveAccessEntries = leaveMasters.Select(lm => new HrmLeaveEmployeeleaveaccess
-        //            {
-        //                EmployeeId = empID,
-        //                LeaveMaster = lm.LeaveMasterId,
-        //                IsCompanyLevel = 0,
-        //                CreatedBy = inserEmployeeDto.EntryBy,
-        //                CreatedDate = DateTime.UtcNow,
-        //                Status = 1,
-        //                FromDate = inserEmployeeDto.JoinDt
-        //            }).ToList();
-
-        //            // Step 5: Insert to DB
-        //            _context.HrmLeaveEmployeeleaveaccesses.AddRange(leaveAccessEntries);
-        //            await _context.SaveChangesAsync();
-
-        //            //-----------------------------------HrmLeaveBasicsettingsaccesses--------------------Start-------------------------
-
-        //            //                    var leaveBasicTransactionId = await GetTransactionIdByTransactionType("Leave_BS");
-
-        //            //                    var applicableSettingIds = await _context.EntityApplicable00s.Where(ea =>
-        //            //                                               ea.TransactionId == leaveBasicTransactionId &&
-        //            //                                               (
-        //            //                                                   (ea.LinkLevel == 1 && ea.LinkId == inserEmployeeDto.firtEntity) ||
-        //            //                                                   (ea.LinkLevel == 15) ||
-        //            //                                                   (ea.LinkLevel != 1 && empEntityIds.Contains((int)ea.LinkId))
-        //            //                                               )
-        //            //                    )
-        //            //                                               .Select(ea => ea.MasterId)
-        //            //                                               .Distinct()
-        //            //                                               .ToListAsync();
-        //            //                    var leaveBasicSettingsAccessList = await (
-        //            //    from s in _context.HrmLeaveMasterandsettingsLinks
-        //            //    join a in _context.HrmLeaveMasters on s.LeaveMasterId equals a.LeaveMasterId
-        //            //    where a.Active == 1 &&
-        //            //          inserEmployeeDto.m.Contains(s.LeaveMasterId) &&
-        //            //          applicableSettingIds.Contains(s.LeaveMasterId) // Assuming s.Id == Id_MasterandSettingsLink
-        //            //    select new HrmLeaveBasicsettingsaccess
-        //            //    {
-        //            //        EmployeeId = empId,
-        //            //        SettingsId = s.SettingsId,
-        //            //        LeaveMasterId = s.LeaveMasterId,
-        //            //        IsCompanyLevel = 0,
-        //            //        CreatedBy = entryBy,
-        //            //        CreatedDate = DateTime.UtcNow,
-        //            //        FromDateBs = joinDate,
-        //            //        Laps = 1.0m
-        //            //    }
-        //            //).ToListAsync();
-
-        //            //                    // 3. Save to DB
-        //            //                    _context.HrmLeaveBasicsettingsaccesses.AddRange(leaveBasicSettingsAccessList);
-        //            //                    await _context.SaveChangesAsync();
-
-
-        //            //-----------------------------------HrmLeaveBasicsettingsaccesses--------------------End-------------------------
-
-        //        }
-
-
-
-        //        ////////////---------------------------Code started on 16 April 2025---------------End------------------///////////
-
-
-
-
-
-
-        //        //-------------Testing need to be done on 08 April 2025-----------End--------
-
-
-        //        await _context.SaveChangesAsync();
-
-
-
-
-
-        //    }
-        //    return "Success";
-        //}
-
+        #endregion
 
 
 
@@ -14247,7 +14173,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return mappings;
         }
 
-        #endregion
+
 
         public async Task<List<object>> RetrieveShiftEmpCreationAsync()
         {
