@@ -562,7 +562,7 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.GetAccessLevel();
         }
 
-        public async Task<object> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto)
+        public async Task<int> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto)
         {
             return await _employeeRepository.AddEmployeeAsync(inserEmployeeDto);
         }
@@ -828,9 +828,9 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetlastEntityByRoleId(roleId, EntityLimit);
         }
-        public async Task<int> SaveManualEmpPayscaleOldFormat (SaveManualEmpPayscaleOldFormatDto dto)
+        public async Task<int> SaveManualEmpPayscaleOldFormat(SaveManualEmpPayscaleOldFormatDto dto)
         {
-            return await _employeeRepository.SaveManualEmpPayscaleOldFormat (dto);
+            return await _employeeRepository.SaveManualEmpPayscaleOldFormat(dto);
         }
     }
 }
