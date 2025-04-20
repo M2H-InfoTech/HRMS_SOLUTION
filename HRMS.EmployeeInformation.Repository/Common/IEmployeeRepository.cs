@@ -230,7 +230,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmpRoleReporteesAsync(int SecondEntityId, int FirstEntityId, string Prefix);
         Task<List<HrmsDocumentField00>> GetDependentFieldsAsync();
         Task<PayscaleResultDto> GetLatestPayscaleAsync(int employeeId, int? type);
-        Task<int> GetlastEntityByRoleId(int roleId, int EntityLimit);
+        Task<int> GetlastEntityByRoleId(EntityRoleRequestDto customEntityList);
         Task<int> SaveManualEmpPayscaleOldFormat(SaveManualEmpPayscaleOldFormatDto dto); //Created By Shan Lal K
         Task<List<string>> DdlIsprobationAsync(int FirstEntityID, string LinkID);
     }

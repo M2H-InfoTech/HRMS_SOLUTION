@@ -824,9 +824,9 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.GetLatestPayscaleAsync(employeeId, type);
         }
 
-        public async Task<int> GetlastEntityByRoleId(int roleId, int EntityLimit)
+        public async Task<int> GetlastEntityByRoleId(EntityRoleRequestDto customEntityList)
         {
-            return await _employeeRepository.GetlastEntityByRoleId(roleId, EntityLimit);
+            return await _employeeRepository.GetlastEntityByRoleId(customEntityList);
         }
         public async Task<int> SaveManualEmpPayscaleOldFormat(SaveManualEmpPayscaleOldFormatDto dto)
         {

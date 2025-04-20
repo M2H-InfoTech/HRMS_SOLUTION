@@ -1341,19 +1341,19 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.GetLatestPayscaleAsync(employeeId, type);
             return Ok(result);
         }
-        [HttpGet]
-        public async Task<IActionResult> GetlastEntityByRoleId(int roleId, int EntityLimit)
+        [HttpPost]
+        public async Task<IActionResult> GetlastEntityByRoleId([FromBody] EntityRoleRequestDto customEntityList)
         {
-            var result = await _employeeInformation.GetlastEntityByRoleId(roleId, EntityLimit);
+            var result = await _employeeInformation.GetlastEntityByRoleId(customEntityList);
             return Ok(result);
         }
 
         //Shan Lal Created
         [HttpPost]
-        public async Task<IActionResult> SaveManualEmpPayscaleOldFormat (SaveManualEmpPayscaleOldFormatDto dto)
+        public async Task<IActionResult> SaveManualEmpPayscaleOldFormat(SaveManualEmpPayscaleOldFormatDto dto)
         {
-            var result = await _employeeInformation.SaveManualEmpPayscaleOldFormat (dto);
-            return Ok (result);
+            var result = await _employeeInformation.SaveManualEmpPayscaleOldFormat(dto);
+            return Ok(result);
         }
         [HttpGet]
         public async Task<IActionResult> DdlIsprobation(int FirstEntityID, string LinkID)
