@@ -3022,7 +3022,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
         }
 
-        public async Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
+        public async Task<(int ErrorID, string ErrorMessage)> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
         {
             var existingEntity = await _context.HrEmpProfdtlsApprls
                 .FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId &&
@@ -3030,7 +3030,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                           e.LeavingDt.HasValue && e.LeavingDt.Value.Date == profdtlsApprlDto.LeavingDt);
             if (existingEntity != null)
             {
-                return _employeeSettings.DataInsertFailedStatus;
+                return (0, _employeeSettings.DataInsertFailedStatus);
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -3047,7 +3047,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                     if (codeId == null)
                     {
                         await transaction.RollbackAsync();
-                        return "NoSequence";  // Match SQL logic
+                        return (0, "NoSequence");  // Match SQL logic
                     }
 
                     hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
@@ -3085,7 +3085,30 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                     //await _context.SaveChangesAsync();
 
-                    await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
+                    var hrEmpProfdtlAprvl = new HrEmpProfdtlsApprl
+                    {
+                        InstId = profdtlsApprlDto.InstId,
+                        ProfId = profdtlsApprlDto.ProfId,
+                        EmpId = profdtlsApprlDto.EmpId,
+                        CompName = profdtlsApprlDto.CompName,
+                        Designation = profdtlsApprlDto.Designation,
+                        CompAddress = profdtlsApprlDto.CompAddress,
+                        Pbno = profdtlsApprlDto.Pbno,
+                        ContactPer = profdtlsApprlDto.ContactPer,
+                        ContactNo = profdtlsApprlDto.ContactNo,
+                        JobDesc = profdtlsApprlDto.JobDesc,
+                        JoinDt = profdtlsApprlDto.JoinDt,
+                        LeavingDt = profdtlsApprlDto.LeavingDt,
+                        LeaveReason = profdtlsApprlDto.LeaveReason,
+                        Ctc = profdtlsApprlDto.Ctc,
+                        CurrencyId = profdtlsApprlDto.CurrencyId,
+                        CompSite = profdtlsApprlDto.CompSite,
+                        EntryBy = profdtlsApprlDto.EntryBy,
+                        EntryDt = profdtlsApprlDto.EntryDt,
+                    };
+                    await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlAprvl);
+
+                    //await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
                 }
 
                 // Update HR_EMP_MASTER.ModifiedDate
@@ -3098,7 +3121,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                 int result = await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                return result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
+                return (0, _employeeSettings.DataInsertSuccessStatus);// result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
             }
             catch
             {
@@ -3111,9 +3134,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<string?> GetLastSequence(string codeId)
         {
             return await _context.AdmCodegenerationmasters
-                .Where(a => a.CodeId.ToString() == codeId) // Fix condition
-                .Select(a => a.LastSequence)
-                .FirstOrDefaultAsync();
+            .Where(a => a.CodeId.ToString() == codeId) // Fix condition
+            .Select(a => a.LastSequence)
+            .FirstOrDefaultAsync();
         }
 
         // Fixes in UpdateCodeGeneration
@@ -3138,8 +3161,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             // Assuming there’s a stored procedure call or business logic
             await _context.Database.ExecuteSqlRawAsync(
-                "EXEC WorkFlowActivityFlow @p0, @p1, @p2, @p3",
-                empId, transactionType, requestId, entryBy
+            "EXEC WorkFlowActivityFlow @p0, @p1, @p2, @p3",
+            empId, transactionType, requestId, entryBy
             );
         }
 
@@ -3201,17 +3224,17 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<bool> IsWorkflowNeeded()
         {
             return await _context.CompanyParameters
-                .Join(_context.HrmValueTypes, a => a.Value, b => b.Value, (a, b) => new { a, b })
-                .Where(x => x.b.Type == "EmployeeReporting" && x.a.ParameterCode == "WRKFLO")
-                .Select(x => x.b.Code)
-                .FirstOrDefaultAsync() == "Yes";
+            .Join(_context.HrmValueTypes, a => a.Value, b => b.Value, (a, b) => new { a, b })
+            .Where(x => x.b.Type == "EmployeeReporting" && x.a.ParameterCode == "WRKFLO")
+            .Select(x => x.b.Code)
+            .FirstOrDefaultAsync() == "Yes";
         }
         public async Task<string?> GenerateRequestId(int empId)
         {
             var transactionID = await _context.TransactionMasters
-                .Where(a => a.TransactionType == "Professional")
-                .Select(a => a.TransactionId)
-                .FirstOrDefaultAsync();
+            .Where(a => a.TransactionType == "Professional")
+            .Select(a => a.TransactionId)
+            .FirstOrDefaultAsync();
 
             return GetSequenceAPI(empId, transactionID, "", 0);
         }
@@ -3236,27 +3259,27 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private async Task InsertProfessionalDetails(int empId)
         {
             var profdtlsApprlDto = await _context.HrEmpProfdtlsApprls
-                .Where(x => x.EmpId == empId)
-                .Select(x => new HrEmpProfdtlsApprl
-                {
-                    InstId = x.InstId,
-                    EmpId = x.EmpId,
-                    CompName = x.CompName,
-                    Designation = x.Designation,
-                    CompAddress = x.CompAddress,
-                    Pbno = x.Pbno,
-                    ContactPer = x.ContactPer,
-                    ContactNo = x.ContactNo,
-                    JobDesc = x.JobDesc,
-                    JoinDt = x.JoinDt,
-                    LeavingDt = x.LeavingDt,
-                    LeaveReason = x.LeaveReason,
-                    Ctc = x.Ctc,
-                    CurrencyId = x.CurrencyId,
-                    EntryBy = x.EntryBy,
-                    EntryDt = x.EntryDt
-                })
-                .FirstOrDefaultAsync();
+            .Where(x => x.EmpId == empId)
+            .Select(x => new HrEmpProfdtlsApprl
+            {
+                InstId = x.InstId,
+                EmpId = x.EmpId,
+                CompName = x.CompName,
+                Designation = x.Designation,
+                CompAddress = x.CompAddress,
+                Pbno = x.Pbno,
+                ContactPer = x.ContactPer,
+                ContactNo = x.ContactNo,
+                JobDesc = x.JobDesc,
+                JoinDt = x.JoinDt,
+                LeavingDt = x.LeavingDt,
+                LeaveReason = x.LeaveReason,
+                Ctc = x.Ctc,
+                CurrencyId = x.CurrencyId,
+                EntryBy = x.EntryBy,
+                EntryDt = x.EntryDt
+            })
+            .FirstOrDefaultAsync();
 
             if (profdtlsApprlDto != null)
             {
@@ -3274,10 +3297,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID)
         {
             var query = (updateType == "Pending")
-                ? _context.HrEmpProfdtlsApprls
-                    .Select(a => new { a.ProfId, a.EmpId, a.CompName, a.Designation, a.CompAddress, a.Pbno, a.ContactPer, a.ContactNo, a.JobDesc, a.JoinDt, a.LeavingDt, a.LeaveReason, a.Ctc, a.CurrencyId })
-                : _context.HrEmpProfdtls
-                    .Select(a => new { a.ProfId, a.EmpId, a.CompName, a.Designation, a.CompAddress, a.Pbno, a.ContactPer, a.ContactNo, a.JobDesc, a.JoinDt, a.LeavingDt, a.LeaveReason, a.Ctc, a.CurrencyId });
+            ? _context.HrEmpProfdtlsApprls
+            .Select(a => new { a.ProfId, a.EmpId, a.CompName, a.Designation, a.CompAddress, a.Pbno, a.ContactPer, a.ContactNo, a.JobDesc, a.JoinDt, a.LeavingDt, a.LeaveReason, a.Ctc, a.CurrencyId })
+            : _context.HrEmpProfdtls
+            .Select(a => new { a.ProfId, a.EmpId, a.CompName, a.Designation, a.CompAddress, a.Pbno, a.ContactPer, a.ContactNo, a.JobDesc, a.JoinDt, a.LeavingDt, a.LeaveReason, a.Ctc, a.CurrencyId });
 
             return await (from a in query
                           join b in _context.CurrencyMasters
@@ -3324,51 +3347,51 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var tempDocumentFillList = tempDocumentFill;
             //var tempDocumentFillDict = tempDocumentFillList.ToDictionary(x => x.ReasonId, x => x);
             var tempDocumentFillDict = tempDocumentFillList
-    .DistinctBy(x => x.ReasonId)
-    .ToDictionary(x => x.ReasonId, x => x);
+            .DistinctBy(x => x.ReasonId)
+            .ToDictionary(x => x.ReasonId, x => x);
 
             // Step 2: Retrieve Approved Documents
 
 
             var ApprovedDos = await (
-                                        from t1 in _context.HrmsEmpdocumentsApproved00s
-                                        join t2 in _context.HrmsEmpdocumentsApproved01s on t1.DetailId equals t2.DetailId
-                                        join t3 in _context.HrmsDocumentField00s on Convert.ToInt32(t2.DocFields) equals t3.DocFieldId into docFieldJoin
-                                        from t3 in docFieldJoin.DefaultIfEmpty()
-                                        join t4 in _context.HrmsDocument00s on Convert.ToInt32(t1.DocId) equals t4.DocId
-                                        join t5 in _context.HrmsDocTypeMasters on Convert.ToInt32(t4.DocType) equals t5.DocTypeId
-                                        join t6 in _context.HrmsDatatypes on t3.DataTypeId equals t6.DataTypeId into dataTypeJoin
-                                        from t6 in dataTypeJoin.DefaultIfEmpty()
-                                        join t7 in _context.AdmCountryMasters on t2.DocValues equals t7.CountryId.ToString() into countryJoin
-                                        from t7 in countryJoin.DefaultIfEmpty()
-                                        join t8 in _context.ReasonMasters on t2.DocValues equals t8.ReasonId.ToString() into reasonJoin
-                                        from t8 in reasonJoin.DefaultIfEmpty()
-                                        where t1.EmpId == employeeId
-                                                && t1.Status == _employeeSettings.EmployeeStatus
-                                                && !excludedDocTypes.Contains(t5.DocType)
-                                                && t3.DocDescription != _employeeSettings.Active// "IsActive"
+                                from t1 in _context.HrmsEmpdocumentsApproved00s
+                                join t2 in _context.HrmsEmpdocumentsApproved01s on t1.DetailId equals t2.DetailId
+                                join t3 in _context.HrmsDocumentField00s on Convert.ToInt32(t2.DocFields) equals t3.DocFieldId into docFieldJoin
+                                from t3 in docFieldJoin.DefaultIfEmpty()
+                                join t4 in _context.HrmsDocument00s on Convert.ToInt32(t1.DocId) equals t4.DocId
+                                join t5 in _context.HrmsDocTypeMasters on Convert.ToInt32(t4.DocType) equals t5.DocTypeId
+                                join t6 in _context.HrmsDatatypes on t3.DataTypeId equals t6.DataTypeId into dataTypeJoin
+                                from t6 in dataTypeJoin.DefaultIfEmpty()
+                                join t7 in _context.AdmCountryMasters on t2.DocValues equals t7.CountryId.ToString() into countryJoin
+                                from t7 in countryJoin.DefaultIfEmpty()
+                                join t8 in _context.ReasonMasters on t2.DocValues equals t8.ReasonId.ToString() into reasonJoin
+                                from t8 in reasonJoin.DefaultIfEmpty()
+                                where t1.EmpId == employeeId
+                                        && t1.Status == _employeeSettings.EmployeeStatus
+                                        && !excludedDocTypes.Contains(t5.DocType)
+                                        && t3.DocDescription != _employeeSettings.Active// "IsActive"
 
-                                        select new DocumentsDto
-                                        {
-                                            DetailID = t1.DetailId,
-                                            DocID = t1.DocId,
-                                            EmpID = t1.EmpId,
-                                            DocFieldID = t3.DocFieldId,
-                                            DocDescription = t3.DocDescription,
-                                            DocValues = t2.DocValues,
-                                            IsGeneralCategory = t6.IsGeneralCategory,
-                                            DataType = t6.DataType,
-                                            DocName = t4.DocName.ToUpper(),
-                                            IsDate = t6.IsDate,
-                                            repeatrank = (
-                                                from innerT2 in _context.HrmsEmpdocumentsApproved01s
-                                                join innerT3 in _context.HrmsDocumentField00s on Convert.ToInt32(innerT2.DocFields) equals innerT3.DocFieldId
-                                                where innerT2.DetailId == t1.DetailId
-                                                orderby innerT3.DocFieldId descending
-                                                select innerT3.DocFieldId
-                                            ).Count()
-                                        }
-                                    ).OrderBy(x => x.DocID).AsNoTracking().ToListAsync();
+                                select new DocumentsDto
+                                {
+                                    DetailID = t1.DetailId,
+                                    DocID = t1.DocId,
+                                    EmpID = t1.EmpId,
+                                    DocFieldID = t3.DocFieldId,
+                                    DocDescription = t3.DocDescription,
+                                    DocValues = t2.DocValues,
+                                    IsGeneralCategory = t6.IsGeneralCategory,
+                                    DataType = t6.DataType,
+                                    DocName = t4.DocName.ToUpper(),
+                                    IsDate = t6.IsDate,
+                                    repeatrank = (
+                                        from innerT2 in _context.HrmsEmpdocumentsApproved01s
+                                        join innerT3 in _context.HrmsDocumentField00s on Convert.ToInt32(innerT2.DocFields) equals innerT3.DocFieldId
+                                        where innerT2.DetailId == t1.DetailId
+                                        orderby innerT3.DocFieldId descending
+                                        select innerT3.DocFieldId
+                                    ).Count()
+                                }
+                            ).OrderBy(x => x.DocID).AsNoTracking().ToListAsync();
 
 
 
@@ -3460,17 +3483,17 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var approvedFiles = files.Where(f => f.Status == _employeeSettings.EmployeeStatus).ToList();
 
             return new List<AllDocumentsDto>
-            {
-                 new AllDocumentsDto
-                 {
-                     //TempDocumentFill = tempDocumentFillList,
-                     ApprovedDocuments = ApprovedDos,
-                     DocumentList = docList,
-                     PendingDocumentsDto = pendingDocuments,
-                     PendingFiles = pendingFiles,
-                     ApprovedFiles = approvedFiles
-                 }
-            };
+{
+new AllDocumentsDto
+{
+ //TempDocumentFill = tempDocumentFillList,
+ ApprovedDocuments = ApprovedDos,
+ DocumentList = docList,
+ PendingDocumentsDto = pendingDocuments,
+ PendingFiles = pendingFiles,
+ ApprovedFiles = approvedFiles
+}
+};
 
         }
         public async Task<List<PersonalDetailsDto>> GetPersonalDetailsByIdAsync(int employeeid)
@@ -3552,8 +3575,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             // Fetch previous experience data in a single query
             var previousExpDays = await _context.HrEmpProfdtls
-                .Where(empProf => empProf.EmpId == employeeId)
-                .SumAsync(empProf => (int?)EF.Functions.DateDiffDay(empProf.JoinDt, empProf.LeavingDt) ?? 0);
+            .Where(empProf => empProf.EmpId == employeeId)
+            .SumAsync(empProf => (int?)EF.Functions.DateDiffDay(empProf.JoinDt, empProf.LeavingDt) ?? 0);
 
             var previousExp = new CareerHistoryDto
             {
@@ -3565,9 +3588,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Fetch company experience in a single query
             var relevantDays = await _context.HrEmpMasters
-                .Where(empMaster => empMaster.EmpId == employeeId)
-                .Select(empMaster => (int?)EF.Functions.DateDiffDay(empMaster.FirstEntryDate, DateTime.UtcNow) ?? 0)
-                .FirstOrDefaultAsync();
+            .Where(empMaster => empMaster.EmpId == employeeId)
+            .Select(empMaster => (int?)EF.Functions.DateDiffDay(empMaster.FirstEntryDate, DateTime.UtcNow) ?? 0)
+            .FirstOrDefaultAsync();
 
             var companyExp = new CareerHistoryDto
             {
@@ -3594,52 +3617,52 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             //table 1
             var TransferTransition00 = _context.TransferTransition00s
-                .Where(a => a.BatchApprovalStatus != _employeeSettings.Status01
-                            && (a.EmpApprovalStatus ?? _employeeSettings.EmployeeStatus) != _employeeSettings.Status01
-                            && a.EmployeeId == employeeId)
-                .Select(a => new
-                {
-                    a.TransferBatchId,
-                    a.TransferId,
-                    a.EntityOrder,
-                    a.ActionId,
-                    a.EmployeeId,
-                    a.OldEntityId,
-                    a.OldEntityDescription,
-                    a.NewEntityId,
-                    a.NewEntityDescription,
-                    a.FromDate,
-                    a.ToDate,
-                    a.BatchApprovalStatus,
-                    a.EmpApprovalStatus
-                })
-                .ToList();
+            .Where(a => a.BatchApprovalStatus != _employeeSettings.Status01
+                    && (a.EmpApprovalStatus ?? _employeeSettings.EmployeeStatus) != _employeeSettings.Status01
+                    && a.EmployeeId == employeeId)
+            .Select(a => new
+            {
+                a.TransferBatchId,
+                a.TransferId,
+                a.EntityOrder,
+                a.ActionId,
+                a.EmployeeId,
+                a.OldEntityId,
+                a.OldEntityDescription,
+                a.NewEntityId,
+                a.NewEntityDescription,
+                a.FromDate,
+                a.ToDate,
+                a.BatchApprovalStatus,
+                a.EmpApprovalStatus
+            })
+            .ToList();
 
             var transferCareerHistory = TransferTransition00
-                .Select(t => new CareerHistoryTransferModelDto
-                {
-                    TransferId = t.TransferId,
-                    EmployeeId = t.EmployeeId,
-                    FromDate = null,
-                    ToDate = null,
-                    Level1 = null,
-                    Level2 = null,
-                    Level3 = null,
-                    Level4 = null,
-                    Level5 = null,
-                    Level6 = null,
-                    Level7 = null,
-                    Level8 = null,
-                    Level9 = null,
-                    Level10 = null,
-                    Level11 = null
-                })
-                .Distinct()
-                .ToList();
+            .Select(t => new CareerHistoryTransferModelDto
+            {
+                TransferId = t.TransferId,
+                EmployeeId = t.EmployeeId,
+                FromDate = null,
+                ToDate = null,
+                Level1 = null,
+                Level2 = null,
+                Level3 = null,
+                Level4 = null,
+                Level5 = null,
+                Level6 = null,
+                Level7 = null,
+                Level8 = null,
+                Level9 = null,
+                Level10 = null,
+                Level11 = null
+            })
+            .Distinct()
+            .ToList();
 
             var transitionDict = TransferTransition00
-                .GroupBy(t => t.TransferId)
-                .ToDictionary(g => g.Key, g => g.ToList());
+            .GroupBy(t => t.TransferId)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
             foreach (var history in transferCareerHistory)
             {
@@ -3668,61 +3691,61 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 }
             }
             var entityLimit = _context.LicensedCompanyDetails
-                .Select(l => l.EntityLimit)
-                .FirstOrDefault();
+            .Select(l => l.EntityLimit)
+            .FirstOrDefault();
 
             var categoryMaster = _context.Categorymasters
-                .Where(c => c.SortOrder >= 1 && c.SortOrder <= 11)
-                .OrderBy(c => c.SortOrder)
-                .ToList();
+            .Where(c => c.SortOrder >= 1 && c.SortOrder <= 11)
+            .OrderBy(c => c.SortOrder)
+            .ToList();
 
             var categoryLevels = _context.Categorymasters
-                .Where(c => c.SortOrder >= 1 && c.SortOrder <= entityLimit)
-                .OrderBy(c => c.SortOrder)
-                .ToDictionary(c => c.SortOrder, c => c.Description);
+            .Where(c => c.SortOrder >= 1 && c.SortOrder <= entityLimit)
+            .OrderBy(c => c.SortOrder)
+            .ToDictionary(c => c.SortOrder, c => c.Description);
 
             var careerHistoryList01 = transferCareerHistory
-                .Select(t => new CareerHistoryDataDto
-                {
-                    FromDate = t.FromDate,
-                    ToDate = t.ToDate,
-                    LevelData = categoryLevels.ToDictionary(
-                        level => level.Value,
-                        level => level.Key switch
-                            {
-                                1 => t.Level1 ?? "",
-                                2 => t.Level2 ?? "",
-                                3 => t.Level3 ?? "",
-                                4 => t.Level4 ?? "",
-                                5 => t.Level5 ?? "",
-                                6 => t.Level6 ?? "",
-                                7 => t.Level7 ?? "",
-                                8 => t.Level8 ?? "",
-                                9 => t.Level9 ?? "",
-                                10 => t.Level10 ?? "",
-                                11 => t.Level11 ?? "",
-                                _ => ""
-                            })
-                })
-                .ToList();
+            .Select(t => new CareerHistoryDataDto
+            {
+                FromDate = t.FromDate,
+                ToDate = t.ToDate,
+                LevelData = categoryLevels.ToDictionary(
+                level => level.Value,
+                level => level.Key switch
+                    {
+                        1 => t.Level1 ?? "",
+                        2 => t.Level2 ?? "",
+                        3 => t.Level3 ?? "",
+                        4 => t.Level4 ?? "",
+                        5 => t.Level5 ?? "",
+                        6 => t.Level6 ?? "",
+                        7 => t.Level7 ?? "",
+                        8 => t.Level8 ?? "",
+                        9 => t.Level9 ?? "",
+                        10 => t.Level10 ?? "",
+                        11 => t.Level11 ?? "",
+                        _ => ""
+                    })
+            })
+            .ToList();
 
             var finalResult = careerHistoryList01
-                .Select(x =>
+            .Select(x =>
+            {
+                var flatObject = new Dictionary<string, object>
+            {
+{ "FromDate", x.FromDate },
+{ "ToDate", x.ToDate }
+            };
+
+                foreach (var kvp in x.LevelData)
                 {
-                    var flatObject = new Dictionary<string, object>
-                    {
-            { "FromDate", x.FromDate },
-            { "ToDate", x.ToDate }
-                    };
+                    flatObject[kvp.Key] = kvp.Value;
+                }
 
-                    foreach (var kvp in x.LevelData)
-                    {
-                        flatObject[kvp.Key] = kvp.Value;
-                    }
-
-                    return flatObject;
-                })
-                .ToList();
+                return flatObject;
+            })
+            .ToList();
 
             return new CareerHistoryResultDto
             {
@@ -3750,73 +3773,73 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<object> AccessDetailsAsync(int employeeId)
         {
             var employee = await _context.HrEmpMasters
-                .Where(z => z.EmpId == employeeId)
-                .Select(z => new
-                {
-                    Holiday = _context.HrmHolidayMasterAccesses
-                        .Where(a => a.EmployeeId == z.EmpId)
-                        .OrderBy(x => x.IdHolidayMasterAccess)
-                        .Select(x => (long?)x.IdHolidayMasterAccess)
-                        .FirstOrDefault(),
+            .Where(z => z.EmpId == employeeId)
+            .Select(z => new
+            {
+                Holiday = _context.HrmHolidayMasterAccesses
+                .Where(a => a.EmployeeId == z.EmpId)
+                .OrderBy(x => x.IdHolidayMasterAccess)
+                .Select(x => (long?)x.IdHolidayMasterAccess)
+                .FirstOrDefault(),
 
-                    Attendance = _context.AttendancepolicyMasterAccesses
-                        .Where(b => b.EmployeeId == z.EmpId)
-                        .OrderBy(x => x.AttendanceAccessId)
-                        .Select(x => (long?)x.AttendanceAccessId)
-                        .FirstOrDefault(),
+                Attendance = _context.AttendancepolicyMasterAccesses
+                .Where(b => b.EmployeeId == z.EmpId)
+                .OrderBy(x => x.AttendanceAccessId)
+                .Select(x => (long?)x.AttendanceAccessId)
+                .FirstOrDefault(),
 
-                    Shift = _context.ShiftMasterAccesses
-                        .Where(c => c.EmployeeId == z.EmpId)
-                        .OrderBy(x => x.ShiftAccessId)
-                        .Select(x => (long?)x.ShiftAccessId)
-                        .FirstOrDefault(),
+                Shift = _context.ShiftMasterAccesses
+                .Where(c => c.EmployeeId == z.EmpId)
+                .OrderBy(x => x.ShiftAccessId)
+                .Select(x => (long?)x.ShiftAccessId)
+                .FirstOrDefault(),
 
-                    Leave = _context.HrmLeaveEmployeeleaveaccesses
-                        .Where(d => d.EmployeeId == z.EmpId)
-                        .OrderBy(x => x.IdEmployeeLeaveAccess)
-                        .Select(x => (long?)x.IdEmployeeLeaveAccess)
-                        .FirstOrDefault(),
+                Leave = _context.HrmLeaveEmployeeleaveaccesses
+                .Where(d => d.EmployeeId == z.EmpId)
+                .OrderBy(x => x.IdEmployeeLeaveAccess)
+                .Select(x => (long?)x.IdEmployeeLeaveAccess)
+                .FirstOrDefault(),
 
-                    LeavePolicy = _context.LeavepolicyMasterAccesses
-                        .Where(e => e.EmployeeId == z.EmpId)
-                        .OrderBy(x => x.LeaveAccessId)
-                        .Select(x => (long?)x.LeaveAccessId)
-                        .FirstOrDefault(),
+                LeavePolicy = _context.LeavepolicyMasterAccesses
+                .Where(e => e.EmployeeId == z.EmpId)
+                .OrderBy(x => x.LeaveAccessId)
+                .Select(x => (long?)x.LeaveAccessId)
+                .FirstOrDefault(),
 
-                    LeaveBasicSettings = _context.HrmLeaveBasicsettingsaccesses
-                        .Where(f => f.EmployeeId == z.EmpId)
-                        .OrderBy(x => x.IdEmployeeSettinsAccess)
-                        .Select(x => (long?)x.IdEmployeeSettinsAccess)
-                        .FirstOrDefault()
-                })
-              .AsNoTracking().FirstOrDefaultAsync();
+                LeaveBasicSettings = _context.HrmLeaveBasicsettingsaccesses
+                .Where(f => f.EmployeeId == z.EmpId)
+                .OrderBy(x => x.IdEmployeeSettinsAccess)
+                .Select(x => (long?)x.IdEmployeeSettinsAccess)
+                .FirstOrDefault()
+            })
+            .AsNoTracking().FirstOrDefaultAsync();
 
             return employee; // Return empty object if no employee found
         }
         public async Task<List<Fill_ModulesWorkFlowDto>> FillModulesWorkFlowAsync(int entityID, int linkId)
         {
             var excludedTransactionIds = _context.ParamWorkFlow02s
-                .Where(pwf02 => entityID == 13 && pwf02.LinkEmpId == linkId && pwf02.LinkLevel == entityID)
-                .Select(pwf02 => pwf02.TransactionId)
-                .Union(
-                    _context.ParamWorkFlow01s
-                    .Where(pwf01 => entityID != 13 && pwf01.LinkId == linkId && pwf01.LinkLevel == entityID)
-                    .Select(pwf01 => pwf01.TransactionId)
-                );
+            .Where(pwf02 => entityID == 13 && pwf02.LinkEmpId == linkId && pwf02.LinkLevel == entityID)
+            .Select(pwf02 => pwf02.TransactionId)
+            .Union(
+            _context.ParamWorkFlow01s
+            .Where(pwf01 => entityID != 13 && pwf01.LinkId == linkId && pwf01.LinkLevel == entityID)
+            .Select(pwf01 => pwf01.TransactionId)
+            );
 
             var result = await (
-                from b in _context.ParamWorkFlow00s.AsNoTracking()
-                join c in _context.ParamWorkFlowEntityLevel00s.AsNoTracking()
-                    on b.ValueId equals c.ValueId
-                join d in _context.TransactionMasters.AsNoTracking()
-                    on b.TransactionId equals d.TransactionId
-                where c.EntityLevel == entityID && !excludedTransactionIds.Any(e => e == b.TransactionId)
-                select new Fill_ModulesWorkFlowDto
-                {
-                    ValueId = (int?)b.ValueId,
-                    TransactionId = b.TransactionId,
-                    Description = d.Description
-                }
+            from b in _context.ParamWorkFlow00s.AsNoTracking()
+            join c in _context.ParamWorkFlowEntityLevel00s.AsNoTracking()
+            on b.ValueId equals c.ValueId
+            join d in _context.TransactionMasters.AsNoTracking()
+            on b.TransactionId equals d.TransactionId
+            where c.EntityLevel == entityID && !excludedTransactionIds.Any(e => e == b.TransactionId)
+            select new Fill_ModulesWorkFlowDto
+            {
+                ValueId = (int?)b.ValueId,
+                TransactionId = b.TransactionId,
+                Description = d.Description
+            }
             ).ToListAsync();
 
             return result;
@@ -3824,53 +3847,53 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<Fill_WorkFlowMasterDto>> FillWorkFlowMasterAsync(int emp_Id, int roleId)
         {
             var transid = await _context.TransactionMasters
-                .Where(t => t.TransactionType == "W_Flow")
-                .Select(t => t.TransactionId)
-                .FirstOrDefaultAsync();
+            .Where(t => t.TransactionType == "W_Flow")
+            .Select(t => t.TransactionId)
+            .FirstOrDefaultAsync();
 
             int? lnklev = await _context.SpecialAccessRights
-                .Where(s => s.RoleId == roleId)
-                .Select(s => s.LinkLevel)
-                .FirstOrDefaultAsync();
+            .Where(s => s.RoleId == roleId)
+            .Select(s => s.LinkLevel)
+            .FirstOrDefaultAsync();
 
             bool hasAccess = await _context.EntityAccessRights02s
-                .AnyAsync(s => s.RoleId == roleId && s.LinkLevel == 15);
+            .AnyAsync(s => s.RoleId == roleId && s.LinkLevel == 15);
 
             if (hasAccess)
             {
                 return await _context.WorkFlowDetails
-                    .Where(w => (bool)w.IsActive)
-                    .Select(w => new Fill_WorkFlowMasterDto
-                    {
-                        WorkFlowId = w.WorkFlowId,
-                        Description = w.Description
-                    })
-                    .ToListAsync();
+                .Where(w => (bool)w.IsActive)
+                .Select(w => new Fill_WorkFlowMasterDto
+                {
+                    WorkFlowId = w.WorkFlowId,
+                    Description = w.Description
+                })
+                .ToListAsync();
             }
 
             // **Step 1: Compute `ctnew`**
             var empEntity = await _context.HrEmpMasters
-                .Where(h => h.EmpId == emp_Id)
-                .Select(h => h.EmpEntity)
-                .FirstOrDefaultAsync();
+            .Where(h => h.EmpId == emp_Id)
+            .Select(h => h.EmpEntity)
+            .FirstOrDefaultAsync();
 
             var ctnew = SplitStrings_XML(empEntity, ',')
-                .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
-                .Where(c => !string.IsNullOrEmpty(c.Item))
-                .ToList();
+            .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
+            .Where(c => !string.IsNullOrEmpty(c.Item))
+            .ToList();
 
             // **Step 2: Compute `applicableFinal`**
             var applicableFinal = await _context.EntityAccessRights02s
-                .Where(s => s.RoleId == roleId)
-                .SelectMany(s => SplitStrings_XML(s.LinkId, default),
-                    (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
-                .ToListAsync();
+            .Where(s => s.RoleId == roleId)
+            .SelectMany(s => SplitStrings_XML(s.LinkId, default),
+            (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
+            .ToListAsync();
 
             if (lnklev > 0)
             {
                 applicableFinal.AddRange(
-                    ctnew.Where(c => c.LinkLevel >= lnklev)
-                         .Select(c => new LinkItemDto { Item = c.Item, LinkLevel = c.LinkLevel })
+                ctnew.Where(c => c.LinkLevel >= lnklev)
+                     .Select(c => new LinkItemDto { Item = c.Item, LinkLevel = c.LinkLevel })
                 );
             }
 
@@ -3880,41 +3903,41 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // **Step 3: Fetch `EntityApplicable00Final`**
             var entityApplicable00Final = await _context.EntityApplicable00s
-                .Where(e => e.TransactionId == transid)
-                .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
-                .ToListAsync();
+            .Where(e => e.TransactionId == transid)
+            .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
+            .ToListAsync();
 
             // **Step 4: Compute `applicableFinal02`**
             var applicableFinal02 = applicableFinal.ToList(); // Already computed
 
             // **Step 5: Compute `applicableFinal02Emp`**
             var applicableFinal02Emp = await (
-                from emp in _context.EmployeeDetails
-                join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
-                join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
-                join af2 in applicableFinal02 on hlv.LevelOneId.ToString() equals af2.Item into af2LevelOne
-                from af2L1 in af2LevelOne.DefaultIfEmpty()
-                where ea.TransactionId == transid
-                select ea.MasterId
+            from emp in _context.EmployeeDetails
+            join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
+            join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
+            join af2 in applicableFinal02 on hlv.LevelOneId.ToString() equals af2.Item into af2LevelOne
+            from af2L1 in af2LevelOne.DefaultIfEmpty()
+            where ea.TransactionId == transid
+            select ea.MasterId
             ).Distinct().ToListAsync();
 
             // **Step 6: Compute `newhigh`**
             var newhigh = entityApplicable00Final
-                .Where(e => applicableFinalSetLong.Contains(e.LinkId) || e.LinkLevel == 15)
-                .Select(e => e.MasterId)
-                .Union(applicableFinal02Emp)
-                .Distinct()
-                .ToList();
+            .Where(e => applicableFinalSetLong.Contains(e.LinkId) || e.LinkLevel == 15)
+            .Select(e => e.MasterId)
+            .Union(applicableFinal02Emp)
+            .Distinct()
+            .ToList();
 
             // **Step 7: Final WorkFlowDetails Query**
             return await _context.WorkFlowDetails
-                .Where(wf => wf.IsActive == true && newhigh.Contains(wf.WorkFlowId))
-                .Select(wf => new Fill_WorkFlowMasterDto
-                {
-                    WorkFlowId = wf.WorkFlowId,
-                    Description = wf.Description
-                })
-                .ToListAsync();
+            .Where(wf => wf.IsActive == true && newhigh.Contains(wf.WorkFlowId))
+            .Select(wf => new Fill_WorkFlowMasterDto
+            {
+                WorkFlowId = wf.WorkFlowId,
+                Description = wf.Description
+            })
+            .ToListAsync();
         }
         public Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmpAsync(int linkId, int linkLevel)
         {
@@ -3980,9 +4003,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<int?> GetLastEntity(int? empId)
         {
             return await _context.HrEmpMasters
-                  .Where(e => e.EmpId == empId)
-                  .Select(e => e.LastEntity)
-                  .FirstOrDefaultAsync();
+            .Where(e => e.EmpId == empId)
+            .Select(e => e.LastEntity)
+            .FirstOrDefaultAsync();
         }
         public async Task<List<TransferAndPromotionDto>> TransferAndPromotionAsync(int employeeId)
         {
@@ -4066,30 +4089,30 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetailsAsync(int linkId, int linkLevel)
         {
             var query = (linkLevel == 13)
-                ? from a in _context.ParamRole02s
-                  join b in _context.Categorymasterparameters on a.ParameterId equals b.ParameterId into bGroup
-                  from b in bGroup.DefaultIfEmpty()
-                  join c in _context.EmployeeDetails on a.EmpId equals c.EmpId into cGroup
-                  from c in cGroup.DefaultIfEmpty()
-                  where a.LinkEmpId == linkId && b.ShowRoleInEmployeeTab == 1
-                  select new
-                  {
-                      a.ValueId,
-                      b.ParamDescription,
-                      EmployeeName = c.Name // No null check in query
-                  }
-                : from a in _context.ParamRole01s
-                  join b in _context.Categorymasterparameters on a.ParameterId equals b.ParameterId into bGroup
-                  from b in bGroup.DefaultIfEmpty()
-                  join c in _context.EmployeeDetails on a.EmpId equals c.EmpId into cGroup
-                  from c in cGroup.DefaultIfEmpty()
-                  where a.LinkId == linkId && b.ShowRoleInEmployeeTab == 1
-                  select new
-                  {
-                      a.ValueId,
-                      b.ParamDescription,
-                      EmployeeName = c.Name // No null check in query
-                  };
+            ? from a in _context.ParamRole02s
+              join b in _context.Categorymasterparameters on a.ParameterId equals b.ParameterId into bGroup
+              from b in bGroup.DefaultIfEmpty()
+              join c in _context.EmployeeDetails on a.EmpId equals c.EmpId into cGroup
+              from c in cGroup.DefaultIfEmpty()
+              where a.LinkEmpId == linkId && b.ShowRoleInEmployeeTab == 1
+              select new
+              {
+                  a.ValueId,
+                  b.ParamDescription,
+                  EmployeeName = c.Name // No null check in query
+              }
+            : from a in _context.ParamRole01s
+              join b in _context.Categorymasterparameters on a.ParameterId equals b.ParameterId into bGroup
+              from b in bGroup.DefaultIfEmpty()
+              join c in _context.EmployeeDetails on a.EmpId equals c.EmpId into cGroup
+              from c in cGroup.DefaultIfEmpty()
+              where a.LinkId == linkId && b.ShowRoleInEmployeeTab == 1
+              select new
+              {
+                  a.ValueId,
+                  b.ParamDescription,
+                  EmployeeName = c.Name // No null check in query
+              };
 
             var result = await query.AsNoTracking().ToListAsync();
 
@@ -4119,16 +4142,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                        }).Distinct().AsNoTracking().ToListAsync();
 
             var earningsDescriptions = payComponents
-                .Where(x => x.PayType == 1)
-                .Select(x => x.PayCodeDescription)
-                .Distinct()
-                .ToList();
+            .Where(x => x.PayType == 1)
+            .Select(x => x.PayCodeDescription)
+            .Distinct()
+            .ToList();
 
             var deductionDescriptions = payComponents
-                .Where(x => x.PayType == 2)
-                .Select(x => x.PayCodeDescription)
-                .Distinct()
-                .ToList();
+            .Where(x => x.PayType == 2)
+            .Select(x => x.PayCodeDescription)
+            .Distinct()
+            .ToList();
 
             var allDescriptions = earningsDescriptions.Concat(deductionDescriptions).Distinct().ToList();
 
@@ -4149,49 +4172,49 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // 3. Convert pivot to dictionary for quick lookup
             var pivotedDict = pivoted
-                .GroupBy(x => x.PayRequest01Id)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.ToDictionary(k => k.PayCodeDescription, v => v.Amount)
-                );
+            .GroupBy(x => x.PayRequest01Id)
+            .ToDictionary(
+            g => g.Key,
+            g => g.ToDictionary(k => k.PayCodeDescription, v => v.Amount)
+            );
 
             // 4. Main data query
             var baseResult = await (
-                from a in _context.PayscaleRequest00s.AsNoTracking()
-                join b in _context.PayscaleRequest01s.AsNoTracking() on a.PayRequestId equals b.PayRequestId
-                join c in _context.EmployeeDetails.AsNoTracking() on b.EmployeeId equals c.EmpId
-                join br in _context.BranchDetails.AsNoTracking() on c.BranchId equals br.LinkId
-                join d in _context.CurrencyMasters.AsNoTracking() on a.CurrencyId equals d.CurrencyId
-                join e in _context.PayscaleRequest02s.AsNoTracking() on b.PayRequest01Id equals e.PayRequestId01
-                join f in _context.PayCodeMaster01s.AsNoTracking() on e.PayComponentId equals f.PayCodeId
-                where b.EmployeeId == employeeId && b.EmployeeStatus == status
-                orderby b.EffectiveDate ascending
-                select new
-                {
-                    c.EmpId,
-                    a.PayRequestId,
-                    b.PayRequest01Id,
-                    c.EmpCode,
-                    c.Name,
-                    Branch = br.Branch,
-                    b.TotalEarnings,
-                    b.TotalDeductions,
-                    b.TotalPay,
-                    b.EffectiveDate,
-                    d.CurrencyCode,
-                    IsArrears = (a.Type == 4),
-                    PaycodeBatch = (from elpb in _context.EmployeeLatestPayrollBatches.AsNoTracking()
-                                    join pcm in _context.PayCodeMaster00s.AsNoTracking() on elpb.PayrollBatchId equals pcm.PayCodeMasterId
-                                    where elpb.EmployeeId == employeeId
-                                    orderby elpb.EntryDate descending
-                                    select pcm.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
-                    PayPeriod = (from elpp in _context.EmployeeLatestPayrollPeriods.AsNoTracking()
-                                 join p in _context.Payroll00s.AsNoTracking() on elpp.PayrollPeriodId equals p.PayrollPeriodId
-                                 where elpp.EmployeeId == employeeId
-                                 orderby elpp.EntryDate descending
-                                 select p.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
-                    Remarks = b.PayscaleEmpRemarks
-                }).Distinct().ToListAsync();
+            from a in _context.PayscaleRequest00s.AsNoTracking()
+            join b in _context.PayscaleRequest01s.AsNoTracking() on a.PayRequestId equals b.PayRequestId
+            join c in _context.EmployeeDetails.AsNoTracking() on b.EmployeeId equals c.EmpId
+            join br in _context.BranchDetails.AsNoTracking() on c.BranchId equals br.LinkId
+            join d in _context.CurrencyMasters.AsNoTracking() on a.CurrencyId equals d.CurrencyId
+            join e in _context.PayscaleRequest02s.AsNoTracking() on b.PayRequest01Id equals e.PayRequestId01
+            join f in _context.PayCodeMaster01s.AsNoTracking() on e.PayComponentId equals f.PayCodeId
+            where b.EmployeeId == employeeId && b.EmployeeStatus == status
+            orderby b.EffectiveDate ascending
+            select new
+            {
+                c.EmpId,
+                a.PayRequestId,
+                b.PayRequest01Id,
+                c.EmpCode,
+                c.Name,
+                Branch = br.Branch,
+                b.TotalEarnings,
+                b.TotalDeductions,
+                b.TotalPay,
+                b.EffectiveDate,
+                d.CurrencyCode,
+                IsArrears = (a.Type == 4),
+                PaycodeBatch = (from elpb in _context.EmployeeLatestPayrollBatches.AsNoTracking()
+                                join pcm in _context.PayCodeMaster00s.AsNoTracking() on elpb.PayrollBatchId equals pcm.PayCodeMasterId
+                                where elpb.EmployeeId == employeeId
+                                orderby elpb.EntryDate descending
+                                select pcm.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
+                PayPeriod = (from elpp in _context.EmployeeLatestPayrollPeriods.AsNoTracking()
+                             join p in _context.Payroll00s.AsNoTracking() on elpp.PayrollPeriodId equals p.PayrollPeriodId
+                             where elpp.EmployeeId == employeeId
+                             orderby elpp.EntryDate descending
+                             select p.Description).FirstOrDefault() ?? _employeeSettings.NotAvailable,
+                Remarks = b.PayscaleEmpRemarks
+            }).Distinct().ToListAsync();
 
             // 5. Compose final flattened result with all pay components
             var finalResult = baseResult.Select(row =>
@@ -4367,18 +4390,18 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                     }).AsNoTracking().ToListAsync();
 
             var isHRA = await _context.HrEmpMasters
-                .Where(e => e.EmpId == employeeId)
-                .Select(e => e.Ishra)
-                .FirstOrDefaultAsync();
+            .Where(e => e.EmpId == employeeId)
+            .Select(e => e.Ishra)
+            .FirstOrDefaultAsync();
 
             return new List<EmployeeHraDto>
-            {
-                new EmployeeHraDto
-                {
-                    HraHistory = hraHistory,
-                    IsHRA = isHRA
-                }
-            };
+{
+new EmployeeHraDto
+{
+HraHistory = hraHistory,
+IsHRA = isHRA
+}
+};
 
         }
         private IQueryable<AuditInformationSubDto> GetAuditInformation(string employeeIDs, string infoCode, string informationLabel)
@@ -4454,21 +4477,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             var Religion = await (
-             from a in _context.EditInfoHistories
-             join b in _context.AdmReligionMasters on Convert.ToInt32(a.Value) equals b.ReligionId
-             join c in _context.AdmReligionMasters on Convert.ToInt32(a.OldValue) equals c.ReligionId
-             where employeeIdss.Contains(a.EmpId.ToString()) && a.InfoCode == "RELIGION"
-             select new AuditInformationSubDto
-             {
-                 InfoID = (int)a.InfoId,
-                 Info01ID = a.Info01Id,
-                 EmpID = (int)a.EmpId,
-                 Information = "Religion",
-                 NewValue = a.Value == null ? "" : b.ReligionName,
-                 OldValue = a.OldValue == null ? "" : c.ReligionName,
-                 UpdatedBy = a.UpdatedBy,
-                 UpdatedDate = a.UpdatedDate
-             }).AsNoTracking().ToListAsync();
+            from a in _context.EditInfoHistories
+            join b in _context.AdmReligionMasters on Convert.ToInt32(a.Value) equals b.ReligionId
+            join c in _context.AdmReligionMasters on Convert.ToInt32(a.OldValue) equals c.ReligionId
+            where employeeIdss.Contains(a.EmpId.ToString()) && a.InfoCode == "RELIGION"
+            select new AuditInformationSubDto
+            {
+                InfoID = (int)a.InfoId,
+                Info01ID = a.Info01Id,
+                EmpID = (int)a.EmpId,
+                Information = "Religion",
+                NewValue = a.Value == null ? "" : b.ReligionName,
+                OldValue = a.OldValue == null ? "" : c.ReligionName,
+                UpdatedBy = a.UpdatedBy,
+                UpdatedDate = a.UpdatedDate
+            }).AsNoTracking().ToListAsync();
 
             var Height = await GetAuditInformation(employeeIDs, "HEIGHT", "Height").AsNoTracking().ToListAsync();
             var Weight = await GetAuditInformation(employeeIDs, "WEIGHT", "Weight").AsNoTracking().ToListAsync();
@@ -4489,21 +4512,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             var EmployeeReporting = await (
-                 from a in _context.EditInfoHistories
-                 join b in _context.EmployeeDetails on Convert.ToInt32(a.Value) equals b.EmpId
-                 join c in _context.EmployeeDetails on Convert.ToInt32(a.OldValue) equals c.EmpId
-                 where employeeIdss.Contains(a.EmpId.ToString()) && a.InfoCode == "EMPREPORTING"
-                 select new AuditInformationSubDto
-                 {
-                     InfoID = (int)a.InfoId,
-                     Info01ID = a.Info01Id,
-                     EmpID = (int)a.EmpId,
-                     Information = "Employee Reporting",
-                     NewValue = b.Name,
-                     OldValue = c.Name,
-                     UpdatedBy = a.UpdatedBy,
-                     UpdatedDate = a.UpdatedDate
-                 }).AsNoTracking().ToListAsync();
+            from a in _context.EditInfoHistories
+            join b in _context.EmployeeDetails on Convert.ToInt32(a.Value) equals b.EmpId
+            join c in _context.EmployeeDetails on Convert.ToInt32(a.OldValue) equals c.EmpId
+            where employeeIdss.Contains(a.EmpId.ToString()) && a.InfoCode == "EMPREPORTING"
+            select new AuditInformationSubDto
+            {
+                InfoID = (int)a.InfoId,
+                Info01ID = a.Info01Id,
+                EmpID = (int)a.EmpId,
+                Information = "Employee Reporting",
+                NewValue = b.Name,
+                OldValue = c.Name,
+                UpdatedBy = a.UpdatedBy,
+                UpdatedDate = a.UpdatedDate
+            }).AsNoTracking().ToListAsync();
 
 
 
@@ -4552,47 +4575,47 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Use HashSet for faster lookups
             var infoDescs = new HashSet<int>(infoDesc.Split(',')
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .Select(id => int.TryParse(id, out int parsedId) ? parsedId : 0)
-                .Where(id => id != 0)); // Remove default 0 values
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => int.TryParse(id, out int parsedId) ? parsedId : 0)
+            .Where(id => id != 0)); // Remove default 0 values
 
             var infotypes = new HashSet<int>(infotype.Split(',')
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .Select(id => int.TryParse(id, out int parsedId) ? parsedId : 0)
-                .Where(id => id != 0));
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => int.TryParse(id, out int parsedId) ? parsedId : 0)
+            .Where(id => id != 0));
 
             var parsedEmployeeIds = new HashSet<int>(employeeIDs?.Split(',')
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .Select(id => int.Parse(id.Trim())) ?? Enumerable.Empty<int>());
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => int.Parse(id.Trim())) ?? Enumerable.Empty<int>());
 
             int.TryParse(infoDesc, out int parsedInfoDesc);
             int.TryParse(infotype, out int parsedInfotype);
 
             var result = (
-                from a in query
-                join b in _context.EmployeeDetails on a.EmpID equals b.EmpId
-                join c in _context.HrEmployeeUserRelations on a.UpdatedBy equals c.UserId
-                join d in _context.EmployeeDetails on c.EmpId equals d.EmpId
-                where
-                    (!startDate.HasValue || !endDate.HasValue || (a.UpdatedDate >= startDate && a.UpdatedDate <= endDate)) &&
-                    (parsedEmployeeIds.Count == 0 || parsedEmployeeIds.Contains(a.EmpID)) &&
-                    (parsedInfoDesc == 0 || infoDescs.Contains(parsedInfoDesc)) &&
-                    (parsedInfotype == 0 || infotypes.Contains(parsedInfotype))
-                orderby a.EmpID, a.UpdatedDate descending
-                select new AuditInformationDto
-                {
-                    InfoID = a.InfoID,
-                    Info01ID = a.Info01ID,
-                    EmpID = a.EmpID,
-                    EmpCode = b.EmpCode,
-                    Name = b.Name,
-                    InformationType = a.Information,
-                    OldValue = a.OldValue,
-                    NewValue = a.NewValue,
-                    UpdatedBy = d.Name,
-                    EffectiveFrom = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
-                    EffectiveTime = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString("HH:mm:ss") : _employeeSettings.NotAvailable
-                }
+            from a in query
+            join b in _context.EmployeeDetails on a.EmpID equals b.EmpId
+            join c in _context.HrEmployeeUserRelations on a.UpdatedBy equals c.UserId
+            join d in _context.EmployeeDetails on c.EmpId equals d.EmpId
+            where
+            (!startDate.HasValue || !endDate.HasValue || (a.UpdatedDate >= startDate && a.UpdatedDate <= endDate)) &&
+            (parsedEmployeeIds.Count == 0 || parsedEmployeeIds.Contains(a.EmpID)) &&
+            (parsedInfoDesc == 0 || infoDescs.Contains(parsedInfoDesc)) &&
+            (parsedInfotype == 0 || infotypes.Contains(parsedInfotype))
+            orderby a.EmpID, a.UpdatedDate descending
+            select new AuditInformationDto
+            {
+                InfoID = a.InfoID,
+                Info01ID = a.Info01ID,
+                EmpID = a.EmpID,
+                EmpCode = b.EmpCode,
+                Name = b.Name,
+                InformationType = a.Information,
+                OldValue = a.OldValue,
+                NewValue = a.NewValue,
+                UpdatedBy = d.Name,
+                EffectiveFrom = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString(_employeeSettings.DateFormat) : _employeeSettings.NotAvailable,
+                EffectiveTime = a.UpdatedDate.HasValue ? a.UpdatedDate.Value.ToString("HH:mm:ss") : _employeeSettings.NotAvailable
+            }
             ).ToList();
 
 
@@ -4655,13 +4678,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
             else
             {
                 var ctnew = SplitStrings_XML(_context.HrEmpMasters
-                     .Where(h => h.EmpId == Convert.ToInt32(employeeid))
-                     .Select(h => h.EmpEntity).FirstOrDefault(), ',')
-                    .Select((item, index) => new LinkItemDto
-                    {
-                        Item = item,
-                        LinkLevel = index + 2
-                    }).Where(c => !string.IsNullOrEmpty(c.Item));
+                 .Where(h => h.EmpId == Convert.ToInt32(employeeid))
+                 .Select(h => h.EmpEntity).FirstOrDefault(), ',')
+                .Select((item, index) => new LinkItemDto
+                {
+                    Item = item,
+                    LinkLevel = index + 2
+                }).Where(c => !string.IsNullOrEmpty(c.Item));
 
                 var query2 = await Task.Run(() => (from f in ctnew
                                                    join b in _context.Geotagging01s on Convert.ToInt32(f.Item) equals b.LinkId
@@ -4723,20 +4746,20 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             // Step 1: Fetch data first, then apply SplitStrings_XML in memory
             var entityAccessRights = await _context.EntityAccessRights02s
-                .Where(s => s.RoleId == firstEntityId)
-                .ToListAsync(); // Fetch first
+            .Where(s => s.RoleId == firstEntityId)
+            .ToListAsync(); // Fetch first
 
             var applicableFinal = entityAccessRights
-                .SelectMany(s => SplitStrings_XML(s.LinkId, default)
-                    .Select(item => new { Item = item, s.LinkLevel }))
-                .ToList(); // Apply in-memory processing
+            .SelectMany(s => SplitStrings_XML(s.LinkId, default)
+            .Select(item => new { Item = item, s.LinkLevel }))
+            .ToList(); // Apply in-memory processing
             var cteOrg = new HashSet<int>(); // Optimized lookup
             var queue = new Queue<int>();
 
             var initialEmp = await _context.HrEmpReportings
-                .Where(e => e.EmpId == secondEntityId)
-                .Select(e => e.ReprotToWhome == e.EmpId ? (int?)null : e.ReprotToWhome)
-                .FirstOrDefaultAsync();
+            .Where(e => e.EmpId == secondEntityId)
+            .Select(e => e.ReprotToWhome == e.EmpId ? (int?)null : e.ReprotToWhome)
+            .FirstOrDefaultAsync();
 
             if (initialEmp.HasValue)
             {
@@ -4748,9 +4771,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 var current = queue.Dequeue();
                 var subordinates = await _context.HrEmpReportings
-                    .Where(e => e.ReprotToWhome == current && e.ReprotToWhome != e.EmpId)
-                    .Select(e => e.EmpId)
-                    .ToListAsync();
+                .Where(e => e.ReprotToWhome == current && e.ReprotToWhome != e.EmpId)
+                .Select(e => e.EmpId)
+                .ToListAsync();
 
                 foreach (var sub in subordinates)
                 {
@@ -4765,40 +4788,40 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             var hasRoleAccess = _context.EntityAccessRights02s
-     .Any(s => s.RoleId == firstEntityId && s.LinkLevel == 15);
+            .Any(s => s.RoleId == firstEntityId && s.LinkLevel == 15);
 
             var applicableHierarchyLevels = _context.EmployeeDetails
-                .Join(_context.HighLevelViewTables,
-                    d1 => d1.LastEntity,
-                    a => a.LastEntityId,
-                    (d1, a) => new { d1, a })
-                .Join(applicableFinal,
-                    _ => 1,
-                    _ => 1,
-                    (x, b) => new { x.d1, x.a, b })
-                .Where(joined =>
-                    (joined.b.LinkLevel == 1 && joined.a.LevelOneId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 2 && joined.a.LevelTwoId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 3 && joined.a.LevelThreeId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 4 && joined.a.LevelFourId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 5 && joined.a.LevelFiveId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 6 && joined.a.LevelSixId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 7 && joined.a.LevelSevenId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 8 && joined.a.LevelEightId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 9 && joined.a.LevelNineId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 10 && joined.a.LevelTenId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 11 && joined.a.LevelElevenId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 12 && joined.a.LevelTwelveId == int.Parse(joined.b.Item))
-                )
-                .Select(joined => joined.d1.EmpId);
+            .Join(_context.HighLevelViewTables,
+            d1 => d1.LastEntity,
+            a => a.LastEntityId,
+            (d1, a) => new { d1, a })
+            .Join(applicableFinal,
+            _ => 1,
+            _ => 1,
+            (x, b) => new { x.d1, x.a, b })
+            .Where(joined =>
+            (joined.b.LinkLevel == 1 && joined.a.LevelOneId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 2 && joined.a.LevelTwoId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 3 && joined.a.LevelThreeId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 4 && joined.a.LevelFourId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 5 && joined.a.LevelFiveId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 6 && joined.a.LevelSixId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 7 && joined.a.LevelSevenId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 8 && joined.a.LevelEightId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 9 && joined.a.LevelNineId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 10 && joined.a.LevelTenId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 11 && joined.a.LevelElevenId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 12 && joined.a.LevelTwelveId == int.Parse(joined.b.Item))
+            )
+            .Select(joined => joined.d1.EmpId);
 
             var reportsToSecondEntity = _context.HrEmpReportings
-                .Where(hr => hr.ReprotToWhome == secondEntityId)
-                .Select(hr => hr.EmpId);
+            .Where(hr => hr.ReprotToWhome == secondEntityId)
+            .Select(hr => hr.EmpId);
 
             // Check if EntityAccessRights02s has the role and hierarchy enabled
             var hasHierarchyAccess = _context.EntityAccessRights02s
-                .Any(s => s.RoleId == firstEntityId && s.Hierarchy == 1);
+            .Any(s => s.RoleId == firstEntityId && s.Hierarchy == 1);
 
             // Get all Employee IDs that exist in the hierarchical structure
             var hierarchicalEmpIds = hasHierarchyAccess ? cteOrg.ToList() : new List<int>();
@@ -4827,25 +4850,25 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<object>> GetCountry()
         {
             var countryNames = await _context.AdmCountryMasters
-                .Select(c => new { c.CountryId, c.CountryName })
-                .ToListAsync();
+            .Select(c => new { c.CountryId, c.CountryName })
+            .ToListAsync();
 
             return countryNames.Cast<object>().ToList();
         }
         public async Task<List<object>> GetNationalities()
         {
             var nationalities = await _context.AdmCountryMasters
-                .Select(c => new { c.CountryId, c.Nationality })
-                .ToListAsync();
+            .Select(c => new { c.CountryId, c.Nationality })
+            .ToListAsync();
 
             return nationalities.Cast<object>().ToList();
         }
         public async Task<List<object>> GetBloodGroup()
         {
             var bloodGroups = await _context.HrmValueTypes
-                .Where(v => v.Type == "BloodGroup")
-                .Select(v => $"<option value={v.Code}>{v.Description}</option>")
-                .ToListAsync();  // Get all the options as a list
+            .Where(v => v.Type == "BloodGroup")
+            .Select(v => $"<option value={v.Code}>{v.Description}</option>")
+            .ToListAsync();  // Get all the options as a list
 
             // Aggregate the list of options into a single string
             var bloodGroupsHtml = bloodGroups.Aggregate((result, item) => result + item);
@@ -4855,8 +4878,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<object>> FillReligion()
         {
             var religions = await _context.AdmReligionMasters
-                .Select(r => new { r.ReligionId, r.ReligionName }) // Select ID and Name
-                .ToListAsync();
+            .Select(r => new { r.ReligionId, r.ReligionName }) // Select ID and Name
+            .ToListAsync();
 
             return religions.Cast<object>().ToList(); // Ensure it returns List<object>
         }
@@ -4868,9 +4891,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             foreach (var skill in langSkills.Lilanguage)
             {
                 var existingSkill = await _context.EmployeeLanguageSkills
-                    .FirstOrDefaultAsync(e => e.EmpId == langSkills.EmpID
-                                && e.LanguageId == skill.LanguageId
-                                && e.Status != ApprovalStatus.Deleted.ToString());
+                .FirstOrDefaultAsync(e => e.EmpId == langSkills.EmpID
+                            && e.LanguageId == skill.LanguageId
+                            && e.Status != ApprovalStatus.Deleted.ToString());
 
                 if (existingSkill == null)
                 {
@@ -4908,23 +4931,23 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<object>> FillLanguageTypes()
         {
             var languageTypes = await _context.HrEmpLanguagemasters
-                .Select(v => new { v.LanguageId, v.Description })
-                .ToListAsync();
+            .Select(v => new { v.LanguageId, v.Description })
+            .ToListAsync();
 
             return languageTypes.Cast<object>().ToList();
         }
         public async Task<List<object>> FillConsultant()
         {
             var consultant = await _context.ConsultantDetails
-                .Select(v => new { v.Id, v.ConsultantName })
-                .ToListAsync();
+            .Select(v => new { v.Id, v.ConsultantName })
+            .ToListAsync();
 
             return consultant.Cast<object>().ToList();
         }
         public async Task<string> InsertOrUpdateReference(ReferenceSaveDto Reference)
         {
             var existingEntity = await _context.HrEmpreferences
-                .FirstOrDefaultAsync(e => e.RefId == Reference.DetailID);
+            .FirstOrDefaultAsync(e => e.RefId == Reference.DetailID);
 
             var reference = _mapper.Map<HrEmpreference>(Reference);
             string result;
@@ -4977,9 +5000,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<object>> FillRewardType()
         {
             var rewardType = await _context.HrmValueTypes
-                 .Where(v => v.Type == "Reward")
-                .Select(v => new { v.Id, v.Description })
-                .ToListAsync();
+            .Where(v => v.Type == "Reward")
+            .Select(v => new { v.Id, v.Description })
+            .ToListAsync();
 
             return rewardType.Cast<object>().ToList();
         }
@@ -4990,7 +5013,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 // Check if the achievement exists in AchievementMasters
                 var existingAchievement = await _context.AchievementMasters
-                    .FirstOrDefaultAsync(a => a.Description.Trim() == empRewardsDto.Achievement.Trim());
+                .FirstOrDefaultAsync(a => a.Description.Trim() == empRewardsDto.Achievement.Trim());
 
                 if (existingAchievement == null)
                 {
@@ -5004,13 +5027,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                 // Fetch RewardType ID from HRM_VALUE_TYPES
                 var rewardTypeId = await _context.HrmValueTypes
-                    .Where(h => h.Type == "Reward" && h.Id == empRewardsDto.RewardType)
-                    .Select(h => h.Id)
-                    .FirstOrDefaultAsync();
+                .Where(h => h.Type == "Reward" && h.Id == empRewardsDto.RewardType)
+                .Select(h => h.Id)
+                .FirstOrDefaultAsync();
 
                 // Check if the reward entry exists
                 var existingReward = await _context.EmpRewards
-                    .FirstOrDefaultAsync(r => r.EmpId == empRewardsDto.EmpId && r.RewardId == empRewardsDto.DetailID);
+                .FirstOrDefaultAsync(r => r.EmpId == empRewardsDto.EmpId && r.RewardId == empRewardsDto.DetailID);
 
                 if (existingReward != null)
                 {
@@ -5060,24 +5083,24 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<object>> FillBankDetails(int empID)
         {
             var documents = await (
-                from a in _context.HrmsDocument00s
-                join b in _context.HrmsDocTypeMasters on (long)a.DocType equals b.DocTypeId // Explicit cast to long
-                join c in _context.EmpDocumentAccesses on a.DocId equals (long)c.DocId
-                where c.EmpId == empID &&
-                      (
-                          ((a.Active ?? false) && b.DocType == "BANK DETAILS" &&
-                           !_context.HrmsEmpdocuments00s.Any(e => e.EmpId == empID && e.DocId == a.DocId && e.Status != "R"))
-                          ||
-                          (_context.HrmsDocument00s
-                           .Join(_context.HrmsDocTypeMasters, d => (long)d.DocType, e => e.DocTypeId,
-                                (d, e) => new { d.DocId, d.IsAllowMultiple, e.Code }) // Ensure d.IsAllowMultiple is used
-                           .Any(x => (x.IsAllowMultiple ?? 0) == 1 && x.Code == "BNK" && x.DocId == a.DocId)) // Convert int? to bool correctly
-                      )
-                select new
-                {
-                    a.DocId,
-                    a.DocName
-                }).ToListAsync();
+            from a in _context.HrmsDocument00s
+            join b in _context.HrmsDocTypeMasters on (long)a.DocType equals b.DocTypeId // Explicit cast to long
+            join c in _context.EmpDocumentAccesses on a.DocId equals (long)c.DocId
+            where c.EmpId == empID &&
+              (
+                  ((a.Active ?? false) && b.DocType == "BANK DETAILS" &&
+                   !_context.HrmsEmpdocuments00s.Any(e => e.EmpId == empID && e.DocId == a.DocId && e.Status != "R"))
+                  ||
+                  (_context.HrmsDocument00s
+                   .Join(_context.HrmsDocTypeMasters, d => (long)d.DocType, e => e.DocTypeId,
+                        (d, e) => new { d.DocId, d.IsAllowMultiple, e.Code }) // Ensure d.IsAllowMultiple is used
+                   .Any(x => (x.IsAllowMultiple ?? 0) == 1 && x.Code == "BNK" && x.DocId == a.DocId)) // Convert int? to bool correctly
+              )
+            select new
+            {
+                a.DocId,
+                a.DocName
+            }).ToListAsync();
 
             return documents.Cast<object>().ToList();
         }
@@ -5184,7 +5207,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                             join b in _context.TabMasters on a.TabId equals Convert.ToInt32(b.TabId)
                             where a.RoleId == roleId && b.Code == code
                             select (int?)a.AccessId)
-                            .FirstOrDefault() ?? 0;
+                    .FirstOrDefault() ?? 0;
 
 
             return new EmployeeDetailsDto
@@ -5203,17 +5226,17 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                 // Check if the employee already exists
                 bool existsEmployee = await _context.HrEmpMasters
-                    .AnyAsync(emp => emp.EmpCode.Trim() == employeeDetailsDto.EmpCode.Trim()
-                                     && emp.IsDelete == false
-                                     && emp.EmpId != employeeDetailsDto.EmpId);
+                .AnyAsync(emp => emp.EmpCode.Trim() == employeeDetailsDto.EmpCode.Trim()
+                                 && emp.IsDelete == false
+                                 && emp.EmpId != employeeDetailsDto.EmpId);
 
 
 
                 // Fetch the last entity directly instead of selecting first and then comparing
                 int? lastEntityChange = await _context.HrEmpMasters
-                    .Where(e => e.EmpId == employeeDetailsDto.EmpId)
-                    .Select(e => e.LastEntity)
-                    .FirstOrDefaultAsync();
+                .Where(e => e.EmpId == employeeDetailsDto.EmpId)
+                .Select(e => e.LastEntity)
+                .FirstOrDefaultAsync();
 
                 if (lastEntityChange != employeeDetailsDto.LastEntity)
                 {
@@ -5222,12 +5245,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                 // Check if the employee has pending transfer history
                 bool checkTransferHistory = await _context.TransferDetails00s
-                                           .Join(_context.TransferDetails,
-                                                 a => a.TransferBatchId,
-                                                 b => b.TransferBatchId,
-                                                 (a, b) => new { a, b })
-                                           .AnyAsync(joined => new[] { ApprovalStatus.Approved.ToString(), ApprovalStatus.Pending.ToString() }.Contains(joined.b.ApprovalStatus)
-                                                               && joined.a.EmpId == employeeDetailsDto.EmpId);
+                                       .Join(_context.TransferDetails,
+                                             a => a.TransferBatchId,
+                                             b => b.TransferBatchId,
+                                             (a, b) => new { a, b })
+                                       .AnyAsync(joined => new[] { ApprovalStatus.Approved.ToString(), ApprovalStatus.Pending.ToString() }.Contains(joined.b.ApprovalStatus)
+                                                           && joined.a.EmpId == employeeDetailsDto.EmpId);
 
                 if (checkTransferHistory)
                 {
@@ -5355,12 +5378,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
                         if (empData != null)
                         {
                             var levels = new List<int?>
-                                {
-                                    empData.HighLevel.LevelOneId, empData.HighLevel.LevelTwoId, empData.HighLevel.LevelThreeId,
-                                    empData.HighLevel.LevelFourId, empData.HighLevel.LevelFiveId, empData.HighLevel.LevelSixId,
-                                    empData.HighLevel.LevelSevenId, empData.HighLevel.LevelEightId, empData.HighLevel.LevelNineId,
-                                    empData.HighLevel.LevelTenId, empData.HighLevel.LevelElevenId, empData.HighLevel.LevelTwelveId
-                                };
+            {
+                empData.HighLevel.LevelOneId, empData.HighLevel.LevelTwoId, empData.HighLevel.LevelThreeId,
+                empData.HighLevel.LevelFourId, empData.HighLevel.LevelFiveId, empData.HighLevel.LevelSixId,
+                empData.HighLevel.LevelSevenId, empData.HighLevel.LevelEightId, empData.HighLevel.LevelNineId,
+                empData.HighLevel.LevelTenId, empData.HighLevel.LevelElevenId, empData.HighLevel.LevelTwelveId
+            };
 
                             empData.EmpMaster.EmpEntity = string.Join(",", levels.Where(x => x.HasValue && x != 0));
                             empData.EmpMaster.EmpFirstEntity = empData.HighLevel.LevelOneId?.ToString();
@@ -5797,12 +5820,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                     if (employeeToUpdate != null)
                                     {
                                         var levelIds = new List<int?>
-                                                    {
-                                                        employeeToUpdate.high.LevelOneId, employeeToUpdate.high.LevelTwoId, employeeToUpdate.high.LevelThreeId,
-                                                        employeeToUpdate.high.LevelFourId, employeeToUpdate.high.LevelFiveId, employeeToUpdate.high.LevelSixId,
-                                                        employeeToUpdate.high.LevelSevenId, employeeToUpdate.high.LevelEightId, employeeToUpdate.high.LevelNineId,
-                                                        employeeToUpdate.high.LevelTenId, employeeToUpdate.high.LevelElevenId, employeeToUpdate.high.LevelTwelveId
-                                                    };
+                                {
+                                    employeeToUpdate.high.LevelOneId, employeeToUpdate.high.LevelTwoId, employeeToUpdate.high.LevelThreeId,
+                                    employeeToUpdate.high.LevelFourId, employeeToUpdate.high.LevelFiveId, employeeToUpdate.high.LevelSixId,
+                                    employeeToUpdate.high.LevelSevenId, employeeToUpdate.high.LevelEightId, employeeToUpdate.high.LevelNineId,
+                                    employeeToUpdate.high.LevelTenId, employeeToUpdate.high.LevelElevenId, employeeToUpdate.high.LevelTwelveId
+                                };
 
                                         // Constructing EmpEntity string by joining non-zero, non-null values
                                         employeeToUpdate.emp.EmpEntity = string.Join(",", levelIds.Where(id => id.HasValue && id > 0));
@@ -5920,9 +5943,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Fetch Employee Entity and FirstEntity
             var employee = await _context.EmployeeDetails
-                .Where(e => e.EmpId == employeeId)
-                .Select(e => new { e.EmpEntity, e.EmpFirstEntity })
-                .FirstOrDefaultAsync();
+            .Where(e => e.EmpId == employeeId)
+            .Select(e => new { e.EmpEntity, e.EmpFirstEntity })
+            .FirstOrDefaultAsync();
 
             if (employee == null)
                 return 0;
@@ -5972,7 +5995,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                      cp.Type == type
                                orderby cp01.LevelId descending
                                select cp01.Value)
-            .FirstOrDefaultAsync() ?? 0;
+                .FirstOrDefaultAsync() ?? 0;
 
             }
 
@@ -5982,7 +6005,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 value = await (from cp in _context.CompanyParameters
                                where cp.ParameterCode == code && cp.Type == type
                                select cp.Value)
-              .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync();
 
             }
 
@@ -5992,53 +6015,53 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private async Task<List<HighLevelTableDto>> GetEmployeeLevels(int empId, int? entityId)
         {
             var employeeLevel = await _context.HighLevelViewTables
-                                  .Where(h => h.LastEntityId == entityId)
-                                  .Select(h => new HighLevelTableDto
-                                  {
-                                      EmpId = empId,
-                                      LevelOneId = h.LevelOneId,
-                                      LevelOneDescription = h.LevelOneDescription,
-                                      LevelTwoId = h.LevelTwoId,
-                                      LevelTwoDescription = h.LevelTwoDescription,
-                                      LevelThreeId = h.LevelThreeId,
-                                      LevelThreeDescription = h.LevelThreeDescription,
-                                      LevelFourId = h.LevelFourId,
-                                      LevelFourDescription = h.LevelFourDescription,
-                                      LevelFiveId = h.LevelFiveId,
-                                      LevelFiveDescription = h.LevelFiveDescription,
-                                      LevelSixId = h.LevelSixId,
-                                      LevelSixDescription = h.LevelSixDescription,
-                                      LevelSevenId = h.LevelSevenId,
-                                      LevelSevenDescription = h.LevelSevenDescription,
-                                      LevelEightId = h.LevelEightId,
-                                      LevelEightDescription = h.LevelEightDescription,
-                                      LevelNineId = h.LevelNineId,
-                                      LevelNineDescription = h.LevelNineDescription,
-                                      LevelTenId = h.LevelTenId,
-                                      LevelTenDescription = h.LevelTenDescription,
-                                      LevelElevenId = h.LevelElevenId,
-                                      LevelElevenDescription = h.LevelElevenDescription,
-                                      LevelTwelveId = h.LevelTwelveId,
-                                      LevelTwelveDescription = h.LevelTwelveDescription,
-                                      //FromDate = (DateTime?)null,
-                                      //ToDate = (DateTime?)null
-                                  }).ToListAsync();
+                          .Where(h => h.LastEntityId == entityId)
+                          .Select(h => new HighLevelTableDto
+                          {
+                              EmpId = empId,
+                              LevelOneId = h.LevelOneId,
+                              LevelOneDescription = h.LevelOneDescription,
+                              LevelTwoId = h.LevelTwoId,
+                              LevelTwoDescription = h.LevelTwoDescription,
+                              LevelThreeId = h.LevelThreeId,
+                              LevelThreeDescription = h.LevelThreeDescription,
+                              LevelFourId = h.LevelFourId,
+                              LevelFourDescription = h.LevelFourDescription,
+                              LevelFiveId = h.LevelFiveId,
+                              LevelFiveDescription = h.LevelFiveDescription,
+                              LevelSixId = h.LevelSixId,
+                              LevelSixDescription = h.LevelSixDescription,
+                              LevelSevenId = h.LevelSevenId,
+                              LevelSevenDescription = h.LevelSevenDescription,
+                              LevelEightId = h.LevelEightId,
+                              LevelEightDescription = h.LevelEightDescription,
+                              LevelNineId = h.LevelNineId,
+                              LevelNineDescription = h.LevelNineDescription,
+                              LevelTenId = h.LevelTenId,
+                              LevelTenDescription = h.LevelTenDescription,
+                              LevelElevenId = h.LevelElevenId,
+                              LevelElevenDescription = h.LevelElevenDescription,
+                              LevelTwelveId = h.LevelTwelveId,
+                              LevelTwelveDescription = h.LevelTwelveDescription,
+                              //FromDate = (DateTime?)null,
+                              //ToDate = (DateTime?)null
+                          }).ToListAsync();
             return employeeLevel;
         }
         public async Task<List<object>> BankTypeEdit()
         {
             return await (
-                from b in _context.HrmsDocument00s
-                join c in _context.HrmsDocument00s on b.DocId equals c.DocId into bcJoin
-                from c in bcJoin.DefaultIfEmpty()
-                join d in _context.HrmsDocTypeMasters on (long)c.DocType equals d.DocTypeId into cdJoin
-                from d in cdJoin.DefaultIfEmpty()
-                where b.Active == true && d.DocType == "BANK DETAILS"
-                select new
-                {
-                    b.DocId,
-                    b.DocName
-                }
+            from b in _context.HrmsDocument00s
+            join c in _context.HrmsDocument00s on b.DocId equals c.DocId into bcJoin
+            from c in bcJoin.DefaultIfEmpty()
+            join d in _context.HrmsDocTypeMasters on (long)c.DocType equals d.DocTypeId into cdJoin
+            from d in cdJoin.DefaultIfEmpty()
+            where b.Active == true && d.DocType == "BANK DETAILS"
+            select new
+            {
+                b.DocId,
+                b.DocName
+            }
             ).AsNoTracking()
             .Select(x => (object)x)
             .ToListAsync();
@@ -6049,15 +6072,15 @@ namespace HRMS.EmployeeInformation.Repository.Common
                           join b in _context.ReasonMasters on a.Id equals b.Value
                           where a.Description == description
                           select new { b.ReasonId, b.Description })
-                               .AsNoTracking()
-                               .Select(x => (object)x)
-                               .ToListAsync();
+                       .AsNoTracking()
+                       .Select(x => (object)x)
+                       .ToListAsync();
 
         }
         public async Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates)
         {
             var existingCertification = await _context.EmployeeCertifications
-                .FirstOrDefaultAsync(e => e.EmpId == certificates.EmpId && e.CertificationId == certificates.CertificationID);
+            .FirstOrDefaultAsync(e => e.EmpId == certificates.EmpId && e.CertificationId == certificates.CertificationID);
 
             var certification = _mapper.Map<EmployeeCertification>(certificates);
             string result;
@@ -6093,7 +6116,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             string ErrorID = _employeeSettings.empSystemStatus;
             var employee = await _context.HrEmpPersonals
-        .FirstOrDefaultAsync(e => e.EmpId == EmployeeType.EmpID);
+            .FirstOrDefaultAsync(e => e.EmpId == EmployeeType.EmpID);
 
             if (employee != null)
             {
@@ -6152,7 +6175,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             await _context.HrEmpTechnicalApprls.AddAsync(hrEmpTechnicalApprl);
 
             var hrEmpTechnical = await _context.HrEmpTechnicals
-                .FirstOrDefaultAsync(x => x.TechId == skillset.DetailID && x.EmpId == skillset.Emp_Id);
+            .FirstOrDefaultAsync(x => x.TechId == skillset.DetailID && x.EmpId == skillset.Emp_Id);
 
             if (hrEmpTechnical != null)
             {
@@ -6201,22 +6224,22 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<string> UploadOrUpdateEmployeeDocuments(List<IFormFile> files, string filePath, QualificationAttachmentDto attachmentDto)
         {
             var result = await _qualificationAttachmentRepository.UploadOrUpdateDocuments(
-                files,
-                filePath,
-                (file, filePath) => new QualificationAttachment
-                {
-                    EmpId = attachmentDto.EmployeeId,
-                    QualFileName = Path.GetFileName(filePath),
-                    FilePath = filePath,
-                    FileType = file.ContentType,
-                    EntryBy = attachmentDto.EntryBy,
-                    EntryDate = DateTime.UtcNow,
-                    UpdatedBy = attachmentDto.EntryBy,
-                    UpdatedDate = DateTime.UtcNow,
-                    DocStatus = ApprovalStatus.Approved.ToString(),// "A",
-                    QualificationId = attachmentDto.QualificationId
-                },
-                entity => ((QualificationAttachment)(object)entity).EmpId
+            files,
+            filePath,
+            (file, filePath) => new QualificationAttachment
+            {
+                EmpId = attachmentDto.EmployeeId,
+                QualFileName = Path.GetFileName(filePath),
+                FilePath = filePath,
+                FileType = file.ContentType,
+                EntryBy = attachmentDto.EntryBy,
+                EntryDate = DateTime.UtcNow,
+                UpdatedBy = attachmentDto.EntryBy,
+                UpdatedDate = DateTime.UtcNow,
+                DocStatus = ApprovalStatus.Approved.ToString(),// "A",
+                QualificationId = attachmentDto.QualificationId
+            },
+            entity => ((QualificationAttachment)(object)entity).EmpId
             );
 
             return result.Message;
@@ -6234,9 +6257,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (!value.HasValue || value == 0)
             {
                 var entity = _context.EmployeeDetails
-                                   .Where(a => a.EmpId == employeeId)
-                                   .Select(a => a.EmpEntity)
-                                   .FirstOrDefault();
+                               .Where(a => a.EmpId == employeeId)
+                               .Select(a => a.EmpEntity)
+                               .FirstOrDefault();
 
                 if (!string.IsNullOrEmpty(entity))
                 {
@@ -6256,9 +6279,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (!value.HasValue || value == 0)
             {
                 var firstEntity = _context.EmployeeDetails
-                                        .Where(a => a.EmpId == employeeId)
-                                        .Select(a => a.EmpFirstEntity)
-                                        .FirstOrDefault();
+                                    .Where(a => a.EmpId == employeeId)
+                                    .Select(a => a.EmpFirstEntity)
+                                    .FirstOrDefault();
 
                 if (!string.IsNullOrEmpty(firstEntity))
                 {
@@ -6278,9 +6301,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (!value.HasValue || value == 0)
             {
                 value = _context.CompanyParameters
-                               .Where(p => p.ParameterCode == code && p.Type == type)
-                               .Select(p => (int?)p.Value)
-                               .FirstOrDefault();
+                           .Where(p => p.ParameterCode == code && p.Type == type)
+                           .Select(p => (int?)p.Value)
+                           .FirstOrDefault();
             }
 
             return value;
@@ -6668,19 +6691,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<object> FillCountry()
         {
             var countries = await _context.AdmCountryMasters
-                .Select(c => new
-                {
-                    c.CountryId,
-                    c.CountryName,
-                    c.Nationality
-                })
-                .ToListAsync();
+            .Select(c => new
+            {
+                c.CountryId,
+                c.CountryName,
+                c.Nationality
+            })
+            .ToListAsync();
 
             var countryNameHtml = countries.Aggregate("", (result, c) =>
-                result + $"<option value={c.CountryId}>{c.CountryName}</option>");
+            result + $"<option value={c.CountryId}>{c.CountryName}</option>");
 
             var nationalityHtml = countries.Aggregate("", (result, c) =>
-                result + $"<option value={c.CountryId}>{c.Nationality}</option>");
+            result + $"<option value={c.CountryId}>{c.Nationality}</option>");
 
             return new
             {
@@ -6694,92 +6717,92 @@ namespace HRMS.EmployeeInformation.Repository.Common
             int probationStatusInt = int.TryParse(probationStatus, out int tempProb) ? tempProb : 0;
 
             var employeeStatusList = employeeStatus.Split(',')
-                .Select(s => int.TryParse(s, out int val) ? val : (int?)null)
-                .Where(val => val.HasValue)
-                .Select(val => val.Value)
-                .ToList();
+            .Select(s => int.TryParse(s, out int val) ? val : (int?)null)
+            .Where(val => val.HasValue)
+            .Select(val => val.Value)
+            .ToList();
 
             var query = await _context.HrEmpMasters
-                .Where(a =>
-                    (a.CurrentStatus == activeStatusInt || activeStatusInt == 0) &&
-                    (employeeStatusList.Contains(a.EmpStatus.Value) || new List<int> { 1, 2, 3, 7 }.Contains(a.EmpStatus.Value)) &&
-                    (probationStatusInt == 1 ||
-                     (probationStatusInt == 2 && a.IsProbation == true) ||
-                     (probationStatusInt == 3 && a.IsProbation == false)) &&
-                    a.IsDelete == false
-                )
-                .Select(a => (object)new
-                {
-                    EmpId = a.EmpId,
-                    empcode = a.EmpCode,
-                    Name =
-                           (a.MiddleName == null && a.LastName == null ? a.FirstName :
-                            a.MiddleName == null ? a.FirstName + " " + a.LastName :
-                            a.LastName == null ? a.FirstName + " " + a.MiddleName :
-                            a.FirstName + " " + a.MiddleName + " " + a.LastName)
-                })
-                .ToListAsync();
+            .Where(a =>
+            (a.CurrentStatus == activeStatusInt || activeStatusInt == 0) &&
+            (employeeStatusList.Contains(a.EmpStatus.Value) || new List<int> { 1, 2, 3, 7 }.Contains(a.EmpStatus.Value)) &&
+            (probationStatusInt == 1 ||
+             (probationStatusInt == 2 && a.IsProbation == true) ||
+             (probationStatusInt == 3 && a.IsProbation == false)) &&
+            a.IsDelete == false
+            )
+            .Select(a => (object)new
+            {
+                EmpId = a.EmpId,
+                empcode = a.EmpCode,
+                Name =
+                   (a.MiddleName == null && a.LastName == null ? a.FirstName :
+                    a.MiddleName == null ? a.FirstName + " " + a.LastName :
+                    a.LastName == null ? a.FirstName + " " + a.MiddleName :
+                    a.FirstName + " " + a.MiddleName + " " + a.LastName)
+            })
+            .ToListAsync();
 
             return query.Cast<object>().ToList();
         }
         public async Task<List<object>> AssetGroupDropdownEdit()
         {
             var groupId = await _context.CategoryGroups
-                .Where(g => g.DescriptionGrp == "Assets")
-                .OrderBy(g => g.GroupId) // Ensures a deterministic "TOP 1"
-                .Select(g => g.GroupId)
-                .FirstOrDefaultAsync();
+            .Where(g => g.DescriptionGrp == "Assets")
+            .OrderBy(g => g.GroupId) // Ensures a deterministic "TOP 1"
+            .Select(g => g.GroupId)
+            .FirstOrDefaultAsync();
 
             if (groupId == null)
                 return new List<object>();
 
             var result = await _context.GeneralCategories
-                .Where(a => a.GroupId == groupId && a.GeneralIsActive == 1)
-                .OrderBy(a => a.Description)
-                .Select(a => new
-                {
-                    Reason_Id = a.Id,
-                    a.Description,
-                    EmplinkID = a.EmplinkId ?? 0
-                })
-                .ToListAsync();
+            .Where(a => a.GroupId == groupId && a.GeneralIsActive == 1)
+            .OrderBy(a => a.Description)
+            .Select(a => new
+            {
+                Reason_Id = a.Id,
+                a.Description,
+                EmplinkID = a.EmplinkId ?? 0
+            })
+            .ToListAsync();
 
             return result.Cast<object>().ToList();
         }
         public async Task<List<object>> GetAssetDropdownEdit(int varAssestTypeID)
         {
             var reasons = await _context.ReasonMasters
-                .Where(a => a.Value == varAssestTypeID && a.Status != ApprovalStatus.Deleted.ToString())
-                .OrderBy(a => a.Description)
-                .Select(a => new
-                {
-                    a.ReasonId,
-                    a.Description,
-                    a.Value,
-                    a.Status
-                })
-                .ToListAsync();
+            .Where(a => a.Value == varAssestTypeID && a.Status != ApprovalStatus.Deleted.ToString())
+            .OrderBy(a => a.Description)
+            .Select(a => new
+            {
+                a.ReasonId,
+                a.Description,
+                a.Value,
+                a.Status
+            })
+            .ToListAsync();
 
             return reasons.Cast<object>().ToList();
         }
         public async Task<List<object>> GetAssetDetailsEdit(string CommonName)
         {
             var assetCategories = await _context.AssetcategoryCodes
-                .Where(a => a.Code == CommonName
-                    && a.Status != ApprovalStatus.Deleted.ToString()
-                    && a.Status != ApprovalStatus.Approved.ToString())
-                .OrderBy(a => a.Description)
-                .Select(a => new
-                {
-                    a.Id,
-                    a.Code,
-                    a.Description,
-                    a.Value,
-                    a.Status,
-                    a.Assetclass,
-                    a.AssetModel
-                })
-                .ToListAsync();
+            .Where(a => a.Code == CommonName
+            && a.Status != ApprovalStatus.Deleted.ToString()
+            && a.Status != ApprovalStatus.Approved.ToString())
+            .OrderBy(a => a.Description)
+            .Select(a => new
+            {
+                a.Id,
+                a.Code,
+                a.Description,
+                a.Value,
+                a.Status,
+                a.Assetclass,
+                a.AssetModel
+            })
+            .ToListAsync();
 
             return assetCategories.Cast<object>().ToList();
         }
@@ -7064,9 +7087,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
 
                 var assetReasonIdString = await _context.EmployeesAssetsAssigns
-                                                         .Where(ea => ea.AssignId == varAssestID)
-                                                         .Select(ea => ea.Asset)
-                                                         .FirstOrDefaultAsync();
+                                                     .Where(ea => ea.AssignId == varAssestID)
+                                                     .Select(ea => ea.Asset)
+                                                     .FirstOrDefaultAsync();
 
 
                 if (int.TryParse(assetReasonIdString, out int assetReasonId) && assetReasonId != 0)
@@ -7185,13 +7208,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                    where codeID == codeID
                                    select a.LastSequence).FirstOrDefault();
             var maxCurrentCodeValue = _context.AdmCodegenerationmasters
-                .Where(a => a.CodeId == Convert.ToInt32(codeID))
-                .Max(a => (int?)a.CurrentCodeValue) ?? 0;
+            .Where(a => a.CodeId == Convert.ToInt32(codeID))
+            .Max(a => (int?)a.CurrentCodeValue) ?? 0;
 
             var updatedValue = maxCurrentCodeValue + 1;
 
             var recordToUpdate = _context.AdmCodegenerationmasters
-                .FirstOrDefault(a => a.CodeId == Convert.ToInt32(codeID));
+            .FirstOrDefault(a => a.CodeId == Convert.ToInt32(codeID));
 
             if (recordToUpdate != null)
             {
@@ -7200,7 +7223,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
 
             var record = _context.AdmCodegenerationmasters
-                .FirstOrDefault(a => a.CodeId == Convert.ToInt32(codeID));
+            .FirstOrDefault(a => a.CodeId == Convert.ToInt32(codeID));
 
             if (record != null)
             {
@@ -7365,14 +7388,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var sequenceid = 0;
 
             var codeGenMaster = _context.AdmCodegenerationmasters
-                .FirstOrDefault(c => c.CodeId == sequenceid);
+            .FirstOrDefault(c => c.CodeId == sequenceid);
 
             if (codeGenMaster != null)
             {
 
                 int maxCurrentCodeValue1 = _context.AdmCodegenerationmasters
-                    .Where(c => c.CodeId == sequenceid)
-                    .Max(c => (int?)c.CurrentCodeValue) ?? 0;
+                .Where(c => c.CodeId == sequenceid)
+                .Max(c => (int?)c.CurrentCodeValue) ?? 0;
 
                 codeGenMaster.CurrentCodeValue = maxCurrentCodeValue1 + 1;
 
@@ -7389,9 +7412,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 _context.SaveChanges();
             }
             string errorID = _context.HrmsEmpdocuments00s
-                .OrderByDescending(d => d.DetailId)
-                .Select(d => d.DetailId.ToString())
-                .FirstOrDefault() ?? _employeeSettings.empSystemStatus;
+            .OrderByDescending(d => d.DetailId)
+            .Select(d => d.DetailId.ToString())
+            .FirstOrDefault() ?? _employeeSettings.empSystemStatus;
 
             return errorID;
 
@@ -7640,7 +7663,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 var detailIds = tmpDocFileUpList.Select(b => b.DetailID).ToList();
 
                 bool recordsExistApproved = _context.HrmsEmpdocumentsApproved01s
-                    .Any(a => detailIds.Contains(a.DetailId));
+                .Any(a => detailIds.Contains(a.DetailId));
 
                 if (recordsExistApproved)
                 {
@@ -7972,9 +7995,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (dto.Mode == "InsertLetterTypeRequest")
             {
                 var transactionId = await _context.TransactionMasters
-               .Where(a => a.TransactionType == _employeeSettings.LetterConfig)
-               .Select(a => a.TransactionId)
-               .FirstOrDefaultAsync();
+                .Where(a => a.TransactionType == _employeeSettings.LetterConfig)
+                .Select(a => a.TransactionId)
+                .FirstOrDefaultAsync();
                 if (!_context.AssignedLetterTypes.Any(x => x.LetterReqId == dto.MasterID))
                 {
 
@@ -8269,7 +8292,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             else if (dto.Mode == "SubmitLetterSubType")
             {
                 var existingLetter = await _context.LetterMaster01s
-                    .FirstOrDefaultAsync(l => l.ModuleSubId == dto.LetterSubTypeID);
+                .FirstOrDefaultAsync(l => l.ModuleSubId == dto.LetterSubTypeID);
 
                 if (existingLetter == null)
                 {
@@ -8321,7 +8344,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             else if (dto.Mode == "UploadbackgroundImage")
             {
                 var existingLetter = await _context.LetterMaster01s
-                    .FirstOrDefaultAsync(l => l.ModuleSubId == dto.LetterSubTypeID);
+                .FirstOrDefaultAsync(l => l.ModuleSubId == dto.LetterSubTypeID);
                 if (existingLetter != null)
                 {
                     existingLetter.BackgroundImage = dto.FileName;
@@ -8339,16 +8362,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 return "Record not found."; // Return an appropriate message
 
             var result = await _assignedLetterTypeRepository.UploadOrUpdateDocuments(
-                files,
-                "DirectUploadLetters",
-                (file, filePath) =>
-                {
-                    // Update only the required fields
-                    record.UploadFileName = Path.GetFileName(filePath);
-                    record.IsLetterAttached = true;
-                    return record; // Return the modified record
-                },
-                entity => ((AssignedLetterType)(object)entity).LetterReqId
+            files,
+            "DirectUploadLetters",
+            (file, filePath) =>
+            {
+                // Update only the required fields
+                record.UploadFileName = Path.GetFileName(filePath);
+                record.IsLetterAttached = true;
+                return record; // Return the modified record
+            },
+            entity => ((AssignedLetterType)(object)entity).LetterReqId
             );
 
             return result.Message;
@@ -8357,36 +8380,36 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<object> EditEmployeeCommonInformation(string? empIds, int? employeeid)
         {
             var employeeList = empIds?.Split(',')
-                                   .Select(s => int.Parse(s.Trim()))
-                                   .ToList();
+                           .Select(s => int.Parse(s.Trim()))
+                           .ToList();
 
             var employees = await _context.EmployeeDetails.Where(e => employeeList.Contains(e.EmpId))
-                            .Select(e => new
-                            {
-                                e.EmpId,
-                                EmpName = e.EmpCode + " || " + e.Name
-                            }).ToListAsync();
+                    .Select(e => new
+                    {
+                        e.EmpId,
+                        EmpName = e.EmpCode + " || " + e.Name
+                    }).ToListAsync();
             var infoData = await _context.EditInfoMaster00s
-                           .Where(info => info.InfoCode == _employeeSettings.companyParameterCodesType.Substring(0, _employeeSettings.companyParameterCodesType.Length - 1))
-                           .Select(info => new
-                           {
-                               info.InfoId,
-                               info.InfoCode,
-                               info.Description
-                           }).ToListAsync();
+                   .Where(info => info.InfoCode == _employeeSettings.companyParameterCodesType.Substring(0, _employeeSettings.companyParameterCodesType.Length - 1))
+                   .Select(info => new
+                   {
+                       info.InfoId,
+                       info.InfoCode,
+                       info.Description
+                   }).ToListAsync();
 
 
             var employeeDetails = await _context.EmployeeDetails.Where(e => e.EmpId == 115)
-                .Join(_context.DesignationDetails, e => e.DesigId, d => d.LinkId, (e, d) => new { e, d })
-                .Join(_context.BranchDetails, ed => ed.e.BranchId, b => b.LinkId, (ed, b) => new { ed.e, ed.d, b })
-                .GroupJoin(_context.HrEmpImages, edb => edb.e.EmpId, img => img.EmpId, (edb, img) => new { edb, img })
-                .SelectMany(edb_img => edb_img.img.DefaultIfEmpty(),
-                  (edb_img, img) => new
-                  {
-                      edb_img.edb.e.Name,
-                      Branch = edb_img.edb.d.Designation + " / " + edb_img.edb.e.EmpCode + " / " + edb_img.edb.b.Branch,
-                      Image = img != null ? img.ImageUrl : null
-                  }).ToListAsync();
+            .Join(_context.DesignationDetails, e => e.DesigId, d => d.LinkId, (e, d) => new { e, d })
+            .Join(_context.BranchDetails, ed => ed.e.BranchId, b => b.LinkId, (ed, b) => new { ed.e, ed.d, b })
+            .GroupJoin(_context.HrEmpImages, edb => edb.e.EmpId, img => img.EmpId, (edb, img) => new { edb, img })
+            .SelectMany(edb_img => edb_img.img.DefaultIfEmpty(),
+            (edb_img, img) => new
+            {
+                edb_img.edb.e.Name,
+                Branch = edb_img.edb.d.Designation + " / " + edb_img.edb.e.EmpCode + " / " + edb_img.edb.b.Branch,
+                Image = img != null ? img.ImageUrl : null
+            }).ToListAsync();
 
             return new
             {
@@ -8682,14 +8705,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<object> GetInformationDescriptionAsync(int infoId)
         {
             return await _context.EditInfoMaster01s
-                 .Where(e => e.InfoId == infoId)
-                 .Select(e => new
-                 {
-                     e.Info01Id,
-                     e.InfoId,
-                     e.InfoCode,
-                     e.Description
-                 }).ToListAsync();
+            .Where(e => e.InfoId == infoId)
+            .Select(e => new
+            {
+                e.Info01Id,
+                e.InfoId,
+                e.InfoCode,
+                e.Description
+            }).ToListAsync();
         }
         public async Task<object> GetLetterTypeAsync()
         {
@@ -8698,18 +8721,18 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<object> LetterSignatureAuthorityAsync()
         {
             return await _context.Categorymasterparameters
-               .Select(x => new
-               {
-                   x.ParameterId,
-                   x.ParamDescription
-               }).ToListAsync();
+            .Select(x => new
+            {
+                x.ParameterId,
+                x.ParamDescription
+            }).ToListAsync();
         }
         public async Task<string> DeleteDesciplinaryLetter(string? masterId)
         {
             var transactionID = await _context.TransactionMasters
-                .Where(tm => tm.TransactionType == _employeeSettings.LetterConfig)
-                .Select(tm => tm.TransactionId)
-                .FirstOrDefaultAsync();
+            .Where(tm => tm.TransactionType == _employeeSettings.LetterConfig)
+            .Select(tm => tm.TransactionId)
+            .FirstOrDefaultAsync();
 
             if (transactionID != null)
             {
@@ -8718,16 +8741,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                 // Fetch and update EMAIL_NOTIFICATION
                 var emailNotifications = await _context.EmailNotifications
-                    .Where(en => masterIds.Contains((int)en.RequestId) && en.TransactionId == transactionID)
-                    .ToListAsync();
+                .Where(en => masterIds.Contains((int)en.RequestId) && en.TransactionId == transactionID)
+                .ToListAsync();
 
                 var emailUpdates = emailNotifications.Count;
                 emailNotifications.ForEach(en => en.ShowStatus = 2);
 
                 // Fetch and update AssignedLetterType
                 var assignedLetterTypes = await _context.AssignedLetterTypes
-                    .Where(alt => masterIds.Contains((int)alt.LetterReqId))
-                    .ToListAsync();
+                .Where(alt => masterIds.Contains((int)alt.LetterReqId))
+                .ToListAsync();
 
                 var letterUpdates = assignedLetterTypes.Count;
                 assignedLetterTypes.ForEach(alt => alt.ApprovalStatus = ApprovalStatus.Deleted.ToString());
@@ -8749,27 +8772,27 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Fetch TransactionID
             int? transactionId = await _context.TransactionMasters
-                .Where(t => t.TransactionType == loadCompanyDetailsRequestDto.Code)
-                .Select(t => (int?)t.TransactionId)
-                .FirstOrDefaultAsync();
+            .Where(t => t.TransactionType == loadCompanyDetailsRequestDto.Code)
+            .Select(t => (int?)t.TransactionId)
+            .FirstOrDefaultAsync();
 
             // Check Access Rights
             bool hasAccess = await _context.TabAccessRights
-                .AnyAsync(a => _context.TabMasters
-                    .Any(t => t.Code == "SelfAssgnShft" && t.TabId == a.TabId) &&
-                    a.RoleId == loadCompanyDetailsRequestDto.FirstEntityId);
+            .AnyAsync(a => _context.TabMasters
+            .Any(t => t.Code == "SelfAssgnShft" && t.TabId == a.TabId) &&
+            a.RoleId == loadCompanyDetailsRequestDto.FirstEntityId);
 
             // Fetch Link Level
             int? linkSelect = await _context.SpecialAccessRights
-                .Where(s => s.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
-                .Select(s => s.LinkLevel)
-                .FirstOrDefaultAsync();
+            .Where(s => s.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
+            .Select(s => s.LinkLevel)
+            .FirstOrDefaultAsync();
 
             int? entityAccess = await _context.EntityAccessRights02s
-                .Where(e => e.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
-                .OrderBy(e => e.LinkLevel)
-                .Select(e => e.LinkLevel)
-                .FirstOrDefaultAsync();
+            .Where(e => e.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
+            .OrderBy(e => e.LinkLevel)
+            .Select(e => e.LinkLevel)
+            .FirstOrDefaultAsync();
 
             // Fetch High-Level Data
             //var highLevelData = await _context.HighLevelViewTables
@@ -9016,27 +9039,27 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<LetterMaster01Dto> GetLetterSubTypeByIdAsync(int LetterSubTypeID)
         {
             return await _context.LetterMaster01s
-                        .Where(l => l.ModuleSubId == LetterSubTypeID && l.IsActive == true)
-                        .Select(l => new LetterMaster01Dto
-                        {
-                            ModuleSubId = l.ModuleSubId,
-                            LetterSubName = l.LetterSubName,
-                            LetterTypeId = l.LetterTypeId,
-                            IsEss = l.IsEss,
-                            CreatedBy = l.CreatedBy,
-                            CreatedDate = l.CreatedDate,
-                            IsActive = l.IsActive,
-                            ModifiedBy = l.ModifiedBy,
-                            ModifiedDate = l.ModifiedDate,
-                            BackGroundImage = l.BackgroundImage,
-                            IsSelfApprove = l.IsSelfApprove,
-                            ApproveText = l.ApproveText ?? string.Empty,
-                            RejectText = l.RejectText ?? string.Empty,
-                            HideReject = l.HideReject ?? 0,
-                            WrkFlowRoleId = l.WrkFlowRoleId ?? 0,
-                            AdjustImagePos = l.AdjustImagePos ?? 0,
-                            AppointmentLetter = l.AppointmentLetter ?? 0
-                        }).FirstAsync();
+                .Where(l => l.ModuleSubId == LetterSubTypeID && l.IsActive == true)
+                .Select(l => new LetterMaster01Dto
+                {
+                    ModuleSubId = l.ModuleSubId,
+                    LetterSubName = l.LetterSubName,
+                    LetterTypeId = l.LetterTypeId,
+                    IsEss = l.IsEss,
+                    CreatedBy = l.CreatedBy,
+                    CreatedDate = l.CreatedDate,
+                    IsActive = l.IsActive,
+                    ModifiedBy = l.ModifiedBy,
+                    ModifiedDate = l.ModifiedDate,
+                    BackGroundImage = l.BackgroundImage,
+                    IsSelfApprove = l.IsSelfApprove,
+                    ApproveText = l.ApproveText ?? string.Empty,
+                    RejectText = l.RejectText ?? string.Empty,
+                    HideReject = l.HideReject ?? 0,
+                    WrkFlowRoleId = l.WrkFlowRoleId ?? 0,
+                    AdjustImagePos = l.AdjustImagePos ?? 0,
+                    AppointmentLetter = l.AppointmentLetter ?? 0
+                }).FirstAsync();
         }
         private async Task<int> GetTransactionIdByTransactionType(string transactionType)
         {
@@ -9088,48 +9111,48 @@ namespace HRMS.EmployeeInformation.Repository.Common
             int empId = 269;
             var transId = await GetTransactionIdByTransactionType("Role");
             var workflowTransId = await _context.TransactionMasters
-                .Where(t => t.TransactionType == "W_Flow")
-                .Select(t => t.TransactionId)
-                .FirstOrDefaultAsync();
+            .Where(t => t.TransactionType == "W_Flow")
+            .Select(t => t.TransactionId)
+            .FirstOrDefaultAsync();
 
             int? lnklev = await _context.SpecialAccessRights
-                .Where(s => s.RoleId == firstEntityId)
-                .Select(s => s.LinkLevel)
-                .FirstOrDefaultAsync();
+            .Where(s => s.RoleId == firstEntityId)
+            .Select(s => s.LinkLevel)
+            .FirstOrDefaultAsync();
 
             bool hasAccess = await _context.EntityAccessRights02s
-                .AnyAsync(s => s.RoleId == firstEntityId && s.LinkLevel == 15);
+            .AnyAsync(s => s.RoleId == firstEntityId && s.LinkLevel == 15);
 
             if (hasAccess)
             {
                 var roles = await _context.AdmRoleMasters.Join(_context.UserTypes, r => r.UserTypeId, u => u.Id,
-                    (r, u) => new
-                    {
-                        RoleId = r.RoleId,
-                        RoleName = r.RoleName,
-                        RoleCode = r.RoleCode,
-                        UserType = u.Description ?? "NA",
-                        Code = u.Code,
-                        Type = r.Type
-                    }).ToListAsync();
+                (r, u) => new
+                {
+                    RoleId = r.RoleId,
+                    RoleName = r.RoleName,
+                    RoleCode = r.RoleCode,
+                    UserType = u.Description ?? "NA",
+                    Code = u.Code,
+                    Type = r.Type
+                }).ToListAsync();
 
                 return roles.Where(a => a.Type != "A" && a.Code != "A").ToList();
             }
 
             var empEntity = await _context.HrEmpMasters
-                .Where(h => h.EmpId == secondEntityId)
-                .Select(h => h.EmpEntity)
-                .FirstOrDefaultAsync();
+            .Where(h => h.EmpId == secondEntityId)
+            .Select(h => h.EmpEntity)
+            .FirstOrDefaultAsync();
 
             var empEntities = SplitStrings_XML(empEntity, ',')
-                .Select((item, index) => new { Item = item, LinkLevelSelf = index + 2 })
-                .Where(e => !string.IsNullOrEmpty(e.Item));
+            .Select((item, index) => new { Item = item, LinkLevelSelf = index + 2 })
+            .Where(e => !string.IsNullOrEmpty(e.Item));
 
             var applicableFinal = await _context.EntityAccessRights02s
-                .Where(s => s.RoleId == firstEntityId)
-                .SelectMany(s => SplitStrings_XML(s.LinkId, default),
-                    (s, item) => new { Item = item, LinkLevel = s.LinkLevel })
-                .ToListAsync();
+            .Where(s => s.RoleId == firstEntityId)
+            .SelectMany(s => SplitStrings_XML(s.LinkId, default),
+            (s, item) => new { Item = item, LinkLevel = s.LinkLevel })
+            .ToListAsync();
 
             if (lnklev > 0)
             {
@@ -9144,49 +9167,49 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var applicableFinalSet = applicableFinal.Select(a => (long?)Convert.ToInt64(a.Item)).ToHashSet();
 
             var entityApplicable00Final = await _context.EntityApplicable00s
-                .Where(e => e.TransactionId == transId)
-                .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
-                .ToListAsync();
+            .Where(e => e.TransactionId == transId)
+            .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
+            .ToListAsync();
 
             var applicableFinal02Emp = await (
-                from emp in _context.EmployeeDetails
-                join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
-                join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
-                where ea.TransactionId == transId && applicableFinalSet.Contains(hlv.LevelOneId)
-                select ea.MasterId
+            from emp in _context.EmployeeDetails
+            join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
+            join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
+            where ea.TransactionId == transId && applicableFinalSet.Contains(hlv.LevelOneId)
+            select ea.MasterId
             ).Distinct().ToListAsync();
 
             var newHigh = entityApplicable00Final
-                .Where(e => applicableFinalSet.Contains(e.LinkId) || e.LinkLevel == 15)
-                .Select(e => e.MasterId)
-                .Union(applicableFinal02Emp)
-                .Distinct()
-                .ToList();
+            .Where(e => applicableFinalSet.Contains(e.LinkId) || e.LinkLevel == 15)
+            .Select(e => e.MasterId)
+            .Union(applicableFinal02Emp)
+            .Distinct()
+            .ToList();
 
             var finalRoles = await _context.AdmRoleMasters
-                .Join(_context.UserTypes, a => a.UserTypeId, b => b.Id, (a, b) => new { a, b })
-                .Join(newHigh, x => x.a.RoleId, e => e, (x, e) => new { x.a, x.b })
-                .Where(x => x.a.Type != "A" && x.b.Code != "A" && x.a.RoleId != firstEntityId && x.b.Id != 5)
-                .Select(x => new
-                {
-                    x.a.RoleId,
-                    x.a.RoleName,
-                    x.a.RoleCode,
-                    UserType = x.b.Description ?? "NA"
-                }).ToListAsync();
+            .Join(_context.UserTypes, a => a.UserTypeId, b => b.Id, (a, b) => new { a, b })
+            .Join(newHigh, x => x.a.RoleId, e => e, (x, e) => new { x.a, x.b })
+            .Where(x => x.a.Type != "A" && x.b.Code != "A" && x.a.RoleId != firstEntityId && x.b.Id != 5)
+            .Select(x => new
+            {
+                x.a.RoleId,
+                x.a.RoleName,
+                x.a.RoleCode,
+                UserType = x.b.Description ?? "NA"
+            }).ToListAsync();
 
             var additionalRoles = await _context.HrEmployeeUserRelations
-                .Where(a => a.EmpId == empId)
-                .Join(_context.AdmUserRoleMasters, a => a.UserId, c => c.UserId, (a, c) => new { a, c })
-                .Join(_context.AdmRoleMasters, ac => ac.c.RoleId, d => d.RoleId, (ac, d) => new { ac, d })
-                .Join(_context.UserTypes, d => d.d.UserTypeId, e => e.Id, (d, e) => new { d, e })
-                .Select(x => new
-                {
-                    x.d.d.RoleId,
-                    x.d.d.RoleName,
-                    x.d.d.RoleCode,
-                    UserType = x.e.Description ?? "NA"
-                }).ToListAsync();
+            .Where(a => a.EmpId == empId)
+            .Join(_context.AdmUserRoleMasters, a => a.UserId, c => c.UserId, (a, c) => new { a, c })
+            .Join(_context.AdmRoleMasters, ac => ac.c.RoleId, d => d.RoleId, (ac, d) => new { ac, d })
+            .Join(_context.UserTypes, d => d.d.UserTypeId, e => e.Id, (d, e) => new { d, e })
+            .Select(x => new
+            {
+                x.d.d.RoleId,
+                x.d.d.RoleName,
+                x.d.d.RoleCode,
+                UserType = x.e.Description ?? "NA"
+            }).ToListAsync();
 
             return finalRoles.Union(additionalRoles).ToList();
         }
@@ -9203,21 +9226,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
 
             var employeeStatuses = await _context.HrEmpStatusSettings
-                .Where(s => !excludedStatuses.Contains(s.Status))
-                .Select(s => $"<option value={s.StatusId}>{s.StatusDesc}</option>")
-                .ToListAsync();
+            .Where(s => !excludedStatuses.Contains(s.Status))
+            .Select(s => $"<option value={s.StatusId}>{s.StatusDesc}</option>")
+            .ToListAsync();
 
             // Fetch System Statuses
             var employeeCurrentStatuses = await _context.HrEmpMasters
-                .Where(e => e.EmpId == empId)
-                .Select(e => e.CurrentStatus)
-                .Union(new int?[] { 7 }) // Including '7' as per the SQL UNION
-                .ToListAsync();
+            .Where(e => e.EmpId == empId)
+            .Select(e => e.CurrentStatus)
+            .Union(new int?[] { 7 }) // Including '7' as per the SQL UNION
+            .ToListAsync();
 
             var systemStatuses = await _context.EmployeeCurrentStatuses
-                .Where(s => employeeCurrentStatuses.Contains(s.Status))
-                .Select(s => $"<option value={s.Status}>{s.StatusDesc}</option>")
-                .ToListAsync();
+            .Where(s => employeeCurrentStatuses.Contains(s.Status))
+            .Select(s => $"<option value={s.Status}>{s.StatusDesc}</option>")
+            .ToListAsync();
 
             // Return concatenated results
             return (string.Join("", employeeStatuses), string.Join("", systemStatuses));
@@ -9225,8 +9248,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<object> GetReligionsAsync()
         {
             var religions = await _context.AdmReligionMasters
-                .Select(r => $"<option value={r.ReligionId}>{r.ReligionName}</option>")
-                .ToListAsync();
+            .Select(r => $"<option value={r.ReligionId}>{r.ReligionName}</option>")
+            .ToListAsync();
 
             return new
             {
@@ -9238,29 +9261,29 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
 
             return await _context.EmployeeFieldMaster00s.OrderBy(f => f.FieldMaster00Id)
-                        .Select(f => new
-                        {
-                            f.FieldMaster00Id,
-                            f.FieldCode,
-                            f.FieldDescription
-                        }).ToListAsync();
+                .Select(f => new
+                {
+                    f.FieldMaster00Id,
+                    f.FieldCode,
+                    f.FieldDescription
+                }).ToListAsync();
         }
         public async Task<object> GetCategoryMasterDetailsAsync(int roleId)
         {
 
             var categoryMaster = await _context.Categorymasters
-                 .Join(_context.HrmValueTypes
-                         .Where(b => b.Type == typeof(CatTrxType).Name), // Filter BEFORE join
-                       a => a.CatTrxTypeId,
-                       b => b.Value,
-                       (a, b) => new
-                       {
-                           SortOrder = a.SortOrder,
-                           Description = a.Description,
-                           Value = b.Value,
-                           Code = b.Code.Trim()
-                       })
-                 .ToListAsync();
+            .Join(_context.HrmValueTypes
+                 .Where(b => b.Type == typeof(CatTrxType).Name), // Filter BEFORE join
+               a => a.CatTrxTypeId,
+               b => b.Value,
+               (a, b) => new
+               {
+                   SortOrder = a.SortOrder,
+                   Description = a.Description,
+                   Value = b.Value,
+                   Code = b.Code.Trim()
+               })
+            .ToListAsync();
 
             var linkLevel = await GetLinkLevelByRoleId(roleId);
 
@@ -9275,14 +9298,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             var excludedCodes = new[] { "ASSIGN", "PAYSCALE" };
             return await _context.EmployeeFieldMaster00s
-                                .Where(f => !excludedCodes.Contains(f.FieldCode))
-                                .OrderBy(f => f.FieldMaster00Id)
-                                .Select(f => new
-                                {
-                                    f.FieldMaster00Id,
-                                    f.FieldCode,
-                                    f.FieldDescription
-                                }).ToListAsync();
+                        .Where(f => !excludedCodes.Contains(f.FieldCode))
+                        .OrderBy(f => f.FieldMaster00Id)
+                        .Select(f => new
+                        {
+                            f.FieldMaster00Id,
+                            f.FieldCode,
+                            f.FieldDescription
+                        }).ToListAsync();
         }
         //public async Task<object> GetFieldsToHideAsync()
         //{
@@ -9294,18 +9317,18 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<object> GetFieldsToHideAsync()
         {
             var parameterVal = await _context.CompanyParameters
-                                  .Where(cp => cp.ParameterCode == "HIDEEMPCREATFLD" && cp.Type == _employeeSettings.companyParameterCodesType)
-                                  .Select(cp => (int?)cp.Value)  // Convert to nullable to handle NULL cases
-                                  .FirstOrDefaultAsync() ?? 0;
+                          .Where(cp => cp.ParameterCode == "HIDEEMPCREATFLD" && cp.Type == _employeeSettings.companyParameterCodesType)
+                          .Select(cp => (int?)cp.Value)  // Convert to nullable to handle NULL cases
+                          .FirstOrDefaultAsync() ?? 0;
 
             List<string> FieldCode = new List<string>(); // Ensure FieldCode is always initialized
 
             if (parameterVal == 1)
             {
                 FieldCode = await _context.EmployeeFieldMaster01s
-                              .Where(a => a.Visibility == 0 && a.FieldMaster00Id == 1)
-                              .Select(a => a.FieldCode)
-                              .ToListAsync();
+                          .Where(a => a.Visibility == 0 && a.FieldMaster00Id == 1)
+                          .Select(a => a.FieldCode)
+                          .ToListAsync();
             }
 
             return FieldCode;
@@ -9316,9 +9339,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             int linkselect = 0;  // Replace with actual value
             string lnk = "";
             var lnkList = await _context.Categorymasters
-               .Where(c => c.SortOrder >= linkselect || linkselect == 15)
-               .Select(c => c.SortOrder.ToString()) // Convert SortOrder to string
-               .ToListAsync();
+            .Where(c => c.SortOrder >= linkselect || linkselect == 15)
+            .Select(c => c.SortOrder.ToString()) // Convert SortOrder to string
+            .ToListAsync();
 
             // Concatenating SortOrder values into a single string
             lnk = string.Join(",", lnkList) + ",13";
@@ -9332,130 +9355,130 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private List<LevelListDto> GetFormattedAccessLevels(List<HighLevelTableDto> dataList, int initialEntity)
         {
             var levelLists = new List<LevelListDto>
-                    {
-                    new LevelListDto
-                    {
-                        LevelOne = initialEntity == 1
-                            ? dataList
-                                .GroupBy(x => new { x.LevelOneId, x.LevelOneDescription })
-                                .Select(g => new LevelOne
-                                {
-                                    LevelOneID = (int)g.Key.LevelOneId,
-                                    LevelOneDescription = g.Key.LevelOneDescription
-                                }).ToList()
-                            : new List<LevelOne>(),
+{
+new LevelListDto
+{
+    LevelOne = initialEntity == 1
+        ? dataList
+            .GroupBy(x => new { x.LevelOneId, x.LevelOneDescription })
+            .Select(g => new LevelOne
+            {
+                LevelOneID = (int)g.Key.LevelOneId,
+                LevelOneDescription = g.Key.LevelOneDescription
+            }).ToList()
+        : new List<LevelOne>(),
 
-                        LevelTwo = initialEntity == 2
-                            ? dataList
-                                .GroupBy(x => new { x.LevelTwoId, x.LevelTwoDescription })
-                                .Select(g => new LevelTwo
-                                {
-                                    LevelTwoID = (int)g.Key.LevelTwoId,
-                                    LevelTwoDescription = g.Key.LevelTwoDescription
-                                }).ToList()
-                            : new List<LevelTwo>(),
+    LevelTwo = initialEntity == 2
+        ? dataList
+            .GroupBy(x => new { x.LevelTwoId, x.LevelTwoDescription })
+            .Select(g => new LevelTwo
+            {
+                LevelTwoID = (int)g.Key.LevelTwoId,
+                LevelTwoDescription = g.Key.LevelTwoDescription
+            }).ToList()
+        : new List<LevelTwo>(),
 
-                        LevelThree = initialEntity == 3
-                            ? dataList
-                                .GroupBy(x => new { x.LevelThreeId, x.LevelThreeDescription })
-                                .Select(g => new LevelThree
-                                {
-                                    LevelThreeID = (int)g.Key.LevelThreeId,
-                                    LevelThreeDescription = g.Key.LevelThreeDescription
-                                }).ToList()
-                            : new List<LevelThree>(),
+    LevelThree = initialEntity == 3
+        ? dataList
+            .GroupBy(x => new { x.LevelThreeId, x.LevelThreeDescription })
+            .Select(g => new LevelThree
+            {
+                LevelThreeID = (int)g.Key.LevelThreeId,
+                LevelThreeDescription = g.Key.LevelThreeDescription
+            }).ToList()
+        : new List<LevelThree>(),
 
-                        LevelFour = initialEntity == 4
-                            ? dataList
-                                .GroupBy(x => new { x.LevelFourId, x.LevelFourDescription })
-                                .Select(g => new LevelFour
-                                {
-                                    LevelFourID = (int)g.Key.LevelFourId,
-                                    LevelFourDescription = g.Key.LevelFourDescription
-                                }).ToList()
-                            : new List<LevelFour>(),
+    LevelFour = initialEntity == 4
+        ? dataList
+            .GroupBy(x => new { x.LevelFourId, x.LevelFourDescription })
+            .Select(g => new LevelFour
+            {
+                LevelFourID = (int)g.Key.LevelFourId,
+                LevelFourDescription = g.Key.LevelFourDescription
+            }).ToList()
+        : new List<LevelFour>(),
 
-                        LevelFive = initialEntity == 5
-                            ? dataList
-                                .GroupBy(x => new { x.LevelFiveId, x.LevelFiveDescription })
-                                .Select(g => new LevelFive
-                                {
-                                    LevelFiveID = (int)g.Key.LevelFiveId,
-                                    LevelFiveDescription = g.Key.LevelFiveDescription
-                                }).ToList()
-                            : new List<LevelFive>(),
+    LevelFive = initialEntity == 5
+        ? dataList
+            .GroupBy(x => new { x.LevelFiveId, x.LevelFiveDescription })
+            .Select(g => new LevelFive
+            {
+                LevelFiveID = (int)g.Key.LevelFiveId,
+                LevelFiveDescription = g.Key.LevelFiveDescription
+            }).ToList()
+        : new List<LevelFive>(),
 
-                        LevelSix = initialEntity == 6
-                            ? dataList
-                                .GroupBy(x => new { x.LevelSixId, x.LevelSixDescription })
-                                .Select(g => new LevelSix
-                                {
-                                    LevelSixID = (int)g.Key.LevelSixId,
-                                    LevelSixDescription = g.Key.LevelSixDescription
-                                }).ToList()
-                            : new List<LevelSix>(),
+    LevelSix = initialEntity == 6
+        ? dataList
+            .GroupBy(x => new { x.LevelSixId, x.LevelSixDescription })
+            .Select(g => new LevelSix
+            {
+                LevelSixID = (int)g.Key.LevelSixId,
+                LevelSixDescription = g.Key.LevelSixDescription
+            }).ToList()
+        : new List<LevelSix>(),
 
-                        LevelSeven = initialEntity == 7
-                            ? dataList
-                                .GroupBy(x => new { x.LevelSevenId, x.LevelSevenDescription })
-                                .Select(g => new LevelSeven
-                                {
-                                    LevelSevenID = (int)g.Key.LevelSevenId,
-                                    LevelSevenDescription = g.Key.LevelSevenDescription
-                                }).ToList()
-                            : new List<LevelSeven>(),
+    LevelSeven = initialEntity == 7
+        ? dataList
+            .GroupBy(x => new { x.LevelSevenId, x.LevelSevenDescription })
+            .Select(g => new LevelSeven
+            {
+                LevelSevenID = (int)g.Key.LevelSevenId,
+                LevelSevenDescription = g.Key.LevelSevenDescription
+            }).ToList()
+        : new List<LevelSeven>(),
 
-                        LevelEight = initialEntity == 8
-                            ? dataList
-                                .GroupBy(x => new { x.LevelEightId, x.LevelEightDescription })
-                                .Select(g => new LevelEight
-                                {
-                                    LevelEightID = (int)g.Key.LevelEightId,
-                                    LevelEightDescription = g.Key.LevelEightDescription
-                                }).ToList()
-                            : new List<LevelEight>(),
+    LevelEight = initialEntity == 8
+        ? dataList
+            .GroupBy(x => new { x.LevelEightId, x.LevelEightDescription })
+            .Select(g => new LevelEight
+            {
+                LevelEightID = (int)g.Key.LevelEightId,
+                LevelEightDescription = g.Key.LevelEightDescription
+            }).ToList()
+        : new List<LevelEight>(),
 
-                        LevelNine = initialEntity == 9
-                            ? dataList
-                                .GroupBy(x => new { x.LevelNineId, x.LevelNineDescription })
-                                .Select(g => new LevelNine
-                                {
-                                    LevelNineID = (int)g.Key.LevelNineId,
-                                    LevelNineDescription = g.Key.LevelNineDescription
-                                }).ToList()
-                            : new List<LevelNine>(),
+    LevelNine = initialEntity == 9
+        ? dataList
+            .GroupBy(x => new { x.LevelNineId, x.LevelNineDescription })
+            .Select(g => new LevelNine
+            {
+                LevelNineID = (int)g.Key.LevelNineId,
+                LevelNineDescription = g.Key.LevelNineDescription
+            }).ToList()
+        : new List<LevelNine>(),
 
-                        LevelTen = initialEntity == 10
-                            ? dataList
-                                .GroupBy(x => new { x.LevelTenId, x.LevelTenDescription })
-                                .Select(g => new LevelTen
-                                {
-                                    LevelTenID = (int)g.Key.LevelTenId,
-                                    LevelTenDescription = g.Key.LevelTenDescription
-                                }).ToList()
-                            : new List<LevelTen>(),
+    LevelTen = initialEntity == 10
+        ? dataList
+            .GroupBy(x => new { x.LevelTenId, x.LevelTenDescription })
+            .Select(g => new LevelTen
+            {
+                LevelTenID = (int)g.Key.LevelTenId,
+                LevelTenDescription = g.Key.LevelTenDescription
+            }).ToList()
+        : new List<LevelTen>(),
 
-                        LevelEleven = initialEntity == 11
-                            ? dataList
-                                .GroupBy(x => new { x.LevelElevenId, x.LevelElevenDescription })
-                                .Select(g => new LevelEleven
-                                {
-                                    LevelElevenID = (int)g.Key.LevelElevenId,
-                                    LevelElevenDescription = g.Key.LevelElevenDescription
-                                }).ToList()
-                            : new List<LevelEleven>(),
+    LevelEleven = initialEntity == 11
+        ? dataList
+            .GroupBy(x => new { x.LevelElevenId, x.LevelElevenDescription })
+            .Select(g => new LevelEleven
+            {
+                LevelElevenID = (int)g.Key.LevelElevenId,
+                LevelElevenDescription = g.Key.LevelElevenDescription
+            }).ToList()
+        : new List<LevelEleven>(),
 
-                        LevelTwelve = initialEntity == 12
-                            ? dataList
-                                .GroupBy(x => new { x.LevelTwelveId, x.LevelTwelveDescription })
-                                .Select(g => new LevelTwelve
-                                {
-                                    LevelTwelveID = (int)g.Key.LevelTwelveId,
-                                    LevelTwelveDescription = g.Key.LevelTwelveDescription
-                                }).ToList()
-                            : new List<LevelTwelve>()
-                    }
-     };
+    LevelTwelve = initialEntity == 12
+        ? dataList
+            .GroupBy(x => new { x.LevelTwelveId, x.LevelTwelveDescription })
+            .Select(g => new LevelTwelve
+            {
+                LevelTwelveID = (int)g.Key.LevelTwelveId,
+                LevelTwelveDescription = g.Key.LevelTwelveDescription
+            }).ToList()
+        : new List<LevelTwelve>()
+}
+};
 
             return levelLists;
         }
@@ -9463,18 +9486,18 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<object> EmployeeCreationFilterAsync(int? firstEntityId)
         {
             var linkselect = await _context.EntityAccessRights02s
-                .Where(e => e.RoleId == firstEntityId)
-                .OrderBy(e => e.LinkLevel)
-                .Select(e => e.LinkLevel)
-                .FirstOrDefaultAsync();
+            .Where(e => e.RoleId == firstEntityId)
+            .OrderBy(e => e.LinkLevel)
+            .Select(e => e.LinkLevel)
+            .FirstOrDefaultAsync();
 
 
             // Replace with actual value
             string lnk = "";
             var lnkList = await _context.Categorymasters
-               .Where(c => c.SortOrder >= linkselect || linkselect == 15)
-               .Select(c => c.SortOrder.ToString()) // Convert SortOrder to string
-               .ToListAsync();
+            .Where(c => c.SortOrder >= linkselect || linkselect == 15)
+            .Select(c => c.SortOrder.ToString()) // Convert SortOrder to string
+            .ToListAsync();
 
             // Concatenating SortOrder values into a single string
             lnk = string.Join(",", lnkList) + ",13";
@@ -9509,28 +9532,28 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<DailyRatePolicyDto>> GetDailyRatePoliciesAsync()
         {
             return await _context.DailyRatePolicy00s
-                        .Select(d => new DailyRatePolicyDto
-                        {
-                            RateId = d.RateId,
-                            Name = d.Name
-                        }).ToListAsync();
+                .Select(d => new DailyRatePolicyDto
+                {
+                    RateId = d.RateId,
+                    Name = d.Name
+                }).ToListAsync();
         }
         public async Task<object> GetWageTypesWithRatesAsync()
         {
             var wageTypes = new List<object>
-                            {
-                                new { ID = 1, Description = "Monthly wage" },
-                                new { ID = 2, Description = "Daily wage" },
-                                new { ID = 3, Description = "Hourly Rate Fixed" },
-                                new { ID = 4, Description = "Hourly Rate Based On Month" }
-                            };
+        {
+            new { ID = 1, Description = "Monthly wage" },
+            new { ID = 2, Description = "Daily wage" },
+            new { ID = 3, Description = "Hourly Rate Fixed" },
+            new { ID = 4, Description = "Hourly Rate Based On Month" }
+        };
 
             var dailyRatePolicies = await _context.DailyRatePolicy00s
-                                    .Select(d => new
-                                    {
-                                        RateId = d.RateId,
-                                        Name = d.Name
-                                    }).ToListAsync();
+                            .Select(d => new
+                            {
+                                RateId = d.RateId,
+                                Name = d.Name
+                            }).ToListAsync();
 
             return new
             {
@@ -9736,23 +9759,23 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             // Get join date
             var joinDate = await _context.EmployeeDetails
-                                  .Where(e => e.EmpId == empId)
-                                  .Select(e => e.JoinDt)
-                                  .FirstOrDefaultAsync();
+                          .Where(e => e.EmpId == empId)
+                          .Select(e => e.JoinDt)
+                          .FirstOrDefaultAsync();
 
             if (joinDate == null)
                 return "0Y: 0M: 0D"; // Employee not found
 
             // Determine last working date
             var lastDate = await _context.Resignations
-                .Where(r => r.EmpId == empId
-                            && (r.ApprovalStatus == "P" || r.ApprovalStatus == "A")
-                            && r.RejoinStatus != "A"
-                            && r.ApprovalStatus != "D"
-                            && r.RelievingDate < DateTime.UtcNow)
-                .OrderByDescending(r => r.RelievingDate)
-                .Select(r => r.RelievingDate)
-                .FirstOrDefaultAsync() ?? DateTime.Now;
+            .Where(r => r.EmpId == empId
+                    && (r.ApprovalStatus == "P" || r.ApprovalStatus == "A")
+                    && r.RejoinStatus != "A"
+                    && r.ApprovalStatus != "D"
+                    && r.RelievingDate < DateTime.UtcNow)
+            .OrderByDescending(r => r.RelievingDate)
+            .Select(r => r.RelievingDate)
+            .FirstOrDefaultAsync() ?? DateTime.Now;
 
             // Future join date scenario
             if (joinDate > lastDate)
@@ -9790,9 +9813,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Query HRM_VALUE_TYPES for the required code
             var editButtonCode = await _context.HrmValueTypes
-                .Where(v => v.Type == "EmployeeReporting" && v.Value == Convert.ToInt32(defaultValue))
-                .Select(v => v.Code)
-                .FirstOrDefaultAsync();  // This returns the first match or null if no match found
+            .Where(v => v.Type == "EmployeeReporting" && v.Value == Convert.ToInt32(defaultValue))
+            .Select(v => v.Code)
+            .FirstOrDefaultAsync();  // This returns the first match or null if no match found
 
             return editButtonCode;
 
@@ -9815,16 +9838,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Assign row numbers in memory
             var finalResult = result
-                .Select((x, index) => new
-                {
-                    x.Id,
-                    x.Projectdes,
-                    x.Description,
-                    x.StartDate,
-                    x.EndDate,
-                    Sno = index + 1 // Generate row numbers
-                })
-                .ToList();
+            .Select((x, index) => new
+            {
+                x.Id,
+                x.Projectdes,
+                x.Description,
+                x.StartDate,
+                x.EndDate,
+                Sno = index + 1 // Generate row numbers
+            })
+            .ToList();
 
             return finalResult;
         }
@@ -9835,13 +9858,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Fetch matching UserIds from HR_EMPLOYEE_USER_RELATION
             var userIds = _context.HrEmployeeUserRelations
-                            .Where(rel => empIdList.Contains(rel.EmpId))
-                            .Select(rel => rel.UserId)
-                            .ToList();
+                    .Where(rel => empIdList.Contains(rel.EmpId))
+                    .Select(rel => rel.UserId)
+                    .ToList();
 
             var usersToUpdate = _context.AdmUserMasters
-                                       .Where(u => userIds.Contains(u.UserId))
-                                       .ToList();
+                               .Where(u => userIds.Contains(u.UserId))
+                               .ToList();
 
             foreach (var user in usersToUpdate)
             {
@@ -9852,8 +9875,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Update HR_EMP_MASTER
             var employeesToUpdate = _context.HrEmpMasters
-                                           .Where(e => empIdList.Contains(e.EmpId))
-                                           .ToList();
+                                   .Where(e => empIdList.Contains(e.EmpId))
+                                   .ToList();
 
             foreach (var emp in employeesToUpdate)
             {
@@ -9867,8 +9890,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Delete from SurveyRelation
             var surveysToDelete = _context.SurveyRelations
-                                         .Where(s => empIdList.Contains((int)s.EmpId))
-                                         .ToList();
+                                 .Where(s => empIdList.Contains((int)s.EmpId))
+                                 .ToList();
 
             _context.SurveyRelations.RemoveRange(surveysToDelete);
 
@@ -9883,9 +9906,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
 
             var splitLinkIds = linkId.Split(',')
-                         .Where(id => int.TryParse(id, out _))  // Ensure only valid integers
-                         .Select(int.Parse)  // Convert to int
-                         .ToList();
+                 .Where(id => int.TryParse(id, out _))  // Ensure only valid integers
+                 .Select(int.Parse)  // Convert to int
+                 .ToList();
 
             var companyParams = await (from a in _context.CompanyParameters
                                        join b in _context.CompanyParameters01s on a.Id equals b.ParamId
@@ -9898,35 +9921,35 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                            LevelId = (long?)b.LevelId, // Convert to nullable long
                                            IsLinked = true
                                        })
-                             .Union(
-                                 from a in _context.CompanyParameters
-                                 where new[] { "PRODTE", "REVDTE", "EMPNOTCE" }.Contains(a.ParameterCode)
-                                 select new
-                                 {
-                                     a.ParameterCode,
-                                     Value = (object)a.Value, // Ensure both return 'object' type
-                                     LevelId = (long?)null, // Convert to nullable long
-                                     IsLinked = false
-                                 }
-                             )
-                             .ToListAsync();
+                     .Union(
+                         from a in _context.CompanyParameters
+                         where new[] { "PRODTE", "REVDTE", "EMPNOTCE" }.Contains(a.ParameterCode)
+                         select new
+                         {
+                             a.ParameterCode,
+                             Value = (object)a.Value, // Ensure both return 'object' type
+                             LevelId = (long?)null, // Convert to nullable long
+                             IsLinked = false
+                         }
+                     )
+                     .ToListAsync();
 
 
 
             var prodte = companyParams.Where(p => p.ParameterCode == "PRODTE")
-                                       .OrderByDescending(p => p.IsLinked)
-                                       .ThenByDescending(p => p.LevelId)
-                                       .FirstOrDefault();
+                               .OrderByDescending(p => p.IsLinked)
+                               .ThenByDescending(p => p.LevelId)
+                               .FirstOrDefault();
 
             var revdte = companyParams.Where(p => p.ParameterCode == "REVDTE")
-                                       .OrderByDescending(p => p.IsLinked)
-                                       .ThenByDescending(p => p.LevelId)
-                                       .FirstOrDefault();
+                               .OrderByDescending(p => p.IsLinked)
+                               .ThenByDescending(p => p.LevelId)
+                               .FirstOrDefault();
 
             var empnotce = companyParams.Where(p => p.ParameterCode == "EMPNOTCE")
-                                         .OrderByDescending(p => p.IsLinked)
-                                         .ThenByDescending(p => p.LevelId)
-                                         .FirstOrDefault();
+                                 .OrderByDescending(p => p.IsLinked)
+                                 .ThenByDescending(p => p.LevelId)
+                                 .FirstOrDefault();
 
             var result = new { PRODTE = prodte, REVDTE = revdte, EMPNOTCE = empnotce };
             return result;
@@ -10091,19 +10114,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return mode switch
             {
                 "GetGeoType" => await _context.HrmValueTypes
-                                              .Where(a => a.Type == "GeoSpacingType")
-                                              .Select(a => new { a.Value, a.Code })
-                                              .ToListAsync(),
+                                          .Where(a => a.Type == "GeoSpacingType")
+                                          .Select(a => new { a.Value, a.Code })
+                                          .ToListAsync(),
 
                 "GetGeoCoordinates" => await _context.MasterGeotaggings
-                                                     .Where(g => g.GeoSpaceType == geoSpacingType
-                                                              && g.GeoCriteria == geoCriteria
-                                                              && g.Status == 1)
-                                                     .Select(g => new
-                                                     {
-                                                         Value = g.GeoMasterId,
-                                                         Description = g.CoordinateName
-                                                     }).ToListAsync(),
+                                                 .Where(g => g.GeoSpaceType == geoSpacingType
+                                                          && g.GeoCriteria == geoCriteria
+                                                          && g.Status == 1)
+                                                 .Select(g => new
+                                                 {
+                                                     Value = g.GeoMasterId,
+                                                     Description = g.CoordinateName
+                                                 }).ToListAsync(),
 
                 _ => string.Empty
             };
@@ -10125,10 +10148,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
                 if (!DateTime.TryParseExact(hraDetail.FromDate,
-                    new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss.fff" },
-                    null,
-                    System.Globalization.DateTimeStyles.None,
-                    out DateTime effectDate))
+                new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss.fff" },
+                null,
+                System.Globalization.DateTimeStyles.None,
+                out DateTime effectDate))
                 {
                     errorMessage = "Invalid FromDate format. Expected format: yyyy-MM-dd or yyyy-MM-dd HH:mm:ss.fff.";
                     return errorMessage;
@@ -10136,9 +10159,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
                 var empHistory = await _context.HraHistories
-                    .Where(h => h.EmployeeId == empid)
-                    .OrderByDescending(h => h.EntryDate)
-                    .FirstOrDefaultAsync();
+                .Where(h => h.EmployeeId == empid)
+                .OrderByDescending(h => h.EntryDate)
+                .FirstOrDefaultAsync();
 
 
                 if (empHistory != null)
@@ -10214,16 +10237,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<object> GetEmployeeCertifications(int employeeid)
         {
             var certifications = await _context.EmployeeCertifications
-                .Where(c => c.EmpId == employeeid && c.Status != "D")
-                .Select(c => new
-                {
-                    c.CertificationId,
-                    c.CertificationName,
-                    c.CertificationField,
-                    c.YearofCompletion,
-                    c.IssuingAuthority
-                })
-                .ToListAsync();
+            .Where(c => c.EmpId == employeeid && c.Status != "D")
+            .Select(c => new
+            {
+                c.CertificationId,
+                c.CertificationName,
+                c.CertificationField,
+                c.YearofCompletion,
+                c.IssuingAuthority
+            })
+            .ToListAsync();
 
             if (certifications == null || !certifications.Any())
             {
@@ -10236,7 +10259,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
 
             var certification = await _context.EmployeeCertifications
-                .FirstOrDefaultAsync(c => c.CertificationId == certificateid);
+            .FirstOrDefaultAsync(c => c.CertificationId == certificateid);
 
             if (certification == null)
             {
@@ -10263,7 +10286,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             try
             {
                 var existingRecord = await _context.BiometricsDtls
-                    .FirstOrDefaultAsync(b => b.EmployeeId == biometricDto.EmployeeID);
+                .FirstOrDefaultAsync(b => b.EmployeeId == biometricDto.EmployeeID);
 
                 if (existingRecord == null)
                 {
@@ -10291,7 +10314,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 }
 
                 var empRecord = await _context.HrEmpMasters
-                    .FirstOrDefaultAsync(e => e.EmpId == biometricDto.EmployeeID);
+                .FirstOrDefaultAsync(e => e.EmpId == biometricDto.EmployeeID);
 
                 if (empRecord != null)
                 {
@@ -10785,8 +10808,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int detailId)
         {
             return await _context.EmployeeLanguageSkills
-                .Where(x => x.EmpId == empId && x.EmpLangId == detailId)
-                .ToListAsync();
+            .Where(x => x.EmpId == empId && x.EmpLangId == detailId)
+            .ToListAsync();
         }
         public async Task<List<ParamRoleViewDto>> EditRoleELAsync(int linkLevel, int valueId)
         {
@@ -11137,13 +11160,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 // Step 2: Try via EmpEntity (except LevelID 1)
                 var empEntity = await _context.EmployeeDetails
-                    .Where(e => e.EmpId == empId)
-                    .Select(e => e.EmpEntity)
-                    .FirstOrDefaultAsync();
+                .Where(e => e.EmpId == empId)
+                .Select(e => e.EmpEntity)
+                .FirstOrDefaultAsync();
 
                 var empEntityIds = empEntity?.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                             .Select(long.Parse)
-                                             .ToList();
+                                         .Select(long.Parse)
+                                         .ToList();
 
                 if (empEntityIds?.Any() == true)
                 {
@@ -11163,13 +11186,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 // Step 3: Try EmpFirstEntity
                 var empFirstEntity = await _context.EmployeeDetails
-                    .Where(e => e.EmpId == empId)
-                    .Select(e => e.EmpFirstEntity)
-                    .FirstOrDefaultAsync();
+                .Where(e => e.EmpId == empId)
+                .Select(e => e.EmpFirstEntity)
+                .FirstOrDefaultAsync();
 
                 var firstEntityIds = empFirstEntity?.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                                    .Select(long.Parse)
-                                                    .ToList();
+                                                .Select(long.Parse)
+                                                .ToList();
                 if (firstEntityIds?.Any() == true)
                 {
                     defaultPolicyId = await (from a in _context.CompanyParameters01s
@@ -11187,9 +11210,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 // Step 4: Company-level fallback
                 defaultPolicyId = await _context.CompanyParameters
-                    .Where(p => p.ParameterCode == "DEFATTNPOL" && p.Type == "EMP1")
-                    .Select(p => p.Value)
-                    .FirstOrDefaultAsync();
+                .Where(p => p.ParameterCode == "DEFATTNPOL" && p.Type == "EMP1")
+                .Select(p => p.Value)
+                .FirstOrDefaultAsync();
             }
 
             return defaultPolicyId ?? 0;
@@ -11225,50 +11248,50 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var empEntityIds = request.EmpEntity;
 
             var holidayAccessExists = await _context.HrmHolidayMasterAccesses
-                .AnyAsync(a => a.EmployeeId == request.empId);
+            .AnyAsync(a => a.EmployeeId == request.empId);
 
 
             if (!holidayAccessExists)
             {
                 var transactionId = await _context.TransactionMasters
-                    .Where(t => t.TransactionType == "H")
-                    .OrderBy(t => t.TransactionId)
-                    .Select(t => t.TransactionId)
-                    .FirstOrDefaultAsync();
+                .Where(t => t.TransactionType == "H")
+                .OrderBy(t => t.TransactionId)
+                .Select(t => t.TransactionId)
+                .FirstOrDefaultAsync();
 
                 var empEntityIdsList = empEntityIds
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(long.Parse)
-                    .ToList();
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(long.Parse)
+                .ToList();
 
                 var applicableHolidayIds = await _context.EntityApplicable00s
-                    .Where(e =>
-                                                e.TransactionId == transactionId &&
-                        (
-                            (e.LinkLevel == 1 && e.LinkId == parsedFirstEntityId) ||
-                            (e.LinkLevel == 15) ||
-                            (e.LinkLevel != 1 && empEntityIdsList.Contains(e.LinkId.Value))
-                        )
-
+                .Where(e =>
+                                            e.TransactionId == transactionId &&
+                    (
+                        (e.LinkLevel == 1 && e.LinkId == parsedFirstEntityId) ||
+                        (e.LinkLevel == 15) ||
+                        (e.LinkLevel != 1 && empEntityIdsList.Contains(e.LinkId.Value))
                     )
-                    .Select(e => e.MasterId)
-                    .ToListAsync();
+
+                )
+                .Select(e => e.MasterId)
+                .ToListAsync();
 
                 var holidaysToInsert = await _context.HolidaysMasters
-                    .Where(s => s.HolidayFromDate > joiningDate &&
-                                applicableHolidayIds.Contains(s.HolidayMasterId))
-                                       .Select(s => new HrmHolidayMasterAccess
-                                       {
-                                           EmployeeId = request.empId,
-                                           HolidayMasterId = s.HolidayMasterId,
-                                           IsCompanyLevel = 0,
-                                           Active = "Y",
-                                           CreatedBy = request.entryBy, // Fix: Convert string to int
-                                           CreatedDate = DateTime.UtcNow,
-                                           ValidDatefrom = joiningDate
-                                       })
+                .Where(s => s.HolidayFromDate > joiningDate &&
+                            applicableHolidayIds.Contains(s.HolidayMasterId))
+                                   .Select(s => new HrmHolidayMasterAccess
+                                   {
+                                       EmployeeId = request.empId,
+                                       HolidayMasterId = s.HolidayMasterId,
+                                       IsCompanyLevel = 0,
+                                       Active = "Y",
+                                       CreatedBy = request.entryBy, // Fix: Convert string to int
+                                       CreatedDate = DateTime.UtcNow,
+                                       ValidDatefrom = joiningDate
+                                   })
 
-                    .ToListAsync();
+                .ToListAsync();
 
                 if (holidaysToInsert.Any())
                 {
@@ -11289,13 +11312,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 throw new Exception("Invalid FirstEntityId");
 
             var empEntityIdsList = request.EmpEntity?
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(long.Parse)
-                .ToList() ?? new List<long>();
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(long.Parse)
+            .ToList() ?? new List<long>();
 
 
             var alreadyHasAccess = await _context.AttendancepolicyMasterAccesses
-                .AnyAsync(a => a.EmployeeId == request.empId);
+            .AnyAsync(a => a.EmployeeId == request.empId);
 
             if (alreadyHasAccess)
                 return;
@@ -11306,25 +11329,25 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (policyId == 0)
             {
                 var transactionId = await _context.TransactionMasters
-                    .Where(t => t.TransactionType == "AtnPolicy")
-                    .OrderBy(t => t.TransactionId)
-                    .Select(t => t.TransactionId)
-                    .FirstOrDefaultAsync();
+                .Where(t => t.TransactionType == "AtnPolicy")
+                .OrderBy(t => t.TransactionId)
+                .Select(t => t.TransactionId)
+                .FirstOrDefaultAsync();
 
                 var policyIdInt = await _context.EntityApplicable00s
-                    .Where(e =>
-                        e.TransactionId == transactionId &&
-                        (
-                            (e.LinkLevel == 1 && e.LinkId == firstEntityId) ||
-                            (e.LinkLevel == 15) ||
-                            (e.LinkLevel != 1 && empEntityIdsList.Contains(e.LinkId ?? 0))
-                        )
+                .Where(e =>
+                    e.TransactionId == transactionId &&
+                    (
+                        (e.LinkLevel == 1 && e.LinkId == firstEntityId) ||
+                        (e.LinkLevel == 15) ||
+                        (e.LinkLevel != 1 && empEntityIdsList.Contains(e.LinkId ?? 0))
                     )
-                    .Join(_context.Attendancepolicy00s,
-                        applicable => applicable.MasterId,
-                        policy => policy.AttendancePolicyId,
-                        (applicable, policy) => policy.AttendancePolicyId)
-                    .FirstOrDefaultAsync();
+                )
+                .Join(_context.Attendancepolicy00s,
+                    applicable => applicable.MasterId,
+                    policy => policy.AttendancePolicyId,
+                    (applicable, policy) => policy.AttendancePolicyId)
+                .FirstOrDefaultAsync();
 
                 policyId = policyIdInt;
             }
@@ -11393,9 +11416,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // STEP 3: Try entity-level (excluding LevelID = 1)
             var emp = await _context.EmployeeDetails
-                .Where(e => e.EmpId == employeeId)
-                .Select(e => new { e.EmpEntity, e.EmpFirstEntity })
-                .FirstOrDefaultAsync();
+            .Where(e => e.EmpId == employeeId)
+            .Select(e => new { e.EmpEntity, e.EmpFirstEntity })
+            .FirstOrDefaultAsync();
 
             if (emp != null && !string.IsNullOrEmpty(emp.EmpEntity))
             {
@@ -11448,14 +11471,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // STEP 5: Company-level fallback
             var companyParam = await _context.CompanyParameters
-                .Where(p => p.ParameterCode == parameterCode && p.Type == type)
-                .Select(p => new
-                {
-                    Value = p.Value.ToString(),
-                    Text = p.Text != null ? p.Text.ToString() : null,
-                    Data = p.Data != null ? p.Data.ToString() : null,
-                    MultipleValues = p.MultipleValues != null ? p.MultipleValues.ToString() : null
-                }).FirstOrDefaultAsync();
+            .Where(p => p.ParameterCode == parameterCode && p.Type == type)
+            .Select(p => new
+            {
+                Value = p.Value.ToString(),
+                Text = p.Text != null ? p.Text.ToString() : null,
+                Data = p.Data != null ? p.Data.ToString() : null,
+                MultipleValues = p.MultipleValues != null ? p.MultipleValues.ToString() : null
+            }).FirstOrDefaultAsync();
 
 
             defaultValue = GetControlValue(companyParam, controlType, isMultiple);
@@ -11470,7 +11493,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 throw new Exception("Employee not found");
             // Step 1: Check if shift access already exists
             var hasAccess = await _context.ShiftMasterAccesses
-                .AnyAsync(s => s.EmployeeId == request.empId);
+            .AnyAsync(s => s.EmployeeId == request.empId);
 
             if (hasAccess)
                 return;
@@ -11521,15 +11544,15 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Step 5: Use entity-based mapping if no default shift
             var transactionId = await _context.TransactionMasters
-                .Where(t => t.TransactionType == "Shift")
-                .Select(t => t.TransactionId)
-                .FirstOrDefaultAsync(); // Already returns smallest ID
+            .Where(t => t.TransactionType == "Shift")
+            .Select(t => t.TransactionId)
+            .FirstOrDefaultAsync(); // Already returns smallest ID
 
 
             var empEntityIds = request.EmpEntity?
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(long.Parse)
-                .ToList() ?? new List<long>();
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(long.Parse)
+            .ToList() ?? new List<long>();
 
             if (!long.TryParse(request.EmpFirstEntity, out var firstEntityId))
             {
@@ -11538,19 +11561,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             var applicableShiftId = await _context.EntityApplicable00s
-                .Where(e =>
-                    e.TransactionId == transactionId &&
-                    (
-                        (e.LinkLevel == 1 && e.LinkId == firstEntityId) ||
-                        (e.LinkLevel == 15) ||
-                        (e.LinkLevel != 1 && empEntityIds.Contains(e.LinkId ?? 0))
-                    )
-                )
-                .Join(_context.HrShift00s,
-                      ea => ea.MasterId,
-                      s => s.ShiftId,
-                      (ea, s) => s.ShiftId)
-                .FirstOrDefaultAsync();
+            .Where(e =>
+            e.TransactionId == transactionId &&
+            (
+                (e.LinkLevel == 1 && e.LinkId == firstEntityId) ||
+                (e.LinkLevel == 15) ||
+                (e.LinkLevel != 1 && empEntityIds.Contains(e.LinkId ?? 0))
+            )
+            )
+            .Join(_context.HrShift00s,
+              ea => ea.MasterId,
+              s => s.ShiftId,
+              (ea, s) => s.ShiftId)
+            .FirstOrDefaultAsync();
 
             if (applicableShiftId > 0)
             {
@@ -11579,11 +11602,11 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (string.IsNullOrWhiteSpace(input)) return new List<long?>();
 
             return input
-                .Replace(" ", ",")
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => long.TryParse(x.Trim(), out var val) ? val : (long?)null)
-                .Where(x => x.HasValue)
-                .ToList();
+            .Replace(" ", ",")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => long.TryParse(x.Trim(), out var val) ? val : (long?)null)
+            .Where(x => x.HasValue)
+            .ToList();
         }
         //helper for GetDefaultLeavePolicyAsync
         private async Task<int?> GetPolicyFromEntityAsync(List<long?> linkIds, bool excludeLevel1)
@@ -11604,9 +11627,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
 
             return await query
-                .OrderByDescending(a => a.LevelId)
-                .Select(a => (int?)a.Value)
-                .FirstOrDefaultAsync();
+            .OrderByDescending(a => a.LevelId)
+            .Select(a => (int?)a.Value)
+            .FirstOrDefaultAsync();
         }
 
         //helper for LEAVE POLICY ACCESS
@@ -11615,21 +11638,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (employeeId == 0) return 0;
 
             var empValue = await (
-                from a in _context.CompanyParameters02s
-                join b in _context.CompanyParameters on a.ParamId equals b.Id
-                where b.ParameterCode == "DEFLEAVEPOL"
-                      && b.Type == "EMP1"
-                      && a.EmpId == employeeId
-                select a.Value)
-                    .FirstOrDefaultAsync();
+            from a in _context.CompanyParameters02s
+            join b in _context.CompanyParameters on a.ParamId equals b.Id
+            where b.ParameterCode == "DEFLEAVEPOL"
+              && b.Type == "EMP1"
+              && a.EmpId == employeeId
+            select a.Value)
+            .FirstOrDefaultAsync();
 
             if (empValue.HasValue && empValue.Value != 0)
                 return empValue.Value;
 
             var empEntityInfo = await _context.EmployeeDetails
-                .Where(e => e.EmpId == employeeId)
-                .Select(e => new { e.EmpEntity, e.EmpFirstEntity })
-                .FirstOrDefaultAsync();
+            .Where(e => e.EmpId == employeeId)
+            .Select(e => new { e.EmpEntity, e.EmpFirstEntity })
+            .FirstOrDefaultAsync();
 
             var entityIds = SplitStringToLongList(empEntityInfo?.EmpEntity);
             var entityValue = await GetPolicyFromEntityAsync(entityIds, excludeLevel1: true);
@@ -11642,9 +11665,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 return val3;
 
             var companyValue = await _context.CompanyParameters
-                .Where(p => p.ParameterCode == "DEFLEAVEPOL" && p.Type == "EMP1")
-                .Select(p => p.Value)
-                .FirstOrDefaultAsync();
+            .Where(p => p.ParameterCode == "DEFLEAVEPOL" && p.Type == "EMP1")
+            .Select(p => p.Value)
+            .FirstOrDefaultAsync();
 
             if (companyValue is int val4 && val4 != 0)
                 return val4;
@@ -11658,7 +11681,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             var exists = await _context.LeavePolicyMasters
-             .AnyAsync(a => a.EmpId == request.empId);
+            .AnyAsync(a => a.EmpId == request.empId);
 
             if (exists)
                 return;
@@ -11668,26 +11691,26 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (leavePolicyMasterId == null || leavePolicyMasterId == 0)
             {
                 var transactionId = await _context.TransactionMasters
-                    .Where(t => t.TransactionType == "LeavePolicy")
-                    .Select(t => t.TransactionId)
-                    .FirstOrDefaultAsync();
+                .Where(t => t.TransactionType == "LeavePolicy")
+                .Select(t => t.TransactionId)
+                .FirstOrDefaultAsync();
 
                 var entityIdList = SplitStringToLongList(request.EmpEntity);
 
 
                 leavePolicyMasterId = await _context.LeavePolicyMasters
-                  .Where(lpm => _context.EntityApplicable00s
-                        .Where(ea =>
-                            (ea.LinkLevel == 1 && ea.LinkId == Convert.ToInt64(request.EmpFirstEntity) && ea.TransactionId == transactionId) ||
-                            (ea.LinkLevel == 15 && ea.TransactionId == transactionId) ||
-                            (ea.LinkLevel != 1 && entityIdList.Contains(ea.LinkId) && ea.TransactionId == transactionId)
-                        )
-
-                        .Select(ea => ea.MasterId)
-                        .Contains(lpm.LeavePolicyMasterId)
+                .Where(lpm => _context.EntityApplicable00s
+                    .Where(ea =>
+                        (ea.LinkLevel == 1 && ea.LinkId == Convert.ToInt64(request.EmpFirstEntity) && ea.TransactionId == transactionId) ||
+                        (ea.LinkLevel == 15 && ea.TransactionId == transactionId) ||
+                        (ea.LinkLevel != 1 && entityIdList.Contains(ea.LinkId) && ea.TransactionId == transactionId)
                     )
-                    .Select(lpm => lpm.LeavePolicyMasterId)
-                    .FirstOrDefaultAsync();
+
+                    .Select(ea => ea.MasterId)
+                    .Contains(lpm.LeavePolicyMasterId)
+                )
+                .Select(lpm => lpm.LeavePolicyMasterId)
+                .FirstOrDefaultAsync();
             }
             if (leavePolicyMasterId != null && leavePolicyMasterId > 0)
             {
@@ -11708,7 +11731,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task AssignEmployeeLeaveAccessAsync(AssignEmployeeAccessRequestDto request)
         {
             bool accessExists = await _context.HrmLeaveEmployeeleaveaccesses
-        .AnyAsync(x => x.EmployeeId == request.empId);
+            .AnyAsync(x => x.EmployeeId == request.empId);
 
 
             if (accessExists)
@@ -11725,18 +11748,18 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var empEntityIdList = SplitStringToLongList(request.EmpFirstEntity);
 
             var leaveMasterIds = await
-                 (from lm in _context.HrmLeaveMasters
-                  where lm.Active == 1
-              && (from ea in _context.EntityApplicable00s
-                  where ea.TransactionId == transactionId &&
-                         (
-                             (ea.LinkLevel == 1 && ea.LinkId == Convert.ToInt64(request.EmpFirstEntity)) ||
-                             (ea.LinkLevel == 15) ||
-                             (ea.LinkLevel != 1 && empEntityIdList.Contains(ea.LinkId))
-                         )
+            (from lm in _context.HrmLeaveMasters
+             where lm.Active == 1
+ && (from ea in _context.EntityApplicable00s
+     where ea.TransactionId == transactionId &&
+(
+  (ea.LinkLevel == 1 && ea.LinkId == Convert.ToInt64(request.EmpFirstEntity)) ||
+  (ea.LinkLevel == 15) ||
+  (ea.LinkLevel != 1 && empEntityIdList.Contains(ea.LinkId))
+)
 
-                  select ea.MasterId).Contains(lm.LeaveMasterId)
-                  select lm.LeaveMasterId).ToListAsync();
+     select ea.MasterId).Contains(lm.LeaveMasterId)
+             select lm.LeaveMasterId).ToListAsync();
 
             if (leaveMasterIds.Count == 0)
                 return;
@@ -11758,29 +11781,29 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task AssignLeaveBasicSettingsAccessAsync(AssignEmployeeAccessRequestDto request)
         {
             var exists = await _context.HrmLeaveBasicsettingsaccesses
-             .AnyAsync(x => x.EmployeeId == request.empId);
+            .AnyAsync(x => x.EmployeeId == request.empId);
 
             if (exists) return;
 
 
 
             var leaveTransactionId = await _context.TransactionMasters
-                .Where(x => x.TransactionType == "Leave")
-                .Select(x => x.TransactionId)
-                .FirstOrDefaultAsync();
+            .Where(x => x.TransactionType == "Leave")
+            .Select(x => x.TransactionId)
+            .FirstOrDefaultAsync();
 
             var empEntityIdList = SplitStringToLongList(request.EmpEntity);
 
             var applicableLeaveMasterIds = await GetApplicableMasterIds(leaveTransactionId, Convert.ToInt64(request.EmpFirstEntity), request.EmpEntity);
 
             var activeLeaveMasterIds = await _context.HrmLeaveMasters
-                   .Where(l => l.Active == 1 && applicableLeaveMasterIds.Contains(l.LeaveMasterId))
-                   .Select(l => l.LeaveMasterId)
-                   .ToListAsync();
+            .Where(l => l.Active == 1 && applicableLeaveMasterIds.Contains(l.LeaveMasterId))
+            .Select(l => l.LeaveMasterId)
+            .ToListAsync();
             var leaveBsTransactionId = await _context.TransactionMasters
-                   .Where(x => x.TransactionType == "Leave_BS")
-                   .Select(x => x.TransactionId)
-                   .FirstOrDefaultAsync();
+            .Where(x => x.TransactionType == "Leave_BS")
+            .Select(x => x.TransactionId)
+            .FirstOrDefaultAsync();
 
 
             var settingsToInsert = await (from s in _context.HrmLeaveMasterandsettingsLinks
@@ -11812,9 +11835,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task AssignEmployeeAccessAsync(AssignEmployeeAccessRequestDto request)
         {
             var employee = await _context.HrEmpMasters
-                .Where(e => e.EmpId == request.empId)
-                .Select(e => new { e.EmpEntity, e.EmpFirstEntity, e.JoinDt })
-                .FirstOrDefaultAsync();
+            .Where(e => e.EmpId == request.empId)
+            .Select(e => new { e.EmpEntity, e.EmpFirstEntity, e.JoinDt })
+            .FirstOrDefaultAsync();
 
             if (employee is not null)
             {
@@ -11841,16 +11864,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var empEntityIdList = SplitStringToLongList(empEntityIdsCsv);
 
             var applicableMasterIds = await _context.EntityApplicable00s
-                .Where(x =>
-                    x.TransactionId == transactionId &&
-                    (
-                        (x.LinkLevel == 1 && x.LinkId == firstEntityId) ||
-                        (x.LinkLevel == 15) ||
-                        (x.LinkLevel != 1 && empEntityIdList.Contains(x.LinkId))
-                    )
-                )
-                .Select(x => x.MasterId)
-                .ToListAsync();
+            .Where(x =>
+            x.TransactionId == transactionId &&
+            (
+                (x.LinkLevel == 1 && x.LinkId == firstEntityId) ||
+                (x.LinkLevel == 15) ||
+                (x.LinkLevel != 1 && empEntityIdList.Contains(x.LinkId))
+            )
+            )
+            .Select(x => x.MasterId)
+            .ToListAsync();
 
             return applicableMasterIds;
         }
@@ -11993,28 +12016,28 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<object>> GetGeoSpacingCriteria()
         {
             return await _context.HrmValueTypes
-                .Where(x => x.Type == "GeoSpacingCriteria")
-                .Select(x => new
-                {
-                    x.Value,
-                    x.Description
-                })
-                .Cast<object>()
-                .ToListAsync();
+            .Where(x => x.Type == "GeoSpacingCriteria")
+            .Select(x => new
+            {
+                x.Value,
+                x.Description
+            })
+            .Cast<object>()
+            .ToListAsync();
         }
         public async Task<List<object>> GetGeoCoordinatesTabAsync(int geoSpacingType, int geoCriteria)
         {
             return await _context.MasterGeotaggings
-                .Where(x => x.GeoSpaceType == geoSpacingType &&
-                            x.GeoMasterId == geoCriteria &&
-                            x.Status == 1)
-                .Select(x => new
-                {
-                    Value = x.GeoMasterId,
-                    Description = x.CoordinateName
-                })
-                .Cast<object>()
-                .ToListAsync();
+            .Where(x => x.GeoSpaceType == geoSpacingType &&
+                    x.GeoMasterId == geoCriteria &&
+                    x.Status == 1)
+            .Select(x => new
+            {
+                Value = x.GeoMasterId,
+                Description = x.CoordinateName
+            })
+            .Cast<object>()
+            .ToListAsync();
         }
         public async Task<string> SaveOrUpdateGeoLocationAsync(SaveGeoLocationRequestDTO dto)
         {
@@ -12086,24 +12109,24 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<IEnumerable<AssetCategoryCodeDto>> GetFilteredAssetCategoriesAsync(int varAssetTypeID)
         {
             var result = await _context.AssetcategoryCodes
-                .Where(a => a.Value == varAssetTypeID &&
-                            a.Status != "D" &&
-                            a.Status != "A" &&
-                            a.Status != "Dis" &&
-                            a.Status != "DA")
-                .OrderBy(a => a.Description)
-                .Select(a => new AssetCategoryCodeDto
-                {
-                    Id = a.Id,
-                    Code = a.Code,
-                    Description = a.Description,
-                    Value = a.Value,
-                    Createdby = a.Createdby,
-                    Status = a.Status,
-                    Assetclass = a.Assetclass,
-                    AssetModel = a.AssetModel
-                })
-                .ToListAsync();
+            .Where(a => a.Value == varAssetTypeID &&
+                    a.Status != "D" &&
+                    a.Status != "A" &&
+                    a.Status != "Dis" &&
+                    a.Status != "DA")
+            .OrderBy(a => a.Description)
+            .Select(a => new AssetCategoryCodeDto
+            {
+                Id = a.Id,
+                Code = a.Code,
+                Description = a.Description,
+                Value = a.Value,
+                Createdby = a.Createdby,
+                Status = a.Status,
+                Assetclass = a.Assetclass,
+                AssetModel = a.AssetModel
+            })
+            .ToListAsync();
 
 
 
@@ -12114,24 +12137,24 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<IEnumerable<AssetCategoryCodeDto>> GetAssignedOrPendingAssetCategoriesAsync(int varAssetTypeID, string varAssignAssetStatus)
         {
             var result = await _context.AssetcategoryCodes
-                .Where(a => a.Value == varAssetTypeID &&
-                            a.Status != "D" &&
-                            (
-                                (a.AssetModel == varAssignAssetStatus && a.Status == "A") ||
-                                a.Status == "P" || a.Status == "Pending"
-                            ))
-                .Select(a => new AssetCategoryCodeDto
-                {
-                    Id = a.Id,
-                    Code = a.Code,
-                    Description = a.Description,
-                    Value = a.Value,
-                    Createdby = a.Createdby,
-                    Status = a.Status,
-                    Assetclass = a.Assetclass,
-                    AssetModel = a.AssetModel
-                })
-                .ToListAsync();
+            .Where(a => a.Value == varAssetTypeID &&
+                    a.Status != "D" &&
+                    (
+                        (a.AssetModel == varAssignAssetStatus && a.Status == "A") ||
+                        a.Status == "P" || a.Status == "Pending"
+                    ))
+            .Select(a => new AssetCategoryCodeDto
+            {
+                Id = a.Id,
+                Code = a.Code,
+                Description = a.Description,
+                Value = a.Value,
+                Createdby = a.Createdby,
+                Status = a.Status,
+                Assetclass = a.Assetclass,
+                AssetModel = a.AssetModel
+            })
+            .ToListAsync();
 
             return result;
         }
@@ -12155,9 +12178,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             // Get latest Emp_Id
             var latestEmpId = await _context.EmployeeDetails
-                .OrderByDescending(e => e.EmpId)
-                .Select(e => e.EmpId)
-                .FirstOrDefaultAsync();
+            .OrderByDescending(e => e.EmpId)
+            .Select(e => e.EmpId)
+            .FirstOrDefaultAsync();
 
             var shiftAccess = new ShiftMasterAccess
             {
@@ -12183,13 +12206,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<object>> GetLanguagesAsync()
         {
             return await _context.HrEmpLanguagemasters
-                .Select(lang => new
-                {
-                    lang.LanguageId,
-                    lang.Description
-                })
-                .Cast<object>()
-                .ToListAsync();
+            .Select(lang => new
+            {
+                lang.LanguageId,
+                lang.Description
+            })
+            .Cast<object>()
+            .ToListAsync();
         }
         public async Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type)
         {
@@ -12311,9 +12334,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (dailyRate == 0 || string.IsNullOrEmpty(dailyRate.ToString()))
             {
                 var entity = await _context.EmployeeDetails
-                    .Where(ed => ed.EmpId == employeeId)
-                    .Select(ed => ed.EmpEntity)
-                    .FirstOrDefaultAsync() ?? "";
+                .Where(ed => ed.EmpId == employeeId)
+                .Select(ed => ed.EmpEntity)
+                .FirstOrDefaultAsync() ?? "";
                 var entityItems = entity.Split(',');
                 var entityList = entity.Split(',').Select(s => long.Parse(s)).ToList();
 
@@ -12340,7 +12363,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                    where cp.ParameterCode == parameterCode
                                    && cp.Type == parameterType
                                    select hvt.Value)
-                                  .FirstOrDefaultAsync();
+                              .FirstOrDefaultAsync();
             }
 
             dailyRate = int.TryParse(dailyRate?.ToString(), out int parsedValue) ? parsedValue : 0;
@@ -13209,12 +13232,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             int empID = 0;
             bool employeeExists = await _context.HrEmpMasters.AnyAsync(emp =>
-                                        emp.SeperationStatus == 0 &&
-                                        (emp.IsDelete == false || emp.IsDelete == null) &&
-                                        emp.FirstName == inserEmployeeDto.FirstName &&
-                                        EF.Functions.DateDiffDay(emp.JoinDt, inserEmployeeDto.JoinDt) == 0 &&
-                                        EF.Functions.DateDiffDay(emp.EntryDt, inserEmployeeDto.EntryDt) == 0 &&
-                                        EF.Functions.DateDiffDay(emp.DateOfBirth, inserEmployeeDto.DateOfBirth) == 0);
+                                emp.SeperationStatus == 0 &&
+                                (emp.IsDelete == false || emp.IsDelete == null) &&
+                                emp.FirstName == inserEmployeeDto.FirstName &&
+                                EF.Functions.DateDiffDay(emp.JoinDt, inserEmployeeDto.JoinDt) == 0 &&
+                                EF.Functions.DateDiffDay(emp.EntryDt, inserEmployeeDto.EntryDt) == 0 &&
+                                EF.Functions.DateDiffDay(emp.DateOfBirth, inserEmployeeDto.DateOfBirth) == 0);
 
             if (employeeExists)
             {
@@ -13235,19 +13258,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                     // Collect non-zero level values (from LevelTwo to LevelTwelve)
                     var levels = new List<int?>
-                                {
-                                    record.LevelTwoId,
-                                    record.LevelThreeId,
-                                    record.LevelFourId,
-                                    record.LevelFiveId,
-                                    record.LevelSixId,
-                                    record.LevelSevenId,
-                                    record.LevelEightId,
-                                    record.LevelNineId,
-                                    record.LevelTenId,
-                                    record.LevelElevenId,
-                                    record.LevelTwelveId
-                                };
+            {
+                record.LevelTwoId,
+                record.LevelThreeId,
+                record.LevelFourId,
+                record.LevelFiveId,
+                record.LevelSixId,
+                record.LevelSevenId,
+                record.LevelEightId,
+                record.LevelNineId,
+                record.LevelTenId,
+                record.LevelElevenId,
+                record.LevelTwelveId
+            };
 
                     string chkEmpEntities = string.Join(",", levels.Where(id => id != 0));
 
@@ -13965,16 +13988,16 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var currentYear = DateTime.UtcNow.Year.ToString();
 
             var codeGen = _context.AdmCodegenerationmasters
-                .Where(c => c.CodeId == codeID)
-                .Select(c => new
-                {
-                    BaseSeq = c.FinalCodeWithNoSeq,
-                    PrefixFormatID = c.PrefixFormatId ?? 0,
-                    SuffixFormatID = c.SuffixFormatId ?? 0,
-                    Prefix = c.Code ?? "",
-                    Suffix = c.Suffix ?? ""
-                })
-                .FirstOrDefault();
+            .Where(c => c.CodeId == codeID)
+            .Select(c => new
+            {
+                BaseSeq = c.FinalCodeWithNoSeq,
+                PrefixFormatID = c.PrefixFormatId ?? 0,
+                SuffixFormatID = c.SuffixFormatId ?? 0,
+                Prefix = c.Code ?? "",
+                Suffix = c.Suffix ?? ""
+            })
+            .FirstOrDefault();
 
             if (codeGen == null)
                 return null;
@@ -14003,9 +14026,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             int? codeId = null;
 
             var seqGenTransactionIds = _context.TransactionMasters
-                .Where(t => t.TransactionType == "Seq_Gen")
-                .Select(t => t.TransactionId)
-                .ToList();
+            .Where(t => t.TransactionType == "Seq_Gen")
+            .Select(t => t.TransactionId)
+            .ToList();
 
 
             // Level 17 logic
@@ -14126,9 +14149,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             else if (_context.LevelSettingsAccess00s.Any(x => seqGenTransactionIds.Contains((int)x.TransactionId) && x.Levels == "16"))
             {
                 var master = _context.AdmCodegenerationmasters
-                    .Where(x => x.TypeId == mainMasterId)
-                    .Select(x => new { x.CodeId, x.LastSequence })
-                    .FirstOrDefault();
+                .Where(x => x.TypeId == mainMasterId)
+                .Select(x => new { x.CodeId, x.LastSequence })
+                .FirstOrDefault();
 
                 if (master != null)
                 {
@@ -14156,20 +14179,20 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private async Task<List<CategoryMappingDto>> GetCategoryMapperData()
         {
             var mappings = await _context.Categorymasters
-                .Join(_context.HrmValueTypes,
-                      cat => cat.CatTrxTypeId,
-                      val => val.Value,
-                      (cat, val) => new { cat, val })
-                .Where(x => x.val.Type == "CatTrxType" &&
-                            new[] { "BRANCH", "DEPT", "BAND", "GRADE", "DESIG", "COMPANY" }
-                            .Contains(x.val.Code))
-                .GroupBy(x => x.val.Code)
-                .Select(g => new CategoryMappingDto
-                {
-                    Code = g.Key,
-                    SortOrder = g.Max(x => x.cat.SortOrder)
-                })
-                .ToListAsync();
+            .Join(_context.HrmValueTypes,
+              cat => cat.CatTrxTypeId,
+              val => val.Value,
+              (cat, val) => new { cat, val })
+            .Where(x => x.val.Type == "CatTrxType" &&
+                    new[] { "BRANCH", "DEPT", "BAND", "GRADE", "DESIG", "COMPANY" }
+                    .Contains(x.val.Code))
+            .GroupBy(x => x.val.Code)
+            .Select(g => new CategoryMappingDto
+            {
+                Code = g.Key,
+                SortOrder = g.Max(x => x.cat.SortOrder)
+            })
+            .ToListAsync();
 
             return mappings;
         }
@@ -14179,44 +14202,44 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<object>> RetrieveShiftEmpCreationAsync()
         {
             var result = await _context.HrShift00s
-                .Select(s => new
-                {
-                    s.ShiftId,
-                    s.ShiftName
-                })
-                .ToListAsync<object>();
+            .Select(s => new
+            {
+                s.ShiftId,
+                s.ShiftName
+            })
+            .ToListAsync<object>();
 
             return result;
         }
         public async Task<List<object>> FillWeekEndShiftEmpCreationAsync()
         {
             var result = await _context.WeekEndMasters
-                .Select(w => new
-                {
-                    w.WeekEndMasterId,
-                    w.Name
+            .Select(w => new
+            {
+                w.WeekEndMasterId,
+                w.Name
 
 
-                })
-                .ToListAsync<object>();
+            })
+            .ToListAsync<object>();
 
             return result;
         }
         public async Task<List<object>> FillbatchslabsEmpAsync(int batchId)
         {
             var result = await _context.SpecialcomponentsBatchSlabs
-                .Where(s => s.BatchId == batchId && (s.Active == 1)) // handles null as true
-                .Select(s => new
-                {
-                    s.SpecialcomponentsBatchSlab1,
-                    s.BatchId,
-                    s.BatchSlabDescripttion,
-                    s.EntryBy,
-                    s.EntryDate,
-                    s.Active
-                    // Add other fields you want to return
-                })
-                .ToListAsync<object>();
+            .Where(s => s.BatchId == batchId && (s.Active == 1)) // handles null as true
+            .Select(s => new
+            {
+                s.SpecialcomponentsBatchSlab1,
+                s.BatchId,
+                s.BatchSlabDescripttion,
+                s.EntryBy,
+                s.EntryDate,
+                s.Active
+                // Add other fields you want to return
+            })
+            .ToListAsync<object>();
 
             return result;
         }
@@ -14229,9 +14252,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<object>> GetParameterShiftInEmpAsync()
         {
             var result = await _context.CompanyParameters
-                .Where(p => p.ParameterCode == "ENBLSHFTINEMPCREATION" && p.Type == "ATTN")
-                .Select(p => new { p.Value })
-                .ToListAsync<object>();
+            .Where(p => p.ParameterCode == "ENBLSHFTINEMPCREATION" && p.Type == "ATTN")
+            .Select(p => new { p.Value })
+            .ToListAsync<object>();
 
             return result;
         }
@@ -14246,9 +14269,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
 
             var result = await _context.HrmValueTypes
-                .Where(v => v.Type == "CompanyParameters" && v.Value == autoCodeInt)
-                .Select(v => new { v.Code })
-                .ToListAsync<object>();
+            .Where(v => v.Type == "CompanyParameters" && v.Value == autoCodeInt)
+            .Select(v => new { v.Code })
+            .ToListAsync<object>();
 
             return result;
         }
@@ -14257,21 +14280,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
 
             var paramValue = await _context.CompanyParameters
-                .Where(p => p.ParameterCode == "EMPLINKADD" && p.Type == "EMP1")
-                .Select(p => p.Value)
-                .FirstOrDefaultAsync();
+            .Where(p => p.ParameterCode == "EMPLINKADD" && p.Type == "EMP1")
+            .Select(p => p.Value)
+            .FirstOrDefaultAsync();
 
 
             var accessId = await _context.TabAccessRights
-                .Join(
-                    _context.TabMasters,
-                    a => a.TabId.HasValue ? (long)a.TabId.Value : 0, // Cast TabId to long
-                    b => b.TabId,
-                    (a, b) => new { a, b }
-                )
-                .Where(x => x.a.RoleId == roleId && x.b.Code == "EnableEntityLinkInEmployeeCreation")
-                .Select(x => x.a.AccessId)
-                .FirstOrDefaultAsync();
+            .Join(
+            _context.TabMasters,
+            a => a.TabId.HasValue ? (long)a.TabId.Value : 0, // Cast TabId to long
+            b => b.TabId,
+            (a, b) => new { a, b }
+            )
+            .Where(x => x.a.RoleId == roleId && x.b.Code == "EnableEntityLinkInEmployeeCreation")
+            .Select(x => x.a.AccessId)
+            .FirstOrDefaultAsync();
 
 
             var result = new List<object>();
@@ -14286,9 +14309,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<object>> EnableDocEditAsync()
         {
             var result = await _context.CompanyParameters
-                .Where(p => p.Description == "Enable Document Edit")
-                .Select(p => new { p.Value })
-                .ToListAsync<object>();
+            .Where(p => p.Description == "Enable Document Edit")
+            .Select(p => new { p.Value })
+            .ToListAsync<object>();
 
             return result;
         }
@@ -14296,26 +14319,26 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync(int roleId, int empId)
         {
             var transid = await _context.TransactionMasters
-               .Where(t => t.TransactionType == "GeotaggingMaster")
-               .Select(t => t.TransactionId)
-               .FirstOrDefaultAsync();
+            .Where(t => t.TransactionType == "GeotaggingMaster")
+            .Select(t => t.TransactionId)
+            .FirstOrDefaultAsync();
 
             int? lnklev = await _context.SpecialAccessRights
-                .Where(s => s.RoleId == roleId)
-                .Select(s => s.LinkLevel)
-                .FirstOrDefaultAsync();
+            .Where(s => s.RoleId == roleId)
+            .Select(s => s.LinkLevel)
+            .FirstOrDefaultAsync();
 
             if (lnklev == 0)
             {
                 lnklev = await _context.Categorymasters
-                    .Where(c => c.IsCompany == 1)
-                    .Select(c => c.SortOrder)
-                    .FirstOrDefaultAsync();
+                .Where(c => c.IsCompany == 1)
+                .Select(c => c.SortOrder)
+                .FirstOrDefaultAsync();
             }
 
             var hasFullAccess = await _context.EntityAccessRights02s
-                .Where(s => s.RoleId == roleId && s.LinkLevel == 15)
-                .AnyAsync();
+            .Where(s => s.RoleId == roleId && s.LinkLevel == 15)
+            .AnyAsync();
 
             if (hasFullAccess)
             {
@@ -14327,9 +14350,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                         GeoLocationId = a.GeoLocationId,
                                         Location = a.Location
                                     })
-                     .ToList() // Materialize the database query
-                     .Concat(new[] { new GeoLocationDto { GeoLocationId = -1, Location = "Other" } })
-                     .ToList();
+                 .ToList() // Materialize the database query
+                 .Concat(new[] { new GeoLocationDto { GeoLocationId = -1, Location = "Other" } })
+                 .ToList();
 
                 return geoLocations;
             }
@@ -14341,22 +14364,22 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .FirstOrDefaultAsync();
 
                 var ctnew = SplitStrings_XML(empEntity, ',')
-                    .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
-                    .Where(c => !string.IsNullOrEmpty(c.Item))
-                    .ToList();
+                .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
+                .Where(c => !string.IsNullOrEmpty(c.Item))
+                .ToList();
 
                 // **Step 2: Compute `applicableFinal`**
                 var applicableFinal = _context.EntityAccessRights02s
-                    .Where(s => s.RoleId == roleId).ToList()
-                    .SelectMany(s => SplitStrings_XML(s.LinkId, default),
-                        (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel });
+                .Where(s => s.RoleId == roleId).ToList()
+                .SelectMany(s => SplitStrings_XML(s.LinkId, default),
+                    (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel });
 
                 var applicableFinalSetLong = applicableFinal.Select(a => (long?)Convert.ToInt64(a.Item)).ToHashSet();
 
                 var entityApplicable00Final = await _context.EntityApplicable00s
-                 .Where(e => e.TransactionId == transid)
-                 .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
-                 .ToListAsync();
+                .Where(e => e.TransactionId == transid)
+                .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
+                .ToListAsync();
 
                 var applicableFinal02 = applicableFinal.ToList();
                 var employeedetailsen = await _context.EmployeeDetails.ToListAsync();
@@ -14364,24 +14387,24 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 var high = await _context.HighLevelViewTables.ToListAsync();
 
                 var applicableFinal02Emp = (
-            from emp in employeedetailsen
-            join ea in access2 on emp.EmpId equals ea.EmpId
-            join hlv in high on emp.LastEntity equals hlv.LastEntityId
-            join af2 in applicableFinal02.ToList()  // Convert to List before join
-            on hlv.LevelOneId.ToString() equals af2.Item into af2LevelOne
-            from af2L1 in af2LevelOne.DefaultIfEmpty()
-            where ea.TransactionId == transid
-            select ea.MasterId).Distinct().ToList();
+                from emp in employeedetailsen
+                join ea in access2 on emp.EmpId equals ea.EmpId
+                join hlv in high on emp.LastEntity equals hlv.LastEntityId
+                join af2 in applicableFinal02.ToList()  // Convert to List before join
+                on hlv.LevelOneId.ToString() equals af2.Item into af2LevelOne
+                from af2L1 in af2LevelOne.DefaultIfEmpty()
+                where ea.TransactionId == transid
+                select ea.MasterId).Distinct().ToList();
 
 
 
                 // **Step 6: Compute `newhigh`**
                 var newhigh = entityApplicable00Final
-                    .Where(e => applicableFinalSetLong.Contains(e.LinkId) || e.LinkLevel == 15)
-                    .Select(e => e.MasterId)
-                    .Union(applicableFinal02Emp)
-                    .Distinct()
-                    .ToList();
+                .Where(e => applicableFinalSetLong.Contains(e.LinkId) || e.LinkLevel == 15)
+                .Select(e => e.MasterId)
+                .Union(applicableFinal02Emp)
+                .Distinct()
+                .ToList();
 
 
                 // Final Query
@@ -14393,9 +14416,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                         GeoLocationId = a.GeoLocationId,
                                         Location = a.Location
                                     })
-                     .ToList() // Materialize the database query
-                     .Concat(new[] { new GeoLocationDto { GeoLocationId = -1, Location = "Other" } })
-                     .ToList();
+                 .ToList() // Materialize the database query
+                 .Concat(new[] { new GeoLocationDto { GeoLocationId = -1, Location = "Other" } })
+                 .ToList();
 
                 return geoLocations;
 
@@ -14409,17 +14432,17 @@ namespace HRMS.EmployeeInformation.Repository.Common
             int result = 0;
 
             var letterCount = await (
-                from a in _context.AssignedLetterTypes
-                join b in _context.AssignedLetterTypes
-                    on (int?)a.LetterReqId equals b.LiabilityReqId into gj
-                from b in gj.DefaultIfEmpty()
-                where a.LetterTypeId == 4
-                      && a.EmpId == empid
-                      && (b == null || (b.ApprovalStatus ?? "C") != "A")
-                      && (a.ApprovalStatus ?? "C") != "R"
-                      && a.IsLiability == null
-                      && a.Active == true
-                select a
+            from a in _context.AssignedLetterTypes
+            join b in _context.AssignedLetterTypes
+            on (int?)a.LetterReqId equals b.LiabilityReqId into gj
+            from b in gj.DefaultIfEmpty()
+            where a.LetterTypeId == 4
+              && a.EmpId == empid
+              && (b == null || (b.ApprovalStatus ?? "C") != "A")
+              && (a.ApprovalStatus ?? "C") != "R"
+              && a.IsLiability == null
+              && a.Active == true
+            select a
             ).CountAsync();
 
             if (letterCount > 0)
@@ -14427,18 +14450,18 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 result = 1;
 
                 var liabilityCount = await (
-                    from a in _context.AssignedLetterTypes
-                    join b in _context.AssignedLetterTypes
-                        on (int?)a.LetterReqId equals b.LiabilityReqId into gj
-                    from b in gj.DefaultIfEmpty()
-                    where a.LetterTypeId == 4
-                          && a.EmpId == empid
-                          && b != null
-                          && (b.ApprovalStatus ?? "C") == "A"
-                          && b.IsLiability != null
-                          && b.LiabilityReqId != null
-                          && a.Active == true
-                    select a
+                from a in _context.AssignedLetterTypes
+                join b in _context.AssignedLetterTypes
+                    on (int?)a.LetterReqId equals b.LiabilityReqId into gj
+                from b in gj.DefaultIfEmpty()
+                where a.LetterTypeId == 4
+                      && a.EmpId == empid
+                      && b != null
+                      && (b.ApprovalStatus ?? "C") == "A"
+                      && b.IsLiability != null
+                      && b.LiabilityReqId != null
+                      && a.Active == true
+                select a
                 ).CountAsync();
 
                 if (liabilityCount > 0)
@@ -14567,34 +14590,34 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType)
         {
             var result = await _context.MasterGeotaggings
-             .Where(g => g.GeoMasterId == GeoMasterID
-                      && g.GeoSpaceType == GeoSpaceType
-                      && g.Status == 1)
-             .Select(g => new GeocoordinatesDto
-             {
-                 GeoMasterId = g.GeoMasterId,
-                 GeoCriteria = g.GeoCriteria,
-                 GeoSpaceType = g.GeoSpaceType,
-                 CoordinateName = g.CoordinateName,
-                 Latitude = g.Latitude,
-                 Longitude = g.Longitude,
-                 Radius = g.Radius,
-                 LocationId = g.LocationId,
-                 EntryBy = g.EntryBy,
-                 Status = g.Status,
-                 EntryDate = g.EntryDate,
-                 UpdatedDate = g.UpdatedDate
-             })
-             .ToListAsync();
+            .Where(g => g.GeoMasterId == GeoMasterID
+              && g.GeoSpaceType == GeoSpaceType
+              && g.Status == 1)
+            .Select(g => new GeocoordinatesDto
+            {
+                GeoMasterId = g.GeoMasterId,
+                GeoCriteria = g.GeoCriteria,
+                GeoSpaceType = g.GeoSpaceType,
+                CoordinateName = g.CoordinateName,
+                Latitude = g.Latitude,
+                Longitude = g.Longitude,
+                Radius = g.Radius,
+                LocationId = g.LocationId,
+                EntryBy = g.EntryBy,
+                Status = g.Status,
+                EntryDate = g.EntryDate,
+                UpdatedDate = g.UpdatedDate
+            })
+            .ToListAsync();
 
             return result;
         }
         public async Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto dto)
         {
             var empIdList = dto.EmpIDs
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(id => int.Parse(id.Trim()))
-                .ToList();
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(id => int.Parse(id.Trim()))
+            .ToList();
 
             if (empIdList.Count == 0)
                 return "No employee IDs provided.";
@@ -14605,28 +14628,28 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (dto.Status is "7" or "8")
             {
                 var updatedCount = await _context.HrEmpMasters
-                    .Where(e => empIdList.Contains(e.EmpId))
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(e => e.CurrentStatus, newStatus));
+                .Where(e => empIdList.Contains(e.EmpId))
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(e => e.CurrentStatus, newStatus));
 
                 return updatedCount > 0
-                    ? $"{updatedCount} employee status(es) updated successfully."
-                    : "No employee records were updated.";
+                ? $"{updatedCount} employee status(es) updated successfully."
+                : "No employee records were updated.";
             }
 
             // Handle status 5: per-employee processing
             if (dto.Status == "5")
             {
                 var employees = await _context.HrEmpMasters
-                    .Where(e => empIdList.Contains(e.EmpId))
-                    .Select(e => new
-                    {
-                        e.EmpId,
-                        e.EmpEntity,
-                        e.EmpFirstEntity,
-                        e.IsVerified
-                    })
-                    .ToListAsync();
+                .Where(e => empIdList.Contains(e.EmpId))
+                .Select(e => new
+                {
+                    e.EmpId,
+                    e.EmpEntity,
+                    e.EmpFirstEntity,
+                    e.IsVerified
+                })
+                .ToListAsync();
 
                 int processed = 0;
 
@@ -14653,14 +14676,14 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                 // Bulk update status and IsVerified
                 var updatedCount = await _context.HrEmpMasters
-                    .Where(e => empIdList.Contains(e.EmpId))
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(e => e.CurrentStatus, newStatus)
-                        .SetProperty(e => e.IsVerified, 1));
+                .Where(e => empIdList.Contains(e.EmpId))
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(e => e.CurrentStatus, newStatus)
+                    .SetProperty(e => e.IsVerified, 1));
 
                 return processed > 0
-                    ? $"Updated {updatedCount} record(s)."
-                    : "No valid employee records processed.";
+                ? $"Updated {updatedCount} record(s)."
+                : "No valid employee records processed.";
             }
 
             return "Invalid status code.";
@@ -14671,39 +14694,39 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             // Check if the employee already has holiday access entries
             var alreadyExists = await _context.HrmHolidayMasterAccesses
-                .AnyAsync(x => x.EmployeeId == empId);
+            .AnyAsync(x => x.EmployeeId == empId);
 
             if (!alreadyExists)
             {
                 // Get the employee's joining date
                 var joiningDate = await _context.EmployeeDetails
-                    .Where(e => e.EmpId == empId)
-                    .Select(e => e.JoinDt)
-                    .FirstOrDefaultAsync();
+                .Where(e => e.EmpId == empId)
+                .Select(e => e.JoinDt)
+                .FirstOrDefaultAsync();
 
                 // Get the transaction ID for holiday module
                 var transactionId = await _context.TransactionMasters
-                    .Where(t => t.TransactionType == "H")
-                    .Select(t => t.TransactionId)
-                    .FirstOrDefaultAsync();
+                .Where(t => t.TransactionType == "H")
+                .Select(t => t.TransactionId)
+                .FirstOrDefaultAsync();
 
                 // Get applicable HolidayMaster IDs based on joining date and entity access
                 var applicableHolidayMasterIds = await (
-                    from s in _context.HolidaysMasters
-                    join t in _context.HolidaysMasterDaysCounts
-                        on s.HolidayMasterId equals t.HolidayMasterId
-                    where t.HolidayDate > joiningDate
-                    && (
-                        from ea in _context.EntityApplicable00s
-                        where ea.TransactionId == transactionId &&
-                              (
-                                  (ea.LinkLevel == 1 && ea.LinkId == firstEntityID) ||
-                                  (ea.LinkLevel == 15) ||
-                                  (ea.LinkLevel != 1 && entityIds.Contains((int)ea.LinkId))
-                              )
-                        select ea.MasterId
-                    ).Contains(s.HolidayMasterId)
-                    select s.HolidayMasterId
+                from s in _context.HolidaysMasters
+                join t in _context.HolidaysMasterDaysCounts
+                    on s.HolidayMasterId equals t.HolidayMasterId
+                where t.HolidayDate > joiningDate
+                && (
+                    from ea in _context.EntityApplicable00s
+                    where ea.TransactionId == transactionId &&
+                          (
+                              (ea.LinkLevel == 1 && ea.LinkId == firstEntityID) ||
+                              (ea.LinkLevel == 15) ||
+                              (ea.LinkLevel != 1 && entityIds.Contains((int)ea.LinkId))
+                          )
+                    select ea.MasterId
+                ).Contains(s.HolidayMasterId)
+                select s.HolidayMasterId
                 ).Distinct().ToListAsync();
 
                 // Insert new records if any holiday master IDs are found
@@ -14736,9 +14759,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 .FirstOrDefaultAsync();
 
                 var leaveMasterIds = await _context.HrmLeaveMasters
-                    .Where(s => s.Active == 1 && entityIds.Contains(s.LeaveMasterId))
-                    .Select(s => s.LeaveMasterId)
-                    .ToListAsync();
+                .Where(s => s.Active == 1 && entityIds.Contains(s.LeaveMasterId))
+                .Select(s => s.LeaveMasterId)
+                .ToListAsync();
 
                 if (leaveMasterIds.Any())
                 {
@@ -14759,9 +14782,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                 // LEAVE POLICY ACCESS
                 var leavePolicyMasterId = await _context.LeavePolicyMasters
-                    .Where(l => l.EmpId == empId)
-                    .Select(l => l.LeavePolicyMasterId)
-                    .FirstOrDefaultAsync();
+                .Where(l => l.EmpId == empId)
+                .Select(l => l.LeavePolicyMasterId)
+                .FirstOrDefaultAsync();
 
                 if (leavePolicyMasterId == 0)
                 {
@@ -14807,9 +14830,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 // Get Entity from EmployeeDetails
                 var entity = await _context.EmployeeDetails
-                                    .Where(e => e.EmpId == employeeId)
-                                    .Select(e => e.EmpEntity)
-                                    .FirstOrDefaultAsync();
+                                .Where(e => e.EmpId == employeeId)
+                                .Select(e => e.EmpEntity)
+                                .FirstOrDefaultAsync();
 
                 // Check Entity-specific shift
                 defaultShift = await (from a in _context.CompanyParameters01s
@@ -14826,9 +14849,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 // Get First Entity from EmployeeDetails
                 var firstEntity = await _context.EmployeeDetails
-                                         .Where(e => e.EmpId == employeeId)
-                                         .Select(e => e.EmpFirstEntity)
-                                         .FirstOrDefaultAsync();
+                                     .Where(e => e.EmpId == employeeId)
+                                     .Select(e => e.EmpFirstEntity)
+                                     .FirstOrDefaultAsync();
 
                 // Check First Entity-specific shift
                 defaultShift = await (from a in _context.CompanyParameters01s
@@ -14855,8 +14878,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public List<int> Split(string input)
         {
             return input.Split(',')
-                        .Select(int.Parse)
-                        .ToList();
+                .Select(int.Parse)
+                .ToList();
         }
         private async Task SetupAttendanceModuleAsync(int empId, int entryBy, DateTime validFrom, List<int> entityIds, int firstEntityId)
         {
@@ -14902,7 +14925,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
 
             var hasAttendanceAccess = await _context.AttendancepolicyMasterAccesses
-                .AnyAsync(a => a.EmployeeId == empId);
+            .AnyAsync(a => a.EmployeeId == empId);
 
             if (!hasAttendanceAccess)
             {
@@ -14951,20 +14974,20 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Step 1: Fetch data first, then apply SplitStrings_XML in memory
             var entityAccessRights = await _context.EntityAccessRights02s
-                .Where(s => s.RoleId == FirstEntityId)
-                .ToListAsync(); // Fetch first
+            .Where(s => s.RoleId == FirstEntityId)
+            .ToListAsync(); // Fetch first
 
             var applicableFinal = entityAccessRights
-                .SelectMany(s => SplitStrings_XML(s.LinkId, default)
-                    .Select(item => new { Item = item, s.LinkLevel }))
-                .ToList(); // Apply in-memory processing
+            .SelectMany(s => SplitStrings_XML(s.LinkId, default)
+            .Select(item => new { Item = item, s.LinkLevel }))
+            .ToList(); // Apply in-memory processing
             var cteOrg = new HashSet<int>(); // Optimized lookup
             var queue = new Queue<int>();
 
             var initialEmp = await _context.HrEmpReportings
-                .Where(e => e.EmpId == SecondEntityId)
-                .Select(e => e.ReprotToWhome == e.EmpId ? (int?)null : e.ReprotToWhome)
-                .FirstOrDefaultAsync();
+            .Where(e => e.EmpId == SecondEntityId)
+            .Select(e => e.ReprotToWhome == e.EmpId ? (int?)null : e.ReprotToWhome)
+            .FirstOrDefaultAsync();
 
             if (initialEmp.HasValue)
             {
@@ -14976,9 +14999,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
             {
                 var current = queue.Dequeue();
                 var subordinates = await _context.HrEmpReportings
-                    .Where(e => e.ReprotToWhome == current && e.ReprotToWhome != e.EmpId)
-                    .Select(e => e.EmpId)
-                    .ToListAsync();
+                .Where(e => e.ReprotToWhome == current && e.ReprotToWhome != e.EmpId)
+                .Select(e => e.EmpId)
+                .ToListAsync();
 
                 foreach (var sub in subordinates)
                 {
@@ -14993,40 +15016,40 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             var hasRoleAccess = _context.EntityAccessRights02s
-     .Any(s => s.RoleId == FirstEntityId && s.LinkLevel == 15);
+            .Any(s => s.RoleId == FirstEntityId && s.LinkLevel == 15);
 
             var applicableHierarchyLevels = _context.EmployeeDetails
-                .Join(_context.HighLevelViewTables,
-                    d1 => d1.LastEntity,
-                    a => a.LastEntityId,
-                    (d1, a) => new { d1, a })
-                .Join(applicableFinal,
-                    _ => 1,
-                    _ => 1,
-                    (x, b) => new { x.d1, x.a, b })
-                .Where(joined =>
-                    (joined.b.LinkLevel == 1 && joined.a.LevelOneId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 2 && joined.a.LevelTwoId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 3 && joined.a.LevelThreeId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 4 && joined.a.LevelFourId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 5 && joined.a.LevelFiveId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 6 && joined.a.LevelSixId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 7 && joined.a.LevelSevenId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 8 && joined.a.LevelEightId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 9 && joined.a.LevelNineId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 10 && joined.a.LevelTenId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 11 && joined.a.LevelElevenId == int.Parse(joined.b.Item)) ||
-                    (joined.b.LinkLevel == 12 && joined.a.LevelTwelveId == int.Parse(joined.b.Item))
-                )
-                .Select(joined => joined.d1.EmpId);
+            .Join(_context.HighLevelViewTables,
+            d1 => d1.LastEntity,
+            a => a.LastEntityId,
+            (d1, a) => new { d1, a })
+            .Join(applicableFinal,
+            _ => 1,
+            _ => 1,
+            (x, b) => new { x.d1, x.a, b })
+            .Where(joined =>
+            (joined.b.LinkLevel == 1 && joined.a.LevelOneId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 2 && joined.a.LevelTwoId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 3 && joined.a.LevelThreeId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 4 && joined.a.LevelFourId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 5 && joined.a.LevelFiveId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 6 && joined.a.LevelSixId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 7 && joined.a.LevelSevenId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 8 && joined.a.LevelEightId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 9 && joined.a.LevelNineId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 10 && joined.a.LevelTenId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 11 && joined.a.LevelElevenId == int.Parse(joined.b.Item)) ||
+            (joined.b.LinkLevel == 12 && joined.a.LevelTwelveId == int.Parse(joined.b.Item))
+            )
+            .Select(joined => joined.d1.EmpId);
 
             var reportsToSecondEntity = _context.HrEmpReportings
-                .Where(hr => hr.ReprotToWhome == SecondEntityId)
-                .Select(hr => hr.EmpId);
+            .Where(hr => hr.ReprotToWhome == SecondEntityId)
+            .Select(hr => hr.EmpId);
 
             // Check if EntityAccessRights02s has the role and hierarchy enabled
             var hasHierarchyAccess = _context.EntityAccessRights02s
-                .Any(s => s.RoleId == FirstEntityId && s.Hierarchy == 1);
+            .Any(s => s.RoleId == FirstEntityId && s.Hierarchy == 1);
 
             // Get all Employee IDs that exist in the hierarchical structure
             var hierarchicalEmpIds = hasHierarchyAccess ? cteOrg.ToList() : new List<int>();
@@ -15061,13 +15084,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public async Task<List<HrmsDocumentField00>> GetDependentFieldsAsync()
         {
             var dataTypeId = await _context.GeneralCategories
-                .Where(x => x.Code == "DPNDNT")
-                .Select(x => x.DataTypeId)
-                .FirstOrDefaultAsync();
+            .Where(x => x.Code == "DPNDNT")
+            .Select(x => x.DataTypeId)
+            .FirstOrDefaultAsync();
 
             return await _context.HrmsDocumentField00s
-                .Where(x => x.DataTypeId == dataTypeId)
-                .ToListAsync();
+            .Where(x => x.DataTypeId == dataTypeId)
+            .ToListAsync();
         }
         public async Task<PayscaleResultDto> GetLatestPayscaleAsync(int employeeId, int? type)
         {
@@ -15080,102 +15103,102 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
 
             var ctcPayscale00 = await _context.Payscale00s
-                      .Where(p =>
-                          p.EffectiveFrom != null &&
-                          p.EffectiveFrom.Value.Date <= showFormDates.Date &&
-                          p.BatchId == batchId &&
-                          p.EmployeeId == employeeId)
-                      .GroupBy(p => p.EmployeeId)
-                      .Select(g => g
-                          .OrderByDescending(p => p.EffectiveFrom)
-                          .Select(p => new TempPayscale001Dto
-                          {
-                              PayScaleId = p.PayScaleId,
-                              PayRequest01Id = p.PayRequest01Id,
-                              EmployeeId = p.EmployeeId,
-                              BatchId = p.BatchId,
-                              EffectiveFrom = p.EffectiveFrom,
-                              EffectiveTo = p.EffectiveTo,
-                              PayRequestId = p.PayRequestId
-                          })
-                          .FirstOrDefault())
-                      .ToListAsync();
+              .Where(p =>
+                  p.EffectiveFrom != null &&
+                  p.EffectiveFrom.Value.Date <= showFormDates.Date &&
+                  p.BatchId == batchId &&
+                  p.EmployeeId == employeeId)
+              .GroupBy(p => p.EmployeeId)
+              .Select(g => g
+                  .OrderByDescending(p => p.EffectiveFrom)
+                  .Select(p => new TempPayscale001Dto
+                  {
+                      PayScaleId = p.PayScaleId,
+                      PayRequest01Id = p.PayRequest01Id,
+                      EmployeeId = p.EmployeeId,
+                      BatchId = p.BatchId,
+                      EffectiveFrom = p.EffectiveFrom,
+                      EffectiveTo = p.EffectiveTo,
+                      PayRequestId = p.PayRequestId
+                  })
+                  .FirstOrDefault())
+              .ToListAsync();
 
 
 
             var ctcPayscale01 = await _context.Payscale00s
-     .Where(p => p.EffectiveFrom != null &&
-                 p.EffectiveFrom.Value.Date >= showFormDates.Date &&
-                 p.EffectiveFrom.Value.Date <= endDates.Date &&
-                 p.BatchId == batchId &&
-                 p.EmployeeId == employeeId)
-     .GroupBy(p => p.EmployeeId)
-     .Select(g => g
-         .OrderByDescending(p => p.EffectiveFrom)
-         .Select(p => new TempPayscale001Dto
-         {
-             PayScaleId = p.PayScaleId,
-             PayRequest01Id = p.PayRequest01Id,
-             EmployeeId = p.EmployeeId,
-             BatchId = p.BatchId,
-             EffectiveFrom = p.EffectiveFrom,
-             EffectiveTo = p.EffectiveTo,
-             PayRequestId = p.PayRequestId
-         })
-         .FirstOrDefault())
-     .ToListAsync();
+            .Where(p => p.EffectiveFrom != null &&
+            p.EffectiveFrom.Value.Date >= showFormDates.Date &&
+            p.EffectiveFrom.Value.Date <= endDates.Date &&
+            p.BatchId == batchId &&
+            p.EmployeeId == employeeId)
+            .GroupBy(p => p.EmployeeId)
+            .Select(g => g
+            .OrderByDescending(p => p.EffectiveFrom)
+            .Select(p => new TempPayscale001Dto
+            {
+                PayScaleId = p.PayScaleId,
+                PayRequest01Id = p.PayRequest01Id,
+                EmployeeId = p.EmployeeId,
+                BatchId = p.BatchId,
+                EffectiveFrom = p.EffectiveFrom,
+                EffectiveTo = p.EffectiveTo,
+                PayRequestId = p.PayRequestId
+            })
+            .FirstOrDefault())
+            .ToListAsync();
 
 
             var payscale001FromCTCPayscale00 =
-                (from b in ctcPayscale00
-                 join a in _context.Payscale00s on b.PayScaleId equals a.PayScaleId
-                 join c in _context.EmployeeDetails on a.EmployeeId equals c.EmpId
-                 select new TempPayscale001Dto
-                 {
-                     PayScaleId = a.PayScaleId,
-                     PayRequest01Id = a.PayRequest01Id,
-                     PayRequestId = a.PayRequestId,
-                     BatchId = a.BatchId,
-                     EmployeeCode = c.EmpCode,
-                     EmployeeId = a.EmployeeId,
-                     EmployeeName = c.Name,
-                     EmployeeStatus = c.EmpStatus,
-                     EffectiveFrom = a.EffectiveFrom,
-                     EffectiveTo = a.EffectiveTo
-                 });
+            (from b in ctcPayscale00
+             join a in _context.Payscale00s on b.PayScaleId equals a.PayScaleId
+             join c in _context.EmployeeDetails on a.EmployeeId equals c.EmpId
+             select new TempPayscale001Dto
+             {
+                 PayScaleId = a.PayScaleId,
+                 PayRequest01Id = a.PayRequest01Id,
+                 PayRequestId = a.PayRequestId,
+                 BatchId = a.BatchId,
+                 EmployeeCode = c.EmpCode,
+                 EmployeeId = a.EmployeeId,
+                 EmployeeName = c.Name,
+                 EmployeeStatus = c.EmpStatus,
+                 EffectiveFrom = a.EffectiveFrom,
+                 EffectiveTo = a.EffectiveTo
+             });
 
             var payscale001FromCTCPayscale01 =
-     (from b in ctcPayscale01
-      join a in _context.Payscale00s on b.PayScaleId equals a.PayScaleId
-      join c in _context.EmployeeDetails on a.EmployeeId equals c.EmpId
-      select new TempPayscale001Dto
-      {
-          PayScaleId = a.PayScaleId,
-          PayRequest01Id = a.PayRequest01Id,
-          PayRequestId = a.PayRequestId,
-          BatchId = a.BatchId,
-          EmployeeCode = c.EmpCode,
-          EmployeeId = a.EmployeeId,
-          EmployeeName = c.Name,
-          EmployeeStatus = c.EmpStatus,
-          EffectiveFrom = a.EffectiveFrom,
-          EffectiveTo = a.EffectiveTo
-      });// Using ToList to execute the query and materialize the results into a list
+            (from b in ctcPayscale01
+             join a in _context.Payscale00s on b.PayScaleId equals a.PayScaleId
+             join c in _context.EmployeeDetails on a.EmployeeId equals c.EmpId
+             select new TempPayscale001Dto
+             {
+                 PayScaleId = a.PayScaleId,
+                 PayRequest01Id = a.PayRequest01Id,
+                 PayRequestId = a.PayRequestId,
+                 BatchId = a.BatchId,
+                 EmployeeCode = c.EmpCode,
+                 EmployeeId = a.EmployeeId,
+                 EmployeeName = c.Name,
+                 EmployeeStatus = c.EmpStatus,
+                 EffectiveFrom = a.EffectiveFrom,
+                 EffectiveTo = a.EffectiveTo
+             });// Using ToList to execute the query and materialize the results into a list
 
 
 
 
 
             var combinedPayscale001 = payscale001FromCTCPayscale00
-                .Concat(payscale001FromCTCPayscale01)
-                .ToList();
+            .Concat(payscale001FromCTCPayscale01)
+            .ToList();
 
             //1.FirstTable---------------------------------------------------------------------------------------------------------
 
             var newFormat = _context.CompanyParameters
-                .Where(p => p.Type == "PRL" && p.ParameterCode == "PSCLMNLFRMT")
-                .Select(p => p.Value ?? 0)
-                .FirstOrDefault();
+            .Where(p => p.Type == "PRL" && p.ParameterCode == "PSCLMNLFRMT")
+            .Select(p => p.Value ?? 0)
+            .FirstOrDefault();
             PayscaleResult.NewFormat = newFormat;
 
             int checkPayscaleCount = combinedPayscale001.Count;
@@ -15333,20 +15356,20 @@ namespace HRMS.EmployeeInformation.Repository.Common
             PayscaleResult.ProposedPayTypes = proposedPayTypes;
             PayscaleResult.IncrementTypes = incrementTypes;
             var effectiveDate = _context.HrEmpMasters
-                .Where(emp => emp.EmpId == employeeId)
-                .AsEnumerable()
-                .Select(emp =>
+            .Where(emp => emp.EmpId == employeeId)
+            .AsEnumerable()
+            .Select(emp =>
+            {
+                var ps = combinedPayscale001.FirstOrDefault(x => x.EmployeeId == emp.EmpId);
+                return new PayscaleEffectiveDateDto
                 {
-                    var ps = combinedPayscale001.FirstOrDefault(x => x.EmployeeId == emp.EmpId);
-                    return new PayscaleEffectiveDateDto
-                    {
-                        EmpId = emp.EmpId,
-                        EffectiveDate = ps?.EffectiveFrom?.ToString("dd/MM/yyyy")
-                            ?? emp.JoinDt?.ToString("dd/MM/yyyy")
-                    };
+                    EmpId = emp.EmpId,
+                    EffectiveDate = ps?.EffectiveFrom?.ToString("dd/MM/yyyy")
+            ?? emp.JoinDt?.ToString("dd/MM/yyyy")
+                };
 
-                })
-                .FirstOrDefault();
+            })
+            .FirstOrDefault();
 
             PayscaleResult.EffectiveDate = effectiveDate;
 
@@ -15367,19 +15390,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
         public List<EntityDetailDto> GetHardcodedEntityDetails()
         {
             return new List<EntityDetailDto>
-            {
-            new EntityDetailDto { EntityID = 1, Description = "GROUP COMPANY" },
-            new EntityDetailDto { EntityID = 1, Description = "BUSINESS VERTICAL" },
-            new EntityDetailDto { EntityID = 3, Description = "COUNTRY" },
-            new EntityDetailDto { EntityID = 6, Description = "BRANCH" },
-            new EntityDetailDto { EntityID = 13, Description = "LOCATION" },
-            new EntityDetailDto { EntityID = 27, Description = "CLUSTER" },
-            new EntityDetailDto { EntityID = 60, Description = "DEPARTMENT" },
-            new EntityDetailDto { EntityID = 139, Description = "DIVISION" },
-            new EntityDetailDto { EntityID = 242, Description = "SECTION" },
-            new EntityDetailDto { EntityID = 401, Description = "GRADE" },
-            new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
-            };
+{
+new EntityDetailDto { EntityID = 1, Description = "GROUP COMPANY" },
+new EntityDetailDto { EntityID = 1, Description = "BUSINESS VERTICAL" },
+new EntityDetailDto { EntityID = 3, Description = "COUNTRY" },
+new EntityDetailDto { EntityID = 6, Description = "BRANCH" },
+new EntityDetailDto { EntityID = 13, Description = "LOCATION" },
+new EntityDetailDto { EntityID = 27, Description = "CLUSTER" },
+new EntityDetailDto { EntityID = 60, Description = "DEPARTMENT" },
+new EntityDetailDto { EntityID = 139, Description = "DIVISION" },
+new EntityDetailDto { EntityID = 242, Description = "SECTION" },
+new EntityDetailDto { EntityID = 401, Description = "GRADE" },
+new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
+};
         }
         public async Task<int> GetlastEntityByRoleId([FromBody] EntityRoleRequestDto customEntityList)
         {
@@ -15429,29 +15452,29 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var latestPayscaleEntries = _context.PayscaleRequest01s.Where(p => p.EmployeeStatus != "R" && p.EmployeeStatus != "C").GroupBy(p => p.EmployeeId).Select(g => g.OrderByDescending(x => x.EffectiveDate).FirstOrDefault()).ToList(); // Materialize here
 
             var tempWithoutSalarySeries = latestPayscaleEntries
-                .Where(x => x != null)
-                .Select(x => new
-                {
-                    x.EmployeeId,
-                    x.EffectiveDate
-                })
-                .Distinct()
-                .ToList();
+            .Where(x => x != null)
+            .Select(x => new
+            {
+                x.EmployeeId,
+                x.EffectiveDate
+            })
+            .Distinct()
+            .ToList();
 
             var formattedDate = dto.EffectiveDate?.ToString("dd/MM/yyyy");
             var exists = await _context.PayscaleRequest01s
-                .AnyAsync(p => p.EmployeeId == dto.EmployeeId
-                    && p.EffectiveDate == dto.EffectiveDate
-                    && p.EmployeeStatus != "R"
-                    && p.EmployeeStatus != "C"
-                    && dto.Status != "U");
+            .AnyAsync(p => p.EmployeeId == dto.EmployeeId
+            && p.EffectiveDate == dto.EffectiveDate
+            && p.EmployeeStatus != "R"
+            && p.EmployeeStatus != "C"
+            && dto.Status != "U");
 
             // Materialized tempWithoutSalarySeries
             var tempWithoutSalarySeries1 = await _context.PayscaleRequest01s
-                .Where(p => p.EmployeeStatus != "R" && p.EmployeeStatus != "C")
-                .GroupBy(p => p.EmployeeId)
-                .Select(g => g.OrderByDescending(x => x.EffectiveDate).FirstOrDefault())
-                .ToListAsync();
+            .Where(p => p.EmployeeStatus != "R" && p.EmployeeStatus != "C")
+            .GroupBy(p => p.EmployeeId)
+            .Select(g => g.OrderByDescending(x => x.EffectiveDate).FirstOrDefault())
+            .ToListAsync();
 
             var prlAppr = (prlArrear2 == 0 || prlArrear2 == 2) ? 0 : (prlArrear2 == 1 ? 1 : 0);
             var tempWithoutSalarySeriesList = tempWithoutSalarySeries.ToList();
@@ -15460,22 +15483,22 @@ namespace HRMS.EmployeeInformation.Repository.Common
             var firstQuery = (from c in _context.EmployeeDetails
                               where c.EmpId == dto.EmployeeId
                               select c)
-                  .AsEnumerable()
-                  .Join(tempWithoutSalarySeriesList,
-                        c => c.EmpId,
-                        d => d.EmployeeId,
-                        (c, d) => new { c, d })
-                  .Where(cd => cd.d.EffectiveDate == dto.EffectiveDate)
-                  .Select(cd => new EmployeePayscaleResult
-                  {
-                      EmployeeId = cd.c.EmpId,
-                      EmpCode = cd.c.EmpCode,
-                      EffectiveDate = formattedDate,
-                      RawEffectiveDate = cd.d.EffectiveDate,
-                      Data = -1,
-                      PrlAppr = prlAppr
-                  })
-                  .ToList();
+            .AsEnumerable()
+            .Join(tempWithoutSalarySeriesList,
+                c => c.EmpId,
+                d => d.EmployeeId,
+                (c, d) => new { c, d })
+            .Where(cd => cd.d.EffectiveDate == dto.EffectiveDate)
+            .Select(cd => new EmployeePayscaleResult
+            {
+                EmployeeId = cd.c.EmpId,
+                EmpCode = cd.c.EmpCode,
+                EffectiveDate = formattedDate,
+                RawEffectiveDate = cd.d.EffectiveDate,
+                Data = -1,
+                PrlAppr = prlAppr
+            })
+            .ToList();
 
             // Second query (dto.EffectiveDate < d.EffectiveDate)
             var secondQuery = (from c in _context.EmployeeDetails
@@ -15485,26 +15508,26 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                where e.EmployeeStatus != "R"
                                      && c.EmpId == dto.EmployeeId
                                select new { c })
-                              .AsEnumerable() // force client-side join
-                              .GroupJoin(tempWithoutSalarySeriesList,
-                                         x => x.c.EmpId,
-                                         d => d.EmployeeId,
-                                         (x, dGroup) => new { x.c, dGroup })
-                              .SelectMany(
-                                  cd => cd.dGroup.DefaultIfEmpty(), // left join
-                                  (cd, d) => new { cd.c, d }
-                              )
-                              .Where(cd => cd.d == null || dto.EffectiveDate < cd.d.EffectiveDate)
-                              .Select(cd => new EmployeePayscaleResult
-                              {
-                                  EmployeeId = cd.c.EmpId,
-                                  EmpCode = cd.c.EmpCode,
-                                  EffectiveDate = formattedDate,
-                                  RawEffectiveDate = cd.d?.EffectiveDate,
-                                  Data = -2,
-                                  PrlAppr = prlAppr
-                              })
-                              .ToList();
+                      .AsEnumerable() // force client-side join
+                      .GroupJoin(tempWithoutSalarySeriesList,
+                                 x => x.c.EmpId,
+                                 d => d.EmployeeId,
+                                 (x, dGroup) => new { x.c, dGroup })
+                      .SelectMany(
+                          cd => cd.dGroup.DefaultIfEmpty(), // left join
+                          (cd, d) => new { cd.c, d }
+                      )
+                      .Where(cd => cd.d == null || dto.EffectiveDate < cd.d.EffectiveDate)
+                      .Select(cd => new EmployeePayscaleResult
+                      {
+                          EmployeeId = cd.c.EmpId,
+                          EmpCode = cd.c.EmpCode,
+                          EffectiveDate = formattedDate,
+                          RawEffectiveDate = cd.d?.EffectiveDate,
+                          Data = -2,
+                          PrlAppr = prlAppr
+                      })
+                      .ToList();
 
 
 
@@ -15514,15 +15537,15 @@ namespace HRMS.EmployeeInformation.Repository.Common
             if (dto.Status != "U" && prlArrear2 == 1)
             {
                 var existsRecord = (
-                    from d in _context.ProcessPayRoll01s
-                    join e in _context.Payroll01s
-                        on d.PayRollPeriodSubId equals e.PayrollPeriodSubId
-                    where d.EmployeeId == dto.EmployeeId
-                          && dto.EffectiveDate >= e.ShowFromDate
-                          && dto.EffectiveDate <= e.ShowToDate
-                          && d.Status != "D"
-                          && d.Status != "R"
-                    select -1
+                from d in _context.ProcessPayRoll01s
+                join e in _context.Payroll01s
+                    on d.PayRollPeriodSubId equals e.PayrollPeriodSubId
+                where d.EmployeeId == dto.EmployeeId
+                      && dto.EffectiveDate >= e.ShowFromDate
+                      && dto.EffectiveDate <= e.ShowToDate
+                      && d.Status != "D"
+                      && d.Status != "R"
+                select -1
                 ).Any();
 
                 if (existsRecord)
@@ -15541,19 +15564,19 @@ namespace HRMS.EmployeeInformation.Repository.Common
                                           b.EmpCode,
                                           EffectiveDateRaw = dto.EffectiveDate
                                       })
-                   .AsEnumerable()
-                   .Select(x => new EmployeePayscaleResult
-                   {
-                       EmployeeId = x.EmpId,
-                       EmpCode = x.EmpCode,
-                       EffectiveDate = x.EffectiveDateRaw != null
+                    .AsEnumerable()
+                    .Select(x => new EmployeePayscaleResult
+                    {
+                        EmployeeId = x.EmpId,
+                        EmpCode = x.EmpCode,
+                        EffectiveDate = x.EffectiveDateRaw != null
                            ? x.EffectiveDateRaw.Value.ToString("dd/MM/yyyy")
                            : string.Empty,
-                       RawEffectiveDate = x.EffectiveDateRaw,
-                       Data = -3,
-                       PrlAppr = (prlArrear2 == 1) ? 1 : 0
-                   })
-                   .ToList();
+                        RawEffectiveDate = x.EffectiveDateRaw,
+                        Data = -3,
+                        PrlAppr = (prlArrear2 == 1) ? 1 : 0
+                    })
+                    .ToList();
                     results.AddRange(rawResults);
                 }
             }
@@ -15565,41 +15588,41 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                 // Get TransactionID
                 transactionId = _context.TransactionMasters
-                                        .Where(t => t.TransactionType == "Payscale")
-                                        .Select(t => t.TransactionId)
-                                        .FirstOrDefault();
+                                    .Where(t => t.TransactionType == "Payscale")
+                                    .Select(t => t.TransactionId)
+                                    .FirstOrDefault();
 
                 // Assume GetSequence is implemented in C# as a method
                 var codeId1 = int.Parse(GetSequenceAPI(dto.EmployeeId, transactionId, null, firstEntityId));
                 //int codeId = 0;
                 // Get LastSequence as RequestID
                 var requestId = _context.AdmCodegenerationmasters
-                                    .Where(c => c.CodeId == codeId1)
-                                    .Select(c => c.LastSequence)
-                                    .FirstOrDefault();
+                                .Where(c => c.CodeId == codeId1)
+                                .Select(c => c.LastSequence)
+                                .FirstOrDefault();
 
                 int? batchId = GetEmployeeSchemeID(dto.EmployeeId, "ASSPAYCODE", "PRL").Result;
                 var payCode = _context.PayCodeMaster00s
-                                .Where(c => c.PayCodeMasterId == batchId)
-                                .Select(c => new PayscaleRequest00
-                                {
-                                    BatchId = c.PayCodeMasterId,
-                                    CurrencyId = c.CurrencyId,
-                                    TotalEarnings = 0,
-                                    TotalDeductions = 0,
-                                    TotalPay = 0,
-                                    EmployeeIds = dto.EmployeeIDs,
-                                    BatchStatus = "O",
-                                    RejectStatus = "P",
-                                    EffectiveDate = dto.EffectiveDate,
-                                    Type = 3,
-                                    EntryBy = dto.EntryBy,
-                                    EntryDate = DateTime.UtcNow,
-                                    FlowStatus = "P",
-                                    PayReqCode = requestId,
-                                    Payrolltype = dto.PayrollType,
-                                    PayscaleRemarks = dto.Remarks
-                                }).FirstOrDefault();
+                            .Where(c => c.PayCodeMasterId == batchId)
+                            .Select(c => new PayscaleRequest00
+                            {
+                                BatchId = c.PayCodeMasterId,
+                                CurrencyId = c.CurrencyId,
+                                TotalEarnings = 0,
+                                TotalDeductions = 0,
+                                TotalPay = 0,
+                                EmployeeIds = dto.EmployeeIDs,
+                                BatchStatus = "O",
+                                RejectStatus = "P",
+                                EffectiveDate = dto.EffectiveDate,
+                                Type = 3,
+                                EntryBy = dto.EntryBy,
+                                EntryDate = DateTime.UtcNow,
+                                FlowStatus = "P",
+                                PayReqCode = requestId,
+                                Payrolltype = dto.PayrollType,
+                                PayscaleRemarks = dto.Remarks
+                            }).FirstOrDefault();
                 long insertedId = 0;
                 if (payCode != null)
                 {
@@ -15610,20 +15633,20 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 }
 
                 var totalEarnings = (dto.earnDtos ?? new List<EarnDto>())
-                    .Join(_context.PayCodeMaster01s,
-                          a => a.EarnId,
-                          e => e.PayCodeId,
-                          (a, e) => new { a, e })
-                    .Where(x => x.e.PayCodeMasterId == batchId)
-                    .Sum(x => x.a.EarnNewAmount ?? 0);
+                .Join(_context.PayCodeMaster01s,
+                      a => a.EarnId,
+                      e => e.PayCodeId,
+                      (a, e) => new { a, e })
+                .Where(x => x.e.PayCodeMasterId == batchId)
+                .Sum(x => x.a.EarnNewAmount ?? 0);
 
                 var totalDeductions = (dto.dededDtos ?? new List<DedDto>())
-                                      .Join(_context.PayCodeMaster01s,
-                                            a => a.DedId,
-                                            e => e.PayCodeId,
-                                            (a, e) => new { a, e })
-                                      .Where(x => x.e.PayCodeMasterId == batchId)
-                                      .Sum(x => x.a.DedNewAmount ?? 0);
+                                  .Join(_context.PayCodeMaster01s,
+                                        a => a.DedId,
+                                        e => e.PayCodeId,
+                                        (a, e) => new { a, e })
+                                  .Where(x => x.e.PayCodeMasterId == batchId)
+                                  .Sum(x => x.a.DedNewAmount ?? 0);
 
                 var payscaleRequest01 = new PayscaleRequest01
                 {
@@ -15765,13 +15788,13 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 var totalEarning = _context.PayscaleRequest01s.Where(p => p.PayRequestId == insertedId).Sum(p => (double?)p.TotalEarnings) ?? 0;
 
                 var totalDeduction = _context.PayscaleRequest01s
-                    .Where(p => p.PayRequestId == insertedId)
-                    .Sum(p => (double?)p.TotalDeductions) ?? 0;
+                .Where(p => p.PayRequestId == insertedId)
+                .Sum(p => (double?)p.TotalDeductions) ?? 0;
 
                 var totalPay = totalEarning - totalDeduction;
 
                 var payscaleRequest00 = _context.PayscaleRequest00s
-                    .FirstOrDefault(p => p.PayRequestId == insertedId);
+                .FirstOrDefault(p => p.PayRequestId == insertedId);
 
                 if (payscaleRequest00 != null)
                 {
@@ -15840,7 +15863,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 _context.SaveChanges();
                 // Fetch the entry based on codeID
                 var codeGen = _context.AdmCodegenerationmasters
-                                     .FirstOrDefault(x => x.CodeId == codeId); // @codeID
+                                 .FirstOrDefault(x => x.CodeId == codeId); // @codeID
 
                 if (codeGen != null)
                 {
@@ -15867,7 +15890,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
                 // Step 1: Count the PayscaleRequest01 records for the given request ID
                 int cnts1 = _context.PayscaleRequest01s
-                                   .Count(x => x.PayRequestId == insertedId);
+                               .Count(x => x.PayRequestId == insertedId);
 
                 if (cnts1 == 1)
                 {
@@ -16133,18 +16156,18 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             // Assuming you return this type
             var categoryMaster = await _context.Categorymasters
-                .Join(_context.HrmValueTypes
-                         .Where(b => b.Type == typeof(CatTrxType).Name),
-                    a => a.CatTrxTypeId,
-                    b => b.Value,
-                    (a, b) => new CategoryMasterDto
-                    {
-                        SortOrder = a.SortOrder,
-                        Description = a.Description,
-                        Value = b.Value,
-                        Code = b.Code.Trim()
-                    })
-                .ToListAsync();
+            .Join(_context.HrmValueTypes
+                 .Where(b => b.Type == typeof(CatTrxType).Name),
+            a => a.CatTrxTypeId,
+            b => b.Value,
+            (a, b) => new CategoryMasterDto
+            {
+                SortOrder = a.SortOrder,
+                Description = a.Description,
+                Value = b.Value,
+                Code = b.Code.Trim()
+            })
+            .ToListAsync();
 
             // Return it inside a result class
             return new CategoryMasterResult
@@ -16156,10 +16179,10 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             // Handle nullable LinkIds
             var linkIds = linkIdCsv
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => long.TryParse(x.Trim(), out var val) ? (long?)val : null)
-                .Where(x => x.HasValue)
-                .ToList(); // This is now List<long?>
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => long.TryParse(x.Trim(), out var val) ? (long?)val : null)
+            .Where(x => x.HasValue)
+            .ToList(); // This is now List<long?>
 
             // Case 1
             var case1 = await (from a in _context.CompanyParameters
@@ -16190,9 +16213,9 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
             // Case 3
             var defaultResult = await _context.CompanyParameters
-                .Where(a => a.ParameterCode == "EMPNOTCEONPROB" && a.Type == "EMP1")
-                .Select(a => a.Text)
-                .ToListAsync();
+            .Where(a => a.ParameterCode == "EMPNOTCEONPROB" && a.Type == "EMP1")
+            .Select(a => a.Text)
+            .ToListAsync();
 
             return defaultResult;
         }
@@ -16245,8 +16268,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private async Task<(int empId, int docId, int latestDocHisId)> InsertHistoryRecordsAsync(int detailId, int entryBy, DateTime currentDate)
         {
             var approvedDocs = await _context.HrmsEmpdocumentsApproved00s
-                .Where(x => x.DetailId == detailId)
-                .ToListAsync();
+            .Where(x => x.DetailId == detailId)
+            .ToListAsync();
 
             var historyRecords = approvedDocs.Select(doc => new HrmsEmpdocumentsHistory00
             {
@@ -16275,8 +16298,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private async Task InsertFileHistoryAsync(int detailId, int? deviceId, int docHisId)
         {
             var approvedFiles = await _context.HrmsEmpdocumentsApproved02s
-                .Where(x => x.DetailId == deviceId && x.DocId == detailId)
-                .ToListAsync();
+            .Where(x => x.DetailId == deviceId && x.DocId == detailId)
+            .ToListAsync();
             if (!approvedFiles.Any())
             {
                 // No file data, but continue rest of delete
@@ -16324,21 +16347,21 @@ namespace HRMS.EmployeeInformation.Repository.Common
         private async Task<bool> IsDocumentSoftDeletedAsync(int detailId)
         {
             return await _context.HrmsEmpdocuments00s
-                .AnyAsync(x => x.DetailId == detailId && x.Status == "D");
+            .AnyAsync(x => x.DetailId == detailId && x.Status == "D");
         }
 
         //helper  of function InsertDocumentHistoryAndDeleteAsync method
         private async Task<bool> IsApprovedDocSoftDeletedAsync(int detailId)
         {
             return await _context.HrmsEmpdocumentsApproved00s
-                .AnyAsync(x => x.DetailId == detailId && x.Status == "D");
+            .AnyAsync(x => x.DetailId == detailId && x.Status == "D");
         }
 
         //helper  of function InsertDocumentHistoryAndDeleteAsync method
         private async Task EnsureDocumentAccessAsync(int empId, int docId, int entryBy, DateTime currentDate)
         {
             bool exists = await _context.EmpDocumentAccesses
-                .AnyAsync(x => x.EmpId == empId && x.DocId == docId);
+            .AnyAsync(x => x.EmpId == empId && x.DocId == docId);
 
             if (!exists)
             {

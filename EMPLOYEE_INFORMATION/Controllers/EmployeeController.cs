@@ -202,7 +202,21 @@ namespace EMPLOYEE_INFORMATION.Controllers
             //}
 
             //return Ok(professionalData);
-            var professionalData = await _employeeInformation.UpdateProfessionalDetailsAsync(apprlDto);
+
+            //public async Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
+
+            var professionalData = (ErrorID: 1, ErrorMessage: "");
+
+            if (apprlDto.ProfId == 0)
+            {
+                professionalData = await _employeeInformation.InsertOrUpdateProfessionalData(apprlDto);
+                return Ok(professionalData.ErrorMessage);
+            }
+            else
+            {
+                professionalData = await _employeeInformation.UpdateProfessionalDetailsAsync(apprlDto);
+            }
+
             return Ok(professionalData.ErrorMessage);
 
         }
