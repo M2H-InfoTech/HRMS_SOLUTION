@@ -235,6 +235,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<string>> DdlIsprobationAsync(int FirstEntityID, string LinkID);
         Task<bool> DeleteEmpRewardAsync(int rewardId);
 
-        Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int deviceId);
+        Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int? deviceId);
     }
 }

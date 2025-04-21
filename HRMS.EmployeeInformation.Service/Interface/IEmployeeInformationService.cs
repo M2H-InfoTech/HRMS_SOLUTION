@@ -202,7 +202,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<int> GetlastEntityByRoleId([FromBody] EntityRoleRequestDto customEntityList);
 
         Task<bool> DeleteEmpRewardAsync(int rewardId);
-        Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int deviceId);
+        Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int? deviceId);
 
     }
 

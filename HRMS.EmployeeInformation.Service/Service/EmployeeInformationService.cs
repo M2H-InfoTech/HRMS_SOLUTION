@@ -841,7 +841,7 @@ namespace HRMS.EmployeeInformation.Service.Service
             return await _employeeRepository.DeleteEmpRewardAsync(rewardId);
         }
 
-        public async Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int deviceId)
+        public async Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int? deviceId)
         {
             return await _employeeRepository.InsertDocumentHistoryAndDeleteAsync(detailId, entryBy, deviceId);
         }
