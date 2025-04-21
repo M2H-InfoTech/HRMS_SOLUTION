@@ -16210,32 +16210,32 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return await _context.SaveChangesAsync() > 0;
         }
 
-        public async Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int deviceId)
+        public async Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int? deviceId)
         {
             var currentDate = DateTime.UtcNow;
             string resultMessage = "Failed";
 
+            // Check if the document is already soft-deleted
             bool isDocDeleted = await IsDocumentSoftDeletedAsync(detailId);
             bool isApprovedDeleted = await IsApprovedDocSoftDeletedAsync(detailId);
 
+            // If both documents are already deleted, return early with the appropriate message
             if (isDocDeleted && isApprovedDeleted)
             {
                 Console.WriteLine("Documents are already deleted. Exiting operation.");
-                resultMessage = "Documents already deleted";
-                return resultMessage;
+                return "Documents already deleted";
             }
 
+            // Proceed with inserting history records and performing deletions
             var (empId, docId, latestDocHisId) = await InsertHistoryRecordsAsync(detailId, entryBy, currentDate);
             await InsertFileHistoryAsync(detailId, deviceId, latestDocHisId);
             await SoftDeleteDocumentsAsync(detailId, entryBy, currentDate);
 
+            // After deletion, ensure document access is tracked
+            await EnsureDocumentAccessAsync(empId, docId, entryBy, currentDate);
 
-
-            if (isDocDeleted && isApprovedDeleted)
-            {
-                await EnsureDocumentAccessAsync(empId, docId, entryBy, currentDate);
-                resultMessage = "Deleted";
-            }
+            // Set the result message to "Deleted" after successful operation
+            resultMessage = "Deleted";
 
             return resultMessage;
         }
@@ -16272,7 +16272,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         }
 
         //helper  of function InsertDocumentHistoryAndDeleteAsync method
-        private async Task InsertFileHistoryAsync(int detailId, int deviceId, int docHisId)
+        private async Task InsertFileHistoryAsync(int detailId, int? deviceId, int docHisId)
         {
             var approvedFiles = await _context.HrmsEmpdocumentsApproved02s
                 .Where(x => x.DetailId == deviceId && x.DocId == detailId)
