@@ -48,5 +48,7 @@
 
         public int? MasterId { get; set; }
         public string? updateType { get; set; }
+        public string? entityList { get; set; }
+        public int FirstEntityID { get; set; }
     }
 }
