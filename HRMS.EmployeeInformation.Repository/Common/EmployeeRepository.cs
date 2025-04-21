@@ -3022,106 +3022,287 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
         }
 
-        public async Task<(int ErrorID, string ErrorMessage)> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
+        //public async Task<(int ErrorID, string ErrorMessage)> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto)
+        //{
+        //    var existingEntity = await _context.HrEmpProfdtlsApprls
+        //        .FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId &&
+        //                                  e.JoinDt.HasValue && e.JoinDt.Value.Date == profdtlsApprlDto.JoinDt &&
+        //                                  e.LeavingDt.HasValue && e.LeavingDt.Value.Date == profdtlsApprlDto.LeavingDt);
+        //    if (existingEntity != null)
+        //    {
+        //        return (0, _employeeSettings.DataInsertFailedStatus);
+        //    }
+
+        //    using var transaction = await _context.Database.BeginTransactionAsync();
+        //    try
+        //    {
+        //        bool isWorkflowNeeded = await IsWorkflowNeeded();
+        //        var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
+        //        hrEmpProfdtlsApprl.EntryBy = profdtlsApprlDto.EntryBy;
+        //        hrEmpProfdtlsApprl.EntryDt = DateTime.UtcNow; // Ensure Entry Date is set
+        //        var entityIds = profdtlsApprlDto.entityList.Split(',').Select(int.Parse).ToList();
+        //        string chkEmpEntities = string.Join(",", entityIds.Where(id => id != 0));
+        //        string requestID = "0";
+        //        if (isWorkflowNeeded)
+        //        {
+        //            var transactionId = await GetTransactionIdByTransactionType("Professional");
+        //            var codeId = GetSequenceAPI(profdtlsApprlDto.EmpId, transactionId, chkEmpEntities, profdtlsApprlDto.FirstEntityID);//    await GenerateRequestId(profdtlsApprlDto.EmpId);
+        //            if (codeId == null)
+        //            {
+        //                await transaction.RollbackAsync();
+        //                return (0, "NoSequence");  // Match SQL logic
+        //            }
+        //            else
+        //            {
+        //                requestID = await _context.AdmCodegenerationmasters.Where(x => x.CodeId == Convert.ToInt32(codeId)).Select(x => x.LastSequence).FirstOrDefaultAsync();
+        //            }
+
+        //            var hrEmpProfdtlAprvl = new HrEmpProfdtlsApprl
+        //            {
+        //                InstId = profdtlsApprlDto.InstId,
+        //                ProfId = profdtlsApprlDto.ProfId,
+        //                EmpId = profdtlsApprlDto.EmpId,
+        //                CompName = profdtlsApprlDto.CompName,
+        //                Designation = profdtlsApprlDto.Designation,
+        //                CompAddress = profdtlsApprlDto.CompAddress,
+        //                Pbno = profdtlsApprlDto.Pbno,
+        //                ContactPer = profdtlsApprlDto.ContactPer,
+        //                ContactNo = profdtlsApprlDto.ContactNo,
+        //                JobDesc = profdtlsApprlDto.JobDesc,
+        //                JoinDt = profdtlsApprlDto.JoinDt,
+        //                LeavingDt = profdtlsApprlDto.LeavingDt,
+        //                LeaveReason = profdtlsApprlDto.LeaveReason,
+        //                Ctc = profdtlsApprlDto.Ctc,
+        //                CurrencyId = profdtlsApprlDto.CurrencyId,
+        //                CompSite = profdtlsApprlDto.CompSite,
+        //                EntryBy = profdtlsApprlDto.EntryBy,
+        //                EntryDt = profdtlsApprlDto.EntryDt,
+        //                Status = profdtlsApprlDto.Status,
+        //                FlowStatus = profdtlsApprlDto.FlowStatus,
+        //                RequestId = requestID,
+
+        //            };
+        //            await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlAprvl);
+        //            await _context.SaveChangesAsync();
+        //            var profId = hrEmpProfdtlAprvl.ProfId;
+
+        //            //hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
+        //            //await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
+        //            //await UpdateCodeGeneration(codeId);
+
+        //            // Call Workflow Activity Flow - Assuming a method exists
+        //            await ExecuteWorkFlowActivityFlow(profdtlsApprlDto.EmpId, "Professional", profId.ToString(), profdtlsApprlDto.EntryBy.ToString());
+
+        //            var codeGen = _context.AdmCodegenerationmasters.FirstOrDefault(x => x.CodeId == Convert.ToInt32(codeId));
+
+        //            if (codeGen != null)
+        //            {
+        //                // Step 1: Update CurrentCodeValue to max + 1
+        //                var maxValue = _context.AdmCodegenerationmasters
+        //                    .Where(x => x.CodeId == Convert.ToInt32(codeId))
+        //                    .Max(x => (int?)x.CurrentCodeValue) ?? 0;
+
+        //                codeGen.CurrentCodeValue = maxValue + 1;
+
+        //                // Step 2: Calculate the length of the prefix
+        //                int lengthDiff = (codeGen.NumberFormat?.Length ?? 0) - codeGen.CurrentCodeValue.ToString().Length;
+
+        //                // Step 3: Extract prefix from NumberFormat
+        //                string seq = (codeGen.NumberFormat != null && lengthDiff > 0)
+        //                    ? codeGen.NumberFormat.Substring(0, lengthDiff)
+        //                    : string.Empty;
+
+        //                // Step 4: Compose final code
+        //                string finalCode = $"{codeGen.Code}{seq}{codeGen.CurrentCodeValue}";
+
+        //                // Step 5: Update LastSequence
+        //                codeGen.LastSequence = finalCode;
+
+        //                // Save changes
+        //                _context.SaveChangesAsync();
+        //            }
+
+        //        }
+        //        else
+        //        {
+
+        //            var hrEmpProfdtl = new HrEmpProfdtl
+        //            {
+        //                InstId = profdtlsApprlDto.InstId,
+        //                ProfId = profdtlsApprlDto.ProfId,
+        //                EmpId = profdtlsApprlDto.EmpId,
+        //                CompName = profdtlsApprlDto.CompName,
+        //                Designation = profdtlsApprlDto.Designation,
+        //                CompAddress = profdtlsApprlDto.CompAddress,
+        //                Pbno = profdtlsApprlDto.Pbno,
+        //                ContactPer = profdtlsApprlDto.ContactPer,
+        //                ContactNo = profdtlsApprlDto.ContactNo,
+        //                JobDesc = profdtlsApprlDto.JobDesc,
+        //                JoinDt = profdtlsApprlDto.JoinDt,
+        //                LeavingDt = profdtlsApprlDto.LeavingDt,
+        //                LeaveReason = profdtlsApprlDto.LeaveReason,
+        //                Ctc = profdtlsApprlDto.Ctc,
+        //                CurrencyId = profdtlsApprlDto.CurrencyId,
+        //                CompSite = profdtlsApprlDto.CompSite,
+        //                EntryBy = profdtlsApprlDto.EntryBy,
+        //                EntryDt = profdtlsApprlDto.EntryDt,
+        //            };
+        //            await _context.HrEmpProfdtls.AddAsync(hrEmpProfdtl);
+
+        //            //await _context.SaveChangesAsync();
+
+        //            var hrEmpProfdtlAprvl = new HrEmpProfdtlsApprl
+        //            {
+        //                InstId = profdtlsApprlDto.InstId,
+        //                ProfId = profdtlsApprlDto.ProfId,
+        //                EmpId = profdtlsApprlDto.EmpId,
+        //                CompName = profdtlsApprlDto.CompName,
+        //                Designation = profdtlsApprlDto.Designation,
+        //                CompAddress = profdtlsApprlDto.CompAddress,
+        //                Pbno = profdtlsApprlDto.Pbno,
+        //                ContactPer = profdtlsApprlDto.ContactPer,
+        //                ContactNo = profdtlsApprlDto.ContactNo,
+        //                JobDesc = profdtlsApprlDto.JobDesc,
+        //                JoinDt = profdtlsApprlDto.JoinDt,
+        //                LeavingDt = profdtlsApprlDto.LeavingDt,
+        //                LeaveReason = profdtlsApprlDto.LeaveReason,
+        //                Ctc = profdtlsApprlDto.Ctc,
+        //                CurrencyId = profdtlsApprlDto.CurrencyId,
+        //                CompSite = profdtlsApprlDto.CompSite,
+        //                EntryBy = profdtlsApprlDto.EntryBy,
+        //                EntryDt = profdtlsApprlDto.EntryDt,
+        //                Status = "A",
+        //                FlowStatus = "E",
+        //                RequestId = profdtlsApprlDto.RequestId,
+        //                DateFrom = profdtlsApprlDto.DateFrom,
+        //                MasterId = profdtlsApprlDto.ProfId
+        //            };
+        //            await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlAprvl);
+        //            var empMaster = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId);
+        //            if (empMaster != null)
+        //            {
+        //                empMaster.ModifiedDate = DateTime.UtcNow;
+        //                //await _context.SaveChangesAsync();
+        //            }
+        //            //await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
+        //        }
+
+        //        // Update HR_EMP_MASTER.ModifiedDate
+
+
+        //        int result = await _context.SaveChangesAsync();
+        //        await transaction.CommitAsync();
+        //        return (0, _employeeSettings.DataInsertSuccessStatus);// result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
+        //    }
+        //    catch
+        //    {
+        //        await transaction.RollbackAsync();
+        //        throw;
+        //    }
+        //}
+
+        // Fixes in GetLastSequence
+
+
+        public async Task<(int ErrorID, string ErrorMessage)> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto dto)
         {
-            var existingEntity = await _context.HrEmpProfdtlsApprls
-                .FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId &&
-                                          e.JoinDt.HasValue && e.JoinDt.Value.Date == profdtlsApprlDto.JoinDt &&
-                                          e.LeavingDt.HasValue && e.LeavingDt.Value.Date == profdtlsApprlDto.LeavingDt);
-            if (existingEntity != null)
-            {
+            var exists = await _context.HrEmpProfdtlsApprls
+                .AnyAsync(e => e.EmpId == dto.EmpId &&
+                               e.JoinDt.HasValue && e.JoinDt.Value.Date == dto.JoinDt &&
+                               e.LeavingDt.HasValue && e.LeavingDt.Value.Date == dto.LeavingDt);
+
+            if (exists)
                 return (0, _employeeSettings.DataInsertFailedStatus);
-            }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 bool isWorkflowNeeded = await IsWorkflowNeeded();
-                var hrEmpProfdtlsApprl = _mapper.Map<HrEmpProfdtlsApprl>(profdtlsApprlDto);
-                hrEmpProfdtlsApprl.EntryBy = profdtlsApprlDto.EntryBy;
-                hrEmpProfdtlsApprl.EntryDt = DateTime.UtcNow; // Ensure Entry Date is set
+                string requestID = "0";
+                string? codeId = null;
 
                 if (isWorkflowNeeded)
                 {
-                    string? codeId = await GenerateRequestId(profdtlsApprlDto.EmpId);
+                    var transactionId = await GetTransactionIdByTransactionType("Professional");
+                    var entityIds = dto.entityList.Split(',').Select(int.Parse).Where(id => id != 0).ToList();
+                    string entityList = string.Join(",", entityIds);
+                    codeId = GetSequenceAPI(dto.EmpId, transactionId, entityList, dto.FirstEntityID);
+
                     if (codeId == null)
                     {
                         await transaction.RollbackAsync();
-                        return (0, "NoSequence");  // Match SQL logic
+                        return (0, "NoSequence");
                     }
 
-                    hrEmpProfdtlsApprl.RequestId = await GetLastSequence(codeId);
-                    await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlsApprl);
-                    await UpdateCodeGeneration(codeId);
+                    requestID = await _context.AdmCodegenerationmasters
+                        .Where(x => x.CodeId == Convert.ToInt32(codeId))
+                        .Select(x => x.LastSequence)
+                        .FirstOrDefaultAsync();
+                }
 
-                    // Call Workflow Activity Flow - Assuming a method exists
-                    await ExecuteWorkFlowActivityFlow(profdtlsApprlDto.EmpId, "Professional", hrEmpProfdtlsApprl.RequestId, profdtlsApprlDto.EntryBy.ToString());
+                // Add to HrEmpProfdtls if not workflow
+                if (!isWorkflowNeeded)
+                {
+                    await _context.HrEmpProfdtls.AddAsync(new HrEmpProfdtl
+                    {
+                        InstId = dto.InstId,
+                        ProfId = dto.ProfId,
+                        EmpId = dto.EmpId,
+                        CompName = dto.CompName,
+                        Designation = dto.Designation,
+                        CompAddress = dto.CompAddress,
+                        Pbno = dto.Pbno,
+                        ContactPer = dto.ContactPer,
+                        ContactNo = dto.ContactNo,
+                        JobDesc = dto.JobDesc,
+                        JoinDt = dto.JoinDt,
+                        LeavingDt = dto.LeavingDt,
+                        LeaveReason = dto.LeaveReason,
+                        Ctc = dto.Ctc,
+                        CurrencyId = dto.CurrencyId,
+                        CompSite = dto.CompSite,
+                        EntryBy = dto.EntryBy,
+                        EntryDt = dto.EntryDt
+                    });
+                }
+
+                // Add to HrEmpProfdtlsApprl
+                var approvalEntity = CreateApprovalEntity(dto, requestID, isWorkflowNeeded);
+                await _context.HrEmpProfdtlsApprls.AddAsync(approvalEntity);
+
+                // Workflow execution
+                if (isWorkflowNeeded)
+                {
+                    await ExecuteWorkFlowActivityFlow(dto.EmpId, "Professional", approvalEntity.ProfId.ToString(), dto.EntryBy.ToString());
+
+                    var codeGen = await _context.AdmCodegenerationmasters.FirstOrDefaultAsync(x => x.CodeId == Convert.ToInt32(codeId));
+                    if (codeGen != null)
+                    {
+                        int maxValue = await _context.AdmCodegenerationmasters
+                            .Where(x => x.CodeId == Convert.ToInt32(codeId))
+                            .MaxAsync(x => (int?)x.CurrentCodeValue) ?? 0;
+
+                        codeGen.CurrentCodeValue = maxValue + 1;
+
+                        int lengthDiff = (codeGen.NumberFormat?.Length ?? 0) - codeGen.CurrentCodeValue.ToString().Length;
+                        string seq = (codeGen.NumberFormat != null && lengthDiff > 0)
+                            ? codeGen.NumberFormat.Substring(0, lengthDiff)
+                            : string.Empty;
+
+                        codeGen.LastSequence = $"{codeGen.Code}{seq}{codeGen.CurrentCodeValue}";
+                    }
                 }
                 else
                 {
-
-                    var hrEmpProfdtl = new HrEmpProfdtl
-                    {
-                        InstId = profdtlsApprlDto.InstId,
-                        ProfId = profdtlsApprlDto.ProfId,
-                        EmpId = profdtlsApprlDto.EmpId,
-                        CompName = profdtlsApprlDto.CompName,
-                        Designation = profdtlsApprlDto.Designation,
-                        CompAddress = profdtlsApprlDto.CompAddress,
-                        Pbno = profdtlsApprlDto.Pbno,
-                        ContactPer = profdtlsApprlDto.ContactPer,
-                        ContactNo = profdtlsApprlDto.ContactNo,
-                        JobDesc = profdtlsApprlDto.JobDesc,
-                        JoinDt = profdtlsApprlDto.JoinDt,
-                        LeavingDt = profdtlsApprlDto.LeavingDt,
-                        LeaveReason = profdtlsApprlDto.LeaveReason,
-                        Ctc = profdtlsApprlDto.Ctc,
-                        CurrencyId = profdtlsApprlDto.CurrencyId,
-                        CompSite = profdtlsApprlDto.CompSite,
-                        EntryBy = profdtlsApprlDto.EntryBy,
-                        EntryDt = profdtlsApprlDto.EntryDt,
-                    };
-                    await _context.HrEmpProfdtls.AddAsync(hrEmpProfdtl);
-
-                    //await _context.SaveChangesAsync();
-
-                    var hrEmpProfdtlAprvl = new HrEmpProfdtlsApprl
-                    {
-                        InstId = profdtlsApprlDto.InstId,
-                        ProfId = profdtlsApprlDto.ProfId,
-                        EmpId = profdtlsApprlDto.EmpId,
-                        CompName = profdtlsApprlDto.CompName,
-                        Designation = profdtlsApprlDto.Designation,
-                        CompAddress = profdtlsApprlDto.CompAddress,
-                        Pbno = profdtlsApprlDto.Pbno,
-                        ContactPer = profdtlsApprlDto.ContactPer,
-                        ContactNo = profdtlsApprlDto.ContactNo,
-                        JobDesc = profdtlsApprlDto.JobDesc,
-                        JoinDt = profdtlsApprlDto.JoinDt,
-                        LeavingDt = profdtlsApprlDto.LeavingDt,
-                        LeaveReason = profdtlsApprlDto.LeaveReason,
-                        Ctc = profdtlsApprlDto.Ctc,
-                        CurrencyId = profdtlsApprlDto.CurrencyId,
-                        CompSite = profdtlsApprlDto.CompSite,
-                        EntryBy = profdtlsApprlDto.EntryBy,
-                        EntryDt = profdtlsApprlDto.EntryDt,
-                    };
-                    await _context.HrEmpProfdtlsApprls.AddAsync(hrEmpProfdtlAprvl);
-
-                    //await InsertProfessionalDetails(profdtlsApprlDto.EmpId);
+                    var empMaster = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == dto.EmpId);
+                    if (empMaster != null)
+                        empMaster.ModifiedDate = DateTime.UtcNow;
                 }
 
-                // Update HR_EMP_MASTER.ModifiedDate
-                var empMaster = await _context.HrEmpMasters.FirstOrDefaultAsync(e => e.EmpId == profdtlsApprlDto.EmpId);
-                if (empMaster != null)
-                {
-                    empMaster.ModifiedDate = DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
-                }
-
-                int result = await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                return (0, _employeeSettings.DataInsertSuccessStatus);// result > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;
+
+                return (0, _employeeSettings.DataInsertSuccessStatus);
             }
             catch
             {
@@ -3130,7 +3311,37 @@ namespace HRMS.EmployeeInformation.Repository.Common
             }
         }
 
-        // Fixes in GetLastSequence
+        private HrEmpProfdtlsApprl CreateApprovalEntity(HrEmpProfdtlsApprlDto dto, string requestID, bool isWorkflowNeeded)
+        {
+            return new HrEmpProfdtlsApprl
+            {
+                InstId = dto.InstId,
+                ProfId = dto.ProfId,
+                EmpId = dto.EmpId,
+                CompName = dto.CompName,
+                Designation = dto.Designation,
+                CompAddress = dto.CompAddress,
+                Pbno = dto.Pbno,
+                ContactPer = dto.ContactPer,
+                ContactNo = dto.ContactNo,
+                JobDesc = dto.JobDesc,
+                JoinDt = dto.JoinDt,
+                LeavingDt = dto.LeavingDt,
+                LeaveReason = dto.LeaveReason,
+                Ctc = dto.Ctc,
+                CurrencyId = dto.CurrencyId,
+                CompSite = dto.CompSite,
+                EntryBy = dto.EntryBy,
+                EntryDt = DateTime.UtcNow,
+                Status = isWorkflowNeeded ? dto.Status : "A",
+                FlowStatus = isWorkflowNeeded ? dto.FlowStatus : "E",
+                RequestId = requestID,
+                DateFrom = dto.DateFrom,
+                MasterId = dto.ProfId
+            };
+        }
+
+
         public async Task<string?> GetLastSequence(string codeId)
         {
             return await _context.AdmCodegenerationmasters
