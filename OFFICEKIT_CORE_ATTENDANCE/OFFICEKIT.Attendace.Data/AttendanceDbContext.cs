@@ -23,6 +23,7 @@ namespace OFFICEKIT_CORE_ATTENDANCE.OFFICEKIT.Attendace.Data
         public virtual DbSet<EntityApplicable00> EntityApplicable00s { get; set; }
         public virtual DbSet<EntityApplicable01> EntityApplicable01s { get; set; }
         public virtual DbSet<HrEmpReporting> HrEmpReportings { get; set; }
+        public virtual DbSet<ShiftApproval00> ShiftApproval00s { get; set; }
         public virtual DbSet<HrEmployeeUserRelation> HrEmployeeUserRelations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -484,6 +485,25 @@ namespace OFFICEKIT_CORE_ATTENDANCE.OFFICEKIT.Attendace.Data
                     .HasColumnName("Entry_Dt");
                 entity.Property(e => e.InstId).HasColumnName("inst_Id");
             });
+            modelBuilder.Entity<ShiftApproval00>(entity =>
+            {
+                entity
+                    .HasNoKey()
+                    .ToTable("ShiftApproval00");
+
+                entity.Property(e => e.ApprovalStatus)
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+                entity.Property(e => e.EntryDate).HasColumnType("datetime");
+                entity.Property(e => e.FlowStatus)
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.RequestId)
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+            });
+
         }
     }
 }

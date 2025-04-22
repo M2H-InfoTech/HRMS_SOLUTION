@@ -86,9 +86,9 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
                 .ToList();
         }
 
-        private List<ShiftAccessDto> GetShiftAccessData(int shiftAccessId,int status,int empStatus,int newEmpId,List<long> shiftAccessTable)
+        private List<ShiftAccessDto> GetShiftAccessData(int shiftAccessId, int status, int empStatus, int newEmpId, List<long> shiftAccessTable)
         {
-           
+
             var (firstShifts, secondShifts) = GetShiftPeriods();
 
             var shiftAccessData = (
@@ -157,7 +157,7 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
 
 
         [HttpPost]
-        public IActionResult GetShiftAccessDetails(int shiftAccessId =0, int entryBy=19, int roleId=3, int status=1, int empStatus=1, int pageNumber = 1, int pageSize = 50)
+        public IActionResult GetShiftAccessDetails(int shiftAccessId = 0, int entryBy = 19, int roleId = 3, int status = 1, int empStatus = 1, int pageNumber = 1, int pageSize = 50)
         {
             DateTime shiftCurrentDate = DateTime.UtcNow.Date;
 
@@ -209,7 +209,7 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
 
                 //var ResultData = GetShiftAccessData(shiftAccessId, status, empStatus, newEmpId, shiftAccessTable);
 
-                
+
 
                 var shiftAccessData = (
                     from a in _context.ShiftMasterAccesses
@@ -290,129 +290,130 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
 
 
 
-            else
-            {
-                // 1. Get EmpEntity string of logged-in employee
-                var empEntityString = _context.HrEmpMasters
-                    .Where(e => e.EmpId == newEmpId)
-                    .Select(e => e.EmpEntity)
-                    .FirstOrDefault();
+            //        else
+            //        {
+            //            // 1. Get EmpEntity string of logged-in employee
+            //            var empEntityString = _context.HrEmpMasters
+            //                .Where(e => e.EmpId == newEmpId)
+            //                .Select(e => e.EmpEntity)
+            //                .FirstOrDefault();
 
-                // 2. Split EmpEntity into a list
-                var splitItems = SplitStrings_XML(empEntityString, ',').ToList();
+            //            // 2. Split EmpEntity into a list
+            //            var splitItems = SplitStrings_XML(empEntityString, ',').ToList();
 
-                // 3. Assign LinkLevel starting from 2
-                var ctNewList = splitItems
-                    .Select((item, index) => new
-                    {
-                        Item = item,
-                        LinkLevel = index + 2
-                    })
-                    .ToList();
+            //            // 3. Assign LinkLevel starting from 2
+            //            var ctNewList = splitItems
+            //                .Select((item, index) => new
+            //                {
+            //                    Item = item,
+            //                    LinkLevel = index + 2
+            //                })
+            //                .ToList();
 
-                // 4. Build applicable final access list
-                var accessItemsFromRole = _context.EntityAccessRights02s
-    .Where(x => x.RoleId == roleId)
-    .AsEnumerable()
-    .SelectMany(s => SplitStrings_XML(s.LinkId, ','))
-    .Where(item => !string.IsNullOrWhiteSpace(item))
-    .Select(item => item.Trim())
-    .Distinct()
-    .ToList();
+            //            // 4. Build applicable final access list
+            //            var accessItemsFromRole = _context.EntityAccessRights02s
+            //.Where(x => x.RoleId == roleId)
+            //.AsEnumerable()
+            //.SelectMany(s => SplitStrings_XML(s.LinkId, ','))
+            //.Where(item => !string.IsNullOrWhiteSpace(item))
+            //.Select(item => item.Trim())
+            //.Distinct()
+            //.ToList();
 
-                var applicableFinal = ctNewList
-     .Where(x => lnkLev > 0 && x.LinkLevel >= lnkLev && !string.IsNullOrWhiteSpace(x.Item))
-     .Select(x => new
-     {
-         x.Item,
-         x.LinkLevel
-     })
-     .ToList();
+            //            var applicableFinal = ctNewList
+            // .Where(x => lnkLev > 0 && x.LinkLevel >= lnkLev && !string.IsNullOrWhiteSpace(x.Item))
+            // .Select(x => new
+            // {
+            //     x.Item,
+            //     x.LinkLevel
+            // })
+            // .ToList();
 
-                var parsedAccessList = new List<(int ItemId, int? LinkLevel)>();
+            //            var parsedAccessList = new List<(int ItemId, int? LinkLevel)>();
 
-                // Add role-based access items (LinkLevel = null)
-                parsedAccessList.AddRange(
-                    accessItemsFromRole
-                        .Select(item =>
-                        {
-                            var success = int.TryParse(item, out var id);
-                            return (ItemId: success ? (int?)id : null, LinkLevel: (int?)null);
-                        })
-                        .Where(x => x.ItemId.HasValue)
-                        .Select(x => (x.ItemId.Value, x.LinkLevel))
-                );
+            //            // Add role-based access items (LinkLevel = null)
+            //            parsedAccessList.AddRange(
+            //                accessItemsFromRole
+            //                    .Select(item =>
+            //                    {
+            //                        var success = int.TryParse(item, out var id);
+            //                        return (ItemId: success ? (int?)id : null, LinkLevel: (int?)null);
+            //                    })
+            //                    .Where(x => x.ItemId.HasValue)
+            //                    .Select(x => (x.ItemId.Value, x.LinkLevel))
+            //            );
 
-                // Add ctNewList items (which have LinkLevel)
-                parsedAccessList.AddRange(
-                    applicableFinal
-                        .Select(x =>
-                        {
-                            var success = int.TryParse(x.Item, out var id);
-                            return (ItemId: success ? (int?)id : null, LinkLevel: (int?)x.LinkLevel);
-                        })
-                        .Where(x => x.ItemId.HasValue)
-                        .Select(x => (ItemId: x.ItemId.Value, LinkLevel: x.LinkLevel))
-                );
-
-
-                // switch to LINQ-to-Objects for client-side filtering
-
-                // 7. Apply hierarchical access logic using parsedAccessList
-                var employeesWithAccess = empData
-    .Where(x =>
-        (x.d.IsSave == null || x.d.IsSave == 0) &&
-        (x.d.IsDelete == null || x.d.IsDelete == false) &&
-        parsedAccessList.Any(access =>
-            access.LinkLevel.HasValue && (
-                (access.LinkLevel == 1 && x.h.LevelOneId == access.ItemId) ||
-                (access.LinkLevel == 2 && x.h.LevelTwoId == access.ItemId) ||
-                (access.LinkLevel == 3 && x.h.LevelThreeId == access.ItemId) ||
-                (access.LinkLevel == 4 && x.h.LevelFourId == access.ItemId) ||
-                (access.LinkLevel == 5 && x.h.LevelFiveId == access.ItemId) ||
-                (access.LinkLevel == 6 && x.h.LevelSixId == access.ItemId) ||
-                (access.LinkLevel == 7 && x.h.LevelSevenId == access.ItemId) ||
-                (access.LinkLevel == 8 && x.h.LevelEightId == access.ItemId) ||
-                (access.LinkLevel == 9 && x.h.LevelNineId == access.ItemId) ||
-                (access.LinkLevel == 10 && x.h.LevelTenId == access.ItemId) ||
-                (access.LinkLevel == 11 && x.h.LevelElevenId == access.ItemId) ||
-                (access.LinkLevel == 12 && x.h.LevelTwelveId == access.ItemId)
-            )
-        ) &&
-        (
-            (empStatus == 1 && x.d.SeperationStatus == 0) ||
-            (empStatus == 2 && x.d.SeperationStatus > 0)
-        )
-    )
-    .Select(x => x.d.EmpId)
-    .Distinct()
-    .ToList();
+            //            // Add ctNewList items (which have LinkLevel)
+            //            parsedAccessList.AddRange(
+            //                applicableFinal
+            //                    .Select(x =>
+            //                    {
+            //                        var success = int.TryParse(x.Item, out var id);
+            //                        return (ItemId: success ? (int?)id : null, LinkLevel: (int?)x.LinkLevel);
+            //                    })
+            //                    .Where(x => x.ItemId.HasValue)
+            //                    .Select(x => (ItemId: x.ItemId.Value, LinkLevel: x.LinkLevel))
+            //            );
 
 
-                // 8. Direct reportees logic (EF-friendly)
-                var directReportees = (
-                    from rep in _context.HrEmpReportings
-                    join emp in _context.HrEmpMasters on rep.EmpId equals emp.EmpId
-                    where rep.ReprotToWhome == newEmpId &&
-                          (
-                              (empStatus == 1 && emp.SeperationStatus == 0) ||
-                              (empStatus == 2 && emp.SeperationStatus > 0)
-                          ) &&
-                          (emp.IsSave == null || emp.IsSave == 0) &&
-                          (emp.IsDelete == null || emp.IsDelete == false)
-                    select emp.EmpId
-                ).Distinct().ToList();
+            //            // switch to LINQ-to-Objects for client-side filtering
 
-                // 9. Union both employee groups
-                var cteEmployeeList = employeesWithAccess
-                    .Union(directReportees)
-                    .ToList();
+            //            // 7. Apply hierarchical access logic using parsedAccessList
+            //            var employeesWithAccess = empData
+            //.Where(x =>
+            //    (x.d.IsSave == null || x.d.IsSave == 0) &&
+            //    (x.d.IsDelete == null || x.d.IsDelete == false) &&
+            //    parsedAccessList.Any(access =>
+            //        access.LinkLevel.HasValue && (
+            //            (access.LinkLevel == 1 && x.h.LevelOneId == access.ItemId) ||
+            //            (access.LinkLevel == 2 && x.h.LevelTwoId == access.ItemId) ||
+            //            (access.LinkLevel == 3 && x.h.LevelThreeId == access.ItemId) ||
+            //            (access.LinkLevel == 4 && x.h.LevelFourId == access.ItemId) ||
+            //            (access.LinkLevel == 5 && x.h.LevelFiveId == access.ItemId) ||
+            //            (access.LinkLevel == 6 && x.h.LevelSixId == access.ItemId) ||
+            //            (access.LinkLevel == 7 && x.h.LevelSevenId == access.ItemId) ||
+            //            (access.LinkLevel == 8 && x.h.LevelEightId == access.ItemId) ||
+            //            (access.LinkLevel == 9 && x.h.LevelNineId == access.ItemId) ||
+            //            (access.LinkLevel == 10 && x.h.LevelTenId == access.ItemId) ||
+            //            (access.LinkLevel == 11 && x.h.LevelElevenId == access.ItemId) ||
+            //            (access.LinkLevel == 12 && x.h.LevelTwelveId == access.ItemId)
+            //        )
+            //    ) &&
+            //    (
+            //        (empStatus == 1 && x.d.SeperationStatus == 0) ||
+            //        (empStatus == 2 && x.d.SeperationStatus > 0)
+            //    )
+            //)
+            //.Select(x => x.d.EmpId)
+            //.Distinct()
+            //.ToList();
 
-                // 10. Continue with shift period logic
-                var (firstShifts, secondShifts) = GetShiftPeriods();
 
-                return Ok(); // Return your desired output here
-            }
+            //            // 8. Direct reportees logic (EF-friendly)
+            //            var directReportees = (
+            //                from rep in _context.HrEmpReportings
+            //                join emp in _context.HrEmpMasters on rep.EmpId equals emp.EmpId
+            //                where rep.ReprotToWhome == newEmpId &&
+            //                      (
+            //                          (empStatus == 1 && emp.SeperationStatus == 0) ||
+            //                          (empStatus == 2 && emp.SeperationStatus > 0)
+            //                      ) &&
+            //                      (emp.IsSave == null || emp.IsSave == 0) &&
+            //                      (emp.IsDelete == null || emp.IsDelete == false)
+            //                select emp.EmpId
+            //            ).Distinct().ToList();
+
+            //            // 9. Union both employee groups
+            //            var cteEmployeeList = employeesWithAccess
+            //                .Union(directReportees)
+            //                .ToList();
+
+            //            // 10. Continue with shift period logic
+            //            var (firstShifts, secondShifts) = GetShiftPeriods();
+
+            //            return Ok(); // Return your desired output here
+            //        }
+            return Ok();
 
         }
     }

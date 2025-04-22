@@ -10,13 +10,21 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AttendanceLogController(IAttendanceLogRepository attendanceLog,IAttendanceLogService attendanceLogService) : ControllerBase
+    public class AttendanceLogController : ControllerBase
     {
+        private readonly IAttendanceLogRepository _attendanceLog;
+        private readonly IAttendanceLogService _attendanceLogService;
 
-        [HttpPost]
+        public AttendanceLogController(IAttendanceLogRepository attendanceLog, IAttendanceLogService attendanceLogService)
+        {
+            _attendanceLog = attendanceLog;
+            _attendanceLogService = attendanceLogService;
+        }
+
+        [HttpGet("employee/names")]
         public async Task<IActionResult> GetAllEmployeeNames()
         {
-            var result = await attendanceLog.GetAllEmployeeNamesAsync();
+            var result = await _attendanceLog.GetAllEmployeeNamesAsync();
 
             if (result.IsSuccess)
             {
@@ -24,26 +32,27 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
             }
 
             return StatusCode(result.StatusCode, result.Error);
-
         }
-        [HttpPost]
+
+        [HttpPost("employee/details")]
         public async Task<IActionResult> GetEmployeeDetails([FromBody] AttendanceLogEmployeeDetailsRequestDto request)
         {
-            var result = await attendanceLog.GetEmployeeDetailsAsync(request);
+            var result = await _attendanceLog.GetEmployeeDetailsAsync(request);
 
             if (result != null)
             {
-                return Ok(result); // Return 200 OK with the data
+                return Ok(result);
             }
 
-            return NotFound("Employee details not found."); // Return 404 if not found
+            return NotFound("Employee details not found.");
         }
-        [HttpPost]
+
+        [HttpPost("attendance/logs")]
         public async Task<IActionResult> GetAttendanceLogs([FromBody] AttLogListRequestDto request)
         {
             try
             {
-                var logs = await attendanceLog.GetAttendanceLogsAsync(request);
+                var logs = await _attendanceLog.GetAttendanceLogsAsync(request);
 
                 if (logs == null || !logs.Any())
                 {
@@ -58,22 +67,23 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddOrUpdateAttManualLog(ManualAttendanceLogRequestDto manualLogDto)
+        [HttpPost("manual/log")]
+        public async Task<IActionResult> AddOrUpdateAttManualLog([FromBody] ManualAttendanceLogRequestDto manualLogDto)
         {
-            
-            if (manualLogDto == null) return BadRequest("Invalid request data.");
+            if (manualLogDto == null)
+                return BadRequest("Invalid request data.");
 
-            bool isAdded = await attendanceLogService.AddOrUpdateManualAttendanceLogAsync(manualLogDto);
-            if (!isAdded) return Conflict("Duplicate log entry detected.");
-            return isAdded ? Ok("Manual attendance log added successfully.") : StatusCode(500, "Failed to add log.");
+            bool isAdded = await _attendanceLogService.AddOrUpdateManualAttendanceLogAsync(manualLogDto);
+            if (!isAdded)
+                return Conflict("Duplicate log entry detected.");
+
+            return Ok("Manual attendance log added successfully.");
         }
-        
 
-        [HttpDelete("{id}")]
+        [HttpDelete("log/{id}")]
         public async Task<IActionResult> DeleteAttendanceLog(int id)
         {
-            var result = await attendanceLogService.DeleteAttendanceLogAsync(id);
+            var result = await _attendanceLogService.DeleteAttendanceLogAsync(id);
             if (!result)
             {
                 return NotFound(new { message = "Attendance log not found or could not be deleted." });
@@ -82,4 +92,6 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
             return Ok(new { message = "Attendance log deleted successfully." });
         }
     }
+
 }
+
