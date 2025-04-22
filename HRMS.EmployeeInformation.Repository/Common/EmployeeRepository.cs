@@ -15278,7 +15278,8 @@ new LevelListDto
                             )
                             && !d.IsDelete
                             && d.IsSave == 0
-                               && (d.Name + " || " + d.EmpCode + " || " + e.Branch).StartsWith(Prefix)
+                                //&& (d.Name + " || " + d.EmpCode + " || " + e.Branch).StartsWith(Prefix)
+                                && (d.Name + " || " + d.EmpCode + " || " + e.Branch).Contains(Prefix)
                         select new FillEmployeesBasedOnwWorkflowDto
                         {
                             Emp_Id = d.EmpId,
