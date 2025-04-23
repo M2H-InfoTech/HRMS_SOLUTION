@@ -1,5 +1,9 @@
-﻿using HRMS.EmployeeInformation.DTO.DTOs;
+﻿using EMPLOYEE_INFORMATION.Models.Entity;
+using HRMS.EmployeeInformation.DTO;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.Documents;
+using HRMS.EmployeeInformation.DTO.DTOs.PayScale;
+using HRMS.EmployeeInformation.Models;
 using Microsoft.AspNetCore.Http;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
@@ -27,7 +31,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<AssetDto>> AsseAsync();
         Task<List<AssetDetailsDto>> AssetDetailsAsync(int employeeId);
         Task<List<CurrencyDropdown_ProfessionalDto>> CurrencyDropdownProfessionalAsync();
-        Task<string?> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto);
+        Task<(int ErrorID, string ErrorMessage)> InsertOrUpdateProfessionalData(HrEmpProfdtlsApprlDto profdtlsApprlDto);
         Task<List<HrEmpProfdtlsApprlDto>> GetProfessionalByIdAsync(string updateType, int detailID, int empID);
         Task<List<PersonalDetailsDto>> GetPersonalDetailsByIdAsync(int employeeid);
         Task<List<TrainingDto>> TrainingAsync(int employeeid);
@@ -38,7 +42,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<List<Fill_ModulesWorkFlowDto>> FillModulesWorkFlowAsync(int entityID, int linkId);
         Task<List<Fill_WorkFlowMasterDto>> FillWorkFlowMasterAsync(int emp_Id, int roleId);
         Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmpAsync(int linkId, int linkLevel);
-        Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeid, string status);
+        //Task<List<SalarySeriesDto>> SalarySeriesAsync(int employeeid, string status);
         Task<List<GetRejoinReportDto>> GetRejoinReportAsync(int employeeId);
         Task<List<GetEmpReportingReportDto>> GetEmpReportingReportAsync(int employeeId);
         Task<List<GetEmpWorkFlowRoleDetailstDto>> GetEmpWorkFlowRoleDetailsAsync(int linkId, int linkLevel);
@@ -68,7 +72,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<string> InsertOrUpdateCertificates(CertificationSaveDto certificates);
         Task<string> UpdateEmployeeType(EmployeeTypeDto EmployeeType);
         Task<string> InsertOrUpdateSkill(SaveSkillSetDto skillset);
-        Task<string> InsertQualification(QualificationTableDto Qualification, string FirstEntityID, int EmpEntityIds);
+        Task<string> InsertQualification(QualificationTableDto Qualification, string updateType, string FirstEntityID, int EmpEntityIds);
         Task<object> FillCountry();
         Task<List<object>> FillEmployeeDropdown(string activeStatus, string employeeStatus, string probationStatus);
         Task<List<object>> AssetGroupDropdownEdit();
@@ -119,6 +123,118 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> GetEmployeePersonalDetails(int empId);
         Task<object> FillEmpProject(int empId);
         Task<string> DeleteEmployeeDetails(string empIds, int entryBy);
+        Task<object> GetProbationEffective(string linkId);
 
+        Task<int> UpdateEditEmployeeDetailsAsync(UpdateEmployeeRequestDto request);
+
+
+        Task<object> GetGeoDetails(string mode, int? geoSpacingType, int? geoCriteria);
+        Task<string?> EmployeeHraDtoAsync(EmployeeHraDto EmployeeHraDtos);
+
+        Task<object> GetEmployeeCertifications(int employeeid);
+        Task<string> DeleteCertificate(int certificateid);
+
+        Task<string?> AddEmpModuleDetailsAsync(BiometricDto BiometricDto);
+        List<ParamWorkFlowViewDto> GetWorkFlowData(int linkLevel, int valueId);
+        Task<UpdateResult> UpdateWorkFlowELAsync(ParamWorkFlow01s2sDto dto);
+        Task<List<Dictionary<string, object>>> SalarySeriesAsync1(int employeeId, string status);
+        Task<int> GetAgeLimitValue(int empId);
+        Task<ProfessionalDto> GetUpdateProfessional(int empId, string updateType, int Detailid);
+        Task<QualificationTableDto> GetUpdateQualification(int empId, string updateType, int Detailid);
+        Task<RewardAndRecognitionDto> GetEmployeeRewardsDetails(int empId);
+        Task<SkillSetDto> GetUpdateTechnical(int empId, string updateType, int Detailid);
+        Task<CommunicationTableDto> GetUpdateCommunication(int empId, string updateType, int Detailid);
+        Task<CommunicationTableDto> GetUpdateCommunicationExtra(int empId, string updateType, int Detailid);
+        Task<CommunicationTableDto> GetUpdateEmergencyExtra(int empId, int Detailid);
+        Task<ReferenceDto> GetUpdateReference(int Detailid);
+        Task<List<EmployeeLanguageSkill>> RetrieveEmployeeLanguage(int empId, int Detailid);
+        Task<object> EmployeeCreationFilterAsync(int? firstEntityId);
+        Task<List<ParamRoleViewDto>> EditRoleELAsync(int linkLevel, int valueId);
+        Task<UpdateResult> UpdateRoleEL(ParamRole01AND02Dto dto);
+        Task<CompanyParameterDto> EnableGeoCriteria();
+        Task<string> GetGeoCoordinateNameStatus(int EmployeeId);
+        Task<string> GetGeotaggingMasterStatus(int EmployeeId);
+        Task<List<EmployeeDocumentListDto>> DownloadIndividualEmpDocuments(int EmployeeId);
+        Task<List<DocumentDetailDto>> GetDocumentDetailsAsync(string status, int detailId);
+        Task<int> GetSlabEnabledAsync(int enteredBy);
+        Task<int> EnableNewQualif(int empId);
+
+
+        Task<int> GetDefaultAttendancePolicyAsync(int empId);
+        string GetControlValue(dynamic param, string controlType, bool isMultiple);
+        Task AssignHolidayAccessAsync(AssignEmployeeAccessRequestDto request);
+        Task AssignAttendancePolicyAccessAsync(AssignEmployeeAccessRequestDto request);
+        //helper
+
+        //
+        Task AssignShiftAccessAsync(AssignEmployeeAccessRequestDto request);
+        //helper for LEAVE POLICY ACCESS
+        Task<int?> GetDefaultLeavePolicyAsync(int employeeId);
+        //-- LEAVE POLICY ACCESS
+        Task AssignLeavePolicyIfNotExistsAsync(AssignEmployeeAccessRequestDto request);
+        //-- EMPLOYEE LEAVE ACCESS
+        Task AssignEmployeeLeaveAccessAsync(AssignEmployeeAccessRequestDto request);
+        // basic leave settings
+        Task AssignLeaveBasicSettingsAccessAsync(AssignEmployeeAccessRequestDto request);
+        //SaveWorkFlowMasterEMp   Mode : InsertWorkFlowEL  SP : WORKFLOW_ASSIGN
+        Task<int> SaveParamWorkflow(SaveParamWorkflowDto request);
+        //SaveWorkFlowEmp  Mode : InsertRoleEL
+        Task<int> InsertRoleAsync(RoleInsertDTO roleInsertDto);
+        //Mode : RoleRetrieveEL
+        Task<List<RoleDetailsDTO>> GetRoleDetailsAsync(int linkId, int linkLevel);
+
+        Task AssignEmployeeAccessAsync(AssignEmployeeAccessRequestDto request);
+
+
+        Task<List<object>> GetGeoSpacingCriteria();
+        Task<List<object>> GetGeoCoordinatesTabAsync(int geoSpacingType, int geoCriteria);
+
+        Task<string> SaveOrUpdateGeoLocationAsync(SaveGeoLocationRequestDTO dto);
+        Task<IEnumerable<AssetCategoryCodeDto>> GetFilteredAssetCategoriesAsync(int varAssetTypeID);
+
+        Task<IEnumerable<AssetCategoryCodeDto>> GetAssignedOrPendingAssetCategoriesAsync(int varAssetTypeID, string varAssignAssetStatus);
+        Task<IEnumerable<ReasonDto>> GetGeneralSubCategoryAsync(string code);
+
+        Task<string> SaveShiftMasterAccessAsync(ShiftMasterAccessInputDto dto);
+
+        Task<List<object>> GetLanguagesAsync();
+        Task<PayscaleComponentsResponseDto> PayscaleComponentsListManual(int batchId, int employeeIds, int type);
+
+        Task<List<HighLevelTableDto>> GetAccessLevel();
+        Task<int> AddEmployeeAsync(AddEmployeeDto inserEmployeeDto);
+        Task<List<object>> RetrieveShiftEmpCreationAsync();
+
+        Task<List<object>> FillWeekEndShiftEmpCreationAsync();
+
+        Task<List<object>> FillbatchslabsEmpAsync(int batchid);
+
+
+        Task<int> EnableBatchOptionEmpwiseAsync(int empid);
+
+        Task<List<object>> GetParameterShiftInEmpAsync();
+        Task<List<object>> RetrieveEmpparametersAsync(int empid);
+        Task<List<object>> ShowEntityLinkCheckBoxAsync(int roleid);
+        Task<List<object>> EnableDocEditAsync();
+        Task<List<GeoLocationDto>> GetAccessibleGeoLocationsAsync(int roleId, int empId); // Created By Shan Lal K
+
+        Task<int> CheckLiabilityPending(int empid);
+        Task<List<DocumentsDownoaldDto>> DownloadSingleDocumentsAsync(int DetailID, string status);
+        Task<List<DocumentsDownoaldDto>> DownloadEmpDocumentsAsync(int DetailID, string status);
+
+        Task<List<CoordinateDto>> FillcordinateAsync(int value);
+
+        Task<List<GeocoordinatesDto>> GetcordinatesAsync(int GeoMasterID, int GeoSpaceType);
+        Task<string> UpdateEmpStatusAsync(UpdateEmployeeStatusDto employeeModuleSetupDto);
+
+
+        Task<List<FillEmployeesBasedOnwWorkflowDto>> FillEmpRoleReporteesAsync(int SecondEntityId, int FirstEntityId, string Prefix);
+        Task<List<HrmsDocumentField00>> GetDependentFieldsAsync();
+        Task<PayscaleResultDto> GetLatestPayscaleAsync(int employeeId, int? type);
+        Task<int> GetlastEntityByRoleId(EntityRoleRequestDto customEntityList);
+        Task<int> SaveManualEmpPayscaleOldFormat(SaveManualEmpPayscaleOldFormatDto dto); //Created By Shan Lal K
+        Task<List<string>> DdlIsprobationAsync(int FirstEntityID, string LinkID);
+        Task<bool> DeleteEmpRewardAsync(int rewardId);
+
+        Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int? deviceId);
     }
 }

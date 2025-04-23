@@ -139,6 +139,6 @@
         public string? HomeCountryPhone { get; set; }
 
         public PersonalDetailsDto? PersonalDetailsDto { get; set; }
-        public int UserRole { get; set; }
+        public HrEmpReportingDto? HrEmpReportingDto { get; set; }
     }
 }
