@@ -1410,5 +1410,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
 
             return StatusCode(400, new { success = false, message = "Document deletion failed." });
         }
+        [HttpGet]
+        public async Task<IActionResult> GetLinkLevelByRoleId(int roleId)
+        {
+            var result = await _employeeInformation.GetLinkLevelByRoleId(roleId);
+            return Ok(result);
+        }
     }
 }

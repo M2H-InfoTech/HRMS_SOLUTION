@@ -236,5 +236,6 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<bool> DeleteEmpRewardAsync(int rewardId);
 
         Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int? deviceId);
+        Task<int?> GetLinkLevelByRoleId(int roleId);
     }
 }

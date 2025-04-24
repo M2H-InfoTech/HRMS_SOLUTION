@@ -1614,14 +1614,8 @@ namespace HRMS.EmployeeInformation.Repository.Common
             return await GetPaginatedEmployeeResultAsync(pageNumber, pageSize, ageFormat, systemStatus, currentStatusDesc);
         }
         //-----------------------------Start---------------------------------------------------------
-        private async Task<int?> GetLinkLevelByRoleId(int roleId)
+        public async Task<int?> GetLinkLevelByRoleId(int roleId)
         {
-            //int? linkLevel = await _context.SpecialAccessRights
-            //    .Where(s => s.RoleId == roleId)
-            //    .OrderBy(s => s.LinkLevel)
-            //    .Select(s => s.LinkLevel)
-            //    .FirstOrDefaultAsync();
-
             return await _context.EntityAccessRights02s
             .Where(e => e.RoleId == roleId)
             .OrderBy(e => e.LinkLevel)
@@ -4055,6 +4049,7 @@ new AllDocumentsDto
 
             return result;
         }
+
         public async Task<List<Fill_WorkFlowMasterDto>> FillWorkFlowMasterAsync(int emp_Id, int roleId)
         {
             var transid = await _context.TransactionMasters
@@ -4062,10 +4057,12 @@ new AllDocumentsDto
             .Select(t => t.TransactionId)
             .FirstOrDefaultAsync();
 
-            int? lnklev = await _context.SpecialAccessRights
-            .Where(s => s.RoleId == roleId)
-            .Select(s => s.LinkLevel)
-            .FirstOrDefaultAsync();
+            //int? lnklev = await _context.SpecialAccessRights
+            //.Where(s => s.RoleId == roleId)
+            //.Select(s => s.LinkLevel)
+            //.FirstOrDefaultAsync();
+
+            int? lnklev = await GetLinkLevelByRoleId(roleId);
 
             bool hasAccess = await _context.EntityAccessRights02s
             .AnyAsync(s => s.RoleId == roleId && s.LinkLevel == 15);
@@ -8994,10 +8991,11 @@ IsHRA = isHRA
             a.RoleId == loadCompanyDetailsRequestDto.FirstEntityId);
 
             // Fetch Link Level
-            int? linkSelect = await _context.SpecialAccessRights
-            .Where(s => s.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
-            .Select(s => s.LinkLevel)
-            .FirstOrDefaultAsync();
+            //int? linkSelect = await _context.SpecialAccessRights
+            //.Where(s => s.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
+            //.Select(s => s.LinkLevel)
+            //.FirstOrDefaultAsync();
+            int? linkSelect = await GetLinkLevelByRoleId(loadCompanyDetailsRequestDto.FirstEntityId);
 
             int? entityAccess = await _context.EntityAccessRights02s
             .Where(e => e.RoleId == loadCompanyDetailsRequestDto.FirstEntityId)
@@ -9326,10 +9324,11 @@ IsHRA = isHRA
             .Select(t => t.TransactionId)
             .FirstOrDefaultAsync();
 
-            int? lnklev = await _context.SpecialAccessRights
-            .Where(s => s.RoleId == firstEntityId)
-            .Select(s => s.LinkLevel)
-            .FirstOrDefaultAsync();
+            //int? lnklev = await _context.SpecialAccessRights
+            //.Where(s => s.RoleId == firstEntityId)
+            //.Select(s => s.LinkLevel)
+            //.FirstOrDefaultAsync();
+            int? lnklev = await GetLinkLevelByRoleId((int)firstEntityId);
 
             bool hasAccess = await _context.EntityAccessRights02s
             .AnyAsync(s => s.RoleId == firstEntityId && s.LinkLevel == 15);
@@ -14534,10 +14533,11 @@ new LevelListDto
             .Select(t => t.TransactionId)
             .FirstOrDefaultAsync();
 
-            int? lnklev = await _context.SpecialAccessRights
-            .Where(s => s.RoleId == roleId)
-            .Select(s => s.LinkLevel)
-            .FirstOrDefaultAsync();
+            //int? lnklev = await _context.SpecialAccessRights
+            //.Where(s => s.RoleId == roleId)
+            //.Select(s => s.LinkLevel)
+            //.FirstOrDefaultAsync();
+            int? lnklev = await GetLinkLevelByRoleId(roleId);
 
             if (lnklev == 0)
             {

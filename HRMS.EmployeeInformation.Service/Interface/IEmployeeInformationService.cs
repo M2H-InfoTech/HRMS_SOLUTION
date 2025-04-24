@@ -204,7 +204,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
 
         Task<bool> DeleteEmpRewardAsync(int rewardId);
         Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int? deviceId);
-
+        Task<int?> GetLinkLevelByRoleId(int roleId);
     }
 
 }

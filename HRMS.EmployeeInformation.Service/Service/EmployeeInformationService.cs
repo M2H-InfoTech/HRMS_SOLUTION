@@ -851,5 +851,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.InsertDocumentHistoryAndDeleteAsync(detailId, entryBy, deviceId);
         }
+
+        public async Task<int?> GetLinkLevelByRoleId(int roleId)
+        {
+            return await _employeeRepository.GetLinkLevelByRoleId(roleId);
+        }
     }
 }
