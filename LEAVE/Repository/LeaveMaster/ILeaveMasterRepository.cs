@@ -2,5 +2,7 @@
 {
     public interface ILeaveMasterRepository
     {
+        Task<int?> FillLeaveMasterAsync(int SecondEntityId, int EmpId);
+
     }
 }

@@ -2,5 +2,6 @@
 {
     public interface ILeaveMasterService
     {
+        Task<int?> FillLeaveMasterAsync(int SecondEntityId, int EmpId);
     }
 }

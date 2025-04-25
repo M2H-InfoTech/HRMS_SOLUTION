@@ -8,6 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HRMS.EmployeeInformation.Data\HRMS.EmployeeInformation.Data.csproj" />
+    <ProjectReference Include="..\HRMS.EmployeeInformation.DTO\HRMS.EmployeeInformation.DTO.csproj" />
   </ItemGroup>
 
 </Project>
