@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.MODELS;
+﻿namespace EMPLOYEE_INFORMATION.Models.Entity;
 
 public partial class HrmLeaveServicedbasedleave
 {

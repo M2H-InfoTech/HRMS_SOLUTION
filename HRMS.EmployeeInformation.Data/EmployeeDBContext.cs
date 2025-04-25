@@ -311,6 +311,17 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<ProcessPayRoll01> ProcessPayRoll01s { get; set; }
     public virtual DbSet<PayscaleCalculationValue> PayscaleCalculationValues { get; set; } // Created By Shan Lal K
 
+
+    public virtual DbSet<HrmLeaveBasicSetting> HrmLeaveBasicSettings { get; set; }
+
+    public virtual DbSet<HrmLeaveEntitlementReg> HrmLeaveEntitlementRegs { get; set; }
+    public virtual DbSet<HrmLeaveServicedbasedleave> HrmLeaveServicedbasedleaves { get; set; }
+    public virtual DbSet<HrmLeaveEntitlementHead> HrmLeaveEntitlementHeads { get; set; }
+    public virtual DbSet<HrmLeavePartialPayment> HrmLeavePartialPayments { get; set; }
+    public virtual DbSet<HrmLeaveBasicsettingsDetail> HrmLeaveBasicsettingsDetails { get; set; }
+    public virtual DbSet<HrmLeaveBasicsettingsDetailsHistory> HrmLeaveBasicsettingsDetailsHistories { get; set; }
+    //public virtual DbSet<EntityLevelOne> EntityLevelOnes { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -343,7 +354,15 @@ public partial class EmployeeDBContext : DbContext
             // ✅ Ensure `Value` is defined as an integer
             entity.Property(e => e.Value).HasColumnName("Value");
         });
+        //modelBuilder.Entity<EntityLevelOne>(entity =>
+        //{
+        //    entity
+        //        .HasNoKey()
+        //        .ToView("EntityLevelOne");
 
+        //    entity.Property(e => e.LevelOneCode).IsUnicode(false);
+        //    entity.Property(e => e.LevelOneDescription).IsUnicode(false);
+        //});
 
         modelBuilder.Entity<Payscale00>(entity =>
         {
@@ -4433,7 +4452,7 @@ public partial class EmployeeDBContext : DbContext
         });
         modelBuilder.Entity<HrmLeaveMaster>(entity =>
         {
-            entity.HasKey(e => e.LeaveMasterId);
+            entity.HasKey(e => e.LeaveMasterId).HasName("PK_HRM_LEAVE_MASTER");
 
             entity.ToTable("HRM_LEAVE_MASTER");
 
@@ -4565,76 +4584,188 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.PayScale01Id).HasColumnName("PayScale01ID");
         });
         //Shan Lal Created On 18/04/2025
-        modelBuilder.Entity<Payroll01> (entity =>
+        modelBuilder.Entity<Payroll01>(entity =>
         {
-            entity.HasKey (e => e.PayrollPeriodSubId).HasName ("PK__Payroll0__1E3CFDE5996492DA");
+            entity.HasKey(e => e.PayrollPeriodSubId).HasName("PK__Payroll0__1E3CFDE5996492DA");
 
-            entity.ToTable ("Payroll01");
+            entity.ToTable("Payroll01");
 
-            entity.Property (e => e.PayrollPeriodSubId).HasColumnName ("PayrollPeriodSubID");
-            entity.Property (e => e.DeadlineDate).HasColumnType ("datetime");
-            entity.Property (e => e.Description)
-                .HasMaxLength (100)
-                .IsUnicode (false);
-            entity.Property (e => e.EndDate).HasColumnType ("datetime");
-            entity.Property (e => e.EndMidDate).HasColumnType ("datetime");
-            entity.Property (e => e.IsClose).HasColumnName ("isClose");
-            entity.Property (e => e.PayrollPeriodId).HasColumnName ("PayrollPeriodID");
-            entity.Property (e => e.ShowFromDate).HasColumnType ("datetime");
-            entity.Property (e => e.ShowToDate).HasColumnType ("datetime");
-            entity.Property (e => e.StartDate).HasColumnType ("datetime");
-            entity.Property (e => e.StartMidDate).HasColumnType ("datetime");
+            entity.Property(e => e.PayrollPeriodSubId).HasColumnName("PayrollPeriodSubID");
+            entity.Property(e => e.DeadlineDate).HasColumnType("datetime");
+            entity.Property(e => e.Description)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.EndMidDate).HasColumnType("datetime");
+            entity.Property(e => e.IsClose).HasColumnName("isClose");
+            entity.Property(e => e.PayrollPeriodId).HasColumnName("PayrollPeriodID");
+            entity.Property(e => e.ShowFromDate).HasColumnType("datetime");
+            entity.Property(e => e.ShowToDate).HasColumnType("datetime");
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+            entity.Property(e => e.StartMidDate).HasColumnType("datetime");
         });
 
         //Shan Lal Created On 18/4/2025
-        modelBuilder.Entity<ProcessPayRoll01> (entity =>
+        modelBuilder.Entity<ProcessPayRoll01>(entity =>
         {
-            entity.HasKey (e => e.ProcessPayRoll01Id).HasName ("PK__ProcessP__7ABDF0B5B3683C8B");
+            entity.HasKey(e => e.ProcessPayRoll01Id).HasName("PK__ProcessP__7ABDF0B5B3683C8B");
 
-            entity.ToTable ("ProcessPayRoll01");
+            entity.ToTable("ProcessPayRoll01");
 
-            entity.Property (e => e.ProcessPayRoll01Id).HasColumnName ("ProcessPayRoll01ID");
-            entity.Property (e => e.BatchId).HasColumnName ("BatchID");
-            entity.Property (e => e.EmployeeId).HasColumnName ("EmployeeID");
-            entity.Property (e => e.Esibasic).HasColumnName ("ESIBasic");
-            entity.Property (e => e.FinalsettlementRemark).IsUnicode (false);
-            entity.Property (e => e.HolidayWeekendOtdays).HasColumnName ("HolidayWeekendOTDays");
-            entity.Property (e => e.Leavedays).HasColumnName ("leavedays");
-            entity.Property (e => e.Leavefromdate)
-                .HasColumnType ("datetime")
-                .HasColumnName ("leavefromdate");
-            entity.Property (e => e.Leavetodate)
-                .HasColumnType ("datetime")
-                .HasColumnName ("leavetodate");
-            entity.Property (e => e.Lop).HasColumnName ("LOP");
-            entity.Property (e => e.Lopamount).HasColumnName ("LOPAmount");
-            entity.Property (e => e.Othrs).HasColumnName ("OTHrs");
-            entity.Property (e => e.PayRollPeriodId).HasColumnName ("PayRollPeriodID");
-            entity.Property (e => e.PayRollPeriodSubId).HasColumnName ("PayRollPeriodSubID");
-            entity.Property (e => e.ProcessPayRollId).HasColumnName ("ProcessPayRollID");
-            entity.Property (e => e.RejectDate).HasColumnType ("datetime");
-            entity.Property (e => e.RejectReason)
-                .HasMaxLength (1000)
-                .IsUnicode (false);
-            entity.Property (e => e.RevisionDate).HasColumnType ("datetime");
-            entity.Property (e => e.Status)
-                .HasMaxLength (1)
-                .IsUnicode (false)
-                .IsFixedLength ( );
-            entity.Property (e => e.UpdatedcurrentlpAmount).HasColumnName ("updatedcurrentlpAmount");
-            entity.Property (e => e.Updatedcurrentlpcount).HasColumnName ("updatedcurrentlpcount");
-            entity.Property (e => e.UpdatedlopAmount).HasColumnName ("updatedlopAmount");
-            entity.Property (e => e.Updatedlopcount).HasColumnName ("updatedlopcount");
-            entity.Property (e => e.UpdatedprevlpAmount).HasColumnName ("updatedprevlpAmount");
-            entity.Property (e => e.Updatedprevlpcount).HasColumnName ("updatedprevlpcount");
+            entity.Property(e => e.ProcessPayRoll01Id).HasColumnName("ProcessPayRoll01ID");
+            entity.Property(e => e.BatchId).HasColumnName("BatchID");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.Esibasic).HasColumnName("ESIBasic");
+            entity.Property(e => e.FinalsettlementRemark).IsUnicode(false);
+            entity.Property(e => e.HolidayWeekendOtdays).HasColumnName("HolidayWeekendOTDays");
+            entity.Property(e => e.Leavedays).HasColumnName("leavedays");
+            entity.Property(e => e.Leavefromdate)
+                .HasColumnType("datetime")
+                .HasColumnName("leavefromdate");
+            entity.Property(e => e.Leavetodate)
+                .HasColumnType("datetime")
+                .HasColumnName("leavetodate");
+            entity.Property(e => e.Lop).HasColumnName("LOP");
+            entity.Property(e => e.Lopamount).HasColumnName("LOPAmount");
+            entity.Property(e => e.Othrs).HasColumnName("OTHrs");
+            entity.Property(e => e.PayRollPeriodId).HasColumnName("PayRollPeriodID");
+            entity.Property(e => e.PayRollPeriodSubId).HasColumnName("PayRollPeriodSubID");
+            entity.Property(e => e.ProcessPayRollId).HasColumnName("ProcessPayRollID");
+            entity.Property(e => e.RejectDate).HasColumnType("datetime");
+            entity.Property(e => e.RejectReason)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.RevisionDate).HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.UpdatedcurrentlpAmount).HasColumnName("updatedcurrentlpAmount");
+            entity.Property(e => e.Updatedcurrentlpcount).HasColumnName("updatedcurrentlpcount");
+            entity.Property(e => e.UpdatedlopAmount).HasColumnName("updatedlopAmount");
+            entity.Property(e => e.Updatedlopcount).HasColumnName("updatedlopcount");
+            entity.Property(e => e.UpdatedprevlpAmount).HasColumnName("updatedprevlpAmount");
+            entity.Property(e => e.Updatedprevlpcount).HasColumnName("updatedprevlpcount");
+        });
+
+        modelBuilder.Entity<HrmLeaveBasicSetting>(entity =>
+        {
+            entity.HasKey(e => e.SettingsId);
+
+            entity.ToTable("HRM_LEAVE_BASIC_SETTINGS");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.SettingsDescription)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.SettingsName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<HrmLeaveMasterandsettingsLink>(entity =>
+        {
+            entity.HasKey(e => e.IdMasterandSettingsLink);
+
+            entity.ToTable("HRM_LEAVE_MASTERANDSETTINGS_LINK");
+
+            entity.Property(e => e.IdMasterandSettingsLink).HasColumnName("Id_MasterandSettingsLink");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<HrmLeaveEntitlementReg>(entity =>
+        {
+            entity.HasKey(e => e.LeaveentitlementregId);
+
+            entity.ToTable("HRM_LEAVE_ENTITLEMENT_REG");
+
+            entity.Property(e => e.LeaveentitlementregId).HasColumnName("leaveentitlementregId");
+            entity.Property(e => e.Count).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveCondition).HasColumnName("leaveCondition");
+        });
+
+        modelBuilder.Entity<HrmLeaveServicedbasedleave>(entity =>
+        {
+            entity.HasKey(e => e.IdServiceLeave);
+
+            entity.ToTable("HRM_LEAVE_SERVICEDBASEDLEAVE");
+
+            entity.Property(e => e.Experiancebasedrollover).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveCount).HasColumnType("decimal(18, 2)");
+        });
+
+        modelBuilder.Entity<HrmLeaveEntitlementHead>(entity =>
+        {
+            entity.HasKey(e => e.LeaveEntitlementId);
+
+            entity.ToTable("HRM_LEAVE_ENTITLEMENT_HEAD");
+
+            entity.Property(e => e.AllemployeeLeaveCount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CarryforwardNj).HasColumnName("CarryforwardNJ");
+            entity.Property(e => e.Cfbasedon).HasColumnName("CFbasedon");
+            entity.Property(e => e.CfbasedonNj).HasColumnName("CFbasedonNJ");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ExtraLeaveCountProxy).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Laps).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveCount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeavefromProbationDt).HasColumnName("LeavefromProbationDT");
+            entity.Property(e => e.Rollovercount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.RollovercountNj)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("RollovercountNJ");
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<HrmLeavePartialPayment>(entity =>
+        {
+            entity.HasKey(e => e.PartialpaymentId);
+
+            entity.ToTable("HRM_LEAVE_PartialPayment");
+
+            entity.Property(e => e.Daysfrom).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Daysto).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PayPercentage).HasColumnType("decimal(18, 2)");
+        });
+
+        modelBuilder.Entity<HrmLeaveBasicsettingsDetail>(entity =>
+        {
+            entity.HasKey(e => e.SettingsDetailsId);
+
+            entity.ToTable("HRM_LEAVE_BASICSETTINGS_DETAILS");
+
+            entity.Property(e => e.CompCaryfrwrd).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.CsectionMaxLeave).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Lopcheck).HasColumnName("LOPCheck");
+            entity.Property(e => e.MinServiceDays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.RolloverCount).HasColumnType("decimal(18, 2)");
+        });
+
+        modelBuilder.Entity<HrmLeaveBasicsettingsDetailsHistory>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("HRM_LEAVE_BASICSETTINGS_DETAILS_HISTORY");
+
+            entity.Property(e => e.Ipaddress).HasColumnName("IPAddress");
+            entity.Property(e => e.SettingsHistoryId).ValueGeneratedOnAdd();
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
         });
 
         //Shan lal Created On 19/04/2025
-        modelBuilder.Entity<PayscaleCalculationValue> (entity =>
+        modelBuilder.Entity<PayscaleCalculationValue>(entity =>
         {
-            entity.HasKey (e => e.PayscaleManualId);
+            entity.HasKey(e => e.PayscaleManualId);
         });
-        OnModelCreatingPartial (modelBuilder);
+        OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

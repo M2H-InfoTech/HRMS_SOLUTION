@@ -23,8 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="OfficeKitHR.Leave.MODELS\" />
     <Folder Include="Resource\" />
-    <Folder Include="OfficeKitHR.Leave.REPOSITORY\" />
   </ItemGroup>
 
   <ItemGroup>

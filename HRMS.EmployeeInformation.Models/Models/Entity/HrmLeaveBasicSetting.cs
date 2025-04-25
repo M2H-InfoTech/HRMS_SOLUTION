@@ -1,7 +1,7 @@
-﻿namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.MODELS
-    {
+﻿namespace EMPLOYEE_INFORMATION.Models.Entity
+{
     public class HrmLeaveBasicSetting
-        {
+    {
         public int SettingsId { get; set; }
 
         public string? SettingsName { get; set; }
@@ -19,5 +19,5 @@
         public int? RejoinWarningShow { get; set; }
 
         public double? RejoinWarningShowDaysMax { get; set; }
-        }
     }
+}

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace HRMS.EmployeeInformation.Models.Models.Entity;
+﻿namespace EMPLOYEE_INFORMATION.Models.Entity;
 
 public partial class HrmLeaveMasterandsettingsLink
 {

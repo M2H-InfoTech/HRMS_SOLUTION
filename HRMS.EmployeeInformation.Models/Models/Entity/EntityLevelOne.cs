@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace OFFICEKITCORELEAVE.OfficeKitHR.Leave.MODELS;
+﻿namespace HRMS.EmployeeInformation.Models.Models.Entity;
 
 public partial class EntityLevelOne
 {

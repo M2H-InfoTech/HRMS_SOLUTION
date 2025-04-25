@@ -1,33 +1,33 @@
 using EMPLOYEE_INFORMATION.Data;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using OFFICEKITCORELEAVE.OfficeKit.Leave.Data;
 using OFFICEKITCORELEAVE.OfficeKit.Leave.Mapping;
-using OFFICEKITCORELEAVE.OfficeKitHR.Leave.Interface.LeaveInterfaces;
-using OFFICEKITCORELEAVE.OfficeKitHR.Leave.SERVICE.LeaveServices;
+using OFFICEKITCORELEAVE.OfficeKitHR.Leave.Repository;
+using OFFICEKITCORELEAVE.OfficeKitHR.Leave.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer ( );
-builder.Services.AddSwaggerGen ( );
-builder.Services.AddMemoryCache ( );
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddMemoryCache();
 builder.Services.AddAutoMapper(typeof(LeaveMappings));
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddScoped<ILeaveMasterService,LeaveMasterService>();
-builder.Services.AddRateLimiter (rateLimiteroptions =>
+builder.Services.AddScoped<ILeaveRepository, LeaveRepository>();
+builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddRateLimiter(rateLimiteroptions =>
 {
-    rateLimiteroptions.AddFixedWindowLimiter ("fixed", options =>
+    rateLimiteroptions.AddFixedWindowLimiter("fixed", options =>
     {
         options.QueueLimit = 0;// 
         options.PermitLimit = 1;//
-        options.Window = TimeSpan.FromSeconds (10);//
+        options.Window = TimeSpan.FromSeconds(10);//
 
     });
-    rateLimiteroptions.AddConcurrencyLimiter ("concurrency", conOption =>
+    rateLimiteroptions.AddConcurrencyLimiter("concurrency", conOption =>
     {
         conOption.QueueLimit = 0;
         conOption.PermitLimit = 5;
@@ -35,9 +35,7 @@ builder.Services.AddRateLimiter (rateLimiteroptions =>
     });
     rateLimiteroptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
-builder.Services.AddDbContext<LeaveDBContext> (options =>
-    options.UseSqlServer (builder.Configuration.GetConnectionString ("Default")));
-builder.Services.AddDbContextFactory<EmployeeDBContext> (options => options.UseSqlServer (builder.Configuration.GetConnectionString ("Default")));
+builder.Services.AddDbContextFactory<EmployeeDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 var app = builder.Build();
 
@@ -45,12 +43,12 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.UseSwagger ( );
-    app.UseSwaggerUI ( );
-    }
+    //app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-app.UseRateLimiter ( );
+app.UseRateLimiter();
 
 app.UseHttpsRedirection();
 
