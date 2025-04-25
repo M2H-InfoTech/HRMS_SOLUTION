@@ -21,7 +21,7 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
             _attendanceLogService = attendanceLogService;
         }
 
-        [HttpGet("employee/names")]
+        [HttpGet]
         public async Task<IActionResult> GetAllEmployeeNames()
         {
             var result = await _attendanceLog.GetAllEmployeeNamesAsync();
@@ -34,7 +34,7 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
             return StatusCode(result.StatusCode, result.Error);
         }
 
-        [HttpPost("employee/details")]
+        [HttpPost]
         public async Task<IActionResult> GetEmployeeDetails([FromBody] AttendanceLogEmployeeDetailsRequestDto request)
         {
             var result = await _attendanceLog.GetEmployeeDetailsAsync(request);
@@ -47,51 +47,78 @@ namespace OFFICEKIT_CORE_ATTENDANCE.Controllers
             return NotFound("Employee details not found.");
         }
 
-        [HttpPost("attendance/logs")]
-        public async Task<IActionResult> GetAttendanceLogs([FromBody] AttLogListRequestDto request)
+        //[HttpPost]
+        //public async Task<IActionResult> GetAttendanceLogs([FromBody] AttLogListRequestDto request)
+        //{
+        //    try
+        //    {
+        //        var logs = await _attendanceLog.GetAttendanceLogsAsync(request);
+
+        //        if (logs == null || !logs.Any())
+        //        {
+        //            return NotFound("No attendance logs found for the given employee.");
+        //        }
+
+        //        return Ok(logs);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, $"Internal Server Error: {ex.Message}");
+        //    }
+        //}
+
+        //[HttpPost]
+        //public async Task<IActionResult> AddOrUpdateManualAttendanceLog([FromBody] ManualAttendanceLogRequestDto manualLogDto)
+        //{
+        //    if (manualLogDto == null)
+        //        return BadRequest("Request body cannot be null.");
+
+        //    if (!ModelState.IsValid)
+        //        return BadRequest(ModelState);
+
+        //    try
+        //    {
+        //        var result = await _attendanceLogService.AddOrUpdateManualAttendanceLogAsync(manualLogDto);
+
+        //        if (!result)
+        //            return Conflict("A log entry with the same details already exists.");
+
+        //        return Ok(new { message = "Manual attendance log added or updated successfully." });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Log exception (optional)
+        //        return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
+        //    }
+        //}
+
+
+        //[HttpDelete("log/{id}")]
+        //public async Task<IActionResult> DeleteAttendanceLog(int id)
+        //{
+        //    var result = await _attendanceLogService.DeleteAttendanceLogAsync(id);
+        //    if (!result)
+        //    {
+        //        return NotFound(new { message = "Attendance log not found or could not be deleted." });
+        //    }
+
+        //    return Ok(new { message = "Attendance log deleted successfully." });
+        //}
+        [HttpGet("list")]
+        public ActionResult<List<string>> GetFruits()
         {
-            try
+            var fruits = new List<string>
             {
-                var logs = await _attendanceLog.GetAttendanceLogsAsync(request);
+                "Apple",
+                "Banana",
+                "Cherry",
+                "Mango",
+                "Pineapple"
+            };
 
-                if (logs == null || !logs.Any())
-                {
-                    return NotFound("No attendance logs found for the given employee.");
-                }
+            return Ok(fruits);
 
-                return Ok(logs);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal Server Error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("manual/log")]
-        public async Task<IActionResult> AddOrUpdateAttManualLog([FromBody] ManualAttendanceLogRequestDto manualLogDto)
-        {
-            if (manualLogDto == null)
-                return BadRequest("Invalid request data.");
-
-            bool isAdded = await _attendanceLogService.AddOrUpdateManualAttendanceLogAsync(manualLogDto);
-            if (!isAdded)
-                return Conflict("Duplicate log entry detected.");
-
-            return Ok("Manual attendance log added successfully.");
-        }
-
-        [HttpDelete("log/{id}")]
-        public async Task<IActionResult> DeleteAttendanceLog(int id)
-        {
-            var result = await _attendanceLogService.DeleteAttendanceLogAsync(id);
-            if (!result)
-            {
-                return NotFound(new { message = "Attendance log not found or could not be deleted." });
-            }
-
-            return Ok(new { message = "Attendance log deleted successfully." });
         }
     }
-
 }
 

@@ -12,10 +12,7 @@ namespace OFFICEKIT_CORE_ATTENDANCE.OFFICEKIT.Attendance.Repository
 {
     public class AttendanceLogRepository(AttendanceDbContext context) : IAttendanceLogRepository
     {
-        /// <summary>
-        /// Retrieves all employee names and their IDs.
-        /// </summary>
-        /// <returns>A list of employees containing EmpId and Name.</returns>
+       
         public async Task<Result<IEnumerable<EmployeeDetailsDto>>> GetAllEmployeeNamesAsync()
         {
             try

@@ -28,4 +28,11 @@
     <Folder Include="Resources\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\HRMS.EmployeeInformation.Data\HRMS.EmployeeInformation.Data.csproj" />
+    <ProjectReference Include="..\HRMS.EmployeeInformation.DTO\HRMS.EmployeeInformation.DTO.csproj" />
+    <ProjectReference Include="..\HRMS.EmployeeInformation.Models\HRMS.EmployeeInformation.Models.csproj" />
+    <ProjectReference Include="..\HRMS.EmployeeInformation.Repository\HRMS.EmployeeInformation.Repository.csproj" />
+  </ItemGroup>
+
 </Project>

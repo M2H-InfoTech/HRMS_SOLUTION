@@ -35,7 +35,7 @@
 	<ItemGroup>
 		<Folder Include="Resoucres\" />
 		<Folder Include="scaffoldData\" />
-		<Folder  Include="wwwroot"/>
+		<Folder Include="wwwroot" />
 	</ItemGroup>
 
 </Project>

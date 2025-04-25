@@ -6,7 +6,7 @@ using OFFICEKIT_CORE_ATTENDANCE.OFFICEKIT.Attendance.Repository;
 
 namespace OFFICEKIT_CORE_ATTENDANCE.OFFICEKIT.Attendance.Service
 {
-    public class AttendanceLogService(IAttendanceLogRepository attendanceLogRepository) : IAttendanceLogService
+    public class AttendanceLogService(IAttendanceLogRepository attendanceLogRepository,IShiftSettingsRepository shiftSettingsRepository) : IAttendanceLogService
     {
         
 
@@ -38,6 +38,11 @@ namespace OFFICEKIT_CORE_ATTENDANCE.OFFICEKIT.Attendance.Service
         public Task<bool> DeleteAttendanceLogAsync(int id)
         {
             return attendanceLogRepository.DeleteAttendanceLogAsync(id);
+        }
+
+        public async Task<PaginatedResultDto> GetShiftAccessDetails(int shiftAccessId, int entryBy, int roleId, int status, int empStatus, int pageNumber, int pageSize)
+        {
+            return await shiftSettingsRepository.GetShiftAccessDetails(shiftAccessId, entryBy, roleId, status, empStatus, pageNumber, pageSize);
         }
     }
 }
