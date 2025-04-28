@@ -3,10 +3,12 @@ using LEAVE.Repository.AssignLeave;
 using LEAVE.Repository.BasicSettings;
 using LEAVE.Repository.LeaveBalance;
 using LEAVE.Repository.LeaveMaster;
+using LEAVE.Repository.LeavePolicy;
 using LEAVE.Service.AssignLeave;
 using LEAVE.Service.BasicSettings;
 using LEAVE.Service.LeaveBalance;
 using LEAVE.Service.LeaveMaster;
+using LEAVE.Service.LeavePolicy;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,7 +33,8 @@ builder.Services.AddScoped<IBasicSettingsService, BasicSettingsService>();
 builder.Services.AddScoped<ILeaveBalanceRepository, LeaveBalanceRepository>();
 builder.Services.AddScoped<ILeaveBalanceService, LeaveBalanceService>();
 
-
+builder.Services.AddScoped<ILeavePolicyService, LeavePolicyService>();
+builder.Services.AddScoped<ILeavePolicyRepository, LeavePolicyRepository>();
 
 var app = builder.Build();
 
