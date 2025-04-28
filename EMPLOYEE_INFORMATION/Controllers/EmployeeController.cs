@@ -1416,5 +1416,35 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.GetLinkLevelByRoleId(roleId);
             return Ok(result);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetTransactionIdByTransactionType([FromQuery] string transactionType)
+        {
+            var employeeDetails = await _employeeInformation.GetTransactionIdByTransactionType(transactionType);
+            return Ok(employeeDetails);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetUserDetails(int userId)
+        {
+            var user = await _employeeInformation.GetUserDetails(userId);
+            return Ok(user);
+        }
+        [HttpGet]
+        public async Task<IActionResult> IsLinkLevelExists(int? roleId)
+        {
+            var employeeStatus = await _employeeInformation.IsLinkLevelExists(roleId);
+            return Ok(employeeStatus);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetEntityAccessRights(int roleId, int? linkSelect)
+        {
+            var employeeStatus = await _employeeInformation.GetEntityAccessRights(roleId, linkSelect);
+            return Ok(employeeStatus);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev)
+        {
+            var employeeStatus = await _employeeInformation.GetNewHighListAsync(empId, roleId, transid, lnklev);
+            return Ok(employeeStatus);
+        }
     }
 }

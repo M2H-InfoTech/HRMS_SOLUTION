@@ -224,12 +224,12 @@ namespace HRMS.EmployeeInformation.Repository.Common
         //    var exists = _context.EntityAccessRights02s.Where(s => s.RoleId == roleId && s.LinkLevel == _employeeSettings.LinkLevel).Select(x => x.LinkLevel).First();
         //    return exists > byte.MinValue;
         //}
-        private bool IsLinkLevelExists(int? roleId)
+        public async Task<bool> IsLinkLevelExists(int? roleId)
         {
-            var exists = _context.EntityAccessRights02s
+            var exists = await _context.EntityAccessRights02s
                 .Where(s => s.RoleId == roleId && s.LinkLevel == _employeeSettings.LinkLevel)
                 .Select(x => x.LinkLevel)
-                .FirstOrDefault(); // Returns default value if no data is found
+                .FirstOrDefaultAsync(); // Returns default value if no data is found
 
             return exists > byte.MinValue; // `exists` will be 0 if not found
         }
@@ -292,7 +292,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
                 if (infoFormat != null)
                 {
 
-                    var linkLevelExists = IsLinkLevelExists(employeeInformationParameters.roleId);
+                    var linkLevelExists = await IsLinkLevelExists(employeeInformationParameters.roleId);
 
                     var CurrentStatusDesc = (from ec in _context.EmployeeCurrentStatuses
                                              where ec.StatusDesc == _employeeSettings.OnNotice
@@ -1622,7 +1622,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
             .Select(e => e.LinkLevel)
             .FirstOrDefaultAsync();
         }
-        private async Task<List<LinkItemDto>> GetEntityAccessRights(int roleId, int? linkSelect)
+        public async Task<List<LinkItemDto>> GetEntityAccessRights(int roleId, int? linkSelect)
         {
             var entityAccessRights = await _context.EntityAccessRights02s
             .Where(s => s.RoleId == roleId && s.LinkLevel == linkSelect)
@@ -4080,66 +4080,67 @@ new AllDocumentsDto
             }
 
             // **Step 1: Compute `ctnew`**
-            var empEntity = await _context.HrEmpMasters
-            .Where(h => h.EmpId == emp_Id)
-            .Select(h => h.EmpEntity)
-            .FirstOrDefaultAsync();
+            //var empEntity = await _context.HrEmpMasters
+            //.Where(h => h.EmpId == emp_Id)
+            //.Select(h => h.EmpEntity)
+            //.FirstOrDefaultAsync();
 
-            var ctnew = SplitStrings_XML(empEntity, ',')
-            .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
-            .Where(c => !string.IsNullOrEmpty(c.Item))
-            .ToList();
+            //var ctnew = SplitStrings_XML(empEntity, ',')
+            //.Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
+            //.Where(c => !string.IsNullOrEmpty(c.Item))
+            //.ToList();
 
-            // **Step 2: Compute `applicableFinal`**
-            var applicableFinal = await _context.EntityAccessRights02s
-            .Where(s => s.RoleId == roleId)
-            .SelectMany(s => SplitStrings_XML(s.LinkId, default),
-            (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
-            .ToListAsync();
+            //// **Step 2: Compute `applicableFinal`**
+            //var applicableFinal = await _context.EntityAccessRights02s
+            //.Where(s => s.RoleId == roleId)
+            //.SelectMany(s => SplitStrings_XML(s.LinkId, default),
+            //(s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
+            //.ToListAsync();
 
-            if (lnklev > 0)
-            {
-                applicableFinal.AddRange(
-                ctnew.Where(c => c.LinkLevel >= lnklev)
-                     .Select(c => new LinkItemDto { Item = c.Item, LinkLevel = c.LinkLevel })
-                );
-            }
+            //if (lnklev > 0)
+            //{
+            //    applicableFinal.AddRange(
+            //    ctnew.Where(c => c.LinkLevel >= lnklev)
+            //         .Select(c => new LinkItemDto { Item = c.Item, LinkLevel = c.LinkLevel })
+            //    );
+            //}
 
-            // Convert `applicableFinal` to HashSet for fast lookup
-            //var applicableFinalSet = applicableFinal.Select(a => a.Item).ToHashSet();
-            var applicableFinalSetLong = applicableFinal.Select(a => (long?)Convert.ToInt64(a.Item)).ToHashSet();
+            //// Convert `applicableFinal` to HashSet for fast lookup
+            ////var applicableFinalSet = applicableFinal.Select(a => a.Item).ToHashSet();
+            //var applicableFinalSetLong = applicableFinal.Select(a => (long?)Convert.ToInt64(a.Item)).ToHashSet();
 
-            // **Step 3: Fetch `EntityApplicable00Final`**
-            var entityApplicable00Final = await _context.EntityApplicable00s
-            .Where(e => e.TransactionId == transid)
-            .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
-            .ToListAsync();
+            //// **Step 3: Fetch `EntityApplicable00Final`**
+            //var entityApplicable00Final = await _context.EntityApplicable00s
+            //.Where(e => e.TransactionId == transid)
+            //.Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
+            //.ToListAsync();
 
-            // **Step 4: Compute `applicableFinal02`**
-            var applicableFinal02 = applicableFinal.ToList(); // Already computed
+            //// **Step 4: Compute `applicableFinal02`**
+            //var applicableFinal02 = applicableFinal.ToList(); // Already computed
 
-            // **Step 5: Compute `applicableFinal02Emp`**
-            var applicableFinal02Emp = await (
-            from emp in _context.EmployeeDetails
-            join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
-            join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
-            join af2 in applicableFinal02 on hlv.LevelOneId.ToString() equals af2.Item into af2LevelOne
-            from af2L1 in af2LevelOne.DefaultIfEmpty()
-            where ea.TransactionId == transid
-            select ea.MasterId
-            ).Distinct().ToListAsync();
+            //// **Step 5: Compute `applicableFinal02Emp`**
+            //var applicableFinal02Emp = await (
+            //from emp in _context.EmployeeDetails
+            //join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
+            //join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
+            //join af2 in applicableFinal02 on hlv.LevelOneId.ToString() equals af2.Item into af2LevelOne
+            //from af2L1 in af2LevelOne.DefaultIfEmpty()
+            //where ea.TransactionId == transid
+            //select ea.MasterId
+            //).Distinct().ToListAsync();
 
-            // **Step 6: Compute `newhigh`**
-            var newhigh = entityApplicable00Final
-            .Where(e => applicableFinalSetLong.Contains(e.LinkId) || e.LinkLevel == 15)
-            .Select(e => e.MasterId)
-            .Union(applicableFinal02Emp)
-            .Distinct()
-            .ToList();
+            //// **Step 6: Compute `newhigh`**
+            //var newhigh = entityApplicable00Final
+            //.Where(e => applicableFinalSetLong.Contains(e.LinkId) || e.LinkLevel == 15)
+            //.Select(e => e.MasterId)
+            //.Union(applicableFinal02Emp)
+            //.Distinct()
+            //.ToList();
 
-            // **Step 7: Final WorkFlowDetails Query**
+            var newHighList = await GetNewHighListAsync(emp_Id, roleId, transid, lnklev);
+
             return await _context.WorkFlowDetails
-            .Where(wf => wf.IsActive == true && newhigh.Contains(wf.WorkFlowId))
+            .Where(wf => wf.IsActive == true && newHighList.Contains(wf.WorkFlowId))
             .Select(wf => new Fill_WorkFlowMasterDto
             {
                 WorkFlowId = wf.WorkFlowId,
@@ -4147,6 +4148,71 @@ new AllDocumentsDto
             })
             .ToListAsync();
         }
+        public async Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev)
+        {
+            // Step 1: Get the EmpEntity for the given empId
+            var empEntity = await _context.HrEmpMasters
+                .Where(h => h.EmpId == empId)
+                .Select(h => h.EmpEntity)
+                .FirstOrDefaultAsync();
+
+            // Step 2: Split EmpEntity into ctnew
+            var ctnew = SplitStrings_XML(empEntity)
+                .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
+                .ToList();
+
+            // Step 3: Get access rights for the role
+            var accessRights = await _context.EntityAccessRights02s
+                .Where(s => s.RoleId == roleId)
+                .ToListAsync();
+
+            // Step 4: Build applicableFinal list from access rights
+            var applicableFinal = accessRights
+                .Where(s => !string.IsNullOrEmpty(s.LinkId))
+                .SelectMany(s => SplitStrings_XML(s.LinkId),
+                            (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
+                .ToList();
+
+            // Step 5: Add ctnew items if LinkLevel >= lnklev
+            if (lnklev > 0)
+            {
+                applicableFinal.AddRange(ctnew.Where(c => c.LinkLevel >= lnklev));
+            }
+
+            // Step 6: Convert to HashSet of long values (to ensure uniqueness)
+            var applicableFinalSetLong = applicableFinal
+                .Select(a => (long?)Convert.ToInt64(a.Item))
+                .ToHashSet();
+
+            // Step 7: Get EntityApplicable00Final
+            var entityApplicable00Final = await _context.EntityApplicable00s
+                .Where(e => e.TransactionId == transid)
+                .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
+                .ToListAsync();
+
+            // Step 8: Move applicableFinal to client-side evaluation by calling AsEnumerable
+            var applicableFinalItems = applicableFinal.Select(a => a.Item).ToList(); // We use this list for comparison
+
+            // Step 9: Get applicableFinal02Emp (client-side evaluation)
+            var applicableFinal02Emp = await (
+                from emp in _context.EmployeeDetails
+                join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
+                join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
+                where ea.TransactionId == transid
+                let levelOneId = hlv.LevelOneId.ToString()  // Convert to string for client-side comparison
+                where applicableFinalItems.Contains(levelOneId)  // Perform the comparison in memory
+                select ea.MasterId
+            ).Distinct().ToListAsync();
+
+            // Step 10: Combine results
+            var newhigh = applicableFinalSetLong
+                .Union(applicableFinal02Emp.Select(emp => (long?)emp))  // Assuming MasterId is the result you want
+                .ToList();
+
+            return newhigh;
+        }
+
+
         public Task<List<BindWorkFlowMasterEmpDto>> BindWorkFlowMasterEmpAsync(int linkId, int linkLevel)
         {
 
@@ -9270,7 +9336,7 @@ IsHRA = isHRA
                     AppointmentLetter = l.AppointmentLetter ?? 0
                 }).FirstAsync();
         }
-        private async Task<int> GetTransactionIdByTransactionType(string transactionType)
+        public async Task<int> GetTransactionIdByTransactionType(string transactionType)
         {
             return await _context.TransactionMasters.Where(a => a.TransactionType == transactionType).Select(a => a.TransactionId).FirstOrDefaultAsync();
         }
@@ -16594,7 +16660,17 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
                 await _context.SaveChangesAsync();
             }
         }
-
+        public async Task<object> GetUserDetails(int userId)
+        {
+            return await _context.AdmUserMasters
+                        .Where(x => x.UserId == userId)
+                        .Select(x => new
+                        {
+                            x.UserId,
+                            DetailedName = x.DetailedName ?? "Admin"
+                        })
+                        .FirstOrDefaultAsync();
+        }
     }
 
 }

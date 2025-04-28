@@ -1,0 +1,68 @@
+{
+    "Routes": [
+        {
+            "DownstreamPathTemplate": "/api/Employee/GetTransactionIdByTransactionType",
+            "DownstreamScheme": "https",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "localhost",
+                    "Port": 7160
+                }
+            ],
+            "UpstreamPathTemplate": "/gateway/Employee/GetTransactionIdByTransactionType",
+            "UpstreamHttpMethod": [ "GET" ]
+        },
+        {
+            "DownstreamPathTemplate": "/api/Employee/GetLinkLevelByRoleId",
+            "DownstreamScheme": "https",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "localhost",
+                    "Port": 7160
+                }
+            ],
+            "UpstreamPathTemplate": "/gateway/Employee/GetLinkLevelByRoleId",
+            "UpstreamHttpMethod": [ "GET" ]
+        },
+        {
+            "DownstreamPathTemplate": "/api/Employee/GetUserDetails",
+            "DownstreamScheme": "https",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "localhost",
+                    "Port": 7160
+                }
+            ],
+            "UpstreamPathTemplate": "/gateway/Employee/GetUserDetails",
+            "UpstreamHttpMethod": [ "GET" ]
+        },
+        {
+            "DownstreamPathTemplate": "/api/Employee/IsLinkLevelExists",
+            "DownstreamScheme": "https",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "localhost",
+                    "Port": 7160
+                }
+            ],
+            "UpstreamPathTemplate": "/gateway/Employee/IsLinkLevelExists",
+            "UpstreamHttpMethod": [ "GET" ]
+        },
+        {
+            "DownstreamPathTemplate": "/api/Employee/GetEntityAccessRights",
+            "DownstreamScheme": "https",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "localhost",
+                    "Port": 7160
+                }
+            ],
+            "UpstreamPathTemplate": "/gateway/Employee/GetEntityAccessRights",
+            "UpstreamHttpMethod": [ "GET" ]
+        }
+
+    ],
+    "GlobalConfiguration": {
+        "BaseUrl": "http://localhost:5194"
+    }
+}

@@ -1,4 +1,5 @@
 ﻿
+using LEAVE.Dto;
 using LEAVE.Repository.LeaveMaster;
 
 namespace LEAVE.Service.LeaveMaster
@@ -10,9 +11,10 @@ namespace LEAVE.Service.LeaveMaster
         {
             _leaveMasterRepository = leaveMasterRepository;
         }
-        public Task<int?> FillLeaveMasterAsync(int SecondEntityId, int EmpId)
+
+        public Task<List<LeaveDetailModelDto>> FillLeaveMasterAsync(int secondEntityId, int empId)
         {
-            return _leaveMasterRepository.FillLeaveMasterAsync(SecondEntityId, EmpId);
+            return _leaveMasterRepository.FillLeaveMasterAsync(secondEntityId, empId);
         }
     }
 }

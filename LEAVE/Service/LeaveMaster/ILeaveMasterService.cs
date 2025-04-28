@@ -1,7 +1,9 @@
-﻿namespace LEAVE.Service.LeaveMaster
+﻿using LEAVE.Dto;
+
+namespace LEAVE.Service.LeaveMaster
 {
     public interface ILeaveMasterService
     {
-        Task<int?> FillLeaveMasterAsync(int SecondEntityId, int EmpId);
+        Task<List<LeaveDetailModelDto>> FillLeaveMasterAsync(int secondEntityId, int empId);
     }
 }

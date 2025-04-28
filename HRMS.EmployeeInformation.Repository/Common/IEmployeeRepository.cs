@@ -237,5 +237,11 @@ namespace HRMS.EmployeeInformation.Repository.Common
 
         Task<string> InsertDocumentHistoryAndDeleteAsync(int detailId, int entryBy, int? deviceId);
         Task<int?> GetLinkLevelByRoleId(int roleId);
+        Task<int> GetTransactionIdByTransactionType(string transactionType);
+        Task<bool> IsLinkLevelExists(int? roleId);
+        Task<object> GetUserDetails(int userId);
+        Task<List<LinkItemDto>> GetEntityAccessRights(int roleId, int? linkSelect);
+        //Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev);
+        Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev);
     }
 }

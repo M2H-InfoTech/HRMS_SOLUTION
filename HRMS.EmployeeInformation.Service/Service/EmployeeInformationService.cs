@@ -856,5 +856,28 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetLinkLevelByRoleId(roleId);
         }
+        public async Task<int> GetTransactionIdByTransactionType(string transactionType)
+        {
+            return await _employeeRepository.GetTransactionIdByTransactionType(transactionType);
+        }
+        public async Task<bool> IsLinkLevelExists(int? roleId)
+        {
+            return await _employeeRepository.IsLinkLevelExists(roleId);
+        }
+
+        public async Task<object> GetUserDetails(int userId)
+        {
+            return await _employeeRepository.GetUserDetails(userId);
+        }
+
+        public async Task<List<LinkItemDto>> GetEntityAccessRights(int roleId, int? linkSelect)
+        {
+            return await _employeeRepository.GetEntityAccessRights(roleId, linkSelect);
+        }
+
+        public async Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev)
+        {
+            return await _employeeRepository.GetNewHighListAsync(empId, roleId, transid, lnklev);
+        }
     }
 }
