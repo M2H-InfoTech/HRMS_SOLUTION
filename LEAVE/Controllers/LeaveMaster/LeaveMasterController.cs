@@ -1,7 +1,7 @@
 ﻿using LEAVE.Service.LeaveMaster;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LEAVE.Controllers
+namespace LEAVE.Controllers.LeaveMaster
 {
     [ApiController]
     [Route("api/[controller]/[action]")]

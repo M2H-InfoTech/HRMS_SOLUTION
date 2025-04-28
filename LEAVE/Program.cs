@@ -1,5 +1,11 @@
 using EMPLOYEE_INFORMATION.Data;
+using LEAVE.Repository.AssignLeave;
+using LEAVE.Repository.BasicSettings;
+using LEAVE.Repository.LeaveBalance;
 using LEAVE.Repository.LeaveMaster;
+using LEAVE.Service.AssignLeave;
+using LEAVE.Service.BasicSettings;
+using LEAVE.Service.LeaveBalance;
 using LEAVE.Service.LeaveMaster;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +21,18 @@ builder.Services.AddDbContextFactory<EmployeeDBContext>(options => options.UseSq
 builder.Services.AddScoped<ILeaveMasterRepository, LeaveMasterRepository>();
 builder.Services.AddScoped<ILeaveMasterService, LeaveMasterService>();
 builder.Services.AddHttpClient<ILeaveMasterRepository, LeaveMasterRepository>();
+
+builder.Services.AddScoped<IAssignLeaveRepository, AssignLeaveRepository>();
+builder.Services.AddScoped<IAssignLeaveService, AssignLeaveService>();
+
+builder.Services.AddScoped<IBasicSettingsRepository, BasicSettingsRepository>();
+builder.Services.AddScoped<IBasicSettingsService, BasicSettingsService>();
+
+builder.Services.AddScoped<ILeaveBalanceRepository, LeaveBalanceRepository>();
+builder.Services.AddScoped<ILeaveBalanceService, LeaveBalanceService>();
+
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
