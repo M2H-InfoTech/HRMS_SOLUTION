@@ -24,5 +24,14 @@ namespace LEAVE.Service.BasicSettings
         {
             return _basicSettingsRepository.saveleavelinktable(Masterid);
         }
+        public Task<int?> DeleteConfirm(int Basicsettingsid)
+        {
+            return _basicSettingsRepository.DeleteConfirm(Basicsettingsid);
+
+        }
+            public Task<int?> GetDeletebasics(int Basicsettingsid, int Masterid)
+        {
+            return _basicSettingsRepository.GetDeletebasics(Basicsettingsid,  Masterid);
+        }
     }
 }

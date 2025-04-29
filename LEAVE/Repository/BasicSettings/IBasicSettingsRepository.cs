@@ -7,5 +7,7 @@ namespace LEAVE.Repository.BasicSettings
         Task<List<FillvacationaccrualDto>> Fillvacationaccrual(int basicsettingsid);
         Task<List<GetEditbasicsettingsdto>> GetEditbasicsettings(int Masterid);
         Task<List<GetEditbasicsettingsdto>> saveleavelinktable(int Masterid);
+        Task<int?> DeleteConfirm(int Basicsettingsid);
+        Task<int?> GetDeletebasics(int Basicsettingsid, int Masterid);
     }
 }
