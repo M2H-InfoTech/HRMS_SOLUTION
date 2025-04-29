@@ -318,6 +318,12 @@ public partial class EmployeeDBContext : DbContext
 
     public virtual DbSet<LeavePolicyLeaveNotInclude> LeavePolicyLeaveNotIncludes { get; set; }
     public virtual DbSet<LeavePolicyInstanceLimit> LeavePolicyInstanceLimits { get; set; }
+    public virtual DbSet<HrmLeavePartialPayment> HrmLeavePartialPayments { get; set; }
+    public virtual DbSet<HrmLeaveEntitlementReg> HrmLeaveEntitlementRegs { get; set; }
+    public virtual DbSet<HrmLeaveEntitlementHead> HrmLeaveEntitlementHeads { get; set; }
+    public virtual DbSet<HrmLeaveExceptionalEligibility> HrmLeaveExceptionalEligibilities { get; set; }
+    public virtual DbSet<HrmLeaveBasicsettingsDetail> HrmLeaveBasicsettingsDetails { get; set; }
+    public virtual DbSet<HrmLeaveServicedbasedleave> HrmLeaveServicedbasedleaves { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4744,6 +4750,84 @@ public partial class EmployeeDBContext : DbContext
                 .HasColumnName("ProbationML");
             entity.Property(e => e.Roledeligationdays).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Salaryadvancedays).HasColumnType("decimal(18, 2)");
+        });
+
+
+        modelBuilder.Entity<HrmLeavePartialPayment>(entity =>
+        {
+            entity.HasKey(e => e.PartialpaymentId);
+
+            entity.ToTable("HRM_LEAVE_PartialPayment");
+
+            entity.Property(e => e.Daysfrom).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Daysto).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PayPercentage).HasColumnType("decimal(18, 2)");
+        });
+        modelBuilder.Entity<HrmLeaveEntitlementReg>(entity =>
+        {
+            entity.HasKey(e => e.LeaveentitlementregId);
+
+            entity.ToTable("HRM_LEAVE_ENTITLEMENT_REG");
+
+            entity.Property(e => e.LeaveentitlementregId).HasColumnName("leaveentitlementregId");
+            entity.Property(e => e.Count).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveCondition).HasColumnName("leaveCondition");
+        });
+        modelBuilder.Entity<HrmLeaveEntitlementHead>(entity =>
+        {
+            entity.HasKey(e => e.LeaveEntitlementId);
+
+            entity.ToTable("HRM_LEAVE_ENTITLEMENT_HEAD");
+
+            entity.Property(e => e.AllemployeeLeaveCount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CarryforwardNj).HasColumnName("CarryforwardNJ");
+            entity.Property(e => e.Cfbasedon).HasColumnName("CFbasedon");
+            entity.Property(e => e.CfbasedonNj).HasColumnName("CFbasedonNJ");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ExtraLeaveCountProxy).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Laps).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveCount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveCountBtw).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeavefromProbationDt).HasColumnName("LeavefromProbationDT");
+            entity.Property(e => e.Rollovercount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.RollovercountNj)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("RollovercountNJ");
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<HrmLeaveExceptionalEligibility>(entity =>
+        {
+            entity.HasKey(e => e.EligibilityRegId);
+
+            entity.ToTable("HRM_LEAVE_EXCEPTIONAL_ELIGIBILITY");
+
+            entity.Property(e => e.Count).HasColumnType("decimal(18, 2)");
+        });
+        modelBuilder.Entity<HrmLeaveBasicsettingsDetail>(entity =>
+        {
+            entity.HasKey(e => e.SettingsDetailsId);
+
+            entity.ToTable("HRM_LEAVE_BASICSETTINGS_DETAILS");
+
+            entity.Property(e => e.CompCaryfrwrd).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.CsectionMaxLeave).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Lopcheck).HasColumnName("LOPCheck");
+            entity.Property(e => e.MinServiceDays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.RolloverCount).HasColumnType("decimal(18, 2)");
+        });
+        modelBuilder.Entity<HrmLeaveServicedbasedleave>(entity =>
+        {
+            entity.HasKey(e => e.IdServiceLeave);
+
+            entity.ToTable("HRM_LEAVE_SERVICEDBASEDLEAVE");
+
+            entity.Property(e => e.Experiancebasedrollover).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveCount).HasColumnType("decimal(18, 2)");
         });
         OnModelCreatingPartial(modelBuilder);
     }
