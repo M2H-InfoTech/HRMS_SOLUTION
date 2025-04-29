@@ -16,5 +16,18 @@ namespace LEAVE.Service.LeaveMaster
         {
             return _leaveMasterRepository.FillLeaveMasterAsync(secondEntityId, empId);
         }
+        public Task<List<object>> FillvaluetypesAsync(string type)
+        {
+            return _leaveMasterRepository.FillvaluetypesAsync(type);
+        }
+
+        public async Task<int?> CreateMasterAsync(CreateMasterDto createMasterDto)
+        {
+            return await _leaveMasterRepository.CreateMasterAsync(createMasterDto);
+        }
+        public Task<List<object>> FillbasicsettingsAsync(int Masterid, int SecondEntityId, int EmpId)
+        {
+            return _leaveMasterRepository.FillbasicsettingsAsync(Masterid, SecondEntityId, EmpId);
+        }
     }
 }
