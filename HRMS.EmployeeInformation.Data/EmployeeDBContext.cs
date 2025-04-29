@@ -310,6 +310,9 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<Payroll01> Payroll01s { get; set; }
     public virtual DbSet<ProcessPayRoll01> ProcessPayRoll01s { get; set; }
     public virtual DbSet<PayscaleCalculationValue> PayscaleCalculationValues { get; set; } // Created By Shan Lal K
+    public virtual DbSet<HrmLeaveBasicSetting> HrmLeaveBasicSettings { get; set; }
+    public virtual DbSet<LeavePolicyLeaveNotInclude> LeavePolicyLeaveNotIncludes { get; set; }
+    public virtual DbSet<LeavePolicyInstanceLimit> LeavePolicyInstanceLimits { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -4633,6 +4636,68 @@ public partial class EmployeeDBContext : DbContext
         modelBuilder.Entity<PayscaleCalculationValue> (entity =>
         {
             entity.HasKey (e => e.PayscaleManualId);
+        });
+        modelBuilder.Entity<HrmLeaveBasicSetting>(entity =>
+        {
+            entity.HasKey(e => e.SettingsId);
+
+            entity.ToTable("HRM_LEAVE_BASIC_SETTINGS");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.SettingsDescription)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.SettingsName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<LeavePolicyLeaveNotInclude>(entity =>
+        {
+            entity.HasKey(e => e.LeaveNotIncludeId).HasName("PK__LeavePol__4042A2437E19A91C");
+
+            entity.ToTable("LeavePolicyLeaveNotInclude");
+
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.LeaveId).HasColumnName("LeaveID");
+            entity.Property(e => e.LeavePolicyInstanceLimitId).HasColumnName("LeavePolicyInstanceLimitID");
+            entity.Property(e => e.LeavePolicyMasterId).HasColumnName("LeavePolicyMasterID");
+        });
+
+
+        modelBuilder.Entity<LeavePolicyInstanceLimit>(entity =>
+        {
+            entity.HasKey(e => e.LeavePolicyInstanceLimitId).HasName("PK__LeavePol__1F26EFB4C1D95DF1");
+
+            entity.ToTable("LeavePolicyInstanceLimit");
+
+            entity.Property(e => e.LeavePolicyInstanceLimitId).HasColumnName("LeavePolicyInstanceLimitID");
+            entity.Property(e => e.Applyafterleaveids).IsUnicode(false);
+            entity.Property(e => e.Attachmentdays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Daysbtwndifferentleave).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Daysbtwnleaves).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Daysleaveclubbing).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.InstId).HasColumnName("Inst_Id");
+            entity.Property(e => e.LeaveId).HasColumnName("LeaveID");
+            entity.Property(e => e.LeavePolicyMasterId).HasColumnName("LeavePolicyMasterID");
+            entity.Property(e => e.NewjoinMl)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("NewjoinML");
+            entity.Property(e => e.NoOfDayIncludeHoliday).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.NoOfDayIncludeWeekEnd).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.OtherMl)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("OtherML");
+            entity.Property(e => e.PredatedapplicationAttendance).HasColumnName("predatedapplicationAttendance");
+            entity.Property(e => e.PredatedapplicationAttendanceDays).HasColumnName("predatedapplicationAttendanceDays");
+            entity.Property(e => e.Predateddayslimit).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ProbationMl)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("ProbationML");
+            entity.Property(e => e.Roledeligationdays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Salaryadvancedays).HasColumnType("decimal(18, 2)");
         });
         OnModelCreatingPartial (modelBuilder);
     }
