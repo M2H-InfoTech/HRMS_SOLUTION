@@ -315,6 +315,9 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<Leavescheme02> Leavescheme02s { get; set; }
 
     public virtual DbSet<HrmLeaveBasicSetting> HrmLeaveBasicSettings { get; set; }
+
+    public virtual DbSet<LeavePolicyLeaveNotInclude> LeavePolicyLeaveNotIncludes { get; set; }
+    public virtual DbSet<LeavePolicyInstanceLimit> LeavePolicyInstanceLimits { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4569,74 +4572,74 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.PayScale01Id).HasColumnName("PayScale01ID");
         });
         //Shan Lal Created On 18/04/2025
-        modelBuilder.Entity<Payroll01> (entity =>
+        modelBuilder.Entity<Payroll01>(entity =>
         {
-            entity.HasKey (e => e.PayrollPeriodSubId).HasName ("PK__Payroll0__1E3CFDE5996492DA");
+            entity.HasKey(e => e.PayrollPeriodSubId).HasName("PK__Payroll0__1E3CFDE5996492DA");
 
-            entity.ToTable ("Payroll01");
+            entity.ToTable("Payroll01");
 
-            entity.Property (e => e.PayrollPeriodSubId).HasColumnName ("PayrollPeriodSubID");
-            entity.Property (e => e.DeadlineDate).HasColumnType ("datetime");
-            entity.Property (e => e.Description)
-                .HasMaxLength (100)
-                .IsUnicode (false);
-            entity.Property (e => e.EndDate).HasColumnType ("datetime");
-            entity.Property (e => e.EndMidDate).HasColumnType ("datetime");
-            entity.Property (e => e.IsClose).HasColumnName ("isClose");
-            entity.Property (e => e.PayrollPeriodId).HasColumnName ("PayrollPeriodID");
-            entity.Property (e => e.ShowFromDate).HasColumnType ("datetime");
-            entity.Property (e => e.ShowToDate).HasColumnType ("datetime");
-            entity.Property (e => e.StartDate).HasColumnType ("datetime");
-            entity.Property (e => e.StartMidDate).HasColumnType ("datetime");
+            entity.Property(e => e.PayrollPeriodSubId).HasColumnName("PayrollPeriodSubID");
+            entity.Property(e => e.DeadlineDate).HasColumnType("datetime");
+            entity.Property(e => e.Description)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.EndMidDate).HasColumnType("datetime");
+            entity.Property(e => e.IsClose).HasColumnName("isClose");
+            entity.Property(e => e.PayrollPeriodId).HasColumnName("PayrollPeriodID");
+            entity.Property(e => e.ShowFromDate).HasColumnType("datetime");
+            entity.Property(e => e.ShowToDate).HasColumnType("datetime");
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+            entity.Property(e => e.StartMidDate).HasColumnType("datetime");
         });
 
         //Shan Lal Created On 18/4/2025
-        modelBuilder.Entity<ProcessPayRoll01> (entity =>
+        modelBuilder.Entity<ProcessPayRoll01>(entity =>
         {
-            entity.HasKey (e => e.ProcessPayRoll01Id).HasName ("PK__ProcessP__7ABDF0B5B3683C8B");
+            entity.HasKey(e => e.ProcessPayRoll01Id).HasName("PK__ProcessP__7ABDF0B5B3683C8B");
 
-            entity.ToTable ("ProcessPayRoll01");
+            entity.ToTable("ProcessPayRoll01");
 
-            entity.Property (e => e.ProcessPayRoll01Id).HasColumnName ("ProcessPayRoll01ID");
-            entity.Property (e => e.BatchId).HasColumnName ("BatchID");
-            entity.Property (e => e.EmployeeId).HasColumnName ("EmployeeID");
-            entity.Property (e => e.Esibasic).HasColumnName ("ESIBasic");
-            entity.Property (e => e.FinalsettlementRemark).IsUnicode (false);
-            entity.Property (e => e.HolidayWeekendOtdays).HasColumnName ("HolidayWeekendOTDays");
-            entity.Property (e => e.Leavedays).HasColumnName ("leavedays");
-            entity.Property (e => e.Leavefromdate)
-                .HasColumnType ("datetime")
-                .HasColumnName ("leavefromdate");
-            entity.Property (e => e.Leavetodate)
-                .HasColumnType ("datetime")
-                .HasColumnName ("leavetodate");
-            entity.Property (e => e.Lop).HasColumnName ("LOP");
-            entity.Property (e => e.Lopamount).HasColumnName ("LOPAmount");
-            entity.Property (e => e.Othrs).HasColumnName ("OTHrs");
-            entity.Property (e => e.PayRollPeriodId).HasColumnName ("PayRollPeriodID");
-            entity.Property (e => e.PayRollPeriodSubId).HasColumnName ("PayRollPeriodSubID");
-            entity.Property (e => e.ProcessPayRollId).HasColumnName ("ProcessPayRollID");
-            entity.Property (e => e.RejectDate).HasColumnType ("datetime");
-            entity.Property (e => e.RejectReason)
-                .HasMaxLength (1000)
-                .IsUnicode (false);
-            entity.Property (e => e.RevisionDate).HasColumnType ("datetime");
-            entity.Property (e => e.Status)
-                .HasMaxLength (1)
-                .IsUnicode (false)
-                .IsFixedLength ( );
-            entity.Property (e => e.UpdatedcurrentlpAmount).HasColumnName ("updatedcurrentlpAmount");
-            entity.Property (e => e.Updatedcurrentlpcount).HasColumnName ("updatedcurrentlpcount");
-            entity.Property (e => e.UpdatedlopAmount).HasColumnName ("updatedlopAmount");
-            entity.Property (e => e.Updatedlopcount).HasColumnName ("updatedlopcount");
-            entity.Property (e => e.UpdatedprevlpAmount).HasColumnName ("updatedprevlpAmount");
-            entity.Property (e => e.Updatedprevlpcount).HasColumnName ("updatedprevlpcount");
+            entity.Property(e => e.ProcessPayRoll01Id).HasColumnName("ProcessPayRoll01ID");
+            entity.Property(e => e.BatchId).HasColumnName("BatchID");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.Esibasic).HasColumnName("ESIBasic");
+            entity.Property(e => e.FinalsettlementRemark).IsUnicode(false);
+            entity.Property(e => e.HolidayWeekendOtdays).HasColumnName("HolidayWeekendOTDays");
+            entity.Property(e => e.Leavedays).HasColumnName("leavedays");
+            entity.Property(e => e.Leavefromdate)
+                .HasColumnType("datetime")
+                .HasColumnName("leavefromdate");
+            entity.Property(e => e.Leavetodate)
+                .HasColumnType("datetime")
+                .HasColumnName("leavetodate");
+            entity.Property(e => e.Lop).HasColumnName("LOP");
+            entity.Property(e => e.Lopamount).HasColumnName("LOPAmount");
+            entity.Property(e => e.Othrs).HasColumnName("OTHrs");
+            entity.Property(e => e.PayRollPeriodId).HasColumnName("PayRollPeriodID");
+            entity.Property(e => e.PayRollPeriodSubId).HasColumnName("PayRollPeriodSubID");
+            entity.Property(e => e.ProcessPayRollId).HasColumnName("ProcessPayRollID");
+            entity.Property(e => e.RejectDate).HasColumnType("datetime");
+            entity.Property(e => e.RejectReason)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.RevisionDate).HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.UpdatedcurrentlpAmount).HasColumnName("updatedcurrentlpAmount");
+            entity.Property(e => e.Updatedcurrentlpcount).HasColumnName("updatedcurrentlpcount");
+            entity.Property(e => e.UpdatedlopAmount).HasColumnName("updatedlopAmount");
+            entity.Property(e => e.Updatedlopcount).HasColumnName("updatedlopcount");
+            entity.Property(e => e.UpdatedprevlpAmount).HasColumnName("updatedprevlpAmount");
+            entity.Property(e => e.Updatedprevlpcount).HasColumnName("updatedprevlpcount");
         });
 
         //Shan lal Created On 19/04/2025
-        modelBuilder.Entity<PayscaleCalculationValue> (entity =>
+        modelBuilder.Entity<PayscaleCalculationValue>(entity =>
         {
-            entity.HasKey (e => e.PayscaleManualId);
+            entity.HasKey(e => e.PayscaleManualId);
         });
 
         modelBuilder.Entity<LeaveScheme00>(entity =>
@@ -4680,8 +4683,69 @@ public partial class EmployeeDBContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
         });
+        modelBuilder.Entity<HrmLeaveBasicSetting>(entity =>
+        {
+            entity.HasKey(e => e.SettingsId);
 
-        OnModelCreatingPartial (modelBuilder);
+            entity.ToTable("HRM_LEAVE_BASIC_SETTINGS");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.SettingsDescription)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.SettingsName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<LeavePolicyLeaveNotInclude>(entity =>
+        {
+            entity.HasKey(e => e.LeaveNotIncludeId).HasName("PK__LeavePol__4042A2437E19A91C");
+
+            entity.ToTable("LeavePolicyLeaveNotInclude");
+
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.LeaveId).HasColumnName("LeaveID");
+            entity.Property(e => e.LeavePolicyInstanceLimitId).HasColumnName("LeavePolicyInstanceLimitID");
+            entity.Property(e => e.LeavePolicyMasterId).HasColumnName("LeavePolicyMasterID");
+        });
+
+
+        modelBuilder.Entity<LeavePolicyInstanceLimit>(entity =>
+        {
+            entity.HasKey(e => e.LeavePolicyInstanceLimitId).HasName("PK__LeavePol__1F26EFB4C1D95DF1");
+
+            entity.ToTable("LeavePolicyInstanceLimit");
+
+            entity.Property(e => e.LeavePolicyInstanceLimitId).HasColumnName("LeavePolicyInstanceLimitID");
+            entity.Property(e => e.Applyafterleaveids).IsUnicode(false);
+            entity.Property(e => e.Attachmentdays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Daysbtwndifferentleave).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Daysbtwnleaves).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Daysleaveclubbing).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.InstId).HasColumnName("Inst_Id");
+            entity.Property(e => e.LeaveId).HasColumnName("LeaveID");
+            entity.Property(e => e.LeavePolicyMasterId).HasColumnName("LeavePolicyMasterID");
+            entity.Property(e => e.NewjoinMl)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("NewjoinML");
+            entity.Property(e => e.NoOfDayIncludeHoliday).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.NoOfDayIncludeWeekEnd).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.OtherMl)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("OtherML");
+            entity.Property(e => e.PredatedapplicationAttendance).HasColumnName("predatedapplicationAttendance");
+            entity.Property(e => e.PredatedapplicationAttendanceDays).HasColumnName("predatedapplicationAttendanceDays");
+            entity.Property(e => e.Predateddayslimit).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ProbationMl)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("ProbationML");
+            entity.Property(e => e.Roledeligationdays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Salaryadvancedays).HasColumnType("decimal(18, 2)");
+        });
+        OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
