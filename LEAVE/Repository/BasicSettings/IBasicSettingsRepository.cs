@@ -1,6 +1,11 @@
-﻿namespace LEAVE.Repository.BasicSettings
+﻿using HRMS.EmployeeInformation.DTO.DTOs;
+
+namespace LEAVE.Repository.BasicSettings
 {
     public interface IBasicSettingsRepository
     {
+        Task<List<FillvacationaccrualDto>> Fillvacationaccrual(int basicsettingsid);
+        Task<List<GetEditbasicsettingsdto>> GetEditbasicsettings(int Masterid);
+        Task<List<GetEditbasicsettingsdto>> saveleavelinktable(int Masterid);
     }
 }
