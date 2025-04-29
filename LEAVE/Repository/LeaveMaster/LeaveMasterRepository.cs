@@ -11,6 +11,7 @@ namespace LEAVE.Repository.LeaveMaster
     {
         private readonly EmployeeDBContext _context;
         private readonly HttpClient _httpClient;
+        private readonly EmployeeSettings _employeeSettings;
         public LeaveMasterRepository(EmployeeDBContext dbContext, HttpClient httpClient)
         {
             _context = dbContext;
@@ -23,7 +24,10 @@ namespace LEAVE.Repository.LeaveMaster
                 : list.Split(delimiter)
                       .Select(item => item.Trim())
                       .Where(item => !string.IsNullOrEmpty(item));
-
+        private static string FormatDate(DateTime? date, string format)
+        {
+            return date.HasValue ? date.Value.ToString(format) : string.Empty; // Or any other default value
+        }
         private async Task<List<LeaveDetailModelDto>> FillLeaveMasterAsyncNoAccessMode(int empId, int roleId, int? lnklev, int transid)
         {
 
@@ -311,13 +315,19 @@ namespace LEAVE.Repository.LeaveMaster
                                             SettingsId = b.SettingsId,
                                             SettingsName = b.SettingsName,
                                             SettingsDescription = b.SettingsDescription,
-                                            CreatedDate = b.CreatedDate.HasValue ? b.CreatedDate.Value.ToString("dd/MM/yyyy") : null
+                                            CreatedDate = b.CreatedDate.HasValue ? FormatDate(b.CreatedDate, _employeeSettings.DateFormat): null
                                         })
                                         .Distinct()
                                         .ToListAsync<object>();
 
                     return result;
                 }
+
+
+
+           
+
+
 
                 var empEntity = await _context.HrEmpMasters
                     .Where(h => h.EmpId == EmpId)
@@ -382,7 +392,7 @@ namespace LEAVE.Repository.LeaveMaster
                                              SettingsId = b.SettingsId,
                                              SettingsName = b.SettingsName,
                                              SettingsDescription = b.SettingsDescription,
-                                             CreatedDate = b.CreatedDate.HasValue ? b.CreatedDate.Value.ToString("dd/MM/yyyy") : null
+                                     CreatedDate = b.CreatedDate.HasValue ? FormatDate(b.CreatedDate, _employeeSettings.DateFormat): null
                                          })
                                          .Distinct()
                                          .ToListAsync<object>();
