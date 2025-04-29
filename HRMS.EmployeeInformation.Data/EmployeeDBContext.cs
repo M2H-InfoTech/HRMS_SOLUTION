@@ -311,6 +311,10 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<ProcessPayRoll01> ProcessPayRoll01s { get; set; }
     public virtual DbSet<PayscaleCalculationValue> PayscaleCalculationValues { get; set; } // Created By Shan Lal K
 
+    public virtual DbSet<LeaveScheme00> LeaveScheme00s { get; set; }
+    public virtual DbSet<Leavescheme02> Leavescheme02s { get; set; }
+
+    public virtual DbSet<HrmLeaveBasicSetting> HrmLeaveBasicSettings { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4634,6 +4638,49 @@ public partial class EmployeeDBContext : DbContext
         {
             entity.HasKey (e => e.PayscaleManualId);
         });
+
+        modelBuilder.Entity<LeaveScheme00>(entity =>
+        {
+            entity.HasKey(e => e.LeaveSchemeId);
+
+            entity.ToTable("LeaveScheme00");
+
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.SchemeCode)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.SchemeDescription)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<Leavescheme02>(entity =>
+        {
+            entity.HasKey(e => e.Leaveaccrual02Id);
+
+            entity.ToTable("Leavescheme02");
+
+            entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<HrmLeaveBasicSetting>(entity =>
+        {
+            entity.HasKey(e => e.SettingsId);
+
+            entity.ToTable("HRM_LEAVE_BASIC_SETTINGS");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.SettingsDescription)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.SettingsName)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+
         OnModelCreatingPartial (modelBuilder);
     }
 
