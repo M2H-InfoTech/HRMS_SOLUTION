@@ -1446,5 +1446,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeStatus = await _employeeInformation.GetNewHighListAsync(empId, roleId, transid, lnklev);
             return Ok(employeeStatus);
         }
+        [HttpGet]
+        public async Task<IActionResult> AccessChecking(int empId, string code, int roleId)
+        {
+            var employeeStatus = await _employeeInformation.AccessCheckingAsync(empId, code, roleId);
+            return Ok(employeeStatus);
+        }
     }
 }

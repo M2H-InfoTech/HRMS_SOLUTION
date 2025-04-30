@@ -211,6 +211,7 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<LinkItemDto>> GetEntityAccessRights(int roleId, int? linkSelect);
         //Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev);
         Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev);
+        Task<AccessCheckResultDto> AccessCheckingAsync(int empId, string code, int roleId);
     }
 
 }
