@@ -879,5 +879,9 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetNewHighListAsync(empId, roleId, transid, lnklev);
         }
+        public async Task<AccessCheckResultDto> AccessCheckingAsync(int empId, string code, int roleId)
+        {
+            return await _employeeRepository.AccessCheckingAsync(empId, code, roleId);
+        }
     }
 }

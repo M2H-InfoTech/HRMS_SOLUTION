@@ -1,6 +1,8 @@
 ﻿using EMPLOYEE_INFORMATION.Data;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using LEAVE.Dto;
+using LEAVE.Helpers;
+using LEAVE.Helpers.AccessMetadataService;
 using Microsoft.EntityFrameworkCore;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
@@ -9,11 +11,13 @@ namespace LEAVE.Repository.LeavePolicy
     public class LeavePolicyRepository : ILeavePolicyRepository
     {
         private readonly EmployeeDBContext _context;
-        private readonly HttpClient _httpClient;
-        public LeavePolicyRepository(EmployeeDBContext context, HttpClient httpClient)
+        private readonly ExternalApiService _externalApiService;
+        private IAccessMetadataService _accessMetadataService;
+        public LeavePolicyRepository(EmployeeDBContext context, ExternalApiService externalApiService, IAccessMetadataService accessMetadataService)
         {
             _context = context;
-            _httpClient = httpClient;
+            _externalApiService = externalApiService;
+            _accessMetadataService = accessMetadataService;
         }
 
         private static IEnumerable<string> SplitStrings_XML(string list, char delimiter = ',') =>
@@ -25,31 +29,9 @@ namespace LEAVE.Repository.LeavePolicy
 
         public async Task<List<object>> FillLeavepolicyAsync(int SecondEntityId, int EmpId)
         {
+            var accessMetadata = await _accessMetadataService.GetAccessMetadataAsync("LeavePolicy", SecondEntityId, EmpId);
 
-            var transactionIdTask = _httpClient.GetAsync("http://localhost:5194/gateway/Employee/GetTransactionIdByTransactionType?transactionType=LeavePolicy");
-            var linkLevelTask = _httpClient.GetAsync($"http://localhost:5194/gateway/Employee/GetLinkLevelByRoleId?roleId={SecondEntityId}");
-            var entityAccessRightsTask = _httpClient.GetAsync($"http://localhost:5194/gateway/Employee/GetEntityAccessRights?roleId={SecondEntityId}&linkSelect={linkLevelTask.Result}");
-
-            // Wait for all tasks to complete
-            await Task.WhenAll(transactionIdTask, linkLevelTask, entityAccessRightsTask);
-
-            // Parse the results
-            var transIdString = await transactionIdTask.Result.Content.ReadAsStringAsync();
-            if (!int.TryParse(transIdString, out int transId))
-            {
-                throw new InvalidOperationException("Failed to parse transaction ID.");
-            }
-
-            var linkLevelString = await linkLevelTask.Result.Content.ReadAsStringAsync();
-            if (!int.TryParse(linkLevelString, out int lnklev))
-            {
-                throw new InvalidOperationException("Failed to parse link level.");
-            }
-
-            var entityAccess = await entityAccessRightsTask.Result.Content.ReadAsStringAsync();
-            bool hasAccessRights = !string.IsNullOrEmpty(entityAccess) && entityAccess.Any();
-
-            if (hasAccessRights)
+            if (accessMetadata.HasAccessRights)
             {
                 var leavePolicies = await _context.LeavePolicyMasters
                     .GroupBy(a => new { a.LeavePolicyMasterId, a.InstId, a.PolicyName, a.Blockmultiunapprovedleave })
@@ -64,74 +46,114 @@ namespace LEAVE.Repository.LeavePolicy
 
                 return leavePolicies;
             }
+            else
+            {
+                return await FillLeaveMasterAsyncNoAccessMode(EmpId, SecondEntityId, accessMetadata.LinkLevel, accessMetadata.TransactionId);
+            }
 
-            // No direct access, check entity levels
+        }
+        public async Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev)
+        {
+            // Step 1: Get the EmpEntity for the given empId
             var empEntity = await _context.HrEmpMasters
-                .Where(h => h.EmpId == EmpId)
+                .Where(h => h.EmpId == empId)
                 .Select(h => h.EmpEntity)
                 .FirstOrDefaultAsync();
 
-            var ctnew = SplitStrings_XML(empEntity, ',')
+            // Step 2: Split EmpEntity into ctnew
+            var ctnew = SplitStrings_XML(empEntity)
                 .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
-                .Where(c => !string.IsNullOrEmpty(c.Item))
                 .ToList();
 
-            var applicableFinal = await _context.EntityAccessRights02s
-                .Where(s => s.RoleId == SecondEntityId)
-                .SelectMany(s => SplitStrings_XML(s.LinkId, default),
-                    (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
+            // Step 3: Get access rights for the role
+            var accessRights = await _context.EntityAccessRights02s
+                .Where(s => s.RoleId == roleId)
                 .ToListAsync();
 
+            // Step 4: Build applicableFinal list from access rights
+            var applicableFinal = accessRights
+                .Where(s => !string.IsNullOrEmpty(s.LinkId))
+                .SelectMany(s => SplitStrings_XML(s.LinkId),
+                            (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
+                .ToList();
+
+            // Step 5: Add ctnew items if LinkLevel >= lnklev
             if (lnklev > 0)
             {
-                applicableFinal.AddRange(
-                    ctnew.Where(c => c.LinkLevel >= lnklev)
-                         .Select(c => new LinkItemDto { Item = c.Item, LinkLevel = c.LinkLevel })
-                );
+                applicableFinal.AddRange(ctnew.Where(c => c.LinkLevel >= lnklev));
             }
+
+            // Step 6: Convert to HashSet of long values (to ensure uniqueness)
             var applicableFinalSetLong = applicableFinal
                 .Select(a => (long?)Convert.ToInt64(a.Item))
                 .ToHashSet();
 
+            // Step 7: Get EntityApplicable00Final
             var entityApplicable00Final = await _context.EntityApplicable00s
-                .Where(e => e.TransactionId == transId)
+                .Where(e => e.TransactionId == transid)
                 .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
-            .ToListAsync();
-            var applicableFinal02 = applicableFinal.ToList();
+                .ToListAsync();
 
+            // Step 8: Move applicableFinal to client-side evaluation by calling AsEnumerable
+            var applicableFinalItems = applicableFinal.Select(a => a.Item).ToList(); // We use this list for comparison
+
+            // Step 9: Get applicableFinal02Emp (client-side evaluation)
             var applicableFinal02Emp = await (
-            from emp in _context.EmployeeDetails
-            join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
-            join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
-            join af2 in applicableFinal02 on hlv.LevelOneId.ToString() equals af2.Item into af2LevelOne
-            from af2L1 in af2LevelOne.DefaultIfEmpty()
-            where ea.TransactionId == transId
-            select ea.MasterId
+                from emp in _context.EmployeeDetails
+                join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
+                join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
+                where ea.TransactionId == transid
+                let levelOneId = hlv.LevelOneId.ToString()  // Convert to string for client-side comparison
+                where applicableFinalItems.Contains(levelOneId)  // Perform the comparison in memory
+                select ea.MasterId
             ).Distinct().ToListAsync();
 
-            var newhigh = entityApplicable00Final
-                .Where(e => applicableFinalSetLong.Contains(e.LinkId) || e.LinkLevel == 15)
-                .Select(e => e.MasterId)
-                .Union(applicableFinal02Emp)
-            .Distinct()
+            // Step 10: Combine results
+            var newhigh = applicableFinalSetLong
+                .Union(applicableFinal02Emp.Select(emp => (long?)emp))  // Assuming MasterId is the result you want
                 .ToList();
 
-            // Now fetch LeavePolicyMaster where LeavePolicyMasterId is in newhigh
+            return newhigh;
+        }
+        private async Task<List<object>> FillLeaveMasterAsyncNoAccessMode(int empId, int roleId, int? lnklev, int transid)
+        {
+
+            var newHigh = await GetNewHighListAsync(empId, roleId, transid, lnklev);
+
             var finalLeavePolicies = await _context.LeavePolicyMasters
-                .Where(a => newhigh.Contains(a.LeavePolicyMasterId))
-                .GroupBy(a => new { a.LeavePolicyMasterId, a.InstId, a.PolicyName, a.Blockmultiunapprovedleave })
-                .Select(g => new
-                {
-                    g.Key.LeavePolicyMasterId,
-                    g.Key.InstId,
-                    g.Key.PolicyName,
-                    g.Key.Blockmultiunapprovedleave
-                })
-                .ToListAsync<object>();
+                   .Where(a => newHigh.Contains(a.LeavePolicyMasterId))
+                   .GroupBy(a => new { a.LeavePolicyMasterId, a.InstId, a.PolicyName, a.Blockmultiunapprovedleave })
+                   .Select(g => new
+                   {
+                       g.Key.LeavePolicyMasterId,
+                       g.Key.InstId,
+                       g.Key.PolicyName,
+                       g.Key.Blockmultiunapprovedleave
+                   })
+                   .ToListAsync<object>();
             return finalLeavePolicies;
         }
+        private async Task<List<object>> FinalLeavePoliciesNoAccessMode(int empId, int roleId, int? lnklev, int transid)
+        {
+
+            var newHigh = await GetNewHighListAsync(empId, roleId, transid, lnklev);
+
+            var leavePolicies = await _context.HrmLeaveMasters
+                    .Where(l => l.Active == 1 && newHigh.Contains(l.LeaveMasterId))
+                    .GroupBy(l => new { l.LeaveMasterId, l.LeaveCode, l.Description })
+                    .Select(g => new
+                    {
+                        Leave_type_id = g.Key.LeaveMasterId,
+                        Leave_desc = g.Key.LeaveCode,
+                        Descriptions = g.Key.Description
+                    })
+                    .ToListAsync<object>();
+
+            leavePolicies.AddRange(leavePolicies);
+            return leavePolicies;
 
 
+        }
         public async Task<int?> CreatepolicyAsync(CreatePolicyDto createPolicyDto)
         {
 
@@ -169,33 +191,11 @@ namespace LEAVE.Repository.LeavePolicy
 
         public async Task<List<object>> FillleaveAsync(int SecondEntityId, int EmpId)
         {
+            var accessMetadata = await _accessMetadataService.GetAccessMetadataAsync("Leave", SecondEntityId, EmpId);
 
-
-            var transactionIdTask = _httpClient.GetAsync("http://localhost:5194/gateway/Employee/GetTransactionIdByTransactionType?transactionType=Leave");
-            var linkLevelTask = _httpClient.GetAsync($"http://localhost:5194/gateway/Employee/GetLinkLevelByRoleId?roleId={SecondEntityId}");
-            var entityAccessRightsTask = _httpClient.GetAsync($"http://localhost:5194/gateway/Employee/GetEntityAccessRights?roleId={SecondEntityId}&linkSelect={linkLevelTask.Result}");
-
-            // Wait for all tasks to complete
-            await Task.WhenAll(transactionIdTask, linkLevelTask, entityAccessRightsTask);
-
-            // Parse the results
-            var transIdString = await transactionIdTask.Result.Content.ReadAsStringAsync();
-            if (!int.TryParse(transIdString, out int transId))
-            {
-                throw new InvalidOperationException("Failed to parse transaction ID.");
-            }
-
-            var linkLevelString = await linkLevelTask.Result.Content.ReadAsStringAsync();
-            if (!int.TryParse(linkLevelString, out int lnklev))
-            {
-                throw new InvalidOperationException("Failed to parse link level.");
-            }
-
-            var entityAccess = await entityAccessRightsTask.Result.Content.ReadAsStringAsync();
-            bool hasAccessRights = !string.IsNullOrEmpty(entityAccess) && entityAccess.Any();
             List<object> finalLeavePolicies = new List<object>();
 
-            if (hasAccessRights)
+            if (accessMetadata.HasAccessRights)
             {
                 // Access granted, fetch Leave data
                 var leaveData = await _context.HrmLeaveMasters
@@ -213,70 +213,7 @@ namespace LEAVE.Repository.LeavePolicy
             }
             else
             {
-                // No direct access, check entity levels
-                var empEntity = await _context.HrEmpMasters
-                    .Where(h => h.EmpId == EmpId)
-                    .Select(h => h.EmpEntity)
-                    .FirstOrDefaultAsync();
-
-                var ctnew = SplitStrings_XML(empEntity, ',')
-                    .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
-                    .Where(c => !string.IsNullOrEmpty(c.Item))
-                    .ToList();
-
-                var applicableFinal = await _context.EntityAccessRights02s
-                    .Where(s => s.RoleId == SecondEntityId)
-                    .SelectMany(s => SplitStrings_XML(s.LinkId, default),
-                        (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
-                    .ToListAsync();
-
-                if (lnklev > 0)
-                {
-                    applicableFinal.AddRange(
-                        ctnew.Where(c => c.LinkLevel >= lnklev)
-                            .Select(c => new LinkItemDto { Item = c.Item, LinkLevel = c.LinkLevel })
-                    );
-                }
-                var applicableFinalSetLong = applicableFinal
-                    .Select(a => (long?)Convert.ToInt64(a.Item))
-                    .ToHashSet();
-
-                var entityApplicable00Final = await _context.EntityApplicable00s
-                    .Where(e => e.TransactionId == transId)
-                    .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
-                .ToListAsync();
-
-                var applicableFinal02 = applicableFinal.ToList();
-                var applicableFinal02Emp = await (
-                from emp in _context.EmployeeDetails
-                join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
-                join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
-                join af2 in applicableFinal02 on hlv.LevelOneId.ToString() equals af2.Item into af2LevelOne
-                from af2L1 in af2LevelOne.DefaultIfEmpty()
-                where ea.TransactionId == transId
-                select ea.MasterId
-                ).Distinct().ToListAsync();
-
-                var newhigh = entityApplicable00Final
-                    .Where(e => applicableFinalSetLong.Contains(e.LinkId) || e.LinkLevel == 15)
-                    .Select(e => e.MasterId)
-                    .Union(applicableFinal02Emp)
-                .Distinct()
-                    .ToList();
-
-                // Now fetch LeavePolicyMaster where LeavePolicyMasterId is in newhigh
-                var leavePolicies = await _context.HrmLeaveMasters
-                    .Where(l => l.Active == 1 && newhigh.Contains(l.LeaveMasterId))
-                    .GroupBy(l => new { l.LeaveMasterId, l.LeaveCode, l.Description })
-                    .Select(g => new
-                    {
-                        Leave_type_id = g.Key.LeaveMasterId,
-                        Leave_desc = g.Key.LeaveCode,
-                        Descriptions = g.Key.Description
-                    })
-                    .ToListAsync();
-
-                finalLeavePolicies.AddRange(leavePolicies);
+                return await FinalLeavePoliciesNoAccessMode(EmpId, SecondEntityId, accessMetadata.LinkLevel, accessMetadata.TransactionId);
             }
 
             return finalLeavePolicies;
@@ -412,5 +349,7 @@ namespace LEAVE.Repository.LeavePolicy
 
             return result;
         }
+
     }
+
 }

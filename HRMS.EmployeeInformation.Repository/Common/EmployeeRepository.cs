@@ -16671,6 +16671,83 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
                         })
                         .FirstOrDefaultAsync();
         }
+        public async Task<AccessCheckResultDto> AccessCheckingAsync(int empId, string code, int roleId)
+        {
+            var access = 0;
+            var transactionId = await GetTransactionIdByTransactionType(code);
+            var linkLevel = await GetLinkLevelByRoleId(roleId);
+
+            var tabId = await _context.TabMasters
+                .Where(tm => tm.Code == "SelfAssgnShft")
+                .Select(tm => tm.TabId)
+                .FirstOrDefaultAsync();
+
+            var tabAccessExists = await _context.TabAccessRights
+                .AnyAsync(ta => ta.TabId == tabId && ta.RoleId == empId);
+
+            access = tabAccessExists ? 1 : 0;
+
+            var levels = new List<string>();
+            List<HighLevelTableDto> accessLevel = null;
+
+            var linkLevelExists = await GetEntityAccessRights(roleId, linkLevel);
+            if (linkLevelExists.Any())
+            {
+                accessLevel = await GetAccessLevel();
+
+                var specialLinkLevel = await _context.SpecialAccessRights
+                    .Where(s => s.RoleId == roleId)
+                    .Select(s => s.LinkLevel)
+                    .FirstOrDefaultAsync();
+
+                if (specialLinkLevel > 0)
+                {
+                    linkLevel = specialLinkLevel.Value;
+                }
+                else
+                {
+                    linkLevel = await _context.EntityAccessRights02s
+                        .Where(e => e.RoleId == roleId)
+                        .OrderBy(e => e.LinkLevel)
+                        .Select(e => e.LinkLevel)
+                        .FirstOrDefaultAsync() ?? 13;
+                }
+
+                if (string.IsNullOrEmpty(code))
+                {
+                    var sortOrders = await _context.Categorymasters
+                        .Where(c => c.SortOrder >= linkLevel || linkLevel == 15)
+                        .Select(c => c.SortOrder.ToString())
+                        .ToListAsync();
+
+                    levels = sortOrders.Append("13").ToList();
+                }
+                else
+                {
+                    var levelEntities = await _context.LevelSettingsAccess00s.Where(l => l.TransactionId == transactionId).ToListAsync();
+                    levels = levelEntities.Where(l => linkLevel == 15 || (int.TryParse(l.Levels, out var parsed) && parsed >= linkLevel && parsed != 15))
+                                               .Select(l => l.Levels)
+                                               .ToList();
+                }
+            }
+
+            var employees = await _context.HrEmpMasters
+                .Where(d => d.SeperationStatus == 0)
+                .Select(d => new EmployeeDto
+                {
+                    EmpId = d.EmpId,
+                    Employee = $"{d.FirstName} {d.MiddleName} {d.LastName} || {d.EmpCode} || {d.BranchId}"
+                })
+                .ToListAsync();
+
+            return new AccessCheckResultDto
+            {
+                AccessLevel = accessLevel,
+                Levels = levels,
+                Employees = employees
+            };
+        }
+
     }
 
 }

@@ -1,4 +1,6 @@
 using EMPLOYEE_INFORMATION.Data;
+using LEAVE.Helpers;
+using LEAVE.Helpers.AccessMetadataService;
 using LEAVE.Repository.AssignLeave;
 using LEAVE.Repository.BasicSettings;
 using LEAVE.Repository.LeaveBalance;
@@ -22,7 +24,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContextFactory<EmployeeDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<ILeaveMasterRepository, LeaveMasterRepository>();
 builder.Services.AddScoped<ILeaveMasterService, LeaveMasterService>();
-builder.Services.AddHttpClient<ILeaveMasterRepository, LeaveMasterRepository>();
 
 builder.Services.AddScoped<IAssignLeaveRepository, AssignLeaveRepository>();
 builder.Services.AddScoped<IAssignLeaveService, AssignLeaveService>();
@@ -35,6 +36,8 @@ builder.Services.AddScoped<ILeaveBalanceService, LeaveBalanceService>();
 
 builder.Services.AddScoped<ILeavePolicyService, LeavePolicyService>();
 builder.Services.AddScoped<ILeavePolicyRepository, LeavePolicyRepository>();
+builder.Services.AddHttpClient<ExternalApiService>();
+builder.Services.AddScoped<IAccessMetadataService, AccessMetadataService>();
 
 var app = builder.Build();
 

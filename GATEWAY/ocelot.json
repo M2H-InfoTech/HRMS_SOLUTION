@@ -59,6 +59,18 @@
             ],
             "UpstreamPathTemplate": "/gateway/Employee/GetEntityAccessRights",
             "UpstreamHttpMethod": [ "GET" ]
+        },
+        {
+            "DownstreamPathTemplate": "/api/Employee/AccessChecking",
+            "DownstreamScheme": "https",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "localhost",
+                    "Port": 7160
+                }
+            ],
+            "UpstreamPathTemplate": "/gateway/Employee/AccessChecking",
+            "UpstreamHttpMethod": [ "GET" ]
         }
 
     ],
