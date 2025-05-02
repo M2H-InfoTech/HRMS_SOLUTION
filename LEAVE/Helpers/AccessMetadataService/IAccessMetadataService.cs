@@ -6,5 +6,6 @@ namespace LEAVE.Helpers.AccessMetadataService
     {
         Task<AccessMetadataDto> GetAccessMetadataAsync(string transactionType, int roleId, int empId);
         Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev);
+        Task<int?> GetTransactionIdByTransactionTypeAsync(string transactionType);
     }
 }

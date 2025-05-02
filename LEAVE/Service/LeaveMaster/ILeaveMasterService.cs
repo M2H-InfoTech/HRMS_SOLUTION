@@ -1,4 +1,5 @@
 ﻿using LEAVE.Dto;
+using LEAVE.Repository.LeaveMaster;
 
 namespace LEAVE.Service.LeaveMaster
 {
@@ -8,6 +9,8 @@ namespace LEAVE.Service.LeaveMaster
         Task<List<object>> FillvaluetypesAsync(string type);
 
         Task<int?> CreateMasterAsync(CreateMasterDto createMasterDto);
-        Task<List<object>> FillbasicsettingsAsync(int Masterid, int SecondEntityId, int EmpId);
+        Task<List<object>> FillbasicsettingsAsync(int Masterid, string TransactionType, int SecondEntityId, int EmpId);
+        Task<(string ApplicableLevelsNew, string ApplicableLevelsOne, string EmpIds, string CompanyIds)> GetEntityApplicableStringsAsync(string transactionType, long masterId);
+        Task<string> ProcessEntityApplicableAsync(EntityApplicableApiDto entityApplicableApiDtos);
     }
 }
