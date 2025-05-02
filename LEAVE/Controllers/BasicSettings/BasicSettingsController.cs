@@ -42,10 +42,17 @@ namespace LEAVE.Controllers.BasicSettings
             return Ok(deleteConfirm);
         }
         [HttpGet("GetDeletebasics  ")]
-        public async Task<IActionResult> GetDeletebasics(int Basicsettingsid,int Masterid)
+        public async Task<IActionResult> GetDeletebasics(int Basicsettingsid, int Masterid)
         {
-            var getDeletebasics = await _basicSettingsService.GetDeletebasics(Basicsettingsid,  Masterid);
+            var getDeletebasics = await _basicSettingsService.GetDeletebasics(Basicsettingsid, Masterid);
             return Ok(getDeletebasics);
         }
+        [HttpGet("Geteditdetails")]     
+        public async Task<IActionResult> Geteditdetails(string entitlement, int masterId, int? experienceId = null)
+        {
+            var Geteditdetails = await _basicSettingsService.Geteditdetails(entitlement, masterId, experienceId);
+            return new JsonResult(Geteditdetails);
+        }
+
     }
 }

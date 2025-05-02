@@ -171,5 +171,234 @@ namespace LEAVE.Repository.BasicSettings
                 throw;
             }
         }
+
+        public async Task<object> Geteditdetails(string entitlement, int masterId, int? experienceId = null)
+        {
+            //var emplist= await _context.ViewLeaveBasicsettingsDetails.ToListAsync();
+
+            switch (entitlement.ToLower())
+            {
+                case "exception":
+                    return await (from d in _context.HrmLeaveBasicsettingsDetails
+                                  join e in _context.HrmLeaveExceptionalEligibilities
+                                  on d.SettingsDetailsId equals e.SettingsDetailsHeadId
+                                  where d.SettingsId == masterId
+                                  select new
+                                  {
+                                      e.Year,
+                                      e.Month,
+                                      e.Count
+                                  }).ToListAsync();
+
+                case "prorata":
+                    return await (from h in _context.HrmLeaveEntitlementHeads
+                                  join r in _context.HrmLeaveEntitlementRegs
+                                  on h.LeaveEntitlementId equals r.LeaveEntitlementId
+                                  where h.SettingsId == masterId && r.Newjoin == 0
+                                  select new
+                                  {
+                                      Frommonth = r.Year,
+                                      Tomonth = r.Month,
+                                      r.Count
+                                  }).ToListAsync();
+
+                case "serviceperiod":
+                    return await (from h in _context.HrmLeaveEntitlementHeads
+                                  join s in _context.HrmLeaveServicedbasedleaves
+                                      on h.LeaveEntitlementId equals s.LeaveEntitlementId
+                                  where h.SettingsId == masterId
+                                  select new
+                                  {
+                                     s.FromYear,
+                                      s.ToYear,
+                                      h.LeaveCount,
+                                      s.IdServiceLeave,    
+                                      s.ExperiancebasedGrant,
+                                      s.Experiancebasedrollover,
+                                      s.Checkcase,
+                                      s.ExperiancebasedVacation
+                                  }).ToListAsync();
+
+                case "newjoinprorata":
+                    return await (from h in _context.HrmLeaveEntitlementHeads
+                                  join r in _context.HrmLeaveEntitlementRegs
+                                  on h.LeaveEntitlementId equals r.LeaveEntitlementId
+                                  where h.SettingsId == masterId && r.Newjoin == 1
+                                  select new
+                                  {
+                                      Frommonth = r.Year,
+                                      Tomonth = r.Month,
+                                      r.Count
+                                  }).ToListAsync();
+
+                case "leavelink":
+                    return await (from a in _context.HrmLeaveMasterandsettingsLinks
+                                  join b in _context.HrmLeaveMasters
+                                  on a.LeaveMasterId equals b.LeaveMasterId
+                                  where a.SettingsId == masterId
+                                  select new
+                                  {
+                                      a.LeaveMasterId,
+                                      b.PayType
+                                  }).ToListAsync();
+
+                case "partialpayment":
+                    return await (from a in _context.HrmLeaveEntitlementHeads
+                                  join b in _context.HrmLeavePartialPayments
+                                  on a.LeaveEntitlementId equals b.SettingsDetailsId
+                                  where a.SettingsId == masterId && b.ExperiancetabId == 0 && b.NewjnStatus == 0
+                                  select new
+                                  {
+                                      b.Daysfrom,
+                                      b.Daysto,
+                                      b.PayPercentage,
+                                      b.Ondemandpartial
+                                  }).ToListAsync();
+
+                case "servicepartialpayment":
+                    return await (from a in _context.HrmLeaveEntitlementHeads
+                                  join b in _context.HrmLeavePartialPayments
+                                  on a.LeaveEntitlementId equals b.SettingsDetailsId
+                                  where a.SettingsId == masterId && b.ExperiancetabId == experienceId && b.NewjnStatus == 0
+                                  select new
+                                  {
+                                      b.Daysfrom,
+                                      b.Daysto,
+                                      b.PayPercentage,
+                                      b.Ondemandpartial
+                                  }).ToListAsync();
+
+                case "newjnpartialpayment":
+                    return await (from a in _context.HrmLeaveEntitlementHeads
+                                  join b in _context.HrmLeavePartialPayments
+                                  on a.LeaveEntitlementId equals b.SettingsDetailsId
+                                  where a.SettingsId == masterId && b.ExperiancetabId == 0 && b.NewjnStatus == 1
+                                  select new
+                                  {
+                                      b.Daysfrom,
+                                      b.Daysto,
+                                      b.PayPercentage,
+                                      b.Ondemandpartial
+                                  }).ToListAsync();
+
+                case "details":
+
+                    return await (from b in _context.ViewLeaveBasicsettingsDetails
+                                  join a in _context.HrmLeaveMasterandsettingsLinks
+                                      on b.SettingsId equals a.SettingsId
+                                  join c in _context.HrmLeaveBasicSettings
+                                      on b.SettingsId equals c.SettingsId
+                                  join d in _context.HrmLeaveEntitlementHeads
+                                      on new { SettingsId = b.SettingsId, LeaveEntitlementId = b.LeaveEntitlementId ?? 0 }
+                                      equals new { SettingsId = d.SettingsId ?? 0, LeaveEntitlementId = d.LeaveEntitlementId } into dJoin
+                                  from d in dJoin.DefaultIfEmpty()
+                                  where b.SettingsId == masterId
+                                  select new
+                                  {
+                                      b.SettingsId,
+                                      b.EmployeeType,
+                                      b.Lopcheck,
+                                      b.Gender,
+                                      b.MaritalStatus,
+                                      b.Carryforward,
+                                      b.Rollovercount,
+                                      b.AllemployeeLeaveCount,
+                                      b.DateofJoiningCheck,
+                                      b.JoinedDate,
+                                      b.LeaveCount,
+                                      b.LeaveGrantType,
+                                      b.OndemandLeaveGrand,
+                                      b.Maternity,
+                                      b.Compensatory,
+                                      b.Experiance,
+                                      a.LeaveMasterId,
+                                      b.Monthwise,
+                                      b.NewjoinGranttype,
+                                      b.NewjoinLeavecount,
+                                      b.NewjoinMonthwise,
+                                      b.MinServiceDays,
+                                      b.CsectionMaxLeave,
+                                      b.EligibleCount,
+                                      b.LeaveType,
+                                      b.CompCaryfrwrd,
+                                      b.Defaultreturndate,
+                                      b.Laps,
+                                      StartDate = b.StartDate.HasValue ? b.StartDate.Value.ToString("dd/MM/yyyy") : null,
+                                      b.Attachment,
+                                      b.Eligibility,
+                                      b.EligibilityGrant,
+                                      b.Cfbasedon,
+                                      b.CarryforwardNj,
+                                      b.CfbasedonNj,
+                                      b.RollovercountNj,
+                                      b.Salaryadvance,
+                                      b.Roledeligation,
+                                      b.Firstmonthleavecount,
+                                      b.Credetedon,
+                                      b.Weeklyleaveday,
+                                      b.Yearcount,
+                                      b.JoinmonthdayaftrNyear,
+                                      b.JoinmonthleaveaftrNyear,
+                                      b.Beginningcarryfrwrd,
+                                      b.Vacationaccrualtype,
+                                      b.Ishalfday,
+                                      b.Previousexperiance,
+                                      b.LeaveInclude,
+                                      b.LeavedaysSalaryadvance,
+                                      b.SalaryadvanceApplybeforedays,
+                                      b.Returnrequest,
+                                      b.Attachmentmandatory,
+                                      b.Applywithoutbalance,
+                                      b.Casualholiday,
+                                      b.PassageeligibilityEnable,
+                                      b.Passageeligibilitydays,
+                                      b.PassportRequest,
+                                      b.GrantfullleaveforAll,
+                                      b.FullleaveProRata,
+                                      b.Settingspaymode,
+                                      b.PartialpaymentBalancedays,
+                                      b.PartialpaymentNextcount,
+                                      b.EnableLeaveGrander,
+                                      b.Autocarryforward,
+                                      b.Yearlylimit,
+                                      b.Yearlylimitcount,
+                                      b.ApplicableOnnotice,
+                                      Isallowleavecancel = b.Allowleavecancel,
+                                      Blockpreviouslap = b.Blockpreviouslap ?? 1,
+                                      b.LeaveEncashment,
+                                      b.Disableyearlylimit,
+                                      b.LeaveAccrual,
+                                      b.DaysOrHours,
+                                      b.LeaveHours,
+                                      b.LeaveCriteria,
+                                      b.CalculateOnFirst,
+                                      b.CalculateOnSecond,
+                                      b.LeaveHoursNewjoin,
+                                      b.LeaveCriteriaNewjoin,
+                                      b.CalculateOnFirstNewjoin,
+                                      b.CalculateOnSecondNewjoin,
+                                      ShowcurrentmonthWeekoff =                             b.ShowcurrentmonthWeekoff ?? 0,
+                                      Leavebalanceroundoption =                                 b.Leavebalanceroundoption ?? 0,
+                                      c.RejoinWarningShow,
+                                      c.RejoinWarningShowDaysMax,
+                                      NyearBasedOnJoinDate = d != null ? d.NyearBasedOnJoinDate ?? 0 : 0,
+                                      LeaveEncashmentMnthly = b.LeaveEncashmentMnthly ?? 0,
+                                      LeaveReductionForLateIn = b.LeaveReductionForLateIn ?? 0,
+                                      ConsiderProbationDate = d != null ? d.ConsiderProbationDate ?? 0 : 0,
+                                      IsShowPartialPaymentDays = d != null ? d.IsShowPartialPaymentDays ?? 0 : 0,
+                                      ExtraLeaveCountProxy = d != null ? d.ExtraLeaveCountProxy ?? 0 : 0,
+                                      d.JoinDateIn,
+                                      d.ToJoinDate,
+                                      d.LeaveCountBtw
+                                  }).ToListAsync();
+                    
+
+
+                default:
+                    throw new ArgumentException("Invalid entitlement type");
+            }
+        }
+
+       
     }
 }

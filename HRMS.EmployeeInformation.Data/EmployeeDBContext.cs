@@ -324,6 +324,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrmLeaveExceptionalEligibility> HrmLeaveExceptionalEligibilities { get; set; }
     public virtual DbSet<HrmLeaveBasicsettingsDetail> HrmLeaveBasicsettingsDetails { get; set; }
     public virtual DbSet<HrmLeaveServicedbasedleave> HrmLeaveServicedbasedleaves { get; set; }
+    public virtual DbSet<ViewLeaveBasicsettingsDetail> ViewLeaveBasicsettingsDetails { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4828,6 +4829,28 @@ public partial class EmployeeDBContext : DbContext
 
             entity.Property(e => e.Experiancebasedrollover).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.LeaveCount).HasColumnType("decimal(18, 2)");
+        });
+        modelBuilder.Entity<ViewLeaveBasicsettingsDetail>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("VIEW_LEAVE_BASICSETTINGS_DETAILS");
+
+            entity.Property(e => e.AllemployeeLeaveCount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CarryforwardNj).HasColumnName("CarryforwardNJ");
+            entity.Property(e => e.Cfbasedon).HasColumnName("CFbasedon");
+            entity.Property(e => e.CfbasedonNj).HasColumnName("CFbasedonNJ");
+            entity.Property(e => e.CompCaryfrwrd).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CsectionMaxLeave).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Laps).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveCount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Lopcheck).HasColumnName("LOPCheck");
+            entity.Property(e => e.MinServiceDays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Rollovercount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.RollovercountNj)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("RollovercountNJ");
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
         });
         OnModelCreatingPartial(modelBuilder);
     }
