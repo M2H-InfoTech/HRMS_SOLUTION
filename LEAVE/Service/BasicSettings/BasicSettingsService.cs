@@ -29,9 +29,13 @@ namespace LEAVE.Service.BasicSettings
             return _basicSettingsRepository.DeleteConfirm(Basicsettingsid);
 
         }
-            public Task<int?> GetDeletebasics(int Basicsettingsid, int Masterid)
+        public Task<int?> GetDeletebasics(int Basicsettingsid, int Masterid)
         {
-            return _basicSettingsRepository.GetDeletebasics(Basicsettingsid,  Masterid);
+            return _basicSettingsRepository.GetDeletebasics(Basicsettingsid, Masterid);
+        }
+        public async Task<object> Geteditdetails(string entitlement, int masterId, int? experienceId = null)
+        {
+            return await _basicSettingsRepository.Geteditdetails(entitlement, masterId, experienceId);
         }
     }
 }

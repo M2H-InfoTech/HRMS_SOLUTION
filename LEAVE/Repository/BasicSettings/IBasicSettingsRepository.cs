@@ -9,5 +9,9 @@ namespace LEAVE.Repository.BasicSettings
         Task<List<GetEditbasicsettingsdto>> saveleavelinktable(int Masterid);
         Task<int?> DeleteConfirm(int Basicsettingsid);
         Task<int?> GetDeletebasics(int Basicsettingsid, int Masterid);
+        Task<object> Geteditdetails(string entitlement, int masterId, int? experienceId = null);
+       
+
     }
 }
+    
