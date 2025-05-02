@@ -1,4 +1,6 @@
 ﻿using EMPLOYEE_INFORMATION.Data;
+using EMPLOYEE_INFORMATION.Models;
+using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using LEAVE.Dto;
 using LEAVE.Helpers.AccessMetadataService;
@@ -182,11 +184,11 @@ namespace LEAVE.Repository.LeaveMaster
 
             return null;
         }
-        public async Task<List<object>> FillbasicsettingsAsync(int Masterid, int SecondEntityId, int EmpId)
+        public async Task<List<object>> FillbasicsettingsAsync(int Masterid, string TransactionType, int SecondEntityId, int EmpId)
         {
             if (Masterid == 0)
             {
-                var accessMetadata = await _accessMetadataService.GetAccessMetadataAsync("Leave_BS", SecondEntityId, EmpId);
+                var accessMetadata = await _accessMetadataService.GetAccessMetadataAsync(TransactionType, SecondEntityId, EmpId);//"Leave_BS"
                 if (accessMetadata.HasAccessRights)
                 {
                     var result = await (from b in _context.HrmLeaveBasicSettings
@@ -250,6 +252,253 @@ namespace LEAVE.Repository.LeaveMaster
                 return finalResult;
             }
         }
+        public async Task<(string ApplicableLevelsNew, string ApplicableLevelsOne, string EmpIds, string CompanyIds)>
+    GetEntityApplicableStringsAsync(string transactionType, long masterId)
+        {
+            // Step 1: Get relevant Transaction IDs
+            var transactionIds = await _context.TransactionMasters
+                .Where(t => t.TransactionType == transactionType)
+                .Select(t => t.TransactionId)
+                .ToListAsync();
+
+            // Step 2: Get LinkId (LinkLevel != 1)
+            var applicableLevelsNew = await (
+                                from ea in _context.EntityApplicable00s
+                                join tm in _context.TransactionMasters
+                                    on ea.TransactionId equals tm.TransactionId
+                                where tm.TransactionType == transactionType
+                                   && ea.MasterId == masterId
+                                   && ea.LinkLevel != 1
+                                select ea.LinkId.ToString()
+                            ).ToListAsync();
+
+            var ApplicableLevelsNew = string.Join(",", applicableLevelsNew);
+
+
+            // Step 3: Get LinkId (LinkLevel == 1)
+            var applicableLevelsOne = await (
+                                   from ea in _context.EntityApplicable00s
+                                   join tm in _context.TransactionMasters
+                                       on ea.TransactionId equals tm.TransactionId
+                                   where tm.TransactionType == transactionType
+                                      && ea.MasterId == masterId
+                                      && ea.LinkLevel == 1
+                                   select ea.LinkId.ToString()
+                               ).ToListAsync();
+
+            var ApplicableLevelsOne = string.Join(",", applicableLevelsOne.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+
+
+
+            // Step 4: Get EmpId from EntityApplicable01
+            var empIds = await (
+                       from ea in _context.EntityApplicable01s
+                       join tm in _context.TransactionMasters
+                           on ea.TransactionId equals tm.TransactionId
+                       where tm.TransactionType == transactionType
+                          && ea.MasterId == masterId
+                       select ea.EmpId.ToString()
+                   ).ToListAsync();
+
+            var EmpIds = string.Join(",", empIds);
+
+            // Step 5: Get LinkLevel = 15 as Company IDs
+            var companyIds = await (
+    from ea in _context.EntityApplicable00s
+    join tm in _context.TransactionMasters
+        on ea.TransactionId equals tm.TransactionId
+    where tm.TransactionType == transactionType
+       && ea.MasterId == masterId
+       && ea.LinkLevel == 15
+    select ea.LinkLevel.ToString()
+).ToListAsync();
+
+            var CompanyIds = string.Join(",", companyIds);
+
+            // Step 6: Return all comma-separated results
+            return (
+                ApplicableLevelsNew: string.Join(",", applicableLevelsNew),
+                ApplicableLevelsOne: string.Join(",", applicableLevelsOne),
+                EmpIds: string.Join(",", empIds),
+                CompanyIds: string.Join(",", companyIds)
+            );
+        }
+        public async Task<string> ProcessEntityApplicableAsync(EntityApplicableApiDto entityApplicableApiDtos)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var tranId = await _accessMetadataService.GetTransactionIdByTransactionTypeAsync(entityApplicableApiDtos.TransactionType);
+
+                if (entityApplicableApiDtos.FirstEntityId == 0)
+                {
+                    var applicable00 = await _context.EntityApplicable00s
+                        .Where(e => e.TransactionId == tranId && e.MasterId == entityApplicableApiDtos.MasterId)
+                        .ToListAsync();
+
+                    if (applicable00.Any())
+                    {
+                        _context.EntityApplicable00s.RemoveRange(applicable00);
+                    }
+
+                    if (!string.IsNullOrEmpty(entityApplicableApiDtos.LinkIds))
+                    {
+                        var linkGroupList = entityApplicableApiDtos.LinkIds.Split('+', StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var group in linkGroupList)
+                        {
+                            var linkIdList = group.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                                  .Select(int.Parse)
+                                                  .ToList();
+
+                            var linkLevel = await _context.SubCategoryLinksNews
+                                .Where(s => linkIdList.Contains(s.LinkId))
+                                .Select(s => s.LinkLevel)
+                                .FirstOrDefaultAsync();
+
+                            bool alreadyExists = await _context.EntityApplicable00s
+                                .AnyAsync(e => e.TransactionId == tranId && e.LinkLevel == linkLevel && e.MasterId == entityApplicableApiDtos.MasterId);
+
+                            if (!alreadyExists)
+                            {
+                                var insertLinks = await _context.SubCategoryLinksNews
+                                    .Where(s => linkIdList.Contains(s.LinkId))
+                                    .Select(s => new EntityApplicable00
+                                    {
+                                        TransactionId = tranId,
+                                        LinkLevel = s.LinkLevel,
+                                        LinkId = s.LinkId,
+                                        MasterId = entityApplicableApiDtos.MasterId,
+                                        MainMasterId = entityApplicableApiDtos.SecondEntityId,
+                                        EntryBy = entityApplicableApiDtos.EntryBy,
+                                        EntryDate = DateTime.Now
+                                    }).ToListAsync();
+
+                                _context.EntityApplicable00s.AddRange(insertLinks);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    var applicable01 = await _context.EntityApplicable01s
+                        .Where(e => e.TransactionId == tranId && e.MasterId == entityApplicableApiDtos.MasterId)
+                        .ToListAsync();
+                    var applicable00 = await _context.EntityApplicable00s
+                        .Where(e => e.TransactionId == tranId && e.MasterId == entityApplicableApiDtos.MasterId)
+                        .ToListAsync();
+
+                    _context.EntityApplicable01s.RemoveRange(applicable01);
+                    _context.EntityApplicable00s.RemoveRange(applicable00);
+
+                    _context.EntityApplicable00s.Add(new EntityApplicable00
+                    {
+                        TransactionId = tranId,
+                        LinkLevel = entityApplicableApiDtos.FirstEntityId,
+                        LinkId = 0,
+                        MasterId = entityApplicableApiDtos.MasterId,
+                        MainMasterId = entityApplicableApiDtos.SecondEntityId,
+                        EntryBy = entityApplicableApiDtos.EntryBy,
+                        EntryDate = DateTime.Now
+                    });
+                }
+
+                if (!string.IsNullOrEmpty(entityApplicableApiDtos.EmployeeIds) && entityApplicableApiDtos.EmployeeIds != "0")
+                {
+                    var empIdList = entityApplicableApiDtos.EmployeeIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+
+                    var newEmpEntries = await _context.HrEmpMasters
+                        .Where(e => empIdList.Contains(e.EmpId))
+                        .Select(e => new EntityApplicable01
+                        {
+                            TransactionId = tranId,
+                            LinkLevel = 13,
+                            EmpId = e.EmpId,
+                            MasterId = entityApplicableApiDtos.MasterId,
+                            MainMasterId = entityApplicableApiDtos.SecondEntityId,
+                            EntryBy = entityApplicableApiDtos.EntryBy,
+                            EntryDate = DateTime.Now
+                        }).ToListAsync();
+
+                    var existing = await _context.EntityApplicable01s
+                        .Where(e => e.TransactionId == tranId && e.MasterId == entityApplicableApiDtos.MasterId)
+                        .ToListAsync();
+
+                    _context.EntityApplicable01s.RemoveRange(existing);
+                    _context.EntityApplicable01s.AddRange(newEmpEntries);
+                }
+
+                if (!string.IsNullOrEmpty(entityApplicableApiDtos.EntityList))
+                {
+                    var entityIds = entityApplicableApiDtos.EntityList.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+
+                    var existingLevelOne = await _context.EntityApplicable00s
+                        .Where(e => e.TransactionId == tranId && e.MasterId == entityApplicableApiDtos.MasterId && e.LinkLevel == 1)
+                        .ToListAsync();
+
+                    _context.EntityApplicable00s.RemoveRange(existingLevelOne);
+
+                    var EntityLevelOnes = from a in _context.Categorymasters
+                                          join b in _context.Subcategories on a.EntityId equals b.EntityId
+                                          where a.SortOrder == 1
+                                          select new
+                                          {
+                                              LevelOneId = b.SubEntityId,
+                                              LevelOneCode = b.Code,
+                                              LinkableSubcategory = b.SubEntityId,
+                                              LevelOneDescription = b.Description
+                                          };
+
+                    var result = await EntityLevelOnes.ToListAsync();
+
+                    var newLevelOne = (from e in EntityLevelOnes
+                                       where entityIds.Contains(e.LevelOneId)
+                                       select new EntityApplicable00
+                                       {
+                                           TransactionId = tranId,
+                                           LinkLevel = 1,
+                                           LinkId = e.LevelOneId,
+                                           MasterId = entityApplicableApiDtos.MasterId,
+                                           MainMasterId = entityApplicableApiDtos.SecondEntityId,
+                                           EntryBy = entityApplicableApiDtos.EntryBy,
+                                           EntryDate = DateTime.Now
+                                       }).ToList();
+
+                    // Add the new entries to the EntityApplicable00 table
+                    _context.EntityApplicable00s.AddRange(newLevelOne);
+                }
+
+                // Commit the transaction
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return "success"; // Return success message
+            }
+            catch (Exception)
+            {
+                // Rollback the transaction if something goes wrong
+                await transaction.RollbackAsync();
+                throw; // Rethrow the exception to be handled at a higher level if needed
+            }
+        }
+
+
+
+    }
+    public class EntityApplicableApiDto
+    {
+        public string Mode { get; set; }
+        public string EntityList { get; set; }
+        public string TransactionType { get; set; }
+        public string LinkIds { get; set; }
+        public string EmployeeIds { get; set; }
+        public int FirstEntityId { get; set; }
+        public int SecondEntityId { get; set; }
+        public int MasterId { get; set; }
+        public int EntryBy { get; set; }
+
+        // You can also add constructors, validation logic, or methods if necessary.
     }
 
 }

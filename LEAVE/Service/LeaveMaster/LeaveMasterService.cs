@@ -25,9 +25,19 @@ namespace LEAVE.Service.LeaveMaster
         {
             return await _leaveMasterRepository.CreateMasterAsync(createMasterDto);
         }
-        public Task<List<object>> FillbasicsettingsAsync(int Masterid, int SecondEntityId, int EmpId)
+        public Task<List<object>> FillbasicsettingsAsync(int Masterid, string TransactionType, int SecondEntityId, int EmpId)
         {
-            return _leaveMasterRepository.FillbasicsettingsAsync(Masterid, SecondEntityId, EmpId);
+            return _leaveMasterRepository.FillbasicsettingsAsync(Masterid, TransactionType, SecondEntityId, EmpId);
+        }
+
+        public async Task<(string ApplicableLevelsNew, string ApplicableLevelsOne, string EmpIds, string CompanyIds)> GetEntityApplicableStringsAsync(string transactionType, long masterId)
+        {
+            return await _leaveMasterRepository.GetEntityApplicableStringsAsync(transactionType, masterId);
+        }
+
+        public async Task<string> ProcessEntityApplicableAsync(EntityApplicableApiDto entityApplicableApiDtos)
+        {
+            return await _leaveMasterRepository.ProcessEntityApplicableAsync(entityApplicableApiDtos);
         }
     }
 }

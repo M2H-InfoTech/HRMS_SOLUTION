@@ -14,6 +14,11 @@ namespace LEAVE.Helpers.AccessMetadataService
             _externalApiService = externalApiService;
             _context = context;
         }
+        public async Task<int?> GetTransactionIdByTransactionTypeAsync(string transactionType)
+        {
+            var response = await _externalApiService.GetTransactionIdByTransactionTypeAsync(transactionType);
+            return response;
+        }
         public async Task<AccessMetadataDto> GetAccessMetadataAsync(string transactionType, int roleId, int empId)
         {
             var transactionId = await _externalApiService.GetTransactionIdByTransactionTypeAsync(transactionType);

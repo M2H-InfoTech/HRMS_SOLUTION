@@ -1,4 +1,5 @@
 ﻿using LEAVE.Dto;
+using LEAVE.Repository.LeaveMaster;
 using LEAVE.Service.LeaveMaster;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,11 +47,33 @@ namespace LEAVE.Controllers.LeaveMaster
             return Ok(createMaster);
         }
         [HttpGet]
-        public async Task<IActionResult> FillbasicsettingsAsync(int Masterid, int SecondEntityId, int EmpId)
+        public async Task<IActionResult> FillbasicsettingsAsync(int Masterid, string TransactionType, int SecondEntityId, int EmpId)
         {
 
-            var fillbasicsetting = await _leaveMasterService.FillbasicsettingsAsync(Masterid, SecondEntityId, EmpId);
+            var fillbasicsetting = await _leaveMasterService.FillbasicsettingsAsync(Masterid, TransactionType, SecondEntityId, EmpId);
             return Ok(fillbasicsetting);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetEntityApplicableStringsAsync(string transactionType, long masterId)
+        {
+            var result = await _leaveMasterService.GetEntityApplicableStringsAsync(transactionType, masterId);
+            return Ok(new
+            {
+                result.ApplicableLevelsNew,
+                result.ApplicableLevelsOne,
+                result.EmpIds,
+                result.CompanyIds
+            });
+        }
+        [HttpPost]
+        public async Task<IActionResult> ProcessEntityApplicableAsync([FromBody] EntityApplicableApiDto entityApplicableApiDtos)
+        {
+            if (entityApplicableApiDtos == null)
+            {
+                return BadRequest("Invalid data.");
+            }
+            var result = await _leaveMasterService.ProcessEntityApplicableAsync(entityApplicableApiDtos);
+            return Ok(result);
         }
     }
 }
