@@ -58,9 +58,42 @@ namespace LEAVE.Repository.BasicSettings
 
         }
 
-        public Task<List<GetEditbasicsettingsdto>> saveleavelinktable(int Masterid)
+        public async Task<List<HrmLeaveMasterandsettingsLinksDto>> saveleavelinktable(int masterId, int basicSettingsId, int createdBy)
         {
-            throw new NotImplementedException();
+            var existingLink = await _context.HrmLeaveMasterandsettingsLinks
+                .FirstOrDefaultAsync(link => link.SettingsId == basicSettingsId);
+
+            if (existingLink == null)
+            {
+                var newLink = new HrmLeaveMasterandsettingsLink
+                {
+                    LeaveMasterId = masterId,
+                    SettingsId = basicSettingsId,
+                    CreatedBy = createdBy,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                _context.HrmLeaveMasterandsettingsLinks.Add(newLink);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                existingLink.LeaveMasterId = masterId;
+                await _context.SaveChangesAsync();
+            }
+
+            var result = await _context.HrmLeaveMasterandsettingsLinks
+                .Where(l => l.SettingsId == basicSettingsId)
+                .Select(l => new HrmLeaveMasterandsettingsLinksDto
+                {
+                    SettingsId = (int)l.SettingsId,
+                    LeaveMasterId = l.LeaveMasterId,
+                    CreatedBy = (int)l.CreatedBy,
+                    CreatedDate = DateTime.UtcNow
+                })
+                .ToListAsync();
+
+            return result;
         }
 
         public async Task<int?> DeleteConfirm(int basicSettingsId)
