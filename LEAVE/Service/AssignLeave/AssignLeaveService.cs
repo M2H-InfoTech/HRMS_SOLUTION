@@ -14,5 +14,17 @@ namespace LEAVE.Service.AssignLeave
         {
             return await _assignLeaveRepository.GetconfirmBsInsert(GetconfirmBsInsert);
         }
+        public Task<List<BsemployeedataDto>> Bsemployeedata(int employeeId)
+        {
+            return _assignLeaveRepository.Bsemployeedata(employeeId);
+        }
+        public Task<List<FillchildBSdetailsDto>> FillchildBSdetails(int employeeId)
+        {
+            return _assignLeaveRepository.FillchildBSdetails(employeeId);
+        }
+        public Task<object> Getallbasics(string linkid, int levelid, string transaction, int empid)
+        {
+            return _assignLeaveRepository.Getallbasics(linkid, levelid, transaction, empid);
+        }
     }
 }

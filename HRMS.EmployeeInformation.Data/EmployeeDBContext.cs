@@ -325,6 +325,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrmLeaveBasicsettingsDetail> HrmLeaveBasicsettingsDetails { get; set; }
     public virtual DbSet<HrmLeaveServicedbasedleave> HrmLeaveServicedbasedleaves { get; set; }
     public virtual DbSet<ViewLeaveBasicsettingsDetail> ViewLeaveBasicsettingsDetails { get; set; }
+    public virtual DbSet<MasterBranchDetail> MasterBranchDetails { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4852,6 +4853,47 @@ public partial class EmployeeDBContext : DbContext
                 .HasColumnName("RollovercountNJ");
             entity.Property(e => e.StartDate).HasColumnType("datetime");
         });
+        modelBuilder.Entity<MasterBranchDetail>(entity =>
+        {
+            entity.HasKey(e => e.BranchId).HasName("PK__MasterBr__A1682FA5235BCC57");
+
+            entity.Property(e => e.BranchId).HasColumnName("BranchID");
+            entity.Property(e => e.Address)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.BranchCode)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.BranchName)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.Circumference)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.DateOfBranchOpen).HasColumnType("datetime");
+            entity.Property(e => e.Email)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.ExtensionCode)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.InstId).HasColumnName("inst_ID");
+            entity.Property(e => e.Latitude)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Location)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.Logo).IsUnicode(false);
+            entity.Property(e => e.Longitude)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Phone)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.SubBranchId).HasColumnName("SubBranchID");
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 

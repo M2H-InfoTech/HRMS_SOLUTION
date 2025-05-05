@@ -33,9 +33,9 @@ namespace LEAVE.Controllers.BasicSettings
             return Ok(GetEditbasicsettings);
         }
         [HttpGet]
-        public async Task<IActionResult> saveleavelinktable(int Masterid)
+        public async Task<IActionResult> saveleavelinktable(int masterId, int basicSettingsId, int createdBy)
         {
-            var saveleavelinktable = await _basicSettingsService.saveleavelinktable(Masterid);
+            var saveleavelinktable = await _basicSettingsService.saveleavelinktable(masterId, basicSettingsId, createdBy);
             return Ok(saveleavelinktable);
         }
         [HttpGet]

@@ -22,9 +22,9 @@ namespace LEAVE.Service.BasicSettings
         {
             return _basicSettingsRepository.GetEditbasicsettings(Masterid);
         }
-        public Task<List<GetEditbasicsettingsdto>> saveleavelinktable(int Masterid)
+        public Task<List<HrmLeaveMasterandsettingsLinksDto>> saveleavelinktable(int masterId, int basicSettingsId, int createdBy)
         {
-            return _basicSettingsRepository.saveleavelinktable(Masterid);
+            return _basicSettingsRepository.saveleavelinktable(masterId, basicSettingsId, createdBy);
         }
         public Task<int?> DeleteConfirm(int Basicsettingsid)
         {
