@@ -1,7 +1,12 @@
 ﻿using EMPLOYEE_INFORMATION.Data;
 using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Models;
+using HRMS.EmployeeInformation.Models.Models.Entity;
+using LEAVE.Dto;
+using LEAVE.Helpers.AccessMetadataService;
 using Microsoft.EntityFrameworkCore;
+using MPLOYEE_INFORMATION.DTO.DTOs;
+using System;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LEAVE.Repository.BasicSettings
@@ -10,10 +15,13 @@ namespace LEAVE.Repository.BasicSettings
     {
         private readonly EmployeeDBContext _context;
         private readonly HttpClient _httpClient;
-        public BasicSettingsRepository(EmployeeDBContext dbContext, HttpClient httpClient)
+      
+        private IAccessMetadataService _accessMetadataService;
+        public BasicSettingsRepository(EmployeeDBContext dbContext, HttpClient httpClient, IAccessMetadataService accessMetadataService)
         {
             _context = dbContext;
             _httpClient = httpClient;
+            _accessMetadataService = accessMetadataService;
         }
 
         public async Task<List<FillvacationaccrualDto>> Fillvacationaccrual(int basicsettingsid)
@@ -396,6 +404,135 @@ namespace LEAVE.Repository.BasicSettings
 
                 default:
                     throw new ArgumentException("Invalid entitlement type");
+            }
+        }
+
+        public async Task<int> Createbasicsettings(CreatebasicsettingsDto CreatebasicsettingsDto)
+        {
+           // description = CamelCase(description); // If you have a method for CamelCase conversion    
+
+            if (CreatebasicsettingsDto.masterId == 0)
+            {
+                if (CreatebasicsettingsDto.basicSettingsId != 0)
+                {
+                    var existingSetting = await _context.HrmLeaveBasicSettings
+                        .FirstOrDefaultAsync(x => x.SettingsId == CreatebasicsettingsDto.basicSettingsId);
+
+                    if (existingSetting != null)
+                    {
+                        existingSetting.SettingsName = CreatebasicsettingsDto.leaveCode;
+                        existingSetting.SettingsDescription = CreatebasicsettingsDto. description;
+                        existingSetting.DaysOrHours = CreatebasicsettingsDto. basedOn;
+
+                        await _context.SaveChangesAsync();
+                        return CreatebasicsettingsDto.basicSettingsId;
+                    }
+                }
+                else
+                {
+                    var duplicateSetting = await _context.HrmLeaveBasicSettings
+                        .FirstOrDefaultAsync(x => x.SettingsName == CreatebasicsettingsDto.leaveCode && x.SettingsDescription == CreatebasicsettingsDto.description);
+
+                    if (duplicateSetting == null)
+                    {
+                        var newSetting = new HrmLeaveBasicSetting
+                        {
+                            SettingsName = CreatebasicsettingsDto.leaveCode,
+                            SettingsDescription = CreatebasicsettingsDto. description,
+                            DaysOrHours = CreatebasicsettingsDto.basedOn,
+                            CreatedBy = CreatebasicsettingsDto.createdBy,
+                            CreatedDate = DateTime.UtcNow
+                        };
+
+                        _context.HrmLeaveBasicSettings.Add(newSetting);
+                        await _context.SaveChangesAsync();
+
+                        return newSetting.SettingsId;
+                    }
+                }
+            }
+            else
+            {
+                var duplicateSetting = await _context.HrmLeaveBasicSettings
+                    .FirstOrDefaultAsync(x => x.SettingsName == CreatebasicsettingsDto.leaveCode && x.SettingsDescription == CreatebasicsettingsDto.description);
+
+                if (duplicateSetting == null)
+                {
+                    var newSetting = new HrmLeaveBasicSetting
+                    {
+                        SettingsName = CreatebasicsettingsDto.leaveCode,
+                        SettingsDescription = CreatebasicsettingsDto.description,
+                        DaysOrHours = CreatebasicsettingsDto.basedOn,
+                        CreatedBy = CreatebasicsettingsDto.createdBy,
+                        CreatedDate = DateTime.UtcNow  
+                    };
+
+                    _context.HrmLeaveBasicSettings.Add(newSetting);
+                    await _context.SaveChangesAsync();
+
+                    duplicateSetting = newSetting;
+                }
+
+                var link = new HrmLeaveMasterandsettingsLink
+                {
+                    LeaveMasterId = CreatebasicsettingsDto.masterId,
+                    SettingsId = duplicateSetting.SettingsId,
+                    CreatedBy = CreatebasicsettingsDto.createdBy,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                _context.HrmLeaveMasterandsettingsLinks.Add(link);
+                await _context.SaveChangesAsync();
+
+                return link.LeaveMasterId;
+            }
+
+            return 0;
+        }
+        private async Task<List<LeaveDetailModelDto>> FillleavetypeListAsyncNoAccessMode(int empId, int roleId, int? lnklev, int transid)
+        {
+
+            var newHigh = await _accessMetadataService.GetNewHighListAsync(empId, roleId, transid, lnklev);
+
+            // Final Fetch
+            return await _context.HrmLeaveMasters
+                .Where(l => newHigh.Contains(l.LeaveMasterId))
+                .GroupJoin(_context.AdmUserMasters,
+                    l => l.CreatedBy,
+                    u => u.UserId,
+                    (l, users) => new { Leave = l, User = users.FirstOrDefault() })
+                .Select(x => new LeaveDetailModelDto
+                {
+                 
+                    LeaveMasterId = x.Leave.LeaveMasterId,
+                    LeaveCode = x.Leave.LeaveCode
+                  
+                  
+                })
+                .ToListAsync();
+        }
+
+        public async Task<List<LeaveDetailModelDto>> FillleavetypeListAsync(int secondEntityId, int empId)
+        {
+            var accessMetadata = await _accessMetadataService.GetAccessMetadataAsync("Leave", secondEntityId, empId);
+
+            if (accessMetadata.HasAccessRights)
+            {
+                var leaveTypes = await _context.HrmLeaveMasters
+                    .Where(l => l.Active == 1)
+                    .GroupBy(l => new { l.LeaveMasterId, l.Description, l.LeaveCode })
+                    .Select(g => new LeaveDetailModelDto
+                    {
+                        LeaveMasterId = g.Key.LeaveMasterId,
+                        LeaveCode = g.Key.Description + "[" + g.Key.LeaveCode + "]"
+                    })
+                    .ToListAsync();
+
+                return leaveTypes;
+            }
+            else
+            {
+                return await FillleavetypeListAsyncNoAccessMode(empId, secondEntityId, accessMetadata.LinkLevel, accessMetadata.TransactionId);
             }
         }
 

@@ -12087,7 +12087,7 @@ new LevelListDto
                                           where a.Active == 1 &&
 
 
-                                                activeLeaveMasterIds.Contains(s.LeaveMasterId.Value) &&
+                                                activeLeaveMasterIds.Contains(s.LeaveMasterId) &&
                                                 applicableLeaveMasterIds.Contains(s.IdMasterandSettingsLink)
 
 

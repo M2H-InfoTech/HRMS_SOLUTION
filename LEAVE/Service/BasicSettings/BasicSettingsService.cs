@@ -1,5 +1,7 @@
 ﻿using HRMS.EmployeeInformation.DTO.DTOs;
+using LEAVE.Dto;
 using LEAVE.Repository.BasicSettings;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LEAVE.Service.BasicSettings
 {
@@ -36,6 +38,14 @@ namespace LEAVE.Service.BasicSettings
         public async Task<object> Geteditdetails(string entitlement, int masterId, int? experienceId = null)
         {
             return await _basicSettingsRepository.Geteditdetails(entitlement, masterId, experienceId);
+        }
+        public async Task<int> Createbasicsettings( CreatebasicsettingsDto CreatebasicsettingsDto)
+        {
+            return await _basicSettingsRepository.Createbasicsettings(CreatebasicsettingsDto);
+        }
+        public Task<List<LeaveDetailModelDto>> FillleavetypeListAsync(int SecondEntityId, int Empid)
+        {
+            return _basicSettingsRepository.FillleavetypeListAsync( SecondEntityId,  Empid);
         }
     }
 }
