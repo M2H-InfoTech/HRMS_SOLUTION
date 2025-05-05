@@ -11,6 +11,8 @@ namespace LEAVE.Service.BasicSettings
         Task<int?> DeleteConfirm(int Basicsettingsid);
         Task<int?> GetDeletebasics(int Basicsettingsid, int Masterid);
         Task<object> Geteditdetails(string entitlement, int masterId, int? experienceId = null);
+        Task<int> Createbasicsettings(CreatebasicsettingsDto CreatebasicsettingsDto);
+        Task<List<LeaveDetailModelDto>> FillleavetypeListAsync(int SecondEntityId, int Empid);
 
     }
 }
