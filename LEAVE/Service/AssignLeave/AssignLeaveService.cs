@@ -26,5 +26,17 @@ namespace LEAVE.Service.AssignLeave
         {
             return _assignLeaveRepository.Getallbasics(linkid, levelid, transaction, empid);
         }
+        public Task<Object> GetBasicAssignmentAsync (int roleId, int entryBy)
+        {
+            return _assignLeaveRepository.GetBasicAssignmentAsync (roleId, entryBy);
+        }
+        public async Task<bool> DeleteSingleEmpBasicSettingAsync (int leavemasters, int empid)
+        {
+            return await _assignLeaveRepository.DeleteSingleEmpBasicSettingAsync (leavemasters, empid);
+        }
+        public async Task<int> AssignBasicsAsync (LeaveAssignSaveDto Dto)
+        {
+            return await _assignLeaveRepository.AssignBasicsAsync (Dto);
+        }
     }
 }

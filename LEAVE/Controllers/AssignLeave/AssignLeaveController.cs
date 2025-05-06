@@ -36,6 +36,41 @@ namespace LEAVE.Controllers.AssignLeave
             var getallbasics = await _assignleaveservice.Getallbasics(linkid, levelid, transaction, empid);
             return Ok(getallbasics);
         }
+        [HttpGet]//Created by Shan Lal K
+        public async Task<IActionResult> GetBasicAssignmentAsync (int roleId, int entryBy)
+        {
+            var result = await _assignleaveservice.GetBasicAssignmentAsync (roleId, entryBy);
+            return Ok (result);
+        }
+        [HttpDelete]//Created by Shan Lal K
+        public async Task<IActionResult> DeleteSingleEmpBasicSettingAsync (int leavemasters, int empid)
+        {
+            if (leavemasters <= 0 || empid <= 0)
+                return BadRequest ("Invalid leave master ID or employee ID.");
+            try
+            {
+                bool result = await _assignleaveservice.DeleteSingleEmpBasicSettingAsync (leavemasters, empid);
+
+                if (result)
+                    return Ok ("Deleted Successfully");
+                else
+                    return NotFound ("No matching record found to delete.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode (500, "An error occurred while processing your request.");
+            }
+        }
+        [HttpPost]//Created by Shan Lal K
+        public async Task<IActionResult> AssignBasicsAsync (LeaveAssignSaveDto Dto)
+        {
+            if (Dto == null)
+            {
+                return BadRequest ("Leave assignment data cannot be null.");
+            }
+            var result = await _assignleaveservice.AssignBasicsAsync (Dto);
+            return Ok (result);
+        }
 
     }
 }

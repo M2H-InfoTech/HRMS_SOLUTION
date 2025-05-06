@@ -1,7 +1,9 @@
 ﻿using EMPLOYEE_INFORMATION.Data;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Models;
 using LEAVE.Dto;
 using Microsoft.EntityFrameworkCore;
+using MPLOYEE_INFORMATION.DTO.DTOs;
 using System.Linq;
 
 namespace LEAVE.Repository.AssignLeave
@@ -360,6 +362,281 @@ namespace LEAVE.Repository.AssignLeave
             }
 
             return result;
+        }
+        public async Task<Object> GetBasicAssignmentAsync (int roleId, int entryBy)
+        {
+
+            var newEmpId = await _context.HrEmployeeUserRelations
+                .Where (x => x.UserId == entryBy)
+                .Select (x => x.EmpId)
+            .FirstOrDefaultAsync ( );
+
+            var lnklev = await _context.SpecialAccessRights
+                .Where (x => x.RoleId == roleId)
+                .Select (x => x.LinkLevel)
+            .FirstOrDefaultAsync ( );
+
+            var hasLevel15 = _context.EntityAccessRights02s
+                .Where (s => s.RoleId == roleId && s.LinkLevel == 15).ToList ( )
+                .SelectMany (s => SplitStrings_XML (s.LinkId))
+                .Any ( );
+
+            if (hasLevel15)
+            {
+                var result = await (from a in _context.EmployeeDetails
+                                    join b in _context.HighLevelViewTables on a.LastEntity equals b.LastEntityId into joined
+                                    from b in joined.DefaultIfEmpty ( )
+                                    where _context.HrmLeaveBasicsettingsaccesses
+                                        .Select (x => x.EmployeeId).Contains (a.EmpId)
+                                    select new
+                                    {
+                                        EmpId = a.EmpId,
+                                        EmpCode = a.EmpCode,
+                                        Name = a.Name,
+                                        LevelOneDescription = b.LevelOneDescription,
+                                        LevelTwoDescription = b.LevelTwoDescription,
+                                        LevelThreeDescription = b.LevelThreeDescription
+                                    }).ToListAsync ( );
+                return result;
+            }
+            else
+            {
+                var empEntity = await _context.HrEmpMasters
+                    .Where (x => x.EmpId == newEmpId)
+                    .Select (x => x.EmpEntity)
+                    .FirstOrDefaultAsync ( );
+
+                var ctnew = SplitStrings_XML (empEntity)
+               .Select ((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
+               .ToList ( );
+
+                var applicableFinal = _context.EntityAccessRights02s
+                    .Where (s => s.RoleId == roleId).ToList ( )
+                    .SelectMany (s => SplitStrings_XML (s.LinkId).Select (x => new { item = x, LinkLevel = s.LinkLevel }));
+
+                if (lnklev > 0)
+                {
+                    var applicableFinal1 = _context.EntityAccessRights02s
+               .Where (s => !string.IsNullOrEmpty (s.LinkId)).ToList ( )
+               .SelectMany (s => SplitStrings_XML (s.LinkId),
+                   (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel });
+                }
+                var empdetails = await _context.EmployeeDetails.ToListAsync ( );
+                var HrmLeaveBasicsettingsaccesses = await _context.HrmLeaveBasicsettingsaccesses.ToListAsync ( );
+                var HrmLeaveEmployeeleaveaccesses = await _context.HrmLeaveEmployeeleaveaccesses.ToListAsync ( );
+                var HighLevelViewTables = await _context.HighLevelViewTables.ToListAsync ( );
+                var result = (from d in empdetails
+                              join e in HrmLeaveBasicsettingsaccesses on d.EmpId equals e.EmployeeId
+                              join f in HrmLeaveEmployeeleaveaccesses on d.EmpId equals f.EmployeeId into tempF
+                              from f in tempF.DefaultIfEmpty ( )
+                              join a in HighLevelViewTables on d.LastEntity equals a.LastEntityId
+                              join b in applicableFinal on 1 equals 1
+                              where (a.LevelOneId == int.Parse (b.item) && b.LinkLevel == 1)
+                                 || (a.LevelTwoId == int.Parse (b.item) && b.LinkLevel == 2)
+                                 || (a.LevelThreeId == int.Parse (b.item) && b.LinkLevel == 3)
+                                 || (a.LevelFourId == int.Parse (b.item) && b.LinkLevel == 4)
+                                 || (a.LevelFiveId == int.Parse (b.item) && b.LinkLevel == 5)
+                                 || (a.LevelSixId == int.Parse (b.item) && b.LinkLevel == 6)
+                                 || (a.LevelSevenId == int.Parse (b.item) && b.LinkLevel == 7)
+                                 || (a.LevelEightId == int.Parse (b.item) && b.LinkLevel == 8)
+                                 || (a.LevelNineId == int.Parse (b.item) && b.LinkLevel == 9)
+                                 || (a.LevelTenId == int.Parse (b.item) && b.LinkLevel == 10)
+                                 || (a.LevelElevenId == int.Parse (b.item) && b.LinkLevel == 11)
+                                 || (a.LevelTwelveId == int.Parse (b.item) && b.LinkLevel == 12)
+                              select new
+                              {
+                                  EmpId = d.EmpId,
+                                  EmpCode = d.EmpCode,
+                                  Name = d.Name,
+                                  LevelOneDescription = a.LevelOneDescription,
+                                  LevelTwoDescription = a.LevelTwoDescription,
+                                  LevelThreeDescription = a.LevelThreeDescription
+                              }).Distinct ( );
+
+                return result;
+            }
+        }
+
+        public async Task<bool> DeleteSingleEmpBasicSettingAsync (int leavemasters, int empid)
+        {
+            try
+            {
+                var recordsToDelete = await _context.HrmLeaveBasicsettingsaccesses
+                    .Where (x => x.SettingsId == leavemasters && x.EmployeeId == empid)
+                    .ToListAsync ( );
+
+                if (recordsToDelete.Any ( ))
+                {
+                    _context.HrmLeaveBasicsettingsaccesses.RemoveRange (recordsToDelete);
+                    await _context.SaveChangesAsync ( );
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+
+        public async Task<int> AssignBasicsAsync (LeaveAssignSaveDto dto)
+        {
+            var leaveMasterIds = SplitToIntList (dto.LeaveMastersCsv);
+            var employeeIds = SplitToIntList (dto.EmployeeIdsCsv);
+            await using var transaction = await _context.Database.BeginTransactionAsync ( );
+            try
+            {
+                // Get LeaveMaster IDs associated with the settings
+                var leaveIds = await _context.HrmLeaveMasterandsettingsLinks
+                    .Where (x => leaveMasterIds.Contains ((int)x.SettingsId))
+                    .Select (x => x.LeaveMasterId.ToString ( ))
+                    .ToListAsync ( );
+
+                // Check if valid basic settings already exist
+                var existsBasicSettings = await _context.HrmLeaveBasicsettingsaccesses.AnyAsync (x =>
+                    leaveMasterIds.Contains ((int)x.SettingsId) &&
+                    employeeIds.Contains ((int)x.EmployeeId) &&
+                    x.FromDateBs >= dto.FromDate);
+
+                if (existsBasicSettings)
+                    return 0;
+
+                // Check for conflicting leave settings
+                var conflictingExists = await _context.HrmLeaveBasicsettingsaccesses.AnyAsync (x =>
+                    !leaveMasterIds.Contains ((int)x.SettingsId) &&
+                    leaveIds.Contains (x.LeaveMasterId.ToString ( )) &&
+                    employeeIds.Contains ((int)x.EmployeeId) &&
+                    x.FromDateBs >= dto.FromDate);
+
+                if (conflictingExists)
+                    return -5;
+
+                // Delete expired valid settings
+                var expiredSettings = await _context.HrmLeaveBasicsettingsaccesses
+                    .Where (x =>
+                        leaveMasterIds.Contains ((int)x.SettingsId) &&
+                        leaveIds.Contains (x.LeaveMasterId.ToString ( )) &&
+                        employeeIds.Contains ((int)x.EmployeeId) &&
+                        x.ValidToBs != null)
+                    .ToListAsync ( );
+
+                _context.HrmLeaveBasicsettingsaccesses.RemoveRange (expiredSettings);
+
+                // Update ValidToBs for overlapping current entries
+                var candidates = await _context.HrmLeaveBasicsettingsaccesses
+                    .Where (x =>
+                        leaveMasterIds.Contains ((int)x.SettingsId) &&
+                        employeeIds.Contains ((int)x.EmployeeId) &&
+                        x.ValidToBs == null)
+                    .ToListAsync ( );
+
+                foreach (var record in candidates)
+                {
+                    var limit = record.Laps > 0 && record.FromDateBs.HasValue
+                        ? record.FromDateBs.Value.AddMonths ((int)(12 / record.Laps))
+                        : dto.FromDate.AddDays (1);
+
+                    if (dto.FromDate > limit)
+                        record.ValidToBs = dto.FromDate.AddDays (-1);
+                }
+
+                // Delete subordinate-level records
+                var subDelete = await _context.HrmLeaveBasicsettingsaccesses
+                    .Where (x =>
+                        employeeIds.Contains ((int)x.EmployeeId) &&
+                        x.LinkLevel < dto.LinkLevel &&
+                        dto.FromDate > (
+                            x.Laps > 0
+                                ? x.FromDateBs.HasValue
+                                    ? x.FromDateBs.Value.AddMonths ((int)(12 / x.Laps))
+                                    : DateTime.MaxValue
+                                : dto.FromDate.AddDays (1)))
+                    .ToListAsync ( );
+
+                _context.HrmLeaveBasicsettingsaccesses.RemoveRange (subDelete);
+
+                // Insert new basic settings (cross join: employeeIds × settings)
+                var query = from a in employeeIds
+                            from x in _context.HrmLeaveMasterandsettingsLinks
+                            join y in _context.HrmLeaveEntitlementHeads
+                                on x.SettingsId equals y.SettingsId into yJoin
+                            from y in yJoin.DefaultIfEmpty ( )
+                            where leaveMasterIds.Contains ((int)x.SettingsId)
+                            select new HrmLeaveBasicsettingsaccess
+                            {
+                                EmployeeId = a,
+                                SettingsId = x.SettingsId,
+                                LeaveMasterId = x.LeaveMasterId,
+                                IsCompanyLevel = 0,
+                                CreatedBy = dto.EntryBy,
+                                CreatedDate = DateTime.UtcNow,
+                                LinkLevel = dto.LinkLevel,
+                                FromDateBs = dto.FromDate,
+                                ValidToBs = dto.ValidTo,
+                                Laps = y != null ? y.Laps : null
+                            };
+
+                await _context.HrmLeaveBasicsettingsaccesses.AddRangeAsync (query);
+
+                // Update ValidTo of existing LEAVE_ACCESS entries
+                var leaveAccessToUpdate = await _context.HrmLeaveEmployeeleaveaccesses
+                    .Where (x =>
+                        leaveMasterIds.Contains ((int)x.LeaveMaster) &&
+                        employeeIds.Contains ((int)x.EmployeeId) &&
+                        x.FromDate < dto.FromDate &&
+                        x.ValidTo == null)
+                    .ToListAsync ( );
+
+                foreach (var access in leaveAccessToUpdate)
+                    access.ValidTo = dto.FromDate.AddDays (-1);
+
+                // Insert new LEAVE_ACCESS entries
+                var newLeaveAccesses = from eId in employeeIds
+                                       from lm in _context.HrmLeaveMasters
+                                       where leaveMasterIds.Contains (lm.LeaveMasterId)
+                                       select new HrmLeaveEmployeeleaveaccess
+                                       {
+                                           EmployeeId = eId,
+                                           LeaveMaster = lm.LeaveMasterId,
+                                           IsCompanyLevel = 0,
+                                           CreatedBy = dto.EntryBy,
+                                           CreatedDate = DateTime.UtcNow,
+                                           Status = 1,
+                                           FromDate = dto.FromDate,
+                                           ValidTo = dto.ValidTo
+                                       };
+
+                await _context.HrmLeaveEmployeeleaveaccesses.AddRangeAsync (newLeaveAccesses);
+
+                await _context.SaveChangesAsync ( );
+
+                var lastInserted = await _context.HrmLeaveBasicsettingsaccesses
+                    .OrderBy (x => x.SettingsId)
+                    .LastOrDefaultAsync ( );
+                await transaction.CommitAsync ( );
+                return (int)(lastInserted?.IdEmployeeSettinsAccess ?? 0);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync ( );
+                throw;
+            }
+        }
+
+
+        private List<int> SplitToIntList (string csv) => csv.Split (',', StringSplitOptions.RemoveEmptyEntries).Select (int.Parse).ToList ( );
+
+
+        public List<string> SplitStrings_XML (string input)
+        {
+            if (string.IsNullOrWhiteSpace (input))
+                return new List<string> ( );
+
+            return input.Split (',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select (x => x.Trim ( ))
+                        .ToList ( );
         }
 
     }
