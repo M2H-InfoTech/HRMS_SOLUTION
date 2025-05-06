@@ -75,5 +75,18 @@ namespace LEAVE.Controllers.LeaveMaster
             var result = await _leaveMasterService.ProcessEntityApplicableAsync(entityApplicableApiDtos);
             return Ok(result);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetEditLeaveMastersAsync(int masterId)
+        {
+            var getEditleave = await _leaveMasterService.GetEditLeaveMastersAsync(masterId);
+            return Ok(getEditleave);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetDeleteLeaveMastersAsync(int masterId)
+        {
+            var getdeleteleave = await _leaveMasterService.GetDeleteLeaveMastersAsync(masterId);
+            return Ok(getdeleteleave);
+        }
     }
 }

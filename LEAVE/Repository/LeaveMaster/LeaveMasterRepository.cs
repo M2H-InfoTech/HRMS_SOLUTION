@@ -4,6 +4,7 @@ using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using LEAVE.Dto;
 using LEAVE.Helpers.AccessMetadataService;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
@@ -253,6 +254,9 @@ namespace LEAVE.Repository.LeaveMaster
             }
         }
         public async Task<(string ApplicableLevelsNew, string ApplicableLevelsOne, string EmpIds, string CompanyIds)>
+
+         
+
     GetEntityApplicableStringsAsync(string transactionType, long masterId)
         {
             // Step 1: Get relevant Transaction IDs
@@ -483,7 +487,86 @@ namespace LEAVE.Repository.LeaveMaster
             }
         }
 
+        public async Task<List<object>> GetEditLeaveMastersAsync(int masterId)
+        {
+            
+                var result = await _context.HrmLeaveMasters
+                    .Where(lm => lm.LeaveMasterId == masterId)
+                    .Select(lm => new
+                    {
+                        lm.LeaveCode,
+                        lm.Description,
+                        lm.PayType,
+                        lm.LeaveUnit,
+                        lm.Active,
+                        lm.Colour
+                    })
+                    .ToListAsync();
 
+                return result.Cast<object>().ToList(); // Because return type is List<object>
+            
+        }
+
+        public async Task<int> GetDeleteLeaveMastersAsync(int masterId)
+        {
+            // Step 1: Get the related SettingsId
+            var settingsLink = await _context.HrmLeaveMasterandsettingsLinks
+                .FirstOrDefaultAsync(l => l.LeaveMasterId == masterId);
+
+            if (settingsLink == null)
+                return masterId;
+
+            int? settingsId = settingsLink.SettingsId;
+
+            // Step 2: Get related SettingsDetailsId
+            var detail = await _context.HrmLeaveBasicsettingsDetails
+                .FirstOrDefaultAsync(d => d.SettingsId == settingsId);
+
+            int? settingsDetailsId = detail?.SettingsDetailsId;
+
+            // Step 3: Get related LeaveEntitlementId
+            var entitlement = await _context.HrmLeaveEntitlementHeads
+                .FirstOrDefaultAsync(e => e.SettingsId == settingsId);
+
+            int? entitlementId = entitlement?.LeaveEntitlementId;
+
+            // Step 4: Delete in the correct order
+
+            if (settingsDetailsId.HasValue)
+            {
+                var exceptions = _context.HrmLeaveExceptionalEligibilities
+                    .Where(e => e.SettingsDetailsHeadId == settingsDetailsId.Value);
+                _context.HrmLeaveExceptionalEligibilities.RemoveRange(exceptions);
+
+                var details = _context.HrmLeaveBasicsettingsDetails
+                    .Where(d => d.SettingsId == settingsId);
+                _context.HrmLeaveBasicsettingsDetails.RemoveRange(details);
+            }
+
+            if (entitlementId.HasValue)
+            {
+                var entitlementRegs = _context.HrmLeaveEntitlementRegs
+                    .Where(r => r.LeaveEntitlementId == entitlementId.Value);
+                _context.HrmLeaveEntitlementRegs.RemoveRange(entitlementRegs);
+
+                _context.HrmLeaveEntitlementHeads.Remove(entitlement);
+            }
+
+            var basicSettings = _context.HrmLeaveBasicSettings
+                .Where(s => s.SettingsId == settingsId);
+            _context.HrmLeaveBasicSettings.RemoveRange(basicSettings);
+
+            _context.HrmLeaveMasterandsettingsLinks.Remove(settingsLink);
+
+            var leaveMaster = await _context.HrmLeaveMasters
+                .FirstOrDefaultAsync(lm => lm.LeaveMasterId == masterId);
+            if (leaveMaster != null)
+                _context.HrmLeaveMasters.Remove(leaveMaster);
+
+            await _context.SaveChangesAsync();
+
+            return masterId;
+        }
 
     }
     public class EntityApplicableApiDto

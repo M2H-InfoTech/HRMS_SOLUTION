@@ -68,5 +68,18 @@ namespace LEAVE.Controllers.BasicSettings
             var fillleavetypeList = await _basicSettingsService.FillleavetypeListAsync(SecondEntityId, Empid);
             return new JsonResult(fillleavetypeList);
         }
+
+        [HttpGet("GetEditbasicsettingsAsync")]
+        public async Task<IActionResult> GetEditbasicsettingsAsync(int masterid)
+        {
+            var fillleavetypeListss = await _basicSettingsService.GetEditbasicsettingsAsync( masterid);
+            return new JsonResult(fillleavetypeListss);
+        }
+        //[HttpGet]
+        //public async Task<IActionResult> GetEditbasicsettingsAsync(int masterid)
+        //{
+        //    var getEditbasicsettings = await _basicSettingsService.getEditbasicsettings(masterid);
+        //    return new JsonResult(getEditbasicsettings);
+        //}
     }
 }

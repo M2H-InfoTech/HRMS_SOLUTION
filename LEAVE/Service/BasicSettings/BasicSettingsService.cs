@@ -47,5 +47,9 @@ namespace LEAVE.Service.BasicSettings
         {
             return _basicSettingsRepository.FillleavetypeListAsync( SecondEntityId,  Empid);
         }
+        public Task<List<BasicSettingDto>> GetEditbasicsettingsAsync(int masterid)
+        {
+            return _basicSettingsRepository.GetEditbasicsettingsAsync(masterid);
+        }
     }
 }
