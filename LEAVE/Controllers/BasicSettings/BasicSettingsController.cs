@@ -1,12 +1,13 @@
-﻿using HRMS.EmployeeInformation.DTO.DTOs;
-using LEAVE.Dto;
+﻿using LEAVE.Dto;
 using LEAVE.Service.BasicSettings;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LEAVE.Controllers.BasicSettings
 {
+    [ApiController]
     [Route("api/[controller]/[action]")]
-    public class BasicSettingsController : Controller
+    //[Authorize]
+    public class BasicSettingsController : ControllerBase
     {
         //public IActionResult Index()
         //{
@@ -50,7 +51,7 @@ namespace LEAVE.Controllers.BasicSettings
             var getDeletebasics = await _basicSettingsService.GetDeletebasics(Basicsettingsid, Masterid);
             return Ok(getDeletebasics);
         }
-        [HttpGet]     
+        [HttpGet]
         public async Task<IActionResult> Geteditdetails(string entitlement, int masterId, int? experienceId = null)
         {
             var Geteditdetails = await _basicSettingsService.Geteditdetails(entitlement, masterId, experienceId);
@@ -63,7 +64,7 @@ namespace LEAVE.Controllers.BasicSettings
             return Ok(Createbasicsettings);
         }
         [HttpGet]
-        public async Task<IActionResult> FillleavetypeListAsync( int SecondEntityId, int Empid)
+        public async Task<IActionResult> FillleavetypeListAsync(int SecondEntityId, int Empid)
         {
             var fillleavetypeList = await _basicSettingsService.FillleavetypeListAsync(SecondEntityId, Empid);
             return new JsonResult(fillleavetypeList);

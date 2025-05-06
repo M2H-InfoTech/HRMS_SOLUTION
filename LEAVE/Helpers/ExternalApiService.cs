@@ -9,10 +9,11 @@ namespace LEAVE.Helpers
         public ExternalApiService(HttpClient httpClient)
         {
             _httpClient = httpClient;
+
         }
         public async Task<int> GetTransactionIdByTransactionTypeAsync(string transactionType)
         {
-            var response = await _httpClient.GetAsync($"http://localhost:5194/gateway/Employee/GetTransactionIdByTransactionType?transactionType={transactionType}");
+            var response = await _httpClient.GetAsync($"http://10.25.25.124:84/gateway/Employee/GetTransactionIdByTransactionType?transactionType={transactionType}");
             var content = await response.Content.ReadAsStringAsync();
 
             if (!int.TryParse(content, out int transactionId))
@@ -22,10 +23,30 @@ namespace LEAVE.Helpers
 
             return transactionId;
         }
+        //public async Task<int> GetTransactionIdByTransactionTypeAsync(string transactionType)
+        //{
+        //    var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyMzExNDI3IiwianRpIjoiZjQwZWUzMDEtYjk4OS00ZmRmLWE3MmEtY2MyZTdiMzI0MTI5IiwibmJmIjoxNzQ2NDYzOTc4LCJleHAiOjE3NDY0NjU3NzgsImlhdCI6MTc0NjQ2Mzk3OCwiaXNzIjoiTTJITExQLEN5YmVycGFyayxLb3poaWtvZGUiLCJhdWQiOiJvZmZpY2VraXRBcHBzVXNlcnNBbmRNYW5hZ2VycyJ9.4xEJgjg94gvXGZJxOpAmjhJLMkvTKwYqlFejZbQ0_hw";
+
+        //    var request = new HttpRequestMessage(HttpMethod.Get,
+        //        $"http://localhost:5194/gateway/Employee/GetTransactionIdByTransactionType?transactionType={transactionType}");
+
+        //    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        //    var response = await _httpClient.SendAsync(request);
+        //    var content = await response.Content.ReadAsStringAsync();
+
+        //    if (!int.TryParse(content, out int transactionId))
+        //    {
+        //        throw new InvalidOperationException("Failed to parse transaction ID.");
+        //    }
+
+        //    return transactionId;
+        //}
+
 
         public async Task<int> GetLinkLevelByRoleIdAsync(int roleId)
         {
-            var response = await _httpClient.GetAsync($"http://localhost:5194/gateway/Employee/GetLinkLevelByRoleId?roleId={roleId}");
+            var response = await _httpClient.GetAsync($"http://10.25.25.124:84/gateway/Employee/GetLinkLevelByRoleId?roleId={roleId}");
             var content = await response.Content.ReadAsStringAsync();
 
             if (!int.TryParse(content, out int linkLevel))
@@ -38,7 +59,7 @@ namespace LEAVE.Helpers
 
         public async Task<bool> GetEntityAccessRightsAsync(int roleId, int linkLevel)
         {
-            var response = await _httpClient.GetAsync($"http://localhost:5194/gateway/Employee/GetEntityAccessRights?roleId={roleId}&linkSelect={linkLevel}");
+            var response = await _httpClient.GetAsync($"http://10.25.25.124:84/gateway/Employee/GetEntityAccessRights?roleId={roleId}&linkSelect={linkLevel}");
             var content = await response.Content.ReadAsStringAsync();
             return !string.IsNullOrEmpty(content) && content.Any();
         }
@@ -46,7 +67,7 @@ namespace LEAVE.Helpers
         {
             try
             {
-                var response = await _httpClient.GetAsync($"http://localhost:5194/gateway/Employee/AccessChecking?empId={roleId}&code={code}&roleId={roleId}");
+                var response = await _httpClient.GetAsync($"http://10.25.25.124:84/gateway/Employee/AccessChecking?empId={roleId}&code={code}&roleId={roleId}");
 
                 if (!response.IsSuccessStatusCode)
                 {

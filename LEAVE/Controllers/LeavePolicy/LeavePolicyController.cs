@@ -6,7 +6,8 @@ namespace LEAVE.Controllers.LeavePolicy
 {
     [ApiController]
     [Route("api/[controller]/[action]")]
-    public class LeavePolicyController : Controller
+    //[Authorize]
+    public class LeavePolicyController : ControllerBase
     {
         private readonly ILeavePolicyService _leavePolicyService;
         public LeavePolicyController(ILeavePolicyService leavePolicyService)

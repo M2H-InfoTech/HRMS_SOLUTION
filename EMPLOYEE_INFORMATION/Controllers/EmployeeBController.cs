@@ -7,6 +7,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
 {
     [ApiController]
     [Route("api/[controller]/[action]")]
+    //[Authorize]
     public class EmployeeBController : Controller
     {
         private readonly IEmployeeInformationServiceB _employeeInformationB;
@@ -14,7 +15,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
         public EmployeeBController(IEmployeeInformationServiceB employeeInformationB, IEmployeeRepository employeerepositoryB)
         {
             _employeeInformationB = employeeInformationB;
-            _employeerepositoryB =employeerepositoryB;
+            _employeerepositoryB = employeerepositoryB;
 
         }
 
@@ -118,7 +119,7 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformationB.SavefieldsReasonsAsync(saveReasonDto);
             return Ok(result);
         }
-        
-        
+
+
     }
 }

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.Helpers;
 using EMPLOYEE_INFORMATION.Services.Mapping;
@@ -31,7 +31,7 @@ internal class Program
         builder.Services.AddControllers();
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        //builder.Services.AddSwaggerGen();
         builder.Services.AddDbContextFactory<EmployeeDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
         builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         builder.Services.AddScoped<IRepositoryB, RepositoryB>();
@@ -46,7 +46,35 @@ internal class Program
         builder.Services.AddAutoMapper(typeof(EmployeeMapper));
         builder.Services.AddScoped<IDocUploadRepository, DocUploadRepository>();
         builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-        builder.Services.AddAuthentication(options =>
+        builder.Services.AddSwaggerGen(options =>
+        {
+            // Add JWT bearer definition
+            options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                Scheme = "Bearer",
+                BearerFormat = "JWT",
+                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                Description = "Enter 'Bearer' [space] and then your valid JWT token.\nExample: Bearer eyJhbGciOiJIUzI1NiIsInR..."
+            });
+
+            // Apply security globally
+            options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+        }); builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -63,10 +91,18 @@ internal class Program
                 ValidAudience = jwtSettings["Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
             };
+            options.Events = new JwtBearerEvents
+            {
+                OnAuthenticationFailed = context =>
+                {
+                    Console.WriteLine($"🔐 JWT Authentication failed: {context.Exception.Message}");
+                    return Task.CompletedTask;
+                }
+            };
 
         });
         //builder.Services.AddMemoryCache();
-        builder.Services.AddAuthorization(options => options.AddPolicy("AdminPolicy", p => p.RequireRole("Admin")));
+        builder.Services.AddAuthorization();
 
         builder.Services.AddRateLimiter(rateLimiteroptions =>
         {
