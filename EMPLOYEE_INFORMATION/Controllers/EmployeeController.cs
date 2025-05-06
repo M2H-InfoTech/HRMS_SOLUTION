@@ -4,15 +4,17 @@ using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Repository.Common;
 using HRMS.EmployeeInformation.Repository.Common.DocUpload;
 using HRMS.EmployeeInformation.Service.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace EMPLOYEE_INFORMATION.Controllers
 {
+
     [ApiController]
     [Route("api/[controller]/[action]")]
-
+    //[Authorize]
     public class EmployeeController : Controller
     {
         private readonly IEmployeeInformationService _employeeInformation;
@@ -27,10 +29,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             _employeeSettings = employeeSettings.Value;
             _empDocumentService = empDocumentService;
         }
+        [AllowAnonymous]
         [HttpGet]
-        public IActionResult Index()
+        public IActionResult GenerateToken(string userId)
         {
-            var token = _tokenService.GenerateToken("2311427", "Admin");
+            var token = _tokenService.GenerateToken(userId);
             return Ok(token);
         }
         [HttpPost]
@@ -51,7 +54,6 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var options = Enum.GetValues(typeof(ProbationStatus)).Cast<ProbationStatus>().Select(e => new { Id = (int)e, Name = e.ToString() });
             return await Task.FromResult(Ok(options));
         }
-
         [HttpGet]
         public async Task<IActionResult> LanguageSkill(int employeeId)
         {
