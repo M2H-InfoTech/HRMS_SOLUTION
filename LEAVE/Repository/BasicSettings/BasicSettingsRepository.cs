@@ -15,7 +15,7 @@ namespace LEAVE.Repository.BasicSettings
     {
         private readonly EmployeeDBContext _context;
         private readonly HttpClient _httpClient;
-      
+
         private IAccessMetadataService _accessMetadataService;
         public BasicSettingsRepository(EmployeeDBContext dbContext, HttpClient httpClient, IAccessMetadataService accessMetadataService)
         {
@@ -132,7 +132,7 @@ namespace LEAVE.Repository.BasicSettings
                         .ToListAsync();
                     _context.HrmLeaveBasicSettings.RemoveRange(basicSettings);
 
-                   
+
 
                     // Delete from EntityApplicable00
                     var applicableEntities = await _context.EntityApplicable00s
@@ -250,10 +250,10 @@ namespace LEAVE.Repository.BasicSettings
                                   where h.SettingsId == masterId
                                   select new
                                   {
-                                     s.FromYear,
+                                      s.FromYear,
                                       s.ToYear,
                                       h.LeaveCount,
-                                      s.IdServiceLeave,    
+                                      s.IdServiceLeave,
                                       s.ExperiancebasedGrant,
                                       s.Experiancebasedrollover,
                                       s.Checkcase,
@@ -418,8 +418,8 @@ namespace LEAVE.Repository.BasicSettings
                                       b.LeaveCriteriaNewjoin,
                                       b.CalculateOnFirstNewjoin,
                                       b.CalculateOnSecondNewjoin,
-                                      ShowcurrentmonthWeekoff =                             b.ShowcurrentmonthWeekoff ?? 0,
-                                      Leavebalanceroundoption =                                 b.Leavebalanceroundoption ?? 0,
+                                      ShowcurrentmonthWeekoff = b.ShowcurrentmonthWeekoff ?? 0,
+                                      Leavebalanceroundoption = b.Leavebalanceroundoption ?? 0,
                                       c.RejoinWarningShow,
                                       c.RejoinWarningShowDaysMax,
                                       NyearBasedOnJoinDate = d != null ? d.NyearBasedOnJoinDate ?? 0 : 0,
@@ -432,7 +432,7 @@ namespace LEAVE.Repository.BasicSettings
                                       d.ToJoinDate,
                                       d.LeaveCountBtw
                                   }).ToListAsync();
-                    
+
 
 
                 default:
@@ -442,7 +442,7 @@ namespace LEAVE.Repository.BasicSettings
 
         public async Task<int> Createbasicsettings(CreatebasicsettingsDto CreatebasicsettingsDto)
         {
-           // description = CamelCase(description); // If you have a method for CamelCase conversion    
+            // description = CamelCase(description); // If you have a method for CamelCase conversion    
 
             if (CreatebasicsettingsDto.masterId == 0)
             {
@@ -454,8 +454,8 @@ namespace LEAVE.Repository.BasicSettings
                     if (existingSetting != null)
                     {
                         existingSetting.SettingsName = CreatebasicsettingsDto.leaveCode;
-                        existingSetting.SettingsDescription = CreatebasicsettingsDto. description;
-                        existingSetting.DaysOrHours = CreatebasicsettingsDto. basedOn;
+                        existingSetting.SettingsDescription = CreatebasicsettingsDto.description;
+                        existingSetting.DaysOrHours = CreatebasicsettingsDto.basedOn;
 
                         await _context.SaveChangesAsync();
                         return CreatebasicsettingsDto.basicSettingsId;
@@ -471,7 +471,7 @@ namespace LEAVE.Repository.BasicSettings
                         var newSetting = new HrmLeaveBasicSetting
                         {
                             SettingsName = CreatebasicsettingsDto.leaveCode,
-                            SettingsDescription = CreatebasicsettingsDto. description,
+                            SettingsDescription = CreatebasicsettingsDto.description,
                             DaysOrHours = CreatebasicsettingsDto.basedOn,
                             CreatedBy = CreatebasicsettingsDto.createdBy,
                             CreatedDate = DateTime.UtcNow
@@ -497,7 +497,7 @@ namespace LEAVE.Repository.BasicSettings
                         SettingsDescription = CreatebasicsettingsDto.description,
                         DaysOrHours = CreatebasicsettingsDto.basedOn,
                         CreatedBy = CreatebasicsettingsDto.createdBy,
-                        CreatedDate = DateTime.UtcNow  
+                        CreatedDate = DateTime.UtcNow
                     };
 
                     _context.HrmLeaveBasicSettings.Add(newSetting);
@@ -536,11 +536,11 @@ namespace LEAVE.Repository.BasicSettings
                     (l, users) => new { Leave = l, User = users.FirstOrDefault() })
                 .Select(x => new LeaveDetailModelDto
                 {
-                 
+
                     LeaveMasterId = x.Leave.LeaveMasterId,
                     LeaveCode = x.Leave.LeaveCode
-                  
-                  
+
+
                 })
                 .ToListAsync();
         }
@@ -569,6 +569,27 @@ namespace LEAVE.Repository.BasicSettings
             }
         }
 
-       
+
+
+        public async Task<List<BasicSettingDto>> GetEditbasicsettingsAsync(int masterid)
+        {
+            return await _context.HrmLeaveBasicSettings
+                 .Join(_context.HrmLeaveMasterandsettingsLinks,
+                     setting => setting.SettingsId,
+                     link => link.SettingsId,
+                     (setting, link) => new { setting, link })
+                 .Where(x => x.link.LeaveMasterId == masterid)
+                 .Select(x => new BasicSettingDto
+                 {
+                     SettingsName = x.setting.SettingsName,
+                     SettingsDescription = x.setting.SettingsDescription,
+                     LeaveMasterId = x.link.LeaveMasterId,
+                     DaysOrHours = x.setting.DaysOrHours
+                 })
+                 .ToListAsync();
+        }
     }
+
+
 }
+

@@ -13,6 +13,6 @@ namespace LEAVE.Service.BasicSettings
         Task<object> Geteditdetails(string entitlement, int masterId, int? experienceId = null);
         Task<int> Createbasicsettings(CreatebasicsettingsDto CreatebasicsettingsDto);
         Task<List<LeaveDetailModelDto>> FillleavetypeListAsync(int SecondEntityId, int Empid);
-
+       Task<List<BasicSettingDto>> GetEditbasicsettingsAsync(int masterid);
     }
 }

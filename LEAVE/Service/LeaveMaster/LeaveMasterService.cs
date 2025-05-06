@@ -1,6 +1,7 @@
 ﻿
 using LEAVE.Dto;
 using LEAVE.Repository.LeaveMaster;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LEAVE.Service.LeaveMaster
 {
@@ -38,6 +39,14 @@ namespace LEAVE.Service.LeaveMaster
         public async Task<string> ProcessEntityApplicableAsync(EntityApplicableApiDto entityApplicableApiDtos)
         {
             return await _leaveMasterRepository.ProcessEntityApplicableAsync(entityApplicableApiDtos);
+        }
+        public Task<List<object>> GetEditLeaveMastersAsync(int masterId)
+        {
+            return _leaveMasterRepository.GetEditLeaveMastersAsync(masterId);
+        }
+        public Task<int> GetDeleteLeaveMastersAsync(int masterId)
+        {
+            return _leaveMasterRepository.GetDeleteLeaveMastersAsync(masterId);
         }
     }
 }
