@@ -62,7 +62,7 @@ namespace LEAVE.Controllers.AssignLeave
             }
         }
         [HttpPost]//Created by Shan Lal K
-        public async Task<IActionResult> AssignBasicsAsync (LeaveAssignSaveDto Dto)
+        public async Task<IActionResult> AssignBasicsAsync ([FromBody]LeaveAssignSaveDto Dto)
         {
             if (Dto == null)
             {
