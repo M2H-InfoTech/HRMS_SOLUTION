@@ -8,8 +8,8 @@ namespace LEAVE.Dto
 {
     public class LeaveAssignSaveDto
     {
-        public string LeaveMastersCsv { get; set; }
-        public string EmployeeIdsCsv { get; set; }
+        public string LeaveMasters { get; set; }
+        public string EmployeeIds { get; set; }
         public DateTime FromDate { get; set; }
         public DateTime? ValidTo { get; set; }
         public int EntryBy { get; set; }
