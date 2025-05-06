@@ -483,8 +483,8 @@ namespace LEAVE.Repository.AssignLeave
 
         public async Task<int> AssignBasicsAsync (LeaveAssignSaveDto dto)
         {
-            var leaveMasterIds = SplitToIntList (dto.LeaveMastersCsv);
-            var employeeIds = SplitToIntList (dto.EmployeeIdsCsv);
+            var leaveMasterIds = SplitToIntList (dto.LeaveMasters);
+            var employeeIds = SplitToIntList (dto.EmployeeIds);
             await using var transaction = await _context.Database.BeginTransactionAsync ( );
             try
             {
