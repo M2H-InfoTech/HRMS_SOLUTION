@@ -7,11 +7,13 @@ namespace LEAVE.Helpers
     {
         private readonly HttpClient _httpClient;
         private readonly string _baseUrl;
-
-        public ExternalApiService(HttpClient httpClient, HttpClientSettings ocelotSettings)
+        public ExternalApiService(HttpClient httpClient, HttpClientSettings httpClientSettings)
         {
-            _httpClient = httpClient;
-            _baseUrl = ocelotSettings.baseUrl;
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            if (httpClientSettings == null || string.IsNullOrWhiteSpace(httpClientSettings.baseUrl))
+                throw new ArgumentException("Base URL configuration is invalid.", nameof(httpClientSettings));
+
+            _baseUrl = httpClientSettings.baseUrl;
         }
 
         public async Task<int> GetTransactionIdByTransactionTypeAsync(string transactionType)
