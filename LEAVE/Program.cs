@@ -15,6 +15,7 @@ using LEAVE.Service.LeaveMaster;
 using LEAVE.Service.LeavePolicy;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -101,7 +102,8 @@ builder.Services.AddScoped<ILeavePolicyService, LeavePolicyService>();
 builder.Services.AddScoped<ILeavePolicyRepository, LeavePolicyRepository>();
 builder.Services.AddHttpClient<ExternalApiService>();
 builder.Services.AddScoped<IAccessMetadataService, AccessMetadataService>();
-//builder.Services.AddSingleton<TokenService>();
+builder.Services.Configure<HttpClientSettings>(builder.Configuration.GetSection("HttpClientSettings"));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<HttpClientSettings>>().Value);
 
 builder.Services.AddCors(options =>
 {
