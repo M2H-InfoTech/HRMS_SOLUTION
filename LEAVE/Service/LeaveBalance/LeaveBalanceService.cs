@@ -15,6 +15,10 @@ namespace LEAVE.Service.LeaveBalance
         {
             return _leaveBalanceRepository.RetrieveBranchDetails(instID, branchID);
         }
+        public Task<List<LeaveApplicationDto>> GetLeaveApplicationsAsync(int employeeId, int leaveId, string approvalStatus, string? flowStatus, DateTime? leaveFrom, DateTime? leaveTo)
+        {
+            return _leaveBalanceRepository.GetLeaveApplicationsAsync(employeeId, leaveId, approvalStatus, flowStatus, leaveFrom, leaveTo);
+        }
     }
 
 }

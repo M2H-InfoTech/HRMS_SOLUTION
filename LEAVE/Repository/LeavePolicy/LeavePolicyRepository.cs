@@ -286,6 +286,277 @@ namespace LEAVE.Repository.LeavePolicy
             return result;
         }
 
+
+        public async Task<List<object>> EditFillInstatntLimitLeaveAsync(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID)
+        {
+            var result = await (
+                from l in _context.LeavePolicyInstanceLimits
+                join m in _context.LeavePolicyMasters
+                    on l.LeavePolicyMasterId equals m.LeavePolicyMasterId
+                join n in _context.LeavePolicyLeaveIncludes
+                    on l.LeavePolicyInstanceLimitId equals n.LeavePolicyInstanceLimitId into leaveIncludes
+                from n in leaveIncludes.DefaultIfEmpty() // Left join to include rows even when there's no match
+                where l.LeavePolicyMasterId == LeavePolicyMasterID &&
+                      (l.LeavePolicyInstanceLimitId == LeavePolicyInstanceLimitID || LeavePolicyInstanceLimitID == 0)
+                select new
+                {
+                    n.Leavestatus,
+                    leaveFromdays = n.Fromdays,
+                    leaveLeavetype = n.Leavetype,
+                    n.LeaveDays,
+                    n.OffdaysIncExc
+                }
+            ).ToListAsync();
+
+            return result.Cast<object>().ToList();
+        }
+
+        public async Task<List<object>> fillweekendinclude(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID)
+        {
+            var result = await (from l in _context.LeavePolicyInstanceLimits
+                                join m in _context.LeavePolicyMasters
+                                    on l.LeavePolicyMasterId equals m.LeavePolicyMasterId
+                                join n in _context.LeavePolicyWeekendIncludes
+                                    on l.LeavePolicyInstanceLimitId equals n.LeavePolicyInstanceLimitId into weekendGroup
+                                from n in weekendGroup.DefaultIfEmpty()
+                                where l.LeavePolicyMasterId == LeavePolicyMasterID &&
+                                      (LeavePolicyInstanceLimitID == 0 || l.LeavePolicyInstanceLimitId == LeavePolicyInstanceLimitID)
+                                select new
+                                {
+                                    Weekendstatus = n.Weekendstatus,
+                                    weekFromdays = n.Fromdays,
+                                    weekTodays = n.Todays,
+                                    weekLeavetype = n.Leavetype,
+                                    LeaveDays = n.LeaveDays,
+                                    OffdaysIncExc = n.OffdaysIncExc
+                                }).ToListAsync();
+
+            return result.Cast<object>().ToList();
+        }
+
+
+        public async Task<List<object>> FillHolidayincludeAsync(int leavePolicyMasterID, int leavePolicyInstanceLimitID)
+        {
+            var result = await (from l in _context.LeavePolicyInstanceLimits
+                                join m in _context.LeavePolicyMasters
+                                    on l.LeavePolicyMasterId equals m.LeavePolicyMasterId
+                                join h in _context.LeavePolicyHolidayIncludes
+                                    on l.LeavePolicyInstanceLimitId equals h.LeavePolicyInstanceLimitId into holidayGroup
+                                from h in holidayGroup.DefaultIfEmpty()
+                                where l.LeavePolicyMasterId == leavePolicyMasterID &&
+                                      (leavePolicyInstanceLimitID == 0 || l.LeavePolicyInstanceLimitId == leavePolicyInstanceLimitID)
+                                select new
+                                {
+                                    h.Holidaystatus,
+                                    holFromdays = h.Fromdays,
+                                    holTodays = h.Todays,
+                                    holLeavetype = h.Leavetype,
+                                    h.LeaveDays,
+                                    h.OffdaysIncExc
+                                }).ToListAsync();
+
+            return result.Cast<object>().ToList();
+        }
+        public async Task<string> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto dto, string compLeaveIDs, int empId)
+        {
+            if (dto.LeavePolicyInstanceLimitID == 0)
+            {
+                // Duplicate check
+                var isDuplicate = await _context.LeavePolicyInstanceLimits.AnyAsync(l =>
+                    l.LeavePolicyMasterId == dto.LeavePolicyMasterID &&
+                    l.LeaveId == dto.LeaveID);
+
+                if (isDuplicate)
+                    return "Already";
+
+                // Insert logic
+                var entity = new LeavePolicyInstanceLimit
+                {
+                    LeavePolicyMasterId = dto.LeavePolicyMasterID,
+                    InstId = dto.Inst_Id,
+                    LeaveId = dto.LeaveID,
+                    MaximamLimit = dto.MaximamLimit,
+                    MinimumLimit = dto.MinimumLimit,
+                    IsHolidayIncluded = dto.IsHolidayIncluded,
+                    IsWeekendIncluded = dto.IsWeekendIncluded,
+                    NoOfDayIncludeHoliday = dto.NoOfDayIncludeHoliday,
+                    NoOfDayIncludeWeekEnd = dto.NoOfDayIncludeWeekEnd,
+                    EntryBy = dto.EntryBy,
+                    EntryDate = DateTime.UtcNow,
+                    Daysbtwnleaves = dto.Daysbtwnleaves,
+                    Salaryadvancedays = dto.Salaryadvancedays,
+                    Roledeligationdays = dto.Roledeligationdays,
+                    Attachmentdays = dto.Attachmentdays,
+                    ProbationMl = dto.ProbationML,
+                    NewjoinMl = dto.NewjoinML,
+                    OtherMl = dto.OtherML,
+                    Halfday = dto.Halfday,
+                    PredatedApplication = dto.PredatedApplication,
+                    Daysbtwndifferentleave = dto.Daysbtwndifferentleave,
+                    Daysleaveclubbing = dto.Daysleaveclubbing,
+                    Predateddayslimit = dto.Predateddayslimit,
+                    Returndate = dto.Returndate,
+                    Autotravelapprove = dto.Autotravelapprove,
+                    Leaveinclude = dto.Leaveinclude,
+                    Contactdetails = dto.Contactdetails,
+                    Leavereason = dto.Leavereason,
+                    Approvremark = dto.Approvremark,
+                    Nobalance = dto.Nobalance,
+                    Applyafterallleave = dto.Applyafterallleave,
+                    Applyafterleaveids = dto.Applyafterleaveids,
+                    Showinapplicationonly = dto.Showinapplicationonly,
+                    Rejectremark = dto.Rejectremark,
+                    Predatedapplicationproxy = dto.Predatedapplicationproxy,
+                    Predateddayslimitproxy = dto.Predateddayslimitproxy,
+                    PredatedapplicationAttendance = dto.PredatedapplicationAttendance,
+                    PredatedapplicationAttendanceDays = dto.PredatedapplicationAttendanceDays,
+                    FutureleaveApplication = dto.FutureleaveApplication,
+                    FutureleaveApplicationDays = dto.FutureleaveApplicationDays
+                };
+
+                _context.LeavePolicyInstanceLimits.Add(entity);
+                await _context.SaveChangesAsync();
+
+                dto.LeavePolicyInstanceLimitID = entity.LeavePolicyInstanceLimitId;
+            }
+            else
+            {
+                // Update logic
+                var existing = await _context.LeavePolicyInstanceLimits
+                    .FirstOrDefaultAsync(x => x.LeavePolicyInstanceLimitId == dto.LeavePolicyInstanceLimitID);
+
+                if (existing == null) return "NotFound";
+
+                // Update fields
+                existing.LeaveId = dto.LeaveID;
+                existing.MaximamLimit = dto.MaximamLimit;
+                existing.MinimumLimit = dto.MinimumLimit;
+                existing.EntryBy = dto.EntryBy;
+                existing.EntryDate = DateTime.UtcNow;
+                existing.IsHolidayIncluded = dto.IsHolidayIncluded;
+                existing.IsWeekendIncluded = dto.IsWeekendIncluded;
+                existing.NoOfDayIncludeHoliday = dto.NoOfDayIncludeHoliday;
+                existing.NoOfDayIncludeWeekEnd = dto.NoOfDayIncludeWeekEnd;
+                existing.Daysbtwnleaves = dto.Daysbtwnleaves;
+                existing.Salaryadvancedays = dto.Salaryadvancedays;
+                existing.Roledeligationdays = dto.Roledeligationdays;
+                existing.Attachmentdays = dto.Attachmentdays;
+                existing.ProbationMl = dto.ProbationML;
+                existing.NewjoinMl = dto.NewjoinML;
+                existing.OtherMl = dto.OtherML;
+                existing.Halfday = dto.Halfday;
+                existing.PredatedApplication = dto.PredatedApplication;
+                existing.Daysbtwndifferentleave = dto.Daysbtwndifferentleave;
+                existing.Daysleaveclubbing = dto.Daysleaveclubbing;
+                existing.Predateddayslimit = dto.Predateddayslimit;
+                existing.Returndate = dto.Returndate;
+                existing.Autotravelapprove = dto.Autotravelapprove;
+                existing.Leaveinclude = dto.Leaveinclude;
+                existing.Contactdetails = dto.Contactdetails;
+                existing.Leavereason = dto.Leavereason;
+                existing.Approvremark = dto.Approvremark;
+                existing.Nobalance = dto.Nobalance;
+                existing.Applyafterallleave = dto.Applyafterallleave;
+                existing.Applyafterleaveids = dto.Applyafterleaveids;
+                existing.Showinapplicationonly = dto.Showinapplicationonly;
+                existing.Rejectremark = dto.Rejectremark;
+                existing.Predatedapplicationproxy = dto.Predatedapplicationproxy;
+                existing.Predateddayslimitproxy = dto.Predateddayslimitproxy;
+                existing.PredatedapplicationAttendance = dto.PredatedapplicationAttendance;
+                existing.PredatedapplicationAttendanceDays = dto.PredatedapplicationAttendanceDays;
+                existing.FutureleaveApplication = dto.FutureleaveApplication;
+                existing.FutureleaveApplicationDays = dto.FutureleaveApplicationDays;
+
+                await _context.SaveChangesAsync();
+
+                // Clean up old references
+                var oldIncludes = _context.LeavePolicyLeaveNotIncludes
+                    .Where(x => x.LeavePolicyInstanceLimitId == dto.LeavePolicyInstanceLimitID);
+                _context.LeavePolicyLeaveNotIncludes.RemoveRange(oldIncludes);
+
+                _context.HrmLeaveProofs.RemoveRange(
+                    _context.HrmLeaveProofs.Where(x => x.InstantlimitId == dto.LeavePolicyInstanceLimitID));
+
+                _context.LeavePolicyHolidayIncludes.RemoveRange(
+                    _context.LeavePolicyHolidayIncludes.Where(x => x.LeavePolicyInstanceLimitId == dto.LeavePolicyInstanceLimitID));
+
+                _context.LeavePolicyWeekendIncludes.RemoveRange(
+                    _context.LeavePolicyWeekendIncludes.Where(x => x.LeavePolicyInstanceLimitId == dto.LeavePolicyInstanceLimitID));
+
+                _context.LeavePolicyLeaveIncludes.RemoveRange(
+                    _context.LeavePolicyLeaveIncludes.Where(x => x.LeavePolicyInstanceLimitId == dto.LeavePolicyInstanceLimitID));
+
+                await _context.SaveChangesAsync();
+
+                // Insert audit record
+                //_context.LeavePolicyHistories.Add(new LeavePolicyHistory
+                //{
+                //    Leavepolicymasterid = dto.LeavePolicyMasterID,
+                //    EmployeeId = empId,
+                //    UpdatedBy = empId,
+                //    UpdatedDate = DateTime.UtcNow
+                //});
+
+                //await _context.SaveChangesAsync();
+            }
+
+            // Reinsert LeavePolicyLeaveNotInclude
+            if (!string.IsNullOrWhiteSpace(compLeaveIDs))
+            {
+                var leaveIdList = compLeaveIDs.Split(',')
+                    .Select(id => int.TryParse(id, out var val) ? val : (int?)null)
+                    .Where(id => id.HasValue)
+                    .Select(id => new LeavePolicyLeaveNotInclude
+                    {
+                        LeavePolicyInstanceLimitId = dto.LeavePolicyInstanceLimitID,
+                        LeavePolicyMasterId = dto.LeavePolicyMasterID,
+                        LeaveId = id.Value,
+                        CreatedBy = dto.EntryBy,
+                        CreatedDate = DateTime.UtcNow
+                    });
+
+                _context.LeavePolicyLeaveNotIncludes.AddRange(leaveIdList);
+                await _context.SaveChangesAsync();
+            }
+
+            return dto.LeavePolicyInstanceLimitID.ToString();
+        }
+
+        public async Task<string?> DeleteInstanceLimit(int LeavePolicyInstanceLimitID)
+        {
+            var leaveNotIncludes = _context.LeavePolicyLeaveNotIncludes
+                .Where(x => x.LeavePolicyInstanceLimitId == LeavePolicyInstanceLimitID);
+            _context.LeavePolicyLeaveNotIncludes.RemoveRange(leaveNotIncludes);
+
+            var leaveIncludes = _context.LeavePolicyLeaveIncludes
+                .Where(x => x.LeavePolicyInstanceLimitId == LeavePolicyInstanceLimitID);
+            _context.LeavePolicyLeaveIncludes.RemoveRange(leaveIncludes);
+
+            var holidayIncludes = _context.LeavePolicyHolidayIncludes
+                .Where(x => x.LeavePolicyInstanceLimitId == LeavePolicyInstanceLimitID);
+            _context.LeavePolicyHolidayIncludes.RemoveRange(holidayIncludes);
+
+            var weekendIncludes = _context.LeavePolicyWeekendIncludes
+                .Where(x => x.LeavePolicyInstanceLimitId == LeavePolicyInstanceLimitID);
+            _context.LeavePolicyWeekendIncludes.RemoveRange(weekendIncludes);
+
+            var leaveProofs = _context.HrmLeaveProofs
+                .Where(x => x.InstantlimitId == LeavePolicyInstanceLimitID);
+            _context.HrmLeaveProofs.RemoveRange(leaveProofs);
+
+            var instanceLimit = await _context.LeavePolicyInstanceLimits
+                .FirstOrDefaultAsync(x => x.LeavePolicyInstanceLimitId == LeavePolicyInstanceLimitID);
+            if (instanceLimit != null)
+            {
+                _context.LeavePolicyInstanceLimits.Remove(instanceLimit);
+            }
+            await _context.SaveChangesAsync();
+            string errorMessage = "true";
+
+            return errorMessage;
+        }
+
+ 
     }
 
 }

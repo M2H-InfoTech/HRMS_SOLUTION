@@ -6,6 +6,7 @@ using EMPLOYEE_INFORMATION.Models.Models.Entity;
 using EMPLOYEE_INFORMATION.Resource;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
+using LEAVE.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -326,6 +327,15 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrmLeaveServicedbasedleave> HrmLeaveServicedbasedleaves { get; set; }
     public virtual DbSet<ViewLeaveBasicsettingsDetail> ViewLeaveBasicsettingsDetails { get; set; }
     public virtual DbSet<MasterBranchDetail> MasterBranchDetails { get; set; }
+    public virtual DbSet<LeavePolicyLeaveInclude> LeavePolicyLeaveIncludes { get; set; }
+    public virtual DbSet<LeavePolicyWeekendInclude> LeavePolicyWeekendIncludes { get; set; }
+    public virtual DbSet<LeavePolicyHolidayInclude> LeavePolicyHolidayIncludes { get; set; }
+
+    public virtual DbSet<LeavePolicyHistory> LeavePolicyHistories { get; set; }
+    public virtual DbSet<HrmLeaveProof> HrmLeaveProofs { get; set; }
+    public virtual DbSet<LeaveApplication00> LeaveApplication00s { get; set; }
+    public virtual DbSet<LeaveApplication02> LeaveApplication02s { get; set; }
+    public virtual DbSet<Leavecancel00> Leavecancel00s { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -4892,6 +4902,191 @@ public partial class EmployeeDBContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.SubBranchId).HasColumnName("SubBranchID");
+        });
+
+        modelBuilder.Entity<LeavePolicyLeaveInclude>(entity =>
+        {
+            entity.HasKey(e => e.LeaveIncludeId);
+
+            entity.ToTable("LeavePolicyLeaveInclude");
+
+            entity.Property(e => e.Createddate).HasColumnType("datetime");
+            entity.Property(e => e.Fromdays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveDays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeavePolicyInstanceLimitId).HasColumnName("LeavePolicyInstanceLimitID");
+        });
+        modelBuilder.Entity<LeavePolicyWeekendInclude>(entity =>
+        {
+            entity.HasKey(e => e.WeekendIncludeId);
+
+            entity.ToTable("LeavePolicyWeekendInclude");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Fromdays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveDays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeavePolicyInstanceLimitId).HasColumnName("LeavePolicyInstanceLimitID");
+            entity.Property(e => e.Todays).HasColumnType("decimal(18, 2)");
+        });
+        modelBuilder.Entity<LeavePolicyHolidayInclude>(entity =>
+        {
+            entity.HasKey(e => e.HolidayIncludeId);
+
+            entity.ToTable("LeavePolicyHolidayInclude");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Fromdays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeaveDays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.LeavePolicyInstanceLimitId).HasColumnName("LeavePolicyInstanceLimitID");
+            entity.Property(e => e.Todays).HasColumnType("decimal(18, 2)");
+        });
+
+        modelBuilder.Entity<HrmLeaveProof>(entity =>
+        {
+            entity.HasKey(e => e.ProofId);
+
+            entity.ToTable("HRM_LEAVE_PROOF");
+
+            entity.Property(e => e.Proofdescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<LeavePolicyHistory>(entity =>
+        {
+            entity.ToTable("LEAVE_POLICY_HISTORY");
+
+            entity.Property(e => e.Ipaddress).HasColumnName("IPAddress");
+            entity.Property(e => e.Leavepolicymasterid).HasColumnName("LEAVEPOLICYMASTERID");
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<LeaveApplication00>(entity =>
+        {
+            entity.HasKey(e => e.LeaveApplicationId);
+
+            entity.ToTable("LeaveApplication00");
+
+            entity.Property(e => e.ApprovalStatus)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.CancelRemarks).IsUnicode(false);
+            entity.Property(e => e.Cancelflowstatus)
+                .HasMaxLength(5)
+                .IsUnicode(false);
+            entity.Property(e => e.Cancelstatus)
+                .HasMaxLength(5)
+                .IsUnicode(false);
+            entity.Property(e => e.Contactaddress)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.Contactnumber)
+                .HasMaxLength(25)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.EntryFrom)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.FlowStatus)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.IdproxyLeave).HasColumnName("IDProxyLeave");
+            entity.Property(e => e.LastupdatedDate).HasColumnType("datetime");
+            entity.Property(e => e.LeaveFrom).HasColumnType("datetime");
+            entity.Property(e => e.LeaveTo).HasColumnType("datetime");
+            entity.Property(e => e.NoOfLeaveDays).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.RejoinStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.RequestId).IsUnicode(false);
+            entity.Property(e => e.ReturnDate).HasColumnType("datetime");
+            entity.Property(e => e.RoleDelegationName)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
+            entity.Property(e => e.SecondApprovalStatus)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.Selectedfromdate)
+                .HasColumnType("datetime")
+                .HasColumnName("selectedfromdate");
+            entity.Property(e => e.Selectedtodate)
+                .HasColumnType("datetime")
+                .HasColumnName("selectedtodate");
+            entity.Property(e => e.SequenceId)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Transactiontype)
+                .IsUnicode(false)
+                .HasColumnName("transactiontype");
+            entity.Property(e => e.UpdatedFrom)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<LeaveApplication02>(entity =>
+        {
+            entity.HasKey(e => e.LeaveApp02Id);
+
+            entity.ToTable("LeaveApplication02");
+
+            entity.Property(e => e.Canceldays)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("canceldays");
+            entity.Property(e => e.Cancelstatus)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("cancelstatus");
+            entity.Property(e => e.Dayscount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ForLeaveancelId).HasColumnName("For_LeaveancelId");
+            entity.Property(e => e.LeaveDate).HasColumnType("datetime");
+            entity.Property(e => e.LeaveStatus)
+                .HasMaxLength(5)
+                .IsUnicode(false);
+            entity.Property(e => e.ProcesspayrollIdleaveIncluded).HasColumnName("ProcesspayrollIDleaveIncluded");
+            entity.Property(e => e.Processpayrollid).HasColumnName("processpayrollid");
+        });
+        modelBuilder.Entity<Leavecancel00>(entity =>
+        {
+            entity.HasKey(e => e.LeavecancelId);
+
+            entity.ToTable("Leavecancel00");
+
+            entity.Property(e => e.Cancelflowstatus)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.EntryFrom)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.FinalApprovalDate).HasColumnType("datetime");
+            entity.Property(e => e.Lcdays)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("LCDays");
+            entity.Property(e => e.Lcdaytype).HasColumnName("LCDaytype");
+            entity.Property(e => e.Lcfirsthalf).HasColumnName("LCFirsthalf");
+            entity.Property(e => e.Lcfromdate)
+                .HasColumnType("datetime")
+                .HasColumnName("LCFromdate");
+            entity.Property(e => e.LcfullLeave).HasColumnName("LCFullLeave");
+            entity.Property(e => e.Lclasthalf).HasColumnName("LCLasthalf");
+            entity.Property(e => e.LcproxyId).HasColumnName("LCProxyId");
+            entity.Property(e => e.Lcremark).HasColumnName("LCRemark");
+            entity.Property(e => e.Lcstatus)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("LCStatus");
+            entity.Property(e => e.Lctodate)
+                .HasColumnType("datetime")
+                .HasColumnName("LCTodate");
+            entity.Property(e => e.LeaveApplicationId).HasColumnName("LeaveApplicationID");
+            entity.Property(e => e.RequestCode).IsUnicode(false);
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedFrom)
+                .HasMaxLength(20)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);
