@@ -8,5 +8,11 @@ namespace LEAVE.Repository.LeavePolicy
         Task<int?> CreatepolicyAsync(CreatePolicyDto createPolicyDto);
         Task<List<object>> FillleaveAsync(int SecondEntityId, int EmpId);
         Task<List<object>> FillInstatntLimitAsync(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID);
+        Task<List<object>> EditFillInstatntLimitLeaveAsync(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID);
+        Task<List<object>> fillweekendinclude(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID);
+        Task<List<object>> FillHolidayincludeAsync(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID);
+        Task<string?> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto leavePolicyInstanceLimitDto, string compLeaveIDs, int empId);
+        Task<string?> DeleteInstanceLimit(int LeavePolicyInstanceLimitID);
+       
     }
 }
