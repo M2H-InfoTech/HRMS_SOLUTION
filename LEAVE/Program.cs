@@ -113,7 +113,7 @@ builder.Services.AddScoped<IAccessMetadataService, AccessMetadataService>();
 builder.Services.Configure<HttpClientSettings>(builder.Configuration.GetSection("HttpClientSettings"));
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<HttpClientSettings>>().Value);
 var app = builder.Build();
-//app.UseCors("AllowAllOrigins");
+app.UseCors("AllowAllOrigins");
 var supportedCulture = new[] { "en", "ar" };
 
 var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture("en").AddSupportedCultures(supportedCulture).AddSupportedUICultures(supportedCulture);
