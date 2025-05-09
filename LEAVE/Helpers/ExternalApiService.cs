@@ -72,5 +72,11 @@ namespace LEAVE.Helpers
 
             return await response.Content.ReadAsStringAsync();
         }
+
+        public async Task<int> EmployeeParameterSettings(int employeeId, string drpType, string parameterCode, string parameterType)
+        {
+            return await GetFromApiAsync<int>($"GetEmployeeParameterSettings?employeeId={employeeId}&drpType={drpType}&parameterCode={parameterCode}&parameterType={parameterType}");
+            //GetEmployeeParameterSettings?employeeId=72&drpType=EmployeeReporting&parameterCode=Leavecalculation&parameterType=COM
+        }
     }
 }
