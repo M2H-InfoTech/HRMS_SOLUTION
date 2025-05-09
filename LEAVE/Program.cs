@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using EMPLOYEE_INFORMATION.Data;
-using HRMS.EmployeeInformation.Repository.Helpers.Middleware;
 using LEAVE.Helpers;
 using LEAVE.Helpers.AccessMetadataService;
 using LEAVE.Repository.AssignLeave;
@@ -114,7 +113,11 @@ builder.Services.AddScoped<IAccessMetadataService, AccessMetadataService>();
 builder.Services.Configure<HttpClientSettings>(builder.Configuration.GetSection("HttpClientSettings"));
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<HttpClientSettings>>().Value);
 var app = builder.Build();
+//app.UseCors("AllowAllOrigins");
+var supportedCulture = new[] { "en", "ar" };
 
+var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture("en").AddSupportedCultures(supportedCulture).AddSupportedUICultures(supportedCulture);
+app.UseRequestLocalization(localizationOptions);
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -123,10 +126,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAllOrigins");
+
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<ExceptionMiddleware>();
+//app.UseMiddleware<ExceptionMiddleware>();
 app.MapControllers();
 
 app.Run();
