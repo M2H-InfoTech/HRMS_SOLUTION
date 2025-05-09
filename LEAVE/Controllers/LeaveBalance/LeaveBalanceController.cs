@@ -24,5 +24,13 @@ namespace LEAVE.Controllers.LeaveBalance
             var retrieveBranchDetails = await _leaveBalanceService.RetrieveBranchDetails(instID, branchID);
             return Ok(retrieveBranchDetails);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLeaveApplicationsAsync(int employeeId, int leaveId, string approvalStatus, string? flowStatus, DateTime? leaveFrom, DateTime? leaveTo)
+        {
+
+            var fillweekendinclude = await _leaveBalanceService.GetLeaveApplicationsAsync(employeeId, leaveId, approvalStatus, flowStatus, leaveFrom, leaveTo);
+            return Ok(fillweekendinclude);
+        }
     }
 }

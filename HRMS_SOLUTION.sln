@@ -21,8 +21,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LEAVE", "LEAVE\LEAVE.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ATTENDANCE", "ATTENDANCE\ATTENDANCE.csproj", "{481F4CC5-7D51-4E0E-9A9C-F2D6BDF0858F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GATEWAY", "GATEWAY\GATEWAY.csproj", "{AEBED3E5-D09A-4543-AE19-D848FBC54A05}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -65,10 +63,6 @@ Global
 		{481F4CC5-7D51-4E0E-9A9C-F2D6BDF0858F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{481F4CC5-7D51-4E0E-9A9C-F2D6BDF0858F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{481F4CC5-7D51-4E0E-9A9C-F2D6BDF0858F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AEBED3E5-D09A-4543-AE19-D848FBC54A05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AEBED3E5-D09A-4543-AE19-D848FBC54A05}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AEBED3E5-D09A-4543-AE19-D848FBC54A05}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AEBED3E5-D09A-4543-AE19-D848FBC54A05}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

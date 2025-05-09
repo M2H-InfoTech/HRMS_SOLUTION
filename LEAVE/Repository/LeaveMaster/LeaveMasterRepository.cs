@@ -4,7 +4,6 @@ using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using LEAVE.Dto;
 using LEAVE.Helpers.AccessMetadataService;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
@@ -255,7 +254,7 @@ namespace LEAVE.Repository.LeaveMaster
         }
         public async Task<(string ApplicableLevelsNew, string ApplicableLevelsOne, string EmpIds, string CompanyIds)>
 
-         
+
 
     GetEntityApplicableStringsAsync(string transactionType, long masterId)
         {
@@ -489,22 +488,22 @@ namespace LEAVE.Repository.LeaveMaster
 
         public async Task<List<object>> GetEditLeaveMastersAsync(int masterId)
         {
-            
-                var result = await _context.HrmLeaveMasters
-                    .Where(lm => lm.LeaveMasterId == masterId)
-                    .Select(lm => new
-                    {
-                        lm.LeaveCode,
-                        lm.Description,
-                        lm.PayType,
-                        lm.LeaveUnit,
-                        lm.Active,
-                        lm.Colour
-                    })
-                    .ToListAsync();
 
-                return result.Cast<object>().ToList(); // Because return type is List<object>
-            
+            var result = await _context.HrmLeaveMasters
+                .Where(lm => lm.LeaveMasterId == masterId)
+                .Select(lm => new
+                {
+                    lm.LeaveCode,
+                    lm.Description,
+                    lm.PayType,
+                    lm.LeaveUnit,
+                    lm.Active,
+                    lm.Colour
+                })
+                .ToListAsync();
+
+            return result.Cast<object>().ToList(); // Because return type is List<object>
+
         }
 
         public async Task<int> GetDeleteLeaveMastersAsync(int masterId)
@@ -568,20 +567,6 @@ namespace LEAVE.Repository.LeaveMaster
             return masterId;
         }
 
-    }
-    public class EntityApplicableApiDto
-    {
-        public string Mode { get; set; }
-        public string EntityList { get; set; }
-        public string TransactionType { get; set; }
-        public string LinkIds { get; set; }
-        public string EmployeeIds { get; set; }
-        public int FirstEntityId { get; set; }
-        public int SecondEntityId { get; set; }
-        public int MasterId { get; set; }
-        public int EntryBy { get; set; }
-
-        // You can also add constructors, validation logic, or methods if necessary.
     }
 
 }

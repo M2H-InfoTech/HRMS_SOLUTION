@@ -6,7 +6,8 @@ namespace LEAVE.Controllers.LeavePolicy
 {
     [ApiController]
     [Route("api/[controller]/[action]")]
-    public class LeavePolicyController : Controller
+    //[Authorize]
+    public class LeavePolicyController : ControllerBase
     {
         private readonly ILeavePolicyService _leavePolicyService;
         public LeavePolicyController(ILeavePolicyService leavePolicyService)
@@ -46,5 +47,47 @@ namespace LEAVE.Controllers.LeavePolicy
             var fillInstatntLimit = await _leavePolicyService.FillInstatntLimitAsync(LeavePolicyMasterID, LeavePolicyInstanceLimitID);
             return Ok(fillInstatntLimit);
         }
+        [HttpGet]
+        public async Task<IActionResult> EditFillInstatntLimitLeaveAsync(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID)
+        {
+
+            var editFillInstatntLimitLeave = await _leavePolicyService.EditFillInstatntLimitLeaveAsync(LeavePolicyMasterID, LeavePolicyInstanceLimitID);
+            return Ok(editFillInstatntLimitLeave);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> fillweekendinclude(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID)
+        {
+
+            var fillweekendinclude = await _leavePolicyService.fillweekendinclude(LeavePolicyMasterID, LeavePolicyInstanceLimitID);
+            return Ok(fillweekendinclude);
+        }
+        [HttpGet]
+        public async Task<IActionResult> FillHolidayincludeAsync(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID)
+        {
+
+            var fillweekendinclude = await _leavePolicyService.FillHolidayincludeAsync(LeavePolicyMasterID, LeavePolicyInstanceLimitID);
+            return Ok(fillweekendinclude);
+        }
+        [HttpPost]
+        public async Task<IActionResult> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto leavePolicyInstanceLimitDto, string compLeaveIDs, int empId)
+        {
+            if (leavePolicyInstanceLimitDto == null)
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            var leavePolicyInstanceLimit = await _leavePolicyService.InsertInstanceLeaveLimitAsync(leavePolicyInstanceLimitDto, compLeaveIDs, empId);
+            return Ok(leavePolicyInstanceLimit);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteInstanceLimit(int LeavePolicyInstanceLimitID)
+        {
+
+            var createPolicy = await _leavePolicyService.DeleteInstanceLimit(LeavePolicyInstanceLimitID);
+            return Ok(createPolicy);
+        }        
+
     }
 }

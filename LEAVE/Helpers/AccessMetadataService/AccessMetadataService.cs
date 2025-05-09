@@ -9,91 +9,102 @@ namespace LEAVE.Helpers.AccessMetadataService
     {
         private readonly ExternalApiService _externalApiService;
         private readonly EmployeeDBContext _context;
+
         public AccessMetadataService(ExternalApiService externalApiService, EmployeeDBContext context)
         {
             _externalApiService = externalApiService;
             _context = context;
         }
+
         public async Task<int?> GetTransactionIdByTransactionTypeAsync(string transactionType)
         {
-            var response = await _externalApiService.GetTransactionIdByTransactionTypeAsync(transactionType);
-            return response;
+            return await _externalApiService.GetTransactionIdByTransactionTypeAsync(transactionType);
+        }
+        public async Task<int> GetEmployeeParameterSettingsAsync(int employeeId, string drpType = "", string parameterCode = "", string parameterType = "")
+        {
+            return await _externalApiService.EmployeeParameterSettings(employeeId, drpType, parameterCode, parameterType);
         }
         public async Task<AccessMetadataDto> GetAccessMetadataAsync(string transactionType, int roleId, int empId)
         {
-            var transactionId = await _externalApiService.GetTransactionIdByTransactionTypeAsync(transactionType);
-            var linkLevel = await _externalApiService.GetLinkLevelByRoleIdAsync(roleId);
-            var hasAccess = await _externalApiService.GetEntityAccessRightsAsync(roleId, linkLevel);
-            var accessDetails = await _externalApiService.AccessLevelDetailsAndEmpList(empId, transactionType, roleId);
+            var transactionIdTask = _externalApiService.GetTransactionIdByTransactionTypeAsync(transactionType);
+            var linkLevelTask = _externalApiService.GetLinkLevelByRoleIdAsync(roleId);
+
+            await Task.WhenAll(transactionIdTask, linkLevelTask);
+
+            var transactionId = transactionIdTask.Result;
+            var linkLevel = linkLevelTask.Result;
+
+            var accessTask = _externalApiService.GetEntityAccessRightsAsync(roleId, linkLevel);
+            var accessDetailsTask = _externalApiService.AccessLevelDetailsAndEmpList(empId, transactionType, roleId);
+
+            await Task.WhenAll(accessTask, accessDetailsTask);
+
             return new AccessMetadataDto
             {
                 TransactionId = transactionId,
                 LinkLevel = linkLevel,
-                HasAccessRights = hasAccess,
-                accessCheckResultDto = accessDetails
+                HasAccessRights = accessTask.Result,
+                accessCheckResultDto = accessDetailsTask.Result
             };
         }
-        public async Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev)
+
+        public async Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transId, int? linkLevel)
         {
-            var empEntity = await _context.HrEmpMasters
+            // Get employee's entity string
+            var empEntityStr = await _context.HrEmpMasters
                 .Where(h => h.EmpId == empId)
                 .Select(h => h.EmpEntity)
                 .FirstOrDefaultAsync();
 
-            var ctnew = SplitStrings_XML(empEntity)
-                .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 })
-                .ToList();
+            var empEntityLinks = SplitStrings_XML(empEntityStr)
+                .Select((item, index) => new LinkItemDto { Item = item, LinkLevel = index + 2 });
 
             var accessRights = await _context.EntityAccessRights02s
-                .Where(s => s.RoleId == roleId)
+                .Where(s => s.RoleId == roleId && !string.IsNullOrEmpty(s.LinkId))
                 .ToListAsync();
 
-            var applicableFinal = accessRights
-                .Where(s => !string.IsNullOrEmpty(s.LinkId))
-                .SelectMany(s => SplitStrings_XML(s.LinkId),
-                    (s, item) => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel })
-                .ToList();
+            var accessLinkItems = accessRights
+                .SelectMany(s => SplitStrings_XML(s.LinkId)
+                    .Select(item => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel }));
 
-            if (lnklev > 0)
+            var applicableLinks = accessLinkItems.ToList();
+
+            if (linkLevel > 0)
             {
-                applicableFinal.AddRange(ctnew.Where(c => c.LinkLevel >= lnklev));
+                applicableLinks.AddRange(empEntityLinks.Where(c => c.LinkLevel >= linkLevel));
             }
 
-            var applicableFinalSetLong = applicableFinal
-                .Select(a => (long?)Convert.ToInt64(a.Item))
-                .ToHashSet();
+            var applicableSet = new HashSet<long?>(applicableLinks
+                .Select(a => long.TryParse(a.Item, out long val) ? (long?)val : null)
+                .Where(id => id.HasValue));
 
-            var entityApplicable00Final = await _context.EntityApplicable00s
-                .Where(e => e.TransactionId == transid)
-                .Select(e => new { e.LinkId, e.LinkLevel, e.MasterId })
-                .ToListAsync();
+            var applicableFinalItems = applicableLinks.Select(a => a.Item).ToHashSet();
 
-            var applicableFinalItems = applicableFinal.Select(a => a.Item).ToList();
-
-            var applicableFinal02Emp = await (
+            // Fetch applicable employee master IDs from EntityApplicable01
+            var applicableEmpMasterIds = await (
                 from emp in _context.EmployeeDetails
                 join ea in _context.EntityApplicable01s on emp.EmpId equals ea.EmpId
                 join hlv in _context.HighLevelViewTables on emp.LastEntity equals hlv.LastEntityId
-                where ea.TransactionId == transid
+                where ea.TransactionId == transId
                 let levelOneId = hlv.LevelOneId.ToString()
                 where applicableFinalItems.Contains(levelOneId)
                 select ea.MasterId
             ).Distinct().ToListAsync();
 
-            var newhigh = applicableFinalSetLong
-                .Union(applicableFinal02Emp.Select(emp => (long?)emp))
-                .ToList();
-
-            return newhigh;
+            // Union and return final list
+            applicableSet.UnionWith(applicableEmpMasterIds.Select(x => (long?)x));
+            return applicableSet.ToList();
         }
+
         private List<string> SplitStrings_XML(string input)
         {
-            if (string.IsNullOrWhiteSpace(input))
-                return new List<string>();
-
-            return input.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(x => x.Trim())
-                        .ToList();
+            return string.IsNullOrWhiteSpace(input)
+                ? new List<string>()
+                : input.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToList();
+        }
+        public async Task<int> EmployeeParameterSettings(int employeeId, string drpType, string parameterCode, string parameterType)
+        {
+            return await _externalApiService.EmployeeParameterSettings(employeeId, drpType, parameterCode, parameterType);
         }
     }
 }

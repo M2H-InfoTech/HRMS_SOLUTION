@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LEAVE.Controllers.AssignLeave
 {
+    [ApiController]
     [Route("api/[controller]/[action]")]
-    public class AssignLeaveController : Controller
+    // [Authorize]
+    public class AssignLeaveController : ControllerBase
     {
         private readonly IAssignLeaveService _assignleaveservice;
         public AssignLeaveController(IAssignLeaveService assignleaveservice)

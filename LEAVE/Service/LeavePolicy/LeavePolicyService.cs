@@ -26,5 +26,28 @@ namespace LEAVE.Service.LeavePolicy
         {
             return _leavePolicyRepository.FillInstatntLimitAsync(LeavePolicyMasterID, LeavePolicyInstanceLimitID);
         }
+        public Task<List<object>> EditFillInstatntLimitLeaveAsync(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID)
+        {
+            return _leavePolicyRepository.EditFillInstatntLimitLeaveAsync(LeavePolicyMasterID, LeavePolicyInstanceLimitID);
+        }
+
+        public Task<List<object>> fillweekendinclude(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID)
+        {
+            return _leavePolicyRepository.fillweekendinclude(LeavePolicyMasterID, LeavePolicyInstanceLimitID);
+        }
+        public Task<List<object>> FillHolidayincludeAsync(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID)
+        {
+            return _leavePolicyRepository.FillHolidayincludeAsync(LeavePolicyMasterID, LeavePolicyInstanceLimitID);
+        }
+
+        public async Task<string> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto leavePolicyInstanceLimitDto, string compLeaveIDs, int empId)
+        {
+            return await _leavePolicyRepository.InsertInstanceLeaveLimitAsync(leavePolicyInstanceLimitDto, compLeaveIDs, empId);
+        }
+        public async Task<string> DeleteInstanceLimit(int LeavePolicyInstanceLimitID)
+        {
+            return await _leavePolicyRepository.DeleteInstanceLimit(LeavePolicyInstanceLimitID);
+        }
+        
     }
 }

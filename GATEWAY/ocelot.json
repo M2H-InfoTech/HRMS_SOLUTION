@@ -2,79 +2,86 @@
     "Routes": [
         {
             "DownstreamPathTemplate": "/api/Employee/GetTransactionIdByTransactionType",
-            "DownstreamScheme": "https",
+            "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "localhost",
-                    "Port": 7160
+                    "Host": "10.25.25.124",
+                    "Port": 89
                 }
             ],
             "UpstreamPathTemplate": "/gateway/Employee/GetTransactionIdByTransactionType",
             "UpstreamHttpMethod": [ "GET" ]
+           
+
         },
         {
             "DownstreamPathTemplate": "/api/Employee/GetLinkLevelByRoleId",
-            "DownstreamScheme": "https",
+            "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "localhost",
-                    "Port": 7160
+                    "Host": "10.25.25.124",
+                    "Port": 89
                 }
             ],
             "UpstreamPathTemplate": "/gateway/Employee/GetLinkLevelByRoleId",
             "UpstreamHttpMethod": [ "GET" ]
+           
         },
         {
             "DownstreamPathTemplate": "/api/Employee/GetUserDetails",
-            "DownstreamScheme": "https",
+            "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "localhost",
-                    "Port": 7160
+                    "Host": "10.25.25.124",
+                    "Port": 89
                 }
             ],
             "UpstreamPathTemplate": "/gateway/Employee/GetUserDetails",
             "UpstreamHttpMethod": [ "GET" ]
+           
         },
         {
             "DownstreamPathTemplate": "/api/Employee/IsLinkLevelExists",
-            "DownstreamScheme": "https",
+            "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "localhost",
-                    "Port": 7160
+                    "Host": "10.25.25.124",
+                    "Port": 89
                 }
             ],
             "UpstreamPathTemplate": "/gateway/Employee/IsLinkLevelExists",
             "UpstreamHttpMethod": [ "GET" ]
+           
         },
         {
             "DownstreamPathTemplate": "/api/Employee/GetEntityAccessRights",
-            "DownstreamScheme": "https",
+            "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "localhost",
-                    "Port": 7160
+                    "Host": "10.25.25.124",
+                    "Port": 89
                 }
             ],
             "UpstreamPathTemplate": "/gateway/Employee/GetEntityAccessRights",
             "UpstreamHttpMethod": [ "GET" ]
+           
         },
         {
             "DownstreamPathTemplate": "/api/Employee/AccessChecking",
-            "DownstreamScheme": "https",
+            "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "localhost",
-                    "Port": 7160
+                    "Host": "10.25.25.124",
+                    "Port": 89
                 }
             ],
             "UpstreamPathTemplate": "/gateway/Employee/AccessChecking",
             "UpstreamHttpMethod": [ "GET" ]
+           
         }
 
     ],
     "GlobalConfiguration": {
-        "BaseUrl": "http://localhost:5194"
+        "BaseUrl": "http://10.25.25.124:84"
     }
 }
