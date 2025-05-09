@@ -883,5 +883,10 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.AccessCheckingAsync(empId, code, roleId);
         }
+
+        public async Task<int> GetEmployeeParameterSettingsAsync(int employeeId, string drpType = "", string parameterCode = "", string parameterType = "")
+        {
+            return await _employeeRepository.GetEmployeeParameterSettingsAsync(employeeId, drpType, parameterCode, parameterType);
+        }
     }
 }

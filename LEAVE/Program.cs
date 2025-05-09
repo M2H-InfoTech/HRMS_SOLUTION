@@ -85,6 +85,15 @@ builder.Services.AddAuthentication(options =>
 });
 //builder.Services.AddMemoryCache();
 builder.Services.AddAuthorization();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyHeader()
+               .AllowAnyMethod();
+    });
+});
 builder.Services.AddDbContextFactory<EmployeeDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<ILeaveMasterRepository, LeaveMasterRepository>();
 builder.Services.AddScoped<ILeaveMasterService, LeaveMasterService>();
@@ -104,17 +113,6 @@ builder.Services.AddHttpClient<ExternalApiService>();
 builder.Services.AddScoped<IAccessMetadataService, AccessMetadataService>();
 builder.Services.Configure<HttpClientSettings>(builder.Configuration.GetSection("HttpClientSettings"));
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<HttpClientSettings>>().Value);
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", builder =>
-    {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
-    });
-});
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -125,7 +123,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ExceptionMiddleware>();

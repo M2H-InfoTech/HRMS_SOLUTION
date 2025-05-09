@@ -20,7 +20,10 @@ namespace LEAVE.Helpers.AccessMetadataService
         {
             return await _externalApiService.GetTransactionIdByTransactionTypeAsync(transactionType);
         }
-
+        public async Task<int> GetEmployeeParameterSettingsAsync(int employeeId, string drpType = "", string parameterCode = "", string parameterType = "")
+        {
+            return await _externalApiService.EmployeeParameterSettings(employeeId, drpType, parameterCode, parameterType);
+        }
         public async Task<AccessMetadataDto> GetAccessMetadataAsync(string transactionType, int roleId, int empId)
         {
             var transactionIdTask = _externalApiService.GetTransactionIdByTransactionTypeAsync(transactionType);
@@ -98,6 +101,10 @@ namespace LEAVE.Helpers.AccessMetadataService
             return string.IsNullOrWhiteSpace(input)
                 ? new List<string>()
                 : input.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToList();
+        }
+        public async Task<int> EmployeeParameterSettings(int employeeId, string drpType, string parameterCode, string parameterType)
+        {
+            return await _externalApiService.EmployeeParameterSettings(employeeId, drpType, parameterCode, parameterType);
         }
     }
 }

@@ -1454,5 +1454,11 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeStatus = await _employeeInformation.AccessCheckingAsync(empId, code, roleId);
             return Ok(employeeStatus);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeParameterSettings(int employeeId, string drpType = "", string parameterCode = "", string parameterType = "")
+        {
+            var employeeStatus = await _employeeInformation.GetEmployeeParameterSettingsAsync(employeeId, drpType, parameterCode, parameterType);
+            return Ok(employeeStatus);
+        }
     }
 }

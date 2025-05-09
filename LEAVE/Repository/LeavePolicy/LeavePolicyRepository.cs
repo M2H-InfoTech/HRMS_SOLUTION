@@ -555,8 +555,24 @@ namespace LEAVE.Repository.LeavePolicy
 
             return errorMessage;
         }
+        public async Task<object> LeaveCompilation(int empId, string subMode)
+        {
+            var settingsId = await _externalApiService.EmployeeParameterSettings(empId, "EmployeeReporting", "Leavecalculation", "COM");
+            if (settingsId == 1 && subMode == "leavebalancefulldetails" || subMode == "Fulldetails" || subMode == "upload")
+            {
+                return await Task.FromResult(new
+                {
+                    Status = "Error",
+                    Message = "Leave compilation settings not found."
+                });
+            }
+            return await Task.FromResult(new
+            {
+                Status = "Success",
+                Message = "Leave compilation completed successfully."
+            });
+        }
 
- 
     }
 
 }

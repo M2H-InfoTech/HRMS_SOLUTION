@@ -1,5 +1,6 @@
 ﻿using EMPLOYEE_INFORMATION.Data;
 using LEAVE.Dto;
+using LEAVE.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace LEAVE.Repository.LeaveBalance
@@ -9,10 +10,12 @@ namespace LEAVE.Repository.LeaveBalance
 
         private readonly EmployeeDBContext _context;
         private readonly HttpClient _httpClient;
-        public LeaveBalanceRepository(EmployeeDBContext dbContext, HttpClient httpClient)
+        private readonly ExternalApiService _externalApiService;
+        public LeaveBalanceRepository(EmployeeDBContext dbContext, HttpClient httpClient, ExternalApiService externalApiServic)
         {
             _context = dbContext;
             _httpClient = httpClient;
+            _externalApiService = externalApiServic;
         }
 
 
