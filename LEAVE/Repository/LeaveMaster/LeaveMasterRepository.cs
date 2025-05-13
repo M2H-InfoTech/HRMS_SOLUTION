@@ -246,7 +246,7 @@ namespace LEAVE.Repository.LeaveMaster
                                              SettingsId = lbs.SettingsId,
                                              SettingsName = lbs.SettingsName,
                                              SettingsDescription = lbs.SettingsDescription,
-                                             CreatedDate = lbs.CreatedDate.HasValue ? lbs.CreatedDate.Value.ToString("dd/MM/yyyy") : null
+                                             CreatedDate = lbs.CreatedDate.HasValue ? FormatDate(lbs.CreatedDate, _employeeSettings.DateFormat) : null
                                          })
                                          .Distinct()
                                          .ToListAsync<object>();

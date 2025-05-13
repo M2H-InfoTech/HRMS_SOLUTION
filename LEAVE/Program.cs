@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using MPLOYEE_INFORMATION.DTO.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,6 +95,8 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Services.AddDbContextFactory<EmployeeDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+builder.Services.Configure<EmployeeSettings>(builder.Configuration.GetSection("EmployeeSettings"));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<EmployeeSettings>>().Value);
 builder.Services.AddScoped<ILeaveMasterRepository, LeaveMasterRepository>();
 builder.Services.AddScoped<ILeaveMasterService, LeaveMasterService>();
 
