@@ -1691,7 +1691,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
-        private static IEnumerable<string> SplitStrings_XML(string list, char delimiter = ',')
+        public static IEnumerable<string> SplitStrings_XML(string list, char delimiter = ',')
         {
             if (string.IsNullOrWhiteSpace(list))
                 return Enumerable.Empty<string>();
@@ -15250,7 +15250,7 @@ new LevelListDto
 
 
             // Step 1: Fetch data first, then apply SplitStrings_XML in memory
-            var entityAccessRights = await _context.EntityAccessRights02s
+            var entityAccessRights = await   _context.EntityAccessRights02s
             .Where(s => s.RoleId == FirstEntityId)
             .ToListAsync(); // Fetch first
 

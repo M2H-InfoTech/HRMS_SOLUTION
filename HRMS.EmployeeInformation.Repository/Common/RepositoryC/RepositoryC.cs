@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using MPLOYEE_INFORMATION.DTO.DTOs;
 using System.Linq;
 
 namespace HRMS.EmployeeInformation.Repository.Common.RepositoryC

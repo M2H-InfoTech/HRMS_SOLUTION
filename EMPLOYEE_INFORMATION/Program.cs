@@ -2,6 +2,7 @@
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.Helpers;
 using EMPLOYEE_INFORMATION.Services.Mapping;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Repository.Common;
 using HRMS.EmployeeInformation.Repository.Common.DocUpload;
 using HRMS.EmployeeInformation.Repository.Common.RepositoryB;
@@ -17,7 +18,6 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using MPLOYEE_INFORMATION.DTO.DTOs;
 using Serilog;
 
 internal class Program

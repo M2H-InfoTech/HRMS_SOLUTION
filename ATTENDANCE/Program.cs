@@ -14,6 +14,7 @@ using ATTENDANCE.Service.ShiftMasterUpload;
 using ATTENDANCE.Service.ShiftSettings;
 using ATTENDANCE.Service.ShiftUpload;
 using EMPLOYEE_INFORMATION.Data;
+using HRMS.EmployeeInformation.Repository.Common;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -26,7 +27,7 @@ builder.Services.AddDbContext<EmployeeDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 
-
+//builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IAssignPolicyRepository, AssignPolicyRepository>();
 builder.Services.AddScoped<IAssignShiftRepository, AssignShiftRepository>();
 builder.Services.AddScoped<IAttendanceLogRepository, AttendanceLogRepository>();
@@ -35,6 +36,8 @@ builder.Services.AddScoped<IAttendanceProcessRepository, AttendanceProcessReposi
 builder.Services.AddScoped<IShiftMasterUploadRepository, ShiftMasterUploadRepository>();
 builder.Services.AddScoped<IShiftSettingsRepository, ShiftSettingsRepository>();
 builder.Services.AddScoped<IShiftUploadRepository, ShiftUploadRepository>();
+
+
 
 // Register Services with AddScoped
 builder.Services.AddScoped<IAssignPolicyService, AssignPolicyService>();
