@@ -14,6 +14,7 @@ using ATTENDANCE.Service.ShiftMasterUpload;
 using ATTENDANCE.Service.ShiftSettings;
 using ATTENDANCE.Service.ShiftUpload;
 using EMPLOYEE_INFORMATION.Data;
+
 using Microsoft.EntityFrameworkCore;
 
 
@@ -35,6 +36,8 @@ builder.Services.AddScoped<IAttendanceProcessRepository, AttendanceProcessReposi
 builder.Services.AddScoped<IShiftMasterUploadRepository, ShiftMasterUploadRepository>();
 builder.Services.AddScoped<IShiftSettingsRepository, ShiftSettingsRepository>();
 builder.Services.AddScoped<IShiftUploadRepository, ShiftUploadRepository>();
+
+
 
 // Register Services with AddScoped
 builder.Services.AddScoped<IAssignPolicyService, AssignPolicyService>();

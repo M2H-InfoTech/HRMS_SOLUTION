@@ -1,5 +1,6 @@
 ﻿using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.Models;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using LEAVE.Dto;

@@ -326,7 +326,12 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<HrmLeaveBasicsettingsDetail> HrmLeaveBasicsettingsDetails { get; set; }
     public virtual DbSet<HrmLeaveServicedbasedleave> HrmLeaveServicedbasedleaves { get; set; }
     public virtual DbSet<ViewLeaveBasicsettingsDetail> ViewLeaveBasicsettingsDetails { get; set; }
+    public virtual DbSet<HrShift01> HrShift01s { get; set; }
     public virtual DbSet<MasterBranchDetail> MasterBranchDetails { get; set; }
+    public virtual DbSet<HrShift02> HrShift02s { get; set; }
+    public virtual DbSet<HrShiftOpen> HrShiftOpens { get; set; }
+    public virtual DbSet<HrShiftseason00> HrShiftseason00s { get; set; }
+    public virtual DbSet<HrShiftseason01> HrShiftseason01s { get; set; }
     public virtual DbSet<LeavePolicyLeaveInclude> LeavePolicyLeaveIncludes { get; set; }
     public virtual DbSet<LeavePolicyWeekendInclude> LeavePolicyWeekendIncludes { get; set; }
     public virtual DbSet<LeavePolicyHolidayInclude> LeavePolicyHolidayIncludes { get; set; }
@@ -4903,7 +4908,78 @@ public partial class EmployeeDBContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.SubBranchId).HasColumnName("SubBranchID");
         });
+        modelBuilder.Entity<HrShift01>(entity =>
+        {
+            entity.HasKey(e => e.Shift01Id).HasName("PK__HR_SHIFT__E287E454CF39E98C");
 
+            entity.ToTable("HR_SHIFT01");
+
+            entity.Property(e => e.Shift01Id).HasColumnName("Shift01ID");
+            entity.Property(e => e.EffectiveFrom).HasColumnType("datetime");
+            entity.Property(e => e.EndTime).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.MinimumWorkHours).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ShiftId).HasColumnName("ShiftID");
+            entity.Property(e => e.StartTime).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TotalHours).HasColumnType("decimal(18, 2)");
+        });
+        modelBuilder.Entity<HrShift02>(entity =>
+        {
+            entity.HasKey(e => e.Shift02Id).HasName("PK__HR_SHIFT__E2C7C19F97E252CA");
+
+            entity.ToTable("HR_SHIFT02");
+
+            entity.Property(e => e.Shift02Id).HasColumnName("Shift02ID");
+            entity.Property(e => e.BreakEndTime).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.BreakStartTime).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.EffectiveFrom).HasColumnType("datetime");
+            entity.Property(e => e.IsPaid)
+                .HasMaxLength(3)
+                .IsUnicode(false);
+            entity.Property(e => e.Shift01Id).HasColumnName("Shift01ID");
+            entity.Property(e => e.ShiftId).HasColumnName("ShiftID");
+            entity.Property(e => e.TotalBreakHours).HasColumnType("decimal(18, 2)");
+        });
+        modelBuilder.Entity<HrShiftOpen>(entity =>
+        {
+            entity.HasKey(e => e.OpenShiftId).HasName("PK__HR_Shift__D8D0FC56C7C4BD4C");
+
+            entity.ToTable("HR_ShiftOPEN");
+
+            entity.Property(e => e.OpenShiftId).HasColumnName("OpenShiftID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.ShiftId).HasColumnName("ShiftID");
+            entity.Property(e => e.ShiftMasterId).HasColumnName("ShiftMasterID");
+        });
+        modelBuilder.Entity<HrShiftseason00>(entity =>
+        {
+            entity.HasKey(e => e.ShiftSeason01Id).HasName("PK__HR_SHIFT__1370B310E6AAC851");
+
+            entity.ToTable("HR_SHIFTSEASON00");
+
+            entity.Property(e => e.ShiftSeason01Id).HasColumnName("ShiftSeason01ID");
+            entity.Property(e => e.EffectiveFrom).HasColumnType("datetime");
+            entity.Property(e => e.EndTime).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.MinimumWorkHours).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ShiftId).HasColumnName("ShiftID");
+            entity.Property(e => e.StartTime).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TotalHours).HasColumnType("decimal(18, 2)");
+        });
+        modelBuilder.Entity<HrShiftseason01>(entity =>
+        {
+            entity.HasKey(e => e.Shiftseason02Id).HasName("PK__HR_SHIFT__789D1D80A4F8A6A0");
+
+            entity.ToTable("HR_SHIFTSEASON01");
+
+            entity.Property(e => e.Shiftseason02Id).HasColumnName("Shiftseason02ID");
+            entity.Property(e => e.BreakEndTime).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.BreakStartTime).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.EffectiveFrom).HasColumnType("datetime");
+            entity.Property(e => e.IsPaid)
+                .HasMaxLength(3)
+                .IsUnicode(false);
+            entity.Property(e => e.ShiftId).HasColumnName("ShiftID");
+            entity.Property(e => e.TotalBreakHours).HasColumnType("decimal(18, 2)");
+        });
         modelBuilder.Entity<LeavePolicyLeaveInclude>(entity =>
         {
             entity.HasKey(e => e.LeaveIncludeId);

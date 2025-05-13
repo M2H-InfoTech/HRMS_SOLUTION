@@ -1,6 +1,4 @@
-﻿
-
-namespace MPLOYEE_INFORMATION.DTO.DTOs
+﻿namespace HRMS.EmployeeInformation.DTO.DTOs
 {
     public class EmployeeSettings
     {
