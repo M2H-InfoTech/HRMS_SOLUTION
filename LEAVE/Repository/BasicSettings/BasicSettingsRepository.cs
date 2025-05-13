@@ -1,13 +1,9 @@
 ﻿using EMPLOYEE_INFORMATION.Data;
 using HRMS.EmployeeInformation.DTO.DTOs;
-using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using LEAVE.Dto;
 using LEAVE.Helpers.AccessMetadataService;
 using Microsoft.EntityFrameworkCore;
-using MPLOYEE_INFORMATION.DTO.DTOs;
-using System;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LEAVE.Repository.BasicSettings
 {
@@ -108,19 +104,9 @@ namespace LEAVE.Repository.BasicSettings
         }
 
 
-        public async Task<int?> GetDeletebasics(int basicSettingsId, int masterId)
+        public async Task<int?> GetDeletebasics(int basicSettingsId, int masterId, string transactionType)
         {
-
-            var transactionIdTask = _httpClient.GetAsync("http://localhost:5194/gateway/Employee/GetTransactionIdByTransactionType?transactionType=Leave_BS");
-            await Task.WhenAll(transactionIdTask);
-
-            // Parse the results
-            var transIdString = await transactionIdTask.Result.Content.ReadAsStringAsync();
-            if (!int.TryParse(transIdString, out int transactionId))
-            {
-                throw new InvalidOperationException("Failed to parse transaction ID.");
-            }
-
+            var tranId = await _accessMetadataService.GetTransactionIdByTransactionTypeAsync(transactionType);//Leave_BS
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -136,7 +122,7 @@ namespace LEAVE.Repository.BasicSettings
 
                     // Delete from EntityApplicable00
                     var applicableEntities = await _context.EntityApplicable00s
-                        .Where(e => e.MasterId == basicSettingsId && e.TransactionId == transactionId)
+                        .Where(e => e.MasterId == basicSettingsId && e.TransactionId == tranId)
                         .ToListAsync();
                     _context.EntityApplicable00s.RemoveRange(applicableEntities);
 

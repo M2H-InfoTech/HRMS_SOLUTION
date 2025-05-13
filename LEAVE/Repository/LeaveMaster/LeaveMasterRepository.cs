@@ -5,6 +5,7 @@ using HRMS.EmployeeInformation.Models.Models.Entity;
 using LEAVE.Dto;
 using LEAVE.Helpers.AccessMetadataService;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace LEAVE.Repository.LeaveMaster
@@ -14,10 +15,11 @@ namespace LEAVE.Repository.LeaveMaster
         private readonly EmployeeDBContext _context;
         private readonly EmployeeSettings _employeeSettings;
         private IAccessMetadataService _accessMetadataService;
-        public LeaveMasterRepository(EmployeeDBContext dbContext, IAccessMetadataService accessMetadataService)
+        public LeaveMasterRepository(EmployeeDBContext dbContext, IAccessMetadataService accessMetadataService, IOptions<EmployeeSettings> employeeSettings)
         {
             _context = dbContext;
             _accessMetadataService = accessMetadataService;
+            _employeeSettings = employeeSettings.Value;
         }
 
         private static IEnumerable<string> SplitStrings_XML(string list, char delimiter = ',') =>
@@ -244,7 +246,7 @@ namespace LEAVE.Repository.LeaveMaster
                                              SettingsId = lbs.SettingsId,
                                              SettingsName = lbs.SettingsName,
                                              SettingsDescription = lbs.SettingsDescription,
-                                             CreatedDate = lbs.CreatedDate.HasValue ? lbs.CreatedDate.Value.ToString("dd/MM/yyyy") : null
+                                             CreatedDate = lbs.CreatedDate.HasValue ? FormatDate(lbs.CreatedDate, _employeeSettings.DateFormat) : null
                                          })
                                          .Distinct()
                                          .ToListAsync<object>();

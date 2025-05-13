@@ -46,9 +46,9 @@ namespace LEAVE.Controllers.BasicSettings
             return Ok(deleteConfirm);
         }
         [HttpGet]
-        public async Task<IActionResult> GetDeletebasics(int Basicsettingsid, int Masterid)
+        public async Task<IActionResult> GetDeletebasics(int Basicsettingsid, int Masterid, string transactionType)
         {
-            var getDeletebasics = await _basicSettingsService.GetDeletebasics(Basicsettingsid, Masterid);
+            var getDeletebasics = await _basicSettingsService.GetDeletebasics(Basicsettingsid, Masterid, transactionType);
             return Ok(getDeletebasics);
         }
         [HttpGet]
@@ -73,7 +73,7 @@ namespace LEAVE.Controllers.BasicSettings
         [HttpGet("GetEditbasicsettingsAsync")]
         public async Task<IActionResult> GetEditbasicsettingsAsync(int masterid)
         {
-            var fillleavetypeListss = await _basicSettingsService.GetEditbasicsettingsAsync( masterid);
+            var fillleavetypeListss = await _basicSettingsService.GetEditbasicsettingsAsync(masterid);
             return new JsonResult(fillleavetypeListss);
         }
         //[HttpGet]
