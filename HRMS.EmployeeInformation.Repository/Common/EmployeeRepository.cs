@@ -1691,7 +1691,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         {
             return await GetEmpIdsByRoleAndEntityAccess(roleId, empId, exists);
         }
-        public static IEnumerable<string> SplitStrings_XML(string list, char delimiter = ',')
+        private static IEnumerable<string> SplitStrings_XML(string list, char delimiter = ',')
         {
             if (string.IsNullOrWhiteSpace(list))
                 return Enumerable.Empty<string>();

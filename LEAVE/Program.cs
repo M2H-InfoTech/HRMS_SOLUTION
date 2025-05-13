@@ -16,7 +16,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using MPLOYEE_INFORMATION.DTO.DTOs;
+
+using HRMS.EmployeeInformation.DTO.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 

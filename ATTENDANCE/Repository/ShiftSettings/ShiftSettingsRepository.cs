@@ -801,43 +801,43 @@ namespace ATTENDANCE.Repository.ShiftSettings
             return 0;
         }
 
-        public async Task<List<FillAllShiftDto>> FillAllShift(ShiftViewDto Request)
-        {
-            var transId = await _context.TransactionMasters.Where(t=>t.TransactionType == "Shift")
-                .Select(t => t.TransactionId)
-                .FirstOrDefaultAsync();
-            var newEmpId = await _context.HrEmployeeUserRelations
-                .Where(r => r.UserId == Request.EntryBy)
-                .Select(r => r.EmpId)
-                .FirstOrDefaultAsync();
-            var LinkLevel = await _context.SpecialAccessRights
-                .Where(r=>r.RoleId == Request.RoleId)
-                .Select(r => r.LinkLevel)
-                .FirstOrDefaultAsync();
+        //public async Task<List<FillAllShiftDto>> FillAllShift(ShiftViewDto Request)
+        //{
+        //    var transId = await _context.TransactionMasters.Where(t=>t.TransactionType == "Shift")
+        //        .Select(t => t.TransactionId)
+        //        .FirstOrDefaultAsync();
+        //    var newEmpId = await _context.HrEmployeeUserRelations
+        //        .Where(r => r.UserId == Request.EntryBy)
+        //        .Select(r => r.EmpId)
+        //        .FirstOrDefaultAsync();
+        //    var LinkLevel = await _context.SpecialAccessRights
+        //        .Where(r=>r.RoleId == Request.RoleId)
+        //        .Select(r => r.LinkLevel)
+        //        .FirstOrDefaultAsync();
 
-            var ifLevel15Exist = await _context.EntityAccessRights02s
-                .Where(s=>s.RoleId == Request.RoleId && s.LinkLevel == 15)
-                .SelectMany(s=>SplitStrings_XML(s.LinkId))
-                .AnyAsync();
+        //    var ifLevel15Exist = await _context.EntityAccessRights02s
+        //        .Where(s=>s.RoleId == Request.RoleId && s.LinkLevel == 15)
+        //        .SelectMany(s=>SplitStrings_XML(s.LinkId))
+        //        .AnyAsync();
 
-            if (ifLevel15Exist)
-            {
-               var shiftData = await _context.HrShift00s
-                    .Where(s=>s.ShiftId == Request.ShiftId || Request.ShiftId == 0)
-                    .Select(s=> new FillAllShiftDto
-                    {
-                        ShiftId = s.ShiftId,
-                        ShiftCode = s.ShiftCode,
-                        ShiftName = s.ShiftName,
-                        ShiftType = s.ShiftType,
-                        EndwithNextDay = s.EndwithNextDay
-                    }).ToListAsync();
+        //    if (ifLevel15Exist)
+        //    {
+        //       var shiftData = await _context.HrShift00s
+        //            .Where(s=>s.ShiftId == Request.ShiftId || Request.ShiftId == 0)
+        //            .Select(s=> new FillAllShiftDto
+        //            {
+        //                ShiftId = s.ShiftId,
+        //                ShiftCode = s.ShiftCode,
+        //                ShiftName = s.ShiftName,
+        //                ShiftType = s.ShiftType,
+        //                EndwithNextDay = s.EndwithNextDay
+        //            }).ToListAsync();
 
-                return shiftData;
-            }
+        //        return shiftData;
+        //    }
 
 
-        }
+        //}
     }
 }
 
