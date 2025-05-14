@@ -82,5 +82,11 @@ namespace LEAVE.Controllers.BasicSettings
         //    var getEditbasicsettings = await _basicSettingsService.getEditbasicsettings(masterid);
         //    return new JsonResult(getEditbasicsettings);
         //}
+        [HttpGet]
+        public async Task<IActionResult> UpdatetLeaveMasterAndSettingsLinkAsync(int masterId, int basicSettingsId, int createdBy)
+        {
+            var updatetLeaveMasterAndSettingsLink = await _basicSettingsService.UpdatetLeaveMasterAndSettingsLinkAsync(masterId, basicSettingsId, createdBy);
+            return new JsonResult(updatetLeaveMasterAndSettingsLink);
+        }
     }
 }

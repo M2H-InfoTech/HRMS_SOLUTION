@@ -574,6 +574,36 @@ namespace LEAVE.Repository.BasicSettings
                  })
                  .ToListAsync();
         }
+        public async Task<long?> UpdatetLeaveMasterAndSettingsLinkAsync(int masterId, int basicSettingsId, int createdBy)
+        {
+            if (masterId == 0)
+                return null;
+
+            var existing = await _context.HrmLeaveMasterandsettingsLinks
+                .FirstOrDefaultAsync(x => x.SettingsId == basicSettingsId);
+
+            if (existing == null)
+            {
+                var newLink = new HrmLeaveMasterandsettingsLink
+                {
+                    LeaveMasterId = masterId,
+                    SettingsId = basicSettingsId,
+                    CreatedBy = createdBy,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                _context.HrmLeaveMasterandsettingsLinks.Add(newLink);
+                await _context.SaveChangesAsync();
+
+
+                return newLink.IdMasterandSettingsLink;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
     }
 
 
