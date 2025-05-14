@@ -1,5 +1,6 @@
 ﻿using LEAVE.Dto;
 using LEAVE.Repository.LeavePolicy;
+using static LEAVE.Repository.LeavePolicy.LeavePolicyRepository;
 
 namespace LEAVE.Service.LeavePolicy
 {
@@ -52,6 +53,11 @@ namespace LEAVE.Service.LeavePolicy
         public async Task<object> LeavePolicySettingsAttachment(int leavePolicyMasterId, int leavePolicyInstanceLimitId)
         {
             return await _leavePolicyRepository.LeavePolicySettingsAttachment(leavePolicyMasterId, leavePolicyInstanceLimitId);
+        }
+
+        public async Task<List<LeaveOptionDto>> LeavePolicySettingsUnpaidLeaves(int secondEntityId, int leaveId)
+        {
+            return await _leavePolicyRepository.LeavePolicySettingsUnpaidLeaves(secondEntityId, leaveId);
         }
     }
 }

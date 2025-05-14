@@ -592,6 +592,87 @@ namespace LEAVE.Repository.LeavePolicy
             return result;
 
         }
+        public async Task<List<LeaveOptionDto>> LeavePolicySettingsUnpaidLeaves(int secondEntityId, int leaveId)
+        {
+            var transactionId = await _externalApiService.GetTransactionIdByTransactionTypeAsync("LeavePolicy");
+
+            // Fetch all link access in a single query
+            var allLinkIds = await _context.EntityAccessRights02s
+                .Where(a => a.RoleId == secondEntityId)
+                .Select(a => new { a.LinkId, a.LinkLevel })
+                .ToListAsync();
+
+            var linkLevel1Ids = allLinkIds.Where(x => x.LinkLevel == 1).Select(x => x.LinkId).ToList();
+            var linkLevelOtherIds = allLinkIds.Where(x => x.LinkLevel != 1).Select(x => x.LinkId).ToList();
+
+            // Fetch applicable LeaveMasterIds
+            var applicableLeaveMasterIds = await _context.EntityApplicable00s
+                .Where(e =>
+                    e.TransactionId == transactionId &&
+                    (
+                        (e.LinkLevel == 1 && linkLevel1Ids.Contains(e.LinkId.ToString())) ||
+                        (e.LinkLevel != 1 && linkLevelOtherIds.Contains(e.LinkId.ToString()))
+                    )
+                )
+                .Select(e => e.MasterId)
+                .Distinct()
+                .ToListAsync();
+
+            // Check entity access and admin rights
+            var hasAccess = await _externalApiService.GetEntityAccessRightsAsync(secondEntityId, (int)allLinkIds.FirstOrDefault().LinkLevel);
+            var isAdminRole = await _context.AdmRoleMasters
+                .AnyAsync(r => r.Type == "A" && r.RoleId == secondEntityId);
+
+            // Query sources
+            var leaveByIdList = await _context.HrmLeaveMasters
+                .Where(l => l.LeaveMasterId == leaveId)
+                .Select(l => new LeaveOptionDto
+                {
+                    LeaveMasterId = l.LeaveMasterId,
+                    Description = l.Description + "[" + l.LeaveCode + "]"
+                })
+                .ToListAsync();
+
+            var payTypeLeavesList = await _context.HrmLeaveMasters
+                .Where(l => l.PayType == 3 && l.Active == 1)
+                .Select(l => new LeaveOptionDto
+                {
+                    LeaveMasterId = l.LeaveMasterId,
+                    Description = l.Description + "[" + l.LeaveCode + "]"
+                })
+                .ToListAsync();
+
+            var noAction = new List<LeaveOptionDto>
+    {
+        new LeaveOptionDto { LeaveMasterId = -3, Description = "No Action" }
+    };
+
+            // Merge and filter in-memory
+            var allLeaves = leaveByIdList
+                .Union(payTypeLeavesList)
+                .Union(noAction);
+
+            var result = allLeaves
+                .Where(l =>
+                    applicableLeaveMasterIds.Contains(l.LeaveMasterId) ||
+                    hasAccess ||
+                    isAdminRole
+                )
+                .GroupBy(l => new { l.LeaveMasterId, l.Description })
+                .Select(g => new LeaveOptionDto
+                {
+                    LeaveMasterId = g.Key.LeaveMasterId,
+                    Description = g.Key.Description
+                })
+                .ToList();
+
+            return result;
+        }
+        public class LeaveOptionDto
+        {
+            public int LeaveMasterId { get; set; }
+            public string Description { get; set; }
+        }
     }
 
 }

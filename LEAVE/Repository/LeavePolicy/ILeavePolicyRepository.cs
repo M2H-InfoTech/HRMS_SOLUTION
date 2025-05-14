@@ -1,4 +1,5 @@
 ﻿using LEAVE.Dto;
+using static LEAVE.Repository.LeavePolicy.LeavePolicyRepository;
 
 namespace LEAVE.Repository.LeavePolicy
 {
@@ -14,6 +15,7 @@ namespace LEAVE.Repository.LeavePolicy
         Task<string?> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto leavePolicyInstanceLimitDto, string compLeaveIDs, int empId);
         Task<string?> DeleteInstanceLimit(int LeavePolicyInstanceLimitID);
         Task<object> LeavePolicySettingsAttachment(int leavePolicyMasterId, int leavePolicyInstanceLimitId);
+        Task<List<LeaveOptionDto>> LeavePolicySettingsUnpaidLeaves(int secondEntityId, int leaveId);
 
 
     }
