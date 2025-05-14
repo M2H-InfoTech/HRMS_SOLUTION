@@ -1,5 +1,4 @@
 ﻿using LEAVE.Dto;
-using LEAVE.Repository.LeaveMaster;
 using LEAVE.Service.LeaveMaster;
 using Microsoft.AspNetCore.Mvc;
 
@@ -82,6 +81,12 @@ namespace LEAVE.Controllers.LeaveMaster
         {
             var getdeleteleave = await _leaveMasterService.GetDeleteLeaveMastersAsync(masterId);
             return Ok(getdeleteleave);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetLeaveBalanceDetails(string employeeIds, string submode, int leaveBalanceFormat)
+        {
+            var leaveBalanceDetails = await _leaveMasterService.GetLeaveBalanceDetails(employeeIds, submode, leaveBalanceFormat);
+            return Ok(leaveBalanceDetails);
         }
     }
 }

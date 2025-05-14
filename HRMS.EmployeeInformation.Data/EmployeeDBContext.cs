@@ -336,7 +336,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<LeavePolicyWeekendInclude> LeavePolicyWeekendIncludes { get; set; }
     public virtual DbSet<LeavePolicyHolidayInclude> LeavePolicyHolidayIncludes { get; set; }
 
-    public virtual DbSet<LeavePolicyHistory> LeavePolicyHistories { get; set; }
+    // public virtual DbSet<LeavePolicyHistory> LeavePolicyHistories { get; set; }
     public virtual DbSet<HrmLeaveProof> HrmLeaveProofs { get; set; }
     public virtual DbSet<LeaveApplication00> LeaveApplication00s { get; set; }
     public virtual DbSet<LeaveApplication02> LeaveApplication02s { get; set; }
@@ -364,6 +364,8 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<EntityLevelTwelve> EntityLevelTwelves { get; set; }
     public virtual DbSet<EmpCommunication> EmpCommunications { get; set; }
     public virtual DbSet<EmpProfessional> EmpProfessionals { get; set; }
+    public virtual DbSet<LeaveFinalSetting> LeaveFinalSettings { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -5603,6 +5605,14 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.PinZipCode).IsUnicode(false);
             entity.Property(e => e.RelievingDate).HasColumnType("datetime");
             entity.Property(e => e.RelievingReason).IsUnicode(false);
+        });
+        modelBuilder.Entity<LeaveFinalSetting>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("LeaveFinalSettings");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
         });
         OnModelCreatingPartial(modelBuilder);
     }
