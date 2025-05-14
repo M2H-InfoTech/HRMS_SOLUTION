@@ -15,6 +15,7 @@ namespace LEAVE.Service.LeavePolicy
         Task<string> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto leavePolicyInstanceLimitDto, string compLeaveIDs, int empId);
 
         Task<string> DeleteInstanceLimit(int LeavePolicyInstanceLimitID);
-      
+        Task<object> LeavePolicySettingsAttachment(int leavePolicyMasterId, int leavePolicyInstanceLimitId);
+
     }
 }

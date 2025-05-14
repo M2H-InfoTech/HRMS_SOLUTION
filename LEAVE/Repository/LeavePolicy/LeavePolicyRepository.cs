@@ -572,7 +572,26 @@ namespace LEAVE.Repository.LeavePolicy
                 Message = "Leave compilation completed successfully."
             });
         }
+        public async Task<object> LeavePolicySettingsAttachment(int leavePolicyMasterId, int leavePolicyInstanceLimitId)
+        {
 
+            var result = await (
+                        from limit in _context.LeavePolicyInstanceLimits
+                        join master in _context.LeavePolicyMasters
+                            on limit.LeavePolicyMasterId equals master.LeavePolicyMasterId
+                        join proof in _context.HrmLeaveProofs
+                        on limit.LeavePolicyInstanceLimitId equals proof.InstantlimitId into proofGroup
+                        from proof in proofGroup.DefaultIfEmpty()
+                        where limit.LeavePolicyMasterId == leavePolicyMasterId
+                              && limit.LeavePolicyInstanceLimitId == leavePolicyInstanceLimitId
+                        select new
+                        {
+                            ProofId = proof != null ? proof.ProofId : (int?)null,
+                            Proofdescription = proof.Proofdescription
+                        }).ToListAsync();
+            return result;
+
+        }
     }
 
 }

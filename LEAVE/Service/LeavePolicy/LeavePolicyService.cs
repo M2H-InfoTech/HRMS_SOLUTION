@@ -48,6 +48,10 @@ namespace LEAVE.Service.LeavePolicy
         {
             return await _leavePolicyRepository.DeleteInstanceLimit(LeavePolicyInstanceLimitID);
         }
-        
+
+        public async Task<object> LeavePolicySettingsAttachment(int leavePolicyMasterId, int leavePolicyInstanceLimitId)
+        {
+            return await _leavePolicyRepository.LeavePolicySettingsAttachment(leavePolicyMasterId, leavePolicyInstanceLimitId);
+        }
     }
 }
