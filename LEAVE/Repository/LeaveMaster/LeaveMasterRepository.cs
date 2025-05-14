@@ -201,9 +201,9 @@ namespace LEAVE.Repository.LeaveMaster
                                         select new
                                         {
                                             UserName = a != null ? a.UserName : null,
-                                            SettingsId = b.SettingsId,
-                                            SettingsName = b.SettingsName,
-                                            SettingsDescription = b.SettingsDescription,
+                                            b.SettingsId,
+                                            b.SettingsName,
+                                            b.SettingsDescription,
                                             CreatedDate = b.CreatedDate.HasValue ? FormatDate(b.CreatedDate, _employeeSettings.DateFormat) : null
                                         })
                                         .Distinct()
@@ -220,9 +220,9 @@ namespace LEAVE.Repository.LeaveMaster
                                          select new
                                          {
                                              UserName = a != null ? a.UserName : null,
-                                             SettingsId = b.SettingsId,
-                                             SettingsName = b.SettingsName,
-                                             SettingsDescription = b.SettingsDescription,
+                                             b.SettingsId,
+                                             b.SettingsName,
+                                             b.SettingsDescription,
                                              CreatedDate = b.CreatedDate.HasValue ? FormatDate(b.CreatedDate, _employeeSettings.DateFormat) : null
                                          })
                                          .Distinct()
@@ -244,9 +244,9 @@ namespace LEAVE.Repository.LeaveMaster
                                          select new
                                          {
                                              UserName = um != null ? um.UserName : null,
-                                             SettingsId = lbs.SettingsId,
-                                             SettingsName = lbs.SettingsName,
-                                             SettingsDescription = lbs.SettingsDescription,
+                                             lbs.SettingsId,
+                                             lbs.SettingsName,
+                                             lbs.SettingsDescription,
                                              CreatedDate = lbs.CreatedDate.HasValue ? FormatDate(lbs.CreatedDate, _employeeSettings.DateFormat) : null
                                          })
                                          .Distinct()
@@ -569,7 +569,295 @@ namespace LEAVE.Repository.LeaveMaster
 
             return masterId;
         }
+        private HashSet<int> ParseStatusList(string? empStatus)
+        {
+            return string.IsNullOrWhiteSpace(empStatus)
+                ? new HashSet<int>()
+                : empStatus.Split(',')
+                           .Select(s => int.Parse(s.Trim()))
+                           .ToHashSet();
+        }
+        //public async Task<List<balancedetailsDto>> LeaveBalanceDetails(string employeeIds)
+        //{
+        //    var employeeIdList = ParseStatusList(employeeIds);
+
+        //    var filteredEmployees = await _context.HrEmpMasters
+        //        .Where(emp => employeeIdList.Contains(emp.EmpId) && emp.JoinDt <= DateTime.UtcNow)
+        //        .Select(emp => new
+        //        {
+        //            emp.EmpId,
+        //            emp.JoinDt,
+        //            emp.PublicHoliday
+        //        }).ToListAsync();
+
+        //    var leaveSettings =
+        //       from emp in _context.HrEmpMasters
+        //       where employeeIdList.Contains(emp.EmpId) && emp.JoinDt <= DateTime.UtcNow
+        //       join setting in _context.LeaveFinalSettings on emp.EmpId equals setting.EmployeeId into empSettings
+        //       from setting in empSettings.DefaultIfEmpty()
+        //       join detail in _context.HrmLeaveBasicsettingsDetails on setting.SettingsId equals detail.SettingsId into settingDetails
+        //       from detail in settingDetails.DefaultIfEmpty()
+        //       where detail == null || detail.Casualholiday == 0 || detail.Casualholiday == 1 && emp.PublicHoliday == true
+        //       select new
+        //       {
+        //           EmployeeId = emp.EmpId,
+        //           emp.JoinDt,
+        //           setting.SettingsId,
+        //           setting.LeaveMaster
+        //       }
+        //   ;
+
+        //    var tempLeaveSetup =
+        //       from a in leaveSettings
+        //       join emp in _context.HrEmpMasters on a.EmployeeId equals emp.EmpId
+        //       join basic in _context.HrmLeaveBasicsettingsDetails on a.SettingsId equals basic.SettingsId into basicGroup
+        //       from basic in basicGroup.DefaultIfEmpty()
+
+        //       join ent in _context.HrmLeaveEntitlementHeads on a.SettingsId equals ent.SettingsId into entGroup
+        //       from ent in entGroup.DefaultIfEmpty()
+
+        //       let grant = _context.HrmLeaveServicedbasedleaves
+        //           .Where(g => ent != null && g.LeaveEntitlementId == ent.LeaveEntitlementId)
+        //           .FirstOrDefault()
+
+        //       let calculatedExperience = emp.JoinDt.HasValue
+        //           ? (float)(DateTime.UtcNow.Year - emp.JoinDt.Value.Year +
+        //                     (DateTime.UtcNow.Month - emp.JoinDt.Value.Month) / 12.0)
+        //           : 0f
+
+        //       where ent != null && ent.LeaveEntitlementId != null
+        //       where grant == null ||
+        //           grant.Checkcase == 1 && calculatedExperience < (grant.FromYear ?? float.MaxValue) ||
+        //           grant.Checkcase == 3 && calculatedExperience > (grant.FromYear ?? float.MinValue) ||
+        //           grant.Checkcase == 2 && calculatedExperience >= (grant.FromYear ?? float.MinValue) &&
+        //                                  calculatedExperience <= (grant.ToYear ?? float.MaxValue)
+
+
+        //       select new
+        //       {
+        //           emp.EmpId,
+        //           a.LeaveMaster,
+        //           a.SettingsId,
+        //           emp.InstId,
+        //           emp.JoinDt,
+        //           GrantType = grant != null ? grant.ExperiancebasedGrant : ent.LeaveGrantType ?? 0,
+        //           IsCarryForward = ent.Carryforward ?? 0,
+        //           FullLeaveProRata = ent.FullleaveProRata ?? 0,
+        //           ent.LeaveCount,
+
+        //       }
+        //   ;
+
+        //    var finalLeaveSummary = await (
+        //                        from setup in tempLeaveSetup
+        //                        join leave in _context.HrmLeaveMasters on setup.LeaveMaster equals leave.LeaveMasterId into leaveGroup
+        //                        from leave in leaveGroup.DefaultIfEmpty()
+
+        //                        join empDetails in _context.EmployeeDetails on setup.EmpId equals empDetails.EmpId into empGroup
+        //                        from emp in empGroup.DefaultIfEmpty()
+
+        //                        join access in _context.LeavepolicyMasterAccesses
+        //                            .Where(x => employeeIdList.Contains(x.EmployeeId ?? 0))
+        //                            on setup.EmpId equals access.EmployeeId into accessGroup
+        //                        from policyAccess in accessGroup.DefaultIfEmpty()
+
+        //                        join limits in _context.LeavePolicyInstanceLimits
+        //                            on new { policyAccess.PolicyId, LeaveId = setup.LeaveMaster }
+        //                            equals new { PolicyId = limits.LeavePolicyMasterId, limits.LeaveId } into limitsGroup
+        //                        from limit in limitsGroup.DefaultIfEmpty()
+
+        //                        where setup.JoinDt == null || setup.JoinDt <= DateTime.Now
+
+        //                        select new balancedetailsDto
+        //                        {
+        //                            EmpId = setup.EmpId,
+        //                            EmpCode = emp.EmpCode,
+        //                            Name = $"{emp.Name}'[{emp.EmpCode}]",
+        //                            LeaveMasterId = setup.LeaveMaster,
+        //                            LeaveCode = leave.LeaveCode,
+        //                            Description = leave.Description,
+        //                            LeaveCredited = setup.LeaveCount,
+        //                            Accrued = setup.LeaveCount,
+        //                            Leavebalance = setup.LeaveCount, /// (limit.Nobalance ?? 0) == 1 && 1 > setup.LeaveCount? setup.LeaveCount: (setup.LeaveCount ?? setup.LeaveCount)
+        //                            Colour = leave.Colour,
+        //                            MonthlyLimit = limit.MaximamLimit,
+        //                        }
+        //                    ).ToListAsync();
+
+
+        //    // You would typically return actual data here
+        //    return finalLeaveSummary; // Placeholder
+        //}
+
+        public async Task<List<LeaveBalanceBaseDto>> GetLeaveBalanceDetails(string employeeIds, string submode, int leaveBalanceFormat)
+        {
+            var employeeIdList = ParseStatusList(employeeIds);
+
+            var leaveSettings =
+                from emp in _context.HrEmpMasters
+                where employeeIdList.Contains(emp.EmpId) && emp.JoinDt <= DateTime.UtcNow
+                join setting in _context.LeaveFinalSettings on emp.EmpId equals setting.EmployeeId into empSettings
+                from setting in empSettings.DefaultIfEmpty()
+                join detail in _context.HrmLeaveBasicsettingsDetails on setting.SettingsId equals detail.SettingsId into settingDetails
+                from detail in settingDetails.DefaultIfEmpty()
+                where detail == null || detail.Casualholiday == 0 || (detail.Casualholiday == 1 && emp.PublicHoliday == true)
+                select new
+                {
+                    EmployeeId = emp.EmpId,
+                    emp.JoinDt,
+                    setting.SettingsId,
+                    setting.LeaveMaster
+                };
+
+            var tempLeaveSetup =
+                from a in leaveSettings
+                join emp in _context.HrEmpMasters on a.EmployeeId equals emp.EmpId
+                join basic in _context.HrmLeaveBasicsettingsDetails on a.SettingsId equals basic.SettingsId into basicGroup
+                from basic in basicGroup.DefaultIfEmpty()
+
+                join ent in _context.HrmLeaveEntitlementHeads on a.SettingsId equals ent.SettingsId into entGroup
+                from ent in entGroup.DefaultIfEmpty()
+
+                let grant = _context.HrmLeaveServicedbasedleaves
+                    .Where(g => ent != null && g.LeaveEntitlementId == ent.LeaveEntitlementId)
+                    .FirstOrDefault()
+
+                let calculatedExperience = emp.JoinDt.HasValue
+                    ? (float)(DateTime.UtcNow.Year - emp.JoinDt.Value.Year +
+                              (DateTime.UtcNow.Month - emp.JoinDt.Value.Month) / 12.0)
+                    : 0f
+
+                where ent != null && ent.LeaveEntitlementId != null
+                where grant == null ||
+                      (grant.Checkcase == 1 && calculatedExperience < (grant.FromYear ?? float.MaxValue)) ||
+                      (grant.Checkcase == 3 && calculatedExperience > (grant.FromYear ?? float.MinValue)) ||
+                      (grant.Checkcase == 2 && calculatedExperience >= (grant.FromYear ?? float.MinValue) &&
+                                                calculatedExperience <= (grant.ToYear ?? float.MaxValue))
+
+                select new
+                {
+                    emp.EmpId,
+                    emp.EmpCode,
+                    emp.FirstName,
+                    a.LeaveMaster,
+                    a.SettingsId,
+                    emp.InstId,
+                    emp.JoinDt,
+                    GrantType = grant != null ? grant.ExperiancebasedGrant : ent.LeaveGrantType ?? 0,
+                    IsCarryForward = ent.Carryforward ?? 0,
+                    FullLeaveProRata = ent.FullleaveProRata ?? 0,
+                    LeaveCount = ent.LeaveCount,
+                    ApplyWithoutBalance = basic.Applywithoutbalance ?? 0
+                };
+
+            var finalLeaveSummary = await (
+                from setup in tempLeaveSetup
+                join leave in _context.HrmLeaveMasters on setup.LeaveMaster equals leave.LeaveMasterId into leaveGroup
+                from leave in leaveGroup.DefaultIfEmpty()
+
+                join empDetails in _context.EmployeeDetails on setup.EmpId equals empDetails.EmpId into empGroup
+                from emp in empGroup.DefaultIfEmpty()
+
+                join access in _context.LeavepolicyMasterAccesses
+                    .Where(x => employeeIdList.Contains(x.EmployeeId ?? 0))
+                    on setup.EmpId equals access.EmployeeId into accessGroup
+                from policyAccess in accessGroup.DefaultIfEmpty()
+
+                    //join limits in _context.LeavePolicyInstanceLimits 
+                    //    on new { PolicyId = policyAccess.PolicyId, LeaveId = setup.LeaveMaster }
+                    //    equals new { limits.LeavePolicyMasterId, limits.LeaveId } into limitsGroup
+                    //from limit in limitsGroup.DefaultIfEmpty()
+                from limit in _context.LeavePolicyInstanceLimits
+       .Where(l => l.LeavePolicyMasterId == policyAccess.PolicyId
+                && l.LeaveId == setup.LeaveMaster)
+       .DefaultIfEmpty()
+
+
+
+                select new
+                {
+                    setup,
+                    leave,
+                    emp,
+                    policyAccess,
+                    limit
+                }
+            ).ToListAsync();
+
+            if (submode == "leavebalancefulldetails")
+            {
+                return finalLeaveSummary.Select(x => new leavebalancefulldetailsDto
+                {
+                    EmpId = x.setup.EmpId,
+                    EmpCode = x.setup.EmpCode,
+                    Name = $"{x.setup.FirstName} [{x.setup.EmpCode}]",
+                    LeaveMasterId = (int)x.setup.LeaveMaster,
+                    LeaveCode = x.leave?.LeaveCode,
+                    Description = x.leave?.Description,
+
+                    LeaveCredited = x.setup.ApplyWithoutBalance == 1 ? 0 : x.setup.LeaveCount,
+                    Accrued = x.setup.ApplyWithoutBalance == 1 ? 0 : x.setup.LeaveCount,
+                    LeaveBalance = x.setup.ApplyWithoutBalance == 1 ? 0 : x.setup.LeaveCount,
+
+                    Used = leaveBalanceFormat == 2 ? (x.setup.LeaveCount ?? 0) : (x.setup.LeaveCount ?? 0),
+                    Granted = 0, // Optional: adjust based on requirement
+                    Carryforward = x.setup.IsCarryForward,
+                    CreditedLeave = x.setup.ApplyWithoutBalance == 1 ? 0 : x.setup.LeaveCount,
+
+                    Colour = x.leave?.Colour,
+                    MonthlyLimit = (decimal?)(x.limit?.MaximamLimit),
+                    LapsedLeaves = 0,
+                    Leavebalanceformat = leaveBalanceFormat
+
+                }).Cast<LeaveBalanceBaseDto>().ToList();
+            }
+            else // balancedetails
+            {
+                return finalLeaveSummary.Select(x => new balancedetailsDto
+                {
+                    EmpId = x.setup.EmpId,
+                    EmpCode = x.setup.EmpCode,
+                    Name = $"{x.setup.FirstName} [{x.setup.EmpCode}]",
+                    LeaveMasterId = (int)x.setup.LeaveMaster,
+                    LeaveCode = x.leave?.LeaveCode,
+                    Description = x.leave?.Description,
+                    LeaveCredited = x.setup.LeaveCount,
+                    Accrued = x.setup.LeaveCount,
+                    Leavebalance = x.setup.LeaveCount,
+                    Colour = x.leave?.Colour,
+                    MonthlyLimit = (decimal?)(x.limit?.MaximamLimit)
+                }).Cast<LeaveBalanceBaseDto>().ToList();
+            }
+        }
+        public class LeaveBalanceBaseDto
+        {
+            public int EmpId { get; set; }
+            public string EmpCode { get; set; }
+            public string Name { get; set; }
+            public int LeaveMasterId { get; set; }
+            public string LeaveCode { get; set; }
+            public string Description { get; set; }
+            public decimal? LeaveCredited { get; set; }
+            public decimal? Accrued { get; set; }
+            public string Colour { get; set; }
+            public decimal? MonthlyLimit { get; set; }
+        }
+        public class balancedetailsDto : LeaveBalanceBaseDto
+        {
+            public decimal? Leavebalance { get; set; }
+        }
+        public class leavebalancefulldetailsDto : LeaveBalanceBaseDto
+        {
+            public decimal? LeaveBalance { get; set; }
+            public decimal? Used { get; set; }
+            public decimal? Granted { get; set; }
+            public decimal? Carryforward { get; set; }
+            public decimal? CreditedLeave { get; set; }
+            public decimal? LapsedLeaves { get; set; }
+            public int Leavebalanceformat { get; set; }
+        }
 
     }
-
 }
+
+
