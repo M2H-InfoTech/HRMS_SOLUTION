@@ -213,6 +213,10 @@ namespace HRMS.EmployeeInformation.Service.Interface
         Task<List<long?>> GetNewHighListAsync(int empId, int roleId, long transid, int? lnklev);
         Task<AccessCheckResultDto> AccessCheckingAsync(int empId, string code, int roleId);
         Task<int> GetEmployeeParameterSettingsAsync(int employeeId, string drpType = "", string parameterCode = "", string parameterType = "");
+        Task<DownloadExeclEmployeeDto> DownloadExeclEmployee(int? docId);
+        Task<object> EmployeeUpload(string data, string uploadType);
+        Task<object> GetEmployeeUpload(string uploadType, string? isAutoCode, string? categoryType);
+        Task<object> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels);
     }
 
 }

@@ -1460,5 +1460,43 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var employeeStatus = await _employeeInformation.GetEmployeeParameterSettingsAsync(employeeId, drpType, parameterCode, parameterType);
             return Ok(employeeStatus);
         }
+        [HttpGet]
+        public async Task<IActionResult> DownloadExeclEmployee(int docId)
+        {
+            var employeeStatus = await _employeeInformation.DownloadExeclEmployee(docId);
+            return Ok(employeeStatus);
+        }
+        [HttpPost]
+        public async Task<IActionResult> EmployeeUpload(string data, string uploadType)
+        {
+
+            var result = await _employeeInformation.EmployeeUpload(data, uploadType);
+            if (result is int insertedCount)
+            {
+                if (insertedCount > 0)
+                {
+                    return Ok(new { status = "Success", count = insertedCount });
+                }
+                else
+                {
+                    return BadRequest(new { status = "Failed", message = "No records were inserted." });
+                }
+            }
+            return BadRequest(new { status = "Failed", message = result?.ToString() });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeeUpload(string uploadType, string isAutoCode, string? categoryType)
+        {
+
+            var result = await _employeeInformation.GetEmployeeUpload(uploadType, isAutoCode, categoryType);
+            return Ok(result);
+        }
+        [HttpPost]
+        public async Task<IActionResult> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels)
+        {
+
+            var result = await _employeeInformation.SaveEmployeeUpload(uploadType, selectedrole, categoryLevels);
+            return Ok(result);
+        }
     }
 }
