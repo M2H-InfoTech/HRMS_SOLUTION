@@ -94,5 +94,11 @@ namespace LEAVE.Controllers.LeavePolicy
             var leavePolicySettingsAttachment = await _leavePolicyService.LeavePolicySettingsAttachment(leavePolicyMasterId, leavePolicyInstanceLimitId);
             return Ok(leavePolicySettingsAttachment);
         }
+        [HttpGet]
+        public async Task<IActionResult> LeavePolicySettingsUnpaidLeaves(int SecondEntityId, int leaveId)
+        {
+            var leavePolicySettingsUnpaidLeaves = await _leavePolicyService.LeavePolicySettingsUnpaidLeaves(SecondEntityId, leaveId);
+            return Ok(leavePolicySettingsUnpaidLeaves);
+        }
     }
 }
