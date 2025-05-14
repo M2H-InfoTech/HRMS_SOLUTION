@@ -888,5 +888,21 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetEmployeeParameterSettingsAsync(employeeId, drpType, parameterCode, parameterType);
         }
+        public async Task<DownloadExeclEmployeeDto> DownloadExeclEmployee(int? docId)
+        {
+            return await _employeeRepository.DownloadExeclEmployee(docId);
+        }
+        public async Task<object> EmployeeUpload(string data, string uploadType)
+        {
+            return await _employeeRepository.EmployeeUpload(data, uploadType);
+        }
+        public async Task<object> GetEmployeeUpload(string uploadType, string? isAutoCode, string? categoryType)
+        {
+            return await _employeeRepository.GetEmployeeUpload(uploadType, isAutoCode, categoryType);
+        }
+        public async Task<object> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels)
+        {
+            return await _employeeRepository.SaveEmployeeUpload(uploadType, selectedrole, categoryLevels);
+        }
     }
 }

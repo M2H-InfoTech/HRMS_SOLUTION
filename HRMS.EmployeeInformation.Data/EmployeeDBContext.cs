@@ -341,6 +341,29 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<LeaveApplication00> LeaveApplication00s { get; set; }
     public virtual DbSet<LeaveApplication02> LeaveApplication02s { get; set; }
     public virtual DbSet<Leavecancel00> Leavecancel00s { get; set; }
+    public virtual DbSet<UploadSettings00> UploadSettings00s { get; set; }
+    public virtual DbSet<UploadSettings01> UploadSettings01s { get; set; }
+    public virtual DbSet<EmployeeDetailsTemp> EmployeeDetailsTemps { get; set; }
+    public virtual DbSet<EntityTemp> EntityTemps { get; set; }
+    public virtual DbSet<EmpPersonal> EmpPersonals { get; set; }
+    public virtual DbSet<HighLevelView> HighLevelViews { get; set; }
+    public virtual DbSet<EntityLevelEight> EntityLevelEights { get; set; }
+
+    public virtual DbSet<EntityLevelEleven> EntityLevelElevens { get; set; }
+
+    public virtual DbSet<EntityLevelFive> EntityLevelFives { get; set; }
+
+    public virtual DbSet<EntityLevelNine> EntityLevelNines { get; set; }
+
+    public virtual DbSet<EntityLevelSeven> EntityLevelSevens { get; set; }
+
+    public virtual DbSet<EntityLevelSix> EntityLevelSixes { get; set; }
+
+    public virtual DbSet<EntityLevelTen> EntityLevelTens { get; set; }
+
+    public virtual DbSet<EntityLevelTwelve> EntityLevelTwelves { get; set; }
+    public virtual DbSet<EmpCommunication> EmpCommunications { get; set; }
+    public virtual DbSet<EmpProfessional> EmpProfessionals { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
          //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
@@ -466,8 +489,8 @@ public partial class EmployeeDBContext : DbContext
         modelBuilder.Entity<EmployeeDetail>(entity =>
         {
             entity
-                .HasNoKey()
-                .ToView("EmployeeDetails");
+                .HasKey(e => e.EmpId);
+            entity.ToView("EmployeeDetails");
 
             entity.Property(e => e.BandId).HasColumnName("BandID");
             entity.Property(e => e.BranchId).HasColumnName("BranchID");
@@ -3485,7 +3508,7 @@ public partial class EmployeeDBContext : DbContext
 
         modelBuilder.Entity<AdmUserRoleMaster>(entity =>
         {
-            entity.HasKey(e => e.InstId);
+            entity.HasKey(e => e.UserId);
             entity.ToTable("ADM_UserRoleMaster");
 
             entity.HasIndex(e => new { e.UserId, e.Acess }, "ix_user_access");
@@ -5164,7 +5187,423 @@ public partial class EmployeeDBContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false);
         });
+        modelBuilder.Entity<UploadSettings00>(entity =>
+        {
+            entity.HasKey(e => e.SettingsId).HasName("PK__UploadSe__991B19DC14EB346D");
 
+            entity.ToTable("UploadSettings00");
+
+            entity.Property(e => e.SettingsId).HasColumnName("SettingsID");
+            entity.Property(e => e.Code)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Description)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<UploadSettings01>(entity =>
+        {
+            entity.HasKey(e => e.SettingsTypeId).HasName("PK__UploadSe__2E45AB45F9D605D3");
+
+            entity.ToTable("UploadSettings01");
+
+            entity.Property(e => e.SettingsTypeId).HasColumnName("SettingsTypeID");
+            entity.Property(e => e.ExcellColumn)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.SettingsId).HasColumnName("SettingsID");
+            entity.Property(e => e.TableColumn)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<EmployeeDetailsTemp>(entity =>
+        {
+            entity
+                .HasKey(e => e.TempId);
+            entity.ToTable("EmployeeDetailsTemp");
+
+            entity.Property(e => e.DateOfBirth).HasColumnType("datetime");
+            entity.Property(e => e.EmployeeCode)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.ErrorDescription)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.ErrorId)
+                .HasDefaultValue(0)
+                .HasColumnName("ErrorID");
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.Gender)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.Gendr)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("gendr");
+            entity.Property(e => e.GuardianName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.IdentificationNumber)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.JobType)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+            entity.Property(e => e.JoinDate).HasColumnType("datetime");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelEightDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelElevenDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelFiveDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelNineDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelSevenDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelSixDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelTenDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelTwelveDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.MarStatus)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.MaritalStatus)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.MiddleName)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.OfficialEmail)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.PersonalEmail)
+                .HasMaxLength(300)
+                .IsUnicode(false);
+            entity.Property(e => e.ProbationEndDate).HasColumnType("datetime");
+            entity.Property(e => e.TempId)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("TempID");
+        });
+        modelBuilder.Entity<EntityTemp>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("EntityTemp");
+
+            entity.Property(e => e.EntryDate)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LevelEightDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelElevenDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelFiveDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelNineDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelSevenDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelSixDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelTenDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelTwelveDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<EmpPersonal>(entity =>
+        {
+            entity
+                .HasKey(e => e.PersonalId);
+            entity.ToTable("EmpPersonal");
+
+            entity.Property(e => e.BirthPlace)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.BloodGroup)
+                .HasMaxLength(5)
+                .IsUnicode(false);
+            entity.Property(e => e.Country)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.DateOfBirth).HasColumnType("datetime");
+            entity.Property(e => e.EmployeeCode)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.Gender)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.IdentityMark)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.MaritalStatus)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.Nationality)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.PersonalId)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("PersonalID");
+            entity.Property(e => e.Religion)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<HighLevelView>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("HighLevelView");
+
+            entity.Property(e => e.LastEntityId).HasColumnName("LastEntityID");
+            entity.Property(e => e.LevelEightDescription).IsUnicode(false);
+            entity.Property(e => e.LevelElevenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFiveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription).IsUnicode(false);
+            entity.Property(e => e.LevelNineDescription).IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSevenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSixDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwelveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription).IsUnicode(false);
+        });
+        modelBuilder.Entity<EntityLevelEight>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("EntityLevelEight");
+
+            entity.Property(e => e.LevelEightDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFiveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription).IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSevenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSixDescription).IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription).IsUnicode(false);
+        });
+
+        modelBuilder.Entity<EntityLevelEleven>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("EntityLevelEleven");
+
+            entity.Property(e => e.LevelEightDescription).IsUnicode(false);
+            entity.Property(e => e.LevelElevenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFiveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription).IsUnicode(false);
+            entity.Property(e => e.LevelNineDescription).IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSevenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSixDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription).IsUnicode(false);
+        });
+
+        modelBuilder.Entity<EntityLevelFive>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("EntityLevelFive");
+
+            entity.Property(e => e.LevelFiveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription).IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription).IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription).IsUnicode(false);
+        });
+
+        modelBuilder.Entity<EntityLevelNine>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("EntityLevelNine");
+
+            entity.Property(e => e.LevelEightDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFiveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription).IsUnicode(false);
+            entity.Property(e => e.LevelNineDescription).IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSevenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSixDescription).IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription).IsUnicode(false);
+        });
+
+        modelBuilder.Entity<EntityLevelSeven>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("EntityLevelSeven");
+
+            entity.Property(e => e.LevelFiveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription).IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSevenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSixDescription).IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription).IsUnicode(false);
+        });
+
+        modelBuilder.Entity<EntityLevelSix>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("EntityLevelSix");
+
+            entity.Property(e => e.LevelFiveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription).IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSixDescription).IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription).IsUnicode(false);
+        });
+
+        modelBuilder.Entity<EntityLevelTen>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("EntityLevelTen");
+
+            entity.Property(e => e.LevelEightDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFiveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription).IsUnicode(false);
+            entity.Property(e => e.LevelNineDescription).IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSevenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSixDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription).IsUnicode(false);
+        });
+
+        modelBuilder.Entity<EntityLevelTwelve>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("EntityLevelTwelve");
+
+            entity.Property(e => e.LevelEightDescription).IsUnicode(false);
+            entity.Property(e => e.LevelElevenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFiveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelFourDescription).IsUnicode(false);
+            entity.Property(e => e.LevelNineDescription).IsUnicode(false);
+            entity.Property(e => e.LevelOneDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSevenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelSixDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTenDescription).IsUnicode(false);
+            entity.Property(e => e.LevelThreeDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwelveDescription).IsUnicode(false);
+            entity.Property(e => e.LevelTwoDescription).IsUnicode(false);
+        });
+        modelBuilder.Entity<EmpCommunication>(entity =>
+        {
+            entity.HasKey(e => e.ComId).HasName("PK__EmpCommu__E15F41329D56FA31");
+
+            entity.ToTable("EmpCommunication");
+
+            entity.Property(e => e.ComId).HasColumnName("ComID");
+            entity.Property(e => e.ContactAddress).IsUnicode(false);
+            entity.Property(e => e.Country).IsUnicode(false);
+            entity.Property(e => e.Country2).IsUnicode(false);
+            entity.Property(e => e.EmployeeCode)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.HomeCountryPhone)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.MobileNo)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.OfficePhone)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.PermanentAddress).IsUnicode(false);
+            entity.Property(e => e.PersonalPhone)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.PinZipCode).IsUnicode(false);
+            entity.Property(e => e.PinZipCode2).IsUnicode(false);
+        });
+        modelBuilder.Entity<EmpProfessional>(entity =>
+        {
+            entity.HasKey(e => e.ProdId).HasName("PK__EmpProfe__042785C5E0E0ABE4");
+
+            entity.ToTable("EmpProfessional");
+
+            entity.Property(e => e.ProdId).HasColumnName("ProdID");
+            entity.Property(e => e.AnnualCtc)
+                .IsUnicode(false)
+                .HasColumnName("AnnualCTC");
+            entity.Property(e => e.Company).IsUnicode(false);
+            entity.Property(e => e.CompanyAddress).IsUnicode(false);
+            entity.Property(e => e.ContactNumber).IsUnicode(false);
+            entity.Property(e => e.ContactPerson).IsUnicode(false);
+            entity.Property(e => e.Currency).IsUnicode(false);
+            entity.Property(e => e.Designation).IsUnicode(false);
+            entity.Property(e => e.EmployeeCode).IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.JobDescription).IsUnicode(false);
+            entity.Property(e => e.JoiningDate).HasColumnType("datetime");
+            entity.Property(e => e.PinZipCode).IsUnicode(false);
+            entity.Property(e => e.RelievingDate).HasColumnType("datetime");
+            entity.Property(e => e.RelievingReason).IsUnicode(false);
+        });
         OnModelCreatingPartial(modelBuilder);
     }
 

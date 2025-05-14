@@ -1,4 +1,7 @@
-﻿using System.Xml.Linq;
+﻿using System.Data;
+using System.Globalization;
+using System.Xml;
+using System.Xml.Linq;
 using AutoMapper;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.DTO.DTOs;
@@ -24,6 +27,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using MPLOYEE_INFORMATION.DTO.DTOs;
+using Newtonsoft.Json;
+using Formatting = Newtonsoft.Json.Formatting;
 
 
 namespace HRMS.EmployeeInformation.Repository.Common
@@ -15250,7 +15255,7 @@ new LevelListDto
 
 
             // Step 1: Fetch data first, then apply SplitStrings_XML in memory
-            var entityAccessRights = await   _context.EntityAccessRights02s
+            var entityAccessRights = await _context.EntityAccessRights02s
             .Where(s => s.RoleId == FirstEntityId)
             .ToListAsync(); // Fetch first
 
@@ -16747,7 +16752,1933 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
                 Employees = employees
             };
         }
+        public async Task<DownloadExeclEmployeeDto> DownloadExeclEmployee(int? docId)
+        {
+            var empUploadColumns = await (from a in _context.UploadSettings00s
+                                          join b in _context.UploadSettings01s on a.SettingsId equals b.SettingsId
+                                          where a.Code == "EmpUpload"
+                                                && b.TableColumn != "EntryBy"
+                                                && b.TableColumn != "EntryDate"
+                                          select new UploadColumnDto
+                                          {
+                                              DtColumnName = b.ExcellColumn,
+                                              TableColumnName = b.TableColumn
+                                          }).ToListAsync();
+            var entUploadColumns = await (from a in _context.UploadSettings00s
+                                          join b in _context.UploadSettings01s on a.SettingsId equals b.SettingsId
+                                          where a.Code == "EntUpload"
+                                                && b.TableColumn != "EntryBy"
+                                                && b.TableColumn != "EntryDate"
+                                          select new UploadColumnDto
+                                          {
+                                              DtColumnName = b.ExcellColumn,
+                                              TableColumnName = b.TableColumn
+                                          }).ToListAsync();
+            var satDocument = await (from a in _context.HrmsDocument00s
+                                     join b in _context.HrmsDocumentField00s on Convert.ToInt32(a.DocId) equals b.DocId
+                                     join c in _context.HrmsDocTypeMasters on Convert.ToInt32(a.DocType) equals c.DocTypeId
+                                     where c.Code == "SAT" && b.DataTypeId != -2 && a.DocId == docId
+                                     select new DocumentDto
+                                     {
+                                         DocDescription = b.DocDescription,
+                                         DocID = Convert.ToInt32(a.DocId)
+                                     }).ToListAsync();
+            var bnkDocument = await (from a in _context.HrmsDocument00s
+                                     join b in _context.HrmsDocumentField00s on Convert.ToInt32(a.DocId) equals b.DocId
+                                     join c in _context.HrmsDocTypeMasters on Convert.ToInt32(a.DocType) equals c.DocTypeId
+                                     where c.Code == "BNK" && b.DataTypeId != -2 && a.DocId == docId
+                                     select new DocumentDto
+                                     {
+                                         DocDescription = b.DocDescription,
+                                         DocID = Convert.ToInt32(a.DocId)
+                                     }).ToListAsync();
 
+            return new DownloadExeclEmployeeDto
+            {
+                EmpUploadColumns = empUploadColumns,
+                EntUploadColumns = entUploadColumns,
+                SatDocument = satDocument,
+                BnkDocument = bnkDocument
+
+            };
+
+        }
+        public async Task<object> EmployeeUpload(string data, string UploadType)
+        {
+            if (UploadType == "Empdetail")
+            {
+                return await EmpDetailUpload(data);
+            }
+            else if (UploadType == "EmpdtlWthEntity")
+            {
+                return await EmpDtlWithEntityUpload(data);
+            }
+            else if (UploadType == "EmpPerso")
+            {
+                return await EmpPersonalUpload(data);
+            }
+            else if (UploadType == "EmpCommu")
+            {
+                return await EmpCommunicationUpload(data);
+            }
+            else if (UploadType == "EmpProf")
+            {
+                return await EmpProfessionalUpload(data);
+            }
+            else
+            {
+                return 1;
+            }
+        }
+        private async Task<object> EmpDetailUpload(string data)
+        {
+            var uploadSettings = await GetUploadDetails("EmpUpload");
+            if (uploadSettings == null || !uploadSettings.Any())
+                return "Upload settings not found.";
+
+            var json = JsonConvert.DeserializeObject<DataTable>(data);
+            if (json == null || json.Rows.Count == 0)
+                return "Please Provide Excel Data Properly";
+
+            var validationResult = await ValidateDateFormat(json);
+            if (!validationResult.Result)
+                return JsonConvert.SerializeObject(validationResult.ErrorMessage, Formatting.Indented);
+
+            json.Columns.Add("Z", typeof(int));
+            json.Columns.Add("AA", typeof(DateTime));
+
+            foreach (DataRow row in json.Rows)
+            {
+                row["Z"] = 19;
+                row["AA"] = DateTime.UtcNow;
+            }
+
+            int rowcount = uploadSettings.Count;
+            int columncount = json.Columns.Count;
+
+            if (rowcount == columncount)
+            {
+                for (int i = 0; i < rowcount; i++)
+                    json.Columns[i].ColumnName = uploadSettings[i].DtColumnName;
+            }
+            else if (rowcount > columncount)
+            {
+                await DeleteTemp1<EmployeeDetailsTemp>(19);
+
+                var requiredCols = new[]
+                {
+            new { Name = "IdentificationNumber", Type = typeof(string) },
+            new { Name = "MaritalStatus", Type = typeof(string) },
+            new { Name = "JobType", Type = typeof(string) },
+            new { Name = "ProbationEndDate", Type = typeof(DateTime) }
+                };
+
+                foreach (var col in requiredCols)
+                {
+                    var match = uploadSettings.FirstOrDefault(x => x.TableColumnName == col.Name);
+                    if (match != null && !json.Columns.Contains(col.Name))
+                    {
+                        int ordinal = uploadSettings.IndexOf(match);
+                        var newCol = new DataColumn(col.Name, col.Type);
+                        json.Columns.Add(newCol);
+                        newCol.SetOrdinal(Math.Min(ordinal, json.Columns.Count - 1));
+                    }
+                }
+
+                foreach (DataRow row in json.Rows)
+                {
+                    DateTime startDate = Convert.ToDateTime(row["JoinDate(MM/DD/YYYY)"]);
+                    row["IdentificationNumber"] = "1";
+                    row["MaritalStatus"] = "Single";
+                    row["JobType"] = "Permanent";
+                    row[json.Columns.Contains("ProbationEndDate(MM/DD/YYYY)") ? "ProbationEndDate(MM/DD/YYYY)" : "ProbationEndDate"]
+                        = startDate.AddDays(30);
+                }
+
+                validationResult = await ValidateEnityNull(json);
+                if (!validationResult.Result)
+                    return JsonConvert.SerializeObject(validationResult.ErrorMessage, Formatting.Indented);
+
+                columncount = json.Columns.Count;
+
+                if (rowcount == columncount)
+                {
+                    for (int j = 0; j < rowcount; j++)
+                        json.Columns[j].ColumnName = uploadSettings[j].DtColumnName;
+                }
+                else
+                {
+                    return "Excel Column Count Does Not Match";
+                }
+            }
+            else
+            {
+                return "Excel Column Count Does Not Match";
+            }
+
+            var insertedCount = await BulkInsertDynamicAsync<EmployeeDetailsTemp>(json, uploadSettings, "Y");
+            return insertedCount;
+        }
+        private async Task<object> EmpDtlWithEntityUpload(string data)
+        {
+            var uploadSettings = await GetUploadDetails("EntUpload");
+            if (uploadSettings == null || !uploadSettings.Any())
+                return "Upload settings not found.";
+
+            var json = JsonConvert.DeserializeObject<DataTable>(data);
+            if (json == null || json.Rows.Count == 0)
+                return "Please Provide Excel Data Properly";
+
+            if (json.Columns.Count != 11)
+                return "-2";
+
+            bool hasEmpty = json.AsEnumerable()
+                .SelectMany(row => row.ItemArray.Select(cell => cell?.ToString().Trim()))
+                .Any(string.IsNullOrEmpty);
+
+            if (hasEmpty)
+                return "-1";
+
+            if (uploadSettings.Count != json.Columns.Count)
+                return "Excel Column Count Does Not Match";
+
+            uploadSettings
+                .Select((col, index) => new { col.DtColumnName, Index = index })
+                .ToList()
+                .ForEach(map => json.Columns[map.Index].ColumnName = map.DtColumnName);
+
+            await DeleteTemp1<EntityTemp>(19);
+            var insertedCount = await BulkInsertDynamicAsync<EntityTemp>(json, uploadSettings, "Y");
+
+            return insertedCount;
+        }
+        private async Task<object> EmpPersonalUpload(string data)
+        {
+            var json = JsonConvert.DeserializeObject<DataTable>(data);
+            var requiredColumns = new List<(string ColumnName, int Ordinal)>
+                                    {
+                                        ("EmployeeCode", 0), ("Gender", 1), ("Nationality", 2), ("Country", 3),
+                                        ("Religion", 4), ("DOB(MM/DD/YYYY)", 5), ("MaritalStatus", 6),
+                                        ("BirthPlace", 7), ("IdentificationMark", 8), ("BloodGroup", 9)
+                                    };
+
+            requiredColumns.ForEach(col =>
+            {
+                if (!json.Columns.Contains(col.ColumnName))
+                    json.Columns.Add(col.ColumnName);
+            });
+
+            requiredColumns.ForEach(col =>
+            {
+                json.Columns[col.ColumnName].SetOrdinal(col.Ordinal);
+            });
+
+            var validationResult = await ValidateEmployeeCodeandDOB(json, "");
+            if (!validationResult.Result)
+                return JsonConvert.SerializeObject(validationResult.ErrorMessage, Formatting.Indented);
+
+            var columnMappingTable = new DataTable();
+            columnMappingTable.Columns.Add("dtColumnName", typeof(string));
+            columnMappingTable.Columns.Add("TableColumnName", typeof(string));
+
+            var columnMappings = new List<UploadColumnDto>
+                                   {
+                                    new UploadColumnDto { DtColumnName = "A", TableColumnName = "EmployeeCode" },
+                                    new UploadColumnDto { DtColumnName = "B", TableColumnName = "Gender" },
+                                    new UploadColumnDto { DtColumnName = "C", TableColumnName = "Nationality" },
+                                    new UploadColumnDto { DtColumnName = "D", TableColumnName = "Country" },
+                                    new UploadColumnDto { DtColumnName = "E", TableColumnName = "Religion" },
+                                    new UploadColumnDto { DtColumnName = "F", TableColumnName = "DateOfBirth" },
+                                    new UploadColumnDto { DtColumnName = "G", TableColumnName = "MaritalStatus" },
+                                    new UploadColumnDto { DtColumnName = "H", TableColumnName = "BirthPlace" },
+                                    new UploadColumnDto { DtColumnName = "I", TableColumnName = "IdentityMark" },
+                                    new UploadColumnDto { DtColumnName = "J", TableColumnName = "BloodGroup" },
+                                    new UploadColumnDto { DtColumnName = "K", TableColumnName = "EntryBy" },
+                                    new UploadColumnDto { DtColumnName = "L", TableColumnName = "EntryDate" }
+                                };
+            json.Columns.Add("K", typeof(int));
+            json.Columns.Add("L", typeof(DateTime));
+
+            foreach (DataRow row in json.Rows)
+            {
+                row["K"] = 19;
+                row["L"] = DateTime.UtcNow;
+            }
+            columnMappings.ForEach(map =>
+            {
+                columnMappingTable.Rows.Add(map.DtColumnName, map.TableColumnName);
+            });
+            for (int i = 0; i <= 9; i++)
+            {
+                json.Columns[i].ColumnName = columnMappings[i].DtColumnName;
+            }
+
+            await DeleteTemp1<EmpPersonal>(19);
+            var insertedCount = await BulkInsertDynamicAsync<EmpPersonal>(json, columnMappings, "Y");
+
+            return insertedCount;
+        }
+        private async Task<object> EmpCommunicationUpload(string data)
+        {
+            var json = JsonConvert.DeserializeObject<DataTable>(data);
+            var requiredColumns = new List<(string ColumnName, int Ordinal)>
+                                    {
+                                        ("EmployeeCode", 0), ("PermanentAddress", 1), ("Country", 2), ("PinZipCode", 3),
+                                        ("ContactAddress", 4), ("Country_1", 5), ("PinZipCode_1", 6),
+                                        ("OfficePhone", 7), ("PersonalPhone", 8), ("MobileNo", 9), ("HomeCountryPhone", 10)
+                                    };
+
+            requiredColumns.ForEach(col =>
+            {
+                if (!json.Columns.Contains(col.ColumnName))
+                    json.Columns.Add(col.ColumnName);
+            });
+
+            requiredColumns.ForEach(col =>
+            {
+                json.Columns[col.ColumnName].SetOrdinal(col.Ordinal);
+            });
+
+            var validationResult = await ValidateEmployeeCodeAndDates(json, "EmployeeCode");
+            if (!validationResult.Result)
+                return JsonConvert.SerializeObject(validationResult.ErrorMessage, Formatting.Indented);
+
+            var columnMappingTable = new DataTable();
+            columnMappingTable.Columns.Add("dtColumnName", typeof(string));
+            columnMappingTable.Columns.Add("TableColumnName", typeof(string));
+
+            var columnMappings = new List<UploadColumnDto>
+                                   {
+                                    new UploadColumnDto { DtColumnName = "A", TableColumnName = "EmployeeCode" },
+                                    new UploadColumnDto { DtColumnName = "B", TableColumnName = "PermanentAddress" },
+                                    new UploadColumnDto { DtColumnName = "C", TableColumnName = "Country" },
+                                    new UploadColumnDto { DtColumnName = "D", TableColumnName = "PinZipCode" },
+                                    new UploadColumnDto { DtColumnName = "E", TableColumnName = "ContactAddress" },
+                                    new UploadColumnDto { DtColumnName = "F", TableColumnName = "Country_1" },
+                                    new UploadColumnDto { DtColumnName = "G", TableColumnName = "PinZipCode_1" },
+                                    new UploadColumnDto { DtColumnName = "H", TableColumnName = "OfficePhone" },
+                                    new UploadColumnDto { DtColumnName = "I", TableColumnName = "PersonalPhone" },
+                                    new UploadColumnDto { DtColumnName = "J", TableColumnName = "MobileNo" },
+                                    new UploadColumnDto { DtColumnName = "M", TableColumnName = "HomeCountryPhone" },
+                                    new UploadColumnDto { DtColumnName = "K", TableColumnName = "EntryBy" },
+                                    new UploadColumnDto { DtColumnName = "L", TableColumnName = "EntryDate" },
+                                };
+            json.Columns.Add("K", typeof(int));
+            json.Columns.Add("L", typeof(DateTime));
+
+            foreach (DataRow row in json.Rows)
+            {
+                row["K"] = 19;
+                row["L"] = DateTime.UtcNow;
+            }
+
+            columnMappings.ForEach(map =>
+            {
+                columnMappingTable.Rows.Add(map.DtColumnName, map.TableColumnName);
+            });
+            for (int i = 0; i <= 10; i++)
+            {
+                json.Columns[i].ColumnName = columnMappings[i].DtColumnName;
+            }
+
+            await DeleteTemp1<EmpCommunication>(19);
+            var insertedCount = await BulkInsertDynamicAsync<EmpCommunication>(json, columnMappings, "Y");
+
+            return insertedCount;
+        }
+        private async Task<object> EmpProfessionalUpload(string data)
+        {
+            var json = JsonConvert.DeserializeObject<DataTable>(data);
+            var requiredColumns = new List<(string ColumnName, int Ordinal)>
+                                    {
+                                        ("EmployeeCode", 0), ("Company", 1), ("CompanyAddress", 2), ("Designation", 3), ("PinZipCode", 4),
+                                        ("ContactPerson", 5), ("ContactNumber", 6), ("JobDescription", 7),
+                                        ("JoiningDate(MM/DD/YYYY)", 8), ("RelievingDate(MM/DD/YYYY)", 9), ("RelievingReason", 10), ("AnnualCTC", 11), ("Currency", 12)
+                                    };
+
+            requiredColumns.ForEach(col =>
+            {
+                if (!json.Columns.Contains(col.ColumnName))
+                    json.Columns.Add(col.ColumnName);
+            });
+
+            requiredColumns.ForEach(col =>
+            {
+                json.Columns[col.ColumnName].SetOrdinal(col.Ordinal);
+            });
+
+            var validationResult = await ValidateEmployeeCodeAndDates(json, "EmployeeCode", "JoiningDate(MM/DD/YYYY)", "RelievingDate(MM/DD/YYYY)");
+            if (!validationResult.Result)
+            {
+                await DeleteTemp1<EmpProfessional>(19);
+                return JsonConvert.SerializeObject(validationResult.ErrorMessage, Formatting.Indented);
+            }
+
+            var columnMappingTable = new DataTable();
+            columnMappingTable.Columns.Add("dtColumnName", typeof(string));
+            columnMappingTable.Columns.Add("TableColumnName", typeof(string));
+
+            var columnMappings = new List<UploadColumnDto>
+                                   {
+                                    new UploadColumnDto { DtColumnName = "A", TableColumnName = "EmployeeCode" },
+                                    new UploadColumnDto { DtColumnName = "B", TableColumnName = "Company" },
+                                    new UploadColumnDto { DtColumnName = "C", TableColumnName = "CompanyAddress" },
+                                    new UploadColumnDto { DtColumnName = "D", TableColumnName = "Designation" },
+                                    new UploadColumnDto { DtColumnName = "E", TableColumnName = "PinZipCode" },
+                                    new UploadColumnDto { DtColumnName = "F", TableColumnName = "ContactPerson" },
+                                    new UploadColumnDto { DtColumnName = "G", TableColumnName = "ContactNumber" },
+                                    new UploadColumnDto { DtColumnName = "H", TableColumnName = "JobDescription" },
+                                    new UploadColumnDto { DtColumnName = "I", TableColumnName = "JoiningDate(MM/DD/YYYY)" },
+                                    new UploadColumnDto { DtColumnName = "J", TableColumnName = "RelievingDate(MM/DD/YYYY)" },
+                                    new UploadColumnDto { DtColumnName = "K", TableColumnName = "RelievingReason" },
+                                    new UploadColumnDto { DtColumnName = "L", TableColumnName = "AnnualCTC" },
+                                    new UploadColumnDto { DtColumnName = "M", TableColumnName = "Currency" },
+                                    new UploadColumnDto { DtColumnName = "N", TableColumnName = "EntryBy" },
+                                    new UploadColumnDto { DtColumnName = "O", TableColumnName = "EntryDate" },
+                                };
+            json.Columns.Add("N", typeof(int));
+            json.Columns.Add("O", typeof(DateTime));
+
+            foreach (DataRow row in json.Rows)
+            {
+                row["N"] = 19;
+                row["O"] = DateTime.UtcNow;
+            }
+
+            columnMappings.ForEach(map =>
+            {
+                columnMappingTable.Rows.Add(map.DtColumnName, map.TableColumnName);
+            });
+            for (int i = 0; i <= 12; i++)
+            {
+                json.Columns[i].ColumnName = columnMappings[i].DtColumnName;
+            }
+
+            await DeleteTemp1<EmpProfessional>(19);
+            var insertedCount = await BulkInsertDynamicAsync<EmpProfessional>(json, columnMappings, "Y");
+
+            return insertedCount;
+        }
+
+
+        public async Task<object> GetEmployeeUpload(string uploadType, string? isAutoCode, string? categoryType)
+        {
+            if (uploadType == "Empdetail")
+            {
+                return await GetEmpDetailUpload(isAutoCode);
+            }
+            else if (uploadType == "EmpPerso")
+            {
+                return await GetEmpPersoUpload();
+            }
+            else if (uploadType == "EmpCommu")
+            {
+                return await GetEmpCommuUpload();
+            }
+            else if (uploadType == "EmpProf")
+            {
+                return await GetEmpProfUpload();
+            }
+            else
+            {
+                return "";
+            }
+        }
+        private async Task<object> GetEmpDetailUpload(string? isAutoCode)
+        {
+            var entryByUserId = 19;
+
+            var tempEmployees = await _context.EmployeeDetailsTemps
+                .Where(e => e.EntryBy == entryByUserId)
+                .ToListAsync();
+
+            foreach (var record in tempEmployees)
+            {
+                record.EmployeeCode = record.EmployeeCode?.Trim();
+                record.LevelOneDescription = record.LevelOneDescription?.Trim();
+                record.LevelTwoDescription = record.LevelTwoDescription?.Trim();
+                record.LevelThreeDescription = record.LevelThreeDescription?.Trim();
+                record.LevelFourDescription = record.LevelFourDescription?.Trim();
+                record.LevelFiveDescription = record.LevelFiveDescription?.Trim();
+                record.LevelSixDescription = record.LevelSixDescription?.Trim();
+                record.LevelSevenDescription = record.LevelSevenDescription?.Trim();
+                record.LevelEightDescription = record.LevelEightDescription?.Trim();
+                record.LevelNineDescription = record.LevelNineDescription?.Trim();
+                record.LevelTenDescription = record.LevelTenDescription?.Trim();
+                record.LevelElevenDescription = record.LevelElevenDescription?.Trim();
+                record.LevelTwelveDescription = record.LevelTwelveDescription?.Trim();
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Detect duplicates within Excel
+            var duplicateExcelCodes = tempEmployees
+                .GroupBy(e => e.EmployeeCode)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            // Detect duplicates against master
+            //var duplicateInMaster = tempEmployees
+            //    .Join(_context.HrEmpMasters, a => a.EmployeeCode.Trim(), b => b.EmpCode.Trim(), (a, b) => a.EmployeeCode)
+            //    .Distinct()
+            //    .ToList();
+
+
+            var duplicateInMaster = tempEmployees
+                             .Where(te => !string.IsNullOrEmpty(te.EmployeeCode))
+                             .Join(
+                                 _context.HrEmpMasters.Where(hm => !string.IsNullOrEmpty(hm.EmpCode)),
+                                 te => te.EmployeeCode.Trim(),
+                                 hm => hm.EmpCode.Trim(),
+                                 (te, hm) => te.EmployeeCode
+                             )
+                             .Distinct()
+                             .ToList();
+
+
+            if (duplicateInMaster.Any())
+            {
+                var result = string.Join(",", duplicateInMaster);
+                return result;
+            }
+
+
+            // Handle Auto Code Generation
+            if (isAutoCode == "Y")
+            {
+                var currentSequence = (from a in _context.AdmCodegenerationmasters
+                                       join b in _context.TransactionMasters on a.TypeId equals b.TransactionId
+                                       join c in _context.EmployeeSequenceAccesses on a.CodeId equals c.SequenceId
+                                       where b.TransactionType == "EmpCode" && c.EmployeeId == 72
+                                       select new
+                                       {
+                                           a.CurrentCodeValue,
+                                           a.FinalCodeWithNoSeq,
+                                           a.CodeId,
+                                           a.PrefixFormatId,
+                                           a.SuffixFormatId,
+                                           a.Code,
+                                           a.Suffix
+                                       }).FirstOrDefault();
+
+                if (currentSequence == null)
+                    return "Code generation sequence not found.";
+
+                int currentCode = (int)currentSequence.CurrentCodeValue;
+                int finalCodeWithNoSeq = int.Parse(currentSequence.FinalCodeWithNoSeq ?? "0");
+                string prefix = currentSequence.PrefixFormatId switch
+                {
+                    1 => DateTime.UtcNow.Year.ToString(),
+                    2 => currentSequence.Code ?? "",
+                    _ => ""
+                };
+                string suffix = currentSequence.SuffixFormatId switch
+                {
+                    1 => DateTime.UtcNow.Year.ToString(),
+                    2 => currentSequence.Suffix ?? "",
+                    _ => ""
+                };
+
+                foreach (var record in tempEmployees)
+                {
+                    record.EmployeeCode = $"{prefix}{finalCodeWithNoSeq}{suffix}";
+                    currentCode++;
+                    finalCodeWithNoSeq++;
+                }
+
+                var codeGenRecord = await _context.AdmCodegenerationmasters
+                    .FirstOrDefaultAsync(c => c.CodeId == currentSequence.CodeId);
+
+                if (codeGenRecord != null)
+                {
+                    codeGenRecord.CurrentCodeValue = currentCode;
+                    codeGenRecord.FinalCodeWithNoSeq = finalCodeWithNoSeq.ToString();
+                    codeGenRecord.LastSequence = $"{prefix}{finalCodeWithNoSeq - 1}{suffix}";
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            // Validate org structure mapping
+            var validOrgCodes = await (from e in _context.EmployeeDetailsTemps
+                                       join h in _context.HighLevelViews
+                                       on new
+                                       {
+                                           e.LevelOneDescription,
+                                           e.LevelTwoDescription,
+                                           e.LevelThreeDescription,
+                                           e.LevelFourDescription,
+                                           e.LevelFiveDescription,
+                                           e.LevelSixDescription,
+                                           e.LevelSevenDescription,
+                                           e.LevelEightDescription,
+                                           e.LevelNineDescription,
+                                           e.LevelTenDescription,
+                                           e.LevelElevenDescription,
+                                           e.LevelTwelveDescription
+                                       }
+                                       equals new
+                                       {
+                                           h.LevelOneDescription,
+                                           h.LevelTwoDescription,
+                                           h.LevelThreeDescription,
+                                           h.LevelFourDescription,
+                                           h.LevelFiveDescription,
+                                           h.LevelSixDescription,
+                                           h.LevelSevenDescription,
+                                           h.LevelEightDescription,
+                                           h.LevelNineDescription,
+                                           h.LevelTenDescription,
+                                           h.LevelElevenDescription,
+                                           h.LevelTwelveDescription
+                                       }
+                                       select e.EmployeeCode).Distinct().ToListAsync();
+
+            var excludedCodes = tempEmployees
+                .Where(e => !validOrgCodes.Contains(e.EmployeeCode))
+                .Select(e => e.EmployeeCode)
+                .ToList();
+
+            if (excludedCodes.Any())
+            {
+                foreach (var emp in tempEmployees.Where(e => excludedCodes.Contains(e.EmployeeCode)))
+                {
+                    emp.ErrorId = 1;
+                    emp.ErrorDescription = "Incomplete Data";
+                }
+                await _context.SaveChangesAsync();
+            }
+            var genderMap = new Dictionary<string, string> { { "Male", "M" }, { "Female", "F" }, { "Others", "O" }, { "M", "M" }, { "F", "F" }, { "O", "O" } };
+            var maritalMap = new Dictionary<string, string> { { "Single", "S" }, { "Married", "M" }, { "Widowed", "W" }, { "Separated", "X" }, { "Divorced", "D" } };
+
+            foreach (var emp in tempEmployees)
+            {
+                if (genderMap.TryGetValue(emp.Gender, out var gen)) emp.Gendr = gen; emp.Gender = gen;
+                if (maritalMap.TryGetValue(emp.MaritalStatus, out var mar)) emp.MarStatus = mar; emp.MaritalStatus = mar;
+            }
+
+            await _context.SaveChangesAsync();
+
+            var resultList = await (from a in _context.EmployeeDetailsTemps
+                                    join b in _context.HrEmployeeUserRelations on a.EntryBy equals b.UserId into ab
+                                    from b in ab.DefaultIfEmpty()
+                                    join c in _context.EmployeeDetails on b.EmpId equals c.EmpId into bc
+                                    from c in bc.DefaultIfEmpty()
+                                    where a.EntryBy == entryByUserId
+                                    select new EmployeeUploadResultDto
+                                    {
+                                        EmployeeCode = a.EmployeeCode ?? "NA",
+                                        IdentificationNumber = a.IdentificationNumber ?? "NA",
+                                        FirstName = a.FirstName ?? "NA",
+                                        MiddleName = a.MiddleName ?? "NA",
+                                        LastName = a.LastName ?? "NA",
+                                        GuardianName = a.GuardianName ?? "NA",
+                                        Gender = a.Gender ?? "NA",
+                                        MaritalStatus = a.MaritalStatus ?? "NA",
+                                        DateOfBirth = a.DateOfBirth.HasValue ? a.DateOfBirth.Value.ToString("dd/MM/yyyy") : "NA",
+                                        JoinDate = a.JoinDate.HasValue ? a.JoinDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                        JobType = a.JobType ?? "NA",
+                                        PersonalEmail = a.PersonalEmail ?? "NA",
+                                        OfficialEmail = a.OfficialEmail ?? "NA",
+                                        LevelOneDescription = a.LevelOneDescription ?? "Not Proper",
+                                        LevelTwoDescription = a.LevelTwoDescription ?? "Not Proper",
+                                        LevelThreeDescription = a.LevelThreeDescription ?? "Not Proper",
+                                        LevelFourDescription = a.LevelFourDescription ?? "Not Proper",
+                                        LevelFiveDescription = a.LevelFiveDescription ?? "Not Proper",
+                                        LevelSixDescription = a.LevelSixDescription ?? "Not Proper",
+                                        LevelSevenDescription = a.LevelSevenDescription ?? "Not Proper",
+                                        LevelEightDescription = a.LevelEightDescription ?? "Not Proper",
+                                        LevelNineDescription = a.LevelNineDescription ?? "Not Proper",
+                                        LevelTenDescription = a.LevelTenDescription ?? "Not Proper",
+                                        LevelElevenDescription = a.LevelElevenDescription ?? "Not Proper",
+                                        LevelTwelveDescription = a.LevelTwelveDescription ?? "Not Proper",
+                                        ProbationEndDate = a.ProbationEndDate.HasValue ? a.ProbationEndDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                        EntryBy = c != null ? c.Name : "NA",
+                                        EntryDate = a.EntryDate.HasValue ? a.EntryDate.Value.ToString("dd/MM/yyyy") : "NA",
+                                        ErrorId = a.ErrorId,
+                                        ErrorDescription = a.ErrorDescription
+                                    }).ToListAsync();
+
+            return resultList;
+        }
+        private async Task<object> GetEmpPersoUpload()
+        {
+            // Assuming context is your DbContext and UserID is a variable
+            var duplicateEmpCodes = await _context.EmpPersonals
+                                    .Where(e => e.EntryBy == 19)
+                                    .GroupBy(e => e.EmployeeCode)
+                                    .Where(g => g.Count() > 1)
+                                    .Select(g => g.Key)
+                                    .ToListAsync();
+
+            if (duplicateEmpCodes.Any())
+            {
+                var duplicateEmpCodeString = string.Join(",", duplicateEmpCodes);
+                return new
+                {
+                    DuplicateEmpCodeInExcel = duplicateEmpCodeString
+                };
+            }
+
+            var personalData = await _context.EmpPersonals
+                .Where(e => e.EntryBy == 19)
+                .Select(e => new
+                {
+                    e.PersonalId,
+                    e.EmployeeCode,
+                    e.Gender,
+                    e.Nationality,
+                    e.Country,
+                    e.Religion,
+                    DateOfBirth = e.DateOfBirth.HasValue ? e.DateOfBirth.Value.ToString("dd/MM/yyyy") : "NA",
+                    e.MaritalStatus,
+                    e.BirthPlace,
+                    IdentityMark = e.IdentityMark,
+                    e.BloodGroup,
+                    e.EntryBy,
+                    EntryDate = e.EntryDate.HasValue ? e.EntryDate.Value.ToString("dd/MM/yyyy") : "NA"
+                })
+                .ToListAsync();
+
+            return personalData;
+
+        }
+        private async Task<object> GetEmpCommuUpload()
+        {
+            var result = await (from a in _context.EmpCommunications
+                                join b in _context.EmployeeDetails
+                                    on a.EmployeeCode.Trim() equals b.EmpCode.Trim()
+                                where a.EntryBy == 19
+                                select new
+                                {
+                                    a.ComId,
+                                    b.Name,
+                                    a.EmployeeCode,
+                                    a.PermanentAddress,
+                                    a.Country,
+                                    a.PinZipCode,
+                                    a.HomeCountryPhone,
+                                    a.ContactAddress,
+                                    a.Country2,
+                                    a.PinZipCode2,
+                                    a.OfficePhone,
+                                    a.PersonalPhone,
+                                    a.MobileNo,
+                                    EntryDate = a.EntryDate.HasValue
+                                        ? a.EntryDate.Value.ToString("dd/MM/yyyy")
+                                        : null
+                                }).ToListAsync();
+
+
+            return result;
+
+        }
+        private async Task<object> GetEmpProfUpload()
+        {
+            var result = await (from a in _context.EmpProfessionals
+                                join b in _context.EmployeeDetails
+                                on a.EmployeeCode.Trim() equals b.EmpCode.Trim()
+                                where a.EntryBy == 19
+                                select new
+                                {
+                                    a.EmployeeCode,
+                                    Name = b.Name,
+                                    a.Company,
+                                    a.CompanyAddress,
+                                    a.Designation,
+                                    a.PinZipCode,
+                                    a.ContactPerson,
+                                    a.ContactNumber,
+                                    a.JobDescription,
+                                    JoiningDate = a.JoiningDate.HasValue
+                                                  ? a.JoiningDate.Value.ToString("dd/MM/yyyy")
+                                                  : null,
+                                    RelievingDate = a.RelievingDate.HasValue
+                                                    ? a.RelievingDate.Value.ToString("dd/MM/yyyy")
+                                                    : null,
+                                    a.RelievingReason,
+                                    a.AnnualCtc,
+                                    a.Currency,
+                                    EntryDate = a.EntryDate.HasValue
+                                                    ? a.EntryDate.Value.ToString("dd/MM/yyyy")
+                                                    : null
+                                }).ToListAsync();
+
+
+
+            return result;
+
+        }
+        public async Task<object> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels)
+        {
+            if (uploadType == "Empdetail")
+            {
+                return await SaveEmpdetailUpload(selectedrole);
+            }
+            else if (uploadType == "EmpPerso")
+            {
+                return await SaveEmpPersoUpload();
+            }
+            else if (uploadType == "EmpCommu")
+            {
+                return await SaveEmpCommuUpload();
+            }
+            else if (uploadType == "EmpProf")
+            {
+                return await SaveEmpProfUpload();
+            }
+            else
+            {
+                string returnMessage = "NotSaved";
+                return returnMessage;
+            }
+        }
+        private async Task<object> SaveEmpdetailUpload(int? selectedrole)
+        {
+            int entityLimit = (int)await _context.LicensedCompanyDetails.Select(x => x.EntityLimit).FirstOrDefaultAsync();
+
+            int noticePeriod = await _context.CompanyParameters
+                .Where(x => x.ParameterCode == "EMPNOTCE" && x.Type == "EMP1")
+                .Select(x => (int?)x.Value).FirstOrDefaultAsync() ?? 30;
+
+            var mapIds = await _context.Categorymasters
+                .Join(_context.HrmValueTypes, a => a.CatTrxTypeId, b => b.Value, (a, b) => new { a.SortOrder, b.Code, b.Type })
+                .Where(x => x.Type == "CatTrxType" && new[] { "BRANCH", "DEPT", "BAND", "GRADE", "DESIG", "COMPANY" }.Contains(x.Code))
+                .ToListAsync();
+
+            var mapDict = mapIds.ToDictionary(x => x.Code, x => (int?)x.SortOrder);
+
+            var employees = await _context.EmployeeDetailsTemps.Where(e => e.EntryBy == 19).ToListAsync();
+            var empEntities = new List<HrEmpMaster>();
+
+            foreach (var emp in employees)
+            {
+                var entity = GetMatchingEntity(_context, emp, entityLimit);
+                if (entity == null) continue;
+
+                empEntities.Add(new HrEmpMaster
+                {
+                    InstId = 1,
+                    EmpCode = emp.EmployeeCode,
+                    FirstName = emp.FirstName?.Trim(),
+                    MiddleName = emp.MiddleName?.Trim(),
+                    LastName = emp.LastName?.Trim(),
+                    JoinDt = emp.JoinDate,
+                    EntryBy = (int)emp.EntryBy,
+                    EntryDt = (DateTime)emp.EntryDate,
+                    EmpStatus = 1,
+                    ProbationDt = emp.ProbationEndDate,
+                    DateOfBirth = emp.DateOfBirth,
+
+                    BranchId = GetLevelId(entity, mapDict.GetValueOrDefault("BRANCH") ?? 0),
+                    DepId = GetLevelId(entity, mapDict.GetValueOrDefault("DEPT") ?? 0),
+                    BandId = GetLevelId(entity, mapDict.GetValueOrDefault("BAND") ?? 0),
+                    GradeId = GetLevelId(entity, mapDict.GetValueOrDefault("GRADE") ?? 0),
+                    DesigId = GetLevelId(entity, mapDict.GetValueOrDefault("DESIG") ?? 0),
+                    LastEntity = GetLastEntityId(entity, entityLimit),
+
+                    GuardiansName = emp.GuardianName,
+                    Gender = emp.Gender,
+                    CurrentStatus = 7,
+                    NationalIdNo = emp.IdentificationNumber,
+                    SeperationStatus = 0,
+                    NoticePeriod = noticePeriod,
+                    InitialDate = DateTime.UtcNow,
+                    ModifiedDate = DateTime.UtcNow,
+                    CompanyConveyance = false,
+                    CompanyVehicle = false,
+                    IsExpat = 0,
+                    Ishra = false,
+                    FirstEntryDate = emp.JoinDate
+                });
+            }
+            await _context.HrEmpMasters.AddRangeAsync(empEntities);
+            await _context.SaveChangesAsync();
+            var insertedIds = empEntities.Select(e => e.EmpId).ToList();
+            // Fetch HighLevelViews in batch
+            var highLevelMap = await _context.HighLevelViews.ToListAsync();
+
+            foreach (var emp in empEntities)
+            {
+                var match = highLevelMap.FirstOrDefault(h => h.LevelTwelveId == emp.LastEntity || h.LevelElevenId == emp.LastEntity || h.LevelTenId == emp.LastEntity || h.LevelNineId == emp.LastEntity || h.LevelEightId == emp.LastEntity || h.LevelSevenId == emp.LastEntity || h.LevelSixId == emp.LastEntity || h.LevelFiveId == emp.LastEntity);
+                if (match != null)
+                {
+                    List<string> ids = new List<string>();
+                    if (match.LevelOneId != 0) ids.Add(match.LevelOneId.ToString());
+                    if (match.LevelTwoId != 0) ids.Add(match.LevelTwoId.ToString());
+                    if (match.LevelThreeId != 0) ids.Add(match.LevelThreeId.ToString());
+                    if (match.LevelFourId != 0) ids.Add(match.LevelFourId.ToString());
+                    if (match.LevelFiveId != 0) ids.Add(match.LevelFiveId.ToString());
+                    if (match.LevelSixId != 0) ids.Add(match.LevelSixId.ToString());
+                    if (match.LevelSevenId != 0) ids.Add(match.LevelSevenId.ToString());
+                    if (match.LevelEightId != 0) ids.Add(match.LevelEightId.ToString());
+                    if (match.LevelNineId != 0) ids.Add(match.LevelNineId.ToString());
+                    if (match.LevelTenId != 0) ids.Add(match.LevelTenId.ToString());
+                    if (match.LevelElevenId != 0) ids.Add(match.LevelElevenId.ToString());
+                    if (match.LevelTwelveId != 0) ids.Add(match.LevelTwelveId.ToString());
+
+                    emp.EmpEntity = string.Join(",", ids.Skip(1));
+                    emp.EmpFirstEntity = match.LevelOneId.ToString();
+                }
+            }
+            await _context.SaveChangesAsync();
+
+            var empIds = empEntities.Select(e => e.EmpId).ToList();
+            var tempDict = employees.ToDictionary(e => e.EmployeeCode);
+
+            var addresses = empEntities.Select(a => new HrEmpAddress
+            {
+                InstId = a.InstId,
+                EmpId = a.EmpId,
+                OfficialEmail = tempDict[a.EmpCode].OfficialEmail,
+                PersonalEmail = tempDict[a.EmpCode].PersonalEmail,
+                AddType = "1",
+                EntryBy = a.EntryBy,
+                EntryDt = a.EntryDt
+            }).ToList();
+            await _context.HrEmpAddresses.AddRangeAsync(addresses);
+
+            var personals = empEntities.Select(a => new HrEmpPersonal
+            {
+                InstId = a.InstId,
+                EmpId = a.EmpId,
+                Dob = a.DateOfBirth,
+                Gender = a.Gender,
+                MaritalStatus = tempDict[a.EmpCode].MarStatus,
+                EntryBy = a.EntryBy,
+                EntryDt = a.EntryDt
+            }).ToList();
+            await _context.HrEmpPersonals.AddRangeAsync(personals);
+
+            var reportings = empEntities.Select(a => new HrEmpReporting
+            {
+                InstId = a.InstId,
+                EmpId = a.EmpId,
+                ReprotToWhome = 0,
+                EffectDate = a.EntryDt,
+                Active = "Y",
+                EntryBy = a.EntryBy,
+                EntryDate = a.EntryDt
+            }).ToList();
+            await _context.HrEmpReportings.AddRangeAsync(reportings);
+
+            var users = empEntities.Select(a => new AdmUserMaster
+            {
+                UserName = a.EmpCode,
+                DetailedName = a.FirstName,
+                Password = "kohNZpjfnsZdZdiqvYllow==",
+                EntryDate = a.EntryDt,
+                Active = "N",
+                Status = "Y",
+                Email = tempDict[a.EmpCode].PersonalEmail,
+                NeedApp = true,
+                UploadEmpId = a.EmpId
+            }).ToList();
+            await _context.AdmUserMasters.AddRangeAsync(users);
+
+            await _context.SaveChangesAsync();
+
+            var createdUsers = empEntities
+                            .Join(_context.AdmUserMasters,
+                                  e => e.EmpCode,
+                                  u => u.UserName,
+                                  (e, u) => new
+                                  {
+                                      e.InstId,
+                                      e.EmpId,
+                                      e.EntryBy,
+                                      e.EntryDt,
+                                      u.UserId
+                                  }).ToList();
+
+            var userRelations = createdUsers.Select(e => new HrEmployeeUserRelation
+            {
+                InstId = e.InstId,
+                EmpId = e.EmpId,
+                EntryBy = e.EntryBy,
+                EntryDt = e.EntryDt,
+                UserId = e.UserId
+            }).ToList();
+            await _context.HrEmployeeUserRelations.AddRangeAsync(userRelations);
+
+            var images = empEntities.Select(e => new HrEmpImage
+            {
+                InstId = e.InstId,
+                EmpId = e.EmpId,
+                ImageUrl = "default.jpg",
+                Active = "Y",
+                FingerUrl = "default.jpg"
+            }).ToList();
+            await _context.HrEmpImages.AddRangeAsync(images);
+            await _context.SaveChangesAsync();
+            var userrelation1 = userRelations;
+            if (selectedrole == 0)
+            {
+                selectedrole = await (from a in _context.UserTypes
+                                      join b in _context.AdmRoleMasters on a.Id equals b.UserTypeId
+                                      where a.Code == "DR"
+                                      select b.RoleId).FirstOrDefaultAsync();
+            }
+
+            var roles = userrelation1.Select(rel => new AdmUserRoleMaster
+            {
+                InstId = rel.InstId,
+                RoleId = (int)selectedrole,
+                UserId = rel.EmpId,
+                Acess = 1
+            }).ToList();
+            await _context.AdmUserRoleMasters.AddRangeAsync(roles);
+
+            await _context.SaveChangesAsync();
+            // Get typeID
+            var typeID = await (from a in _context.CompanyParameters
+                                join b in _context.HrmValueTypes on a.Value equals b.Value
+                                where b.Type == "EmployeeReporting" && a.ParameterCode == "ATASGNPAY"
+                                select b.Code).FirstOrDefaultAsync();
+
+            if (typeID == "Yes")
+            {
+                // Get Employee List
+                var empList = await (from a in _context.EmployeeDetailsTemps
+                                     join b in _context.HrEmpMasters on a.EmployeeCode equals b.EmpCode
+                                     select new
+                                     {
+                                         Master = b,
+                                         a.EmployeeCode,
+                                         a.EntryBy,
+                                         a.EntryDate,
+                                         b.EmpEntity,
+                                         b.EmpFirstEntity,
+                                         b.EmpId
+                                     }).ToListAsync();
+
+                // Fetch required TransactionIds
+                var transactionIds = await _context.TransactionMasters
+                    .Where(x => x.TransactionType == "PayrollPeriod" || x.TransactionType == "PayCodeBatch")
+                    .ToDictionaryAsync(x => x.TransactionType, x => x.TransactionId);
+
+                var transactionIdPayroll = transactionIds.GetValueOrDefault("PayrollPeriod");
+                var transactionIdPayCode = transactionIds.GetValueOrDefault("PayCodeBatch");
+
+                var payPeriodAccessList = new List<PayPeriodMasterAccess>();
+                var payScaleAccessList = new List<HrmPayscaleMasterAccess>();
+
+                foreach (var emp in empList)
+                {
+                    var empEntityList = emp.EmpEntity?.Split(',')
+                                            .Where(e => !string.IsNullOrWhiteSpace(e))
+                                            .Select(int.Parse).ToList() ?? new List<int>();
+
+                    // Get PayrollPeriodId
+                    var payrollPeriodId = await (from s in _context.Payroll00s
+                                                 where _context.EntityApplicable00s.Any(ea =>
+                                                     (ea.LinkLevel == 1 && ea.LinkId == long.Parse(emp.EmpFirstEntity) && ea.TransactionId == transactionIdPayroll) ||
+                                                     (ea.LinkLevel == 15 && ea.TransactionId == transactionIdPayroll) ||
+                                                     (ea.LinkLevel != 1 && empEntityList.Contains((int)ea.LinkId) && ea.TransactionId == transactionIdPayroll))
+                                                 select s.PayrollPeriodId).FirstOrDefaultAsync();
+
+                    if (payrollPeriodId > 0)
+                    {
+                        payPeriodAccessList.Add(new PayPeriodMasterAccess
+                        {
+                            EmployeeId = emp.EmpId,
+                            PayrollPeriodId = payrollPeriodId,
+                            IsCompanyLevel = 1,
+                            CreatedBy = 1,
+                            CreatedDate = DateTime.UtcNow,
+                            Active = "Y",
+                            ValidDateFrom = DateTime.UtcNow
+                        });
+                    }
+
+                    // Get PayCodeMasterId
+                    var payCodeMasterId = await (from s in _context.PayCodeMaster00s
+                                                 where _context.EntityApplicable00s.Any(ea =>
+                                                     (ea.LinkLevel == 1 && ea.LinkId == long.Parse(emp.EmpFirstEntity) && ea.TransactionId == transactionIdPayCode) ||
+                                                     (ea.LinkLevel == 15 && ea.TransactionId == transactionIdPayCode) ||
+                                                     (ea.LinkLevel != 1 && empEntityList.Contains((int)ea.LinkId) && ea.TransactionId == transactionIdPayCode))
+                                                 select s.PayCodeMasterId).FirstOrDefaultAsync();
+
+                    if (payCodeMasterId > 0)
+                    {
+                        payScaleAccessList.Add(new HrmPayscaleMasterAccess
+                        {
+                            EmployeeId = emp.EmpId,
+                            PayscaleMasterId = payCodeMasterId,
+                            IsCompanyLevel = 1,
+                            CreatedBy = 1,
+                            CreatedDate = DateTime.UtcNow,
+                            Active = "Y",
+                            ValidDatefrom = DateTime.UtcNow
+                        });
+                    }
+                }
+
+                if (payPeriodAccessList.Any())
+                    await _context.PayPeriodMasterAccesses.AddRangeAsync(payPeriodAccessList);
+
+                if (payScaleAccessList.Any())
+                    await _context.HrmPayscaleMasterAccesses.AddRangeAsync(payScaleAccessList);
+
+                await _context.SaveChangesAsync();
+            }
+            var currentDate = DateTime.UtcNow;
+
+            // Preload base employees once
+            var baseEmployees = await (
+                from emp in _context.HrEmpMasters
+                join temp in _context.EmployeeDetailsTemps on emp.EmpCode equals temp.EmployeeCode
+                where temp.EntryBy == 19
+                select new { Emp = emp, Temp = temp }
+            ).ToListAsync();
+
+            // ========== 1. DOCUMENT ACCESS ==========
+            var documentTransactionIds = await _context.TransactionMasters
+                .Where(t => t.TransactionType == "Document")
+                .Select(t => t.TransactionId)
+                .ToListAsync();
+
+            var empDocumentAccess = (
+                from emp in baseEmployees
+                from ent in SplitStrings_XML(emp.Emp.EmpEntity)
+                join applicable in _context.EntityApplicable00s on ent equals applicable.LinkId.ToString()
+                where documentTransactionIds.Contains((int)applicable.TransactionId) && applicable.LinkLevel != 1
+                join doc in _context.HrmsDocument00s on applicable.MasterId equals doc.DocId
+                where doc.Active == true
+                select new EmpDocumentAccess
+                {
+                    InstId = 1,
+                    EmpId = emp.Emp.EmpId,
+                    DocId = (int?)doc.DocId,
+                    ValidFrom = currentDate,
+                    IsCompanyLevel = 0,
+                    Status = 0,
+                    CreatedBy = emp.Emp.EntryBy,
+                    CreatedDate = currentDate
+                }).Distinct().ToList();
+
+            if (empDocumentAccess.Any())
+                await _context.EmpDocumentAccesses.AddRangeAsync(empDocumentAccess);
+
+            // ========== 2. PAYROLL PERIOD ==========
+            var empPeriods = (
+                from emp in baseEmployees
+                where emp.Emp.SeperationStatus == 0
+                join latest in _context.EmployeeLatestPayrollPeriods on emp.Emp.EmpId equals latest.EmployeeId into lj
+                from latest in lj.DefaultIfEmpty()
+                where latest == null
+                let period = GetEmployeeSchemeID(emp.Emp.EmpId, "ASSPAYROLLPERIOD", "PRL").Result
+                where period != 0
+                select new EmployeeLatestPayrollPeriod
+                {
+                    EmployeeId = emp.Emp.EmpId,
+                    PayrollPeriodId = period,
+                    EntryBy = emp.Temp.EntryBy,
+                    EntryDate = emp.Temp.EntryDate
+                }).ToList();
+
+            if (empPeriods.Any())
+                await _context.EmployeeLatestPayrollPeriods.AddRangeAsync(empPeriods);
+
+            // ========== 3. PAYROLL BATCH ==========
+            var empBatches = (
+                from emp in baseEmployees
+                let batchId = GetEmployeeSchemeID(emp.Emp.EmpId, "ASSPAYCODE", "PRL").Result
+                where batchId != 0
+                select new EmployeeLatestPayrollBatch
+                {
+                    EmployeeId = emp.Emp.EmpId,
+                    PayrollBatchId = batchId,
+                    EntryBy = emp.Emp.EntryBy,
+                    EntryDate = emp.Emp.EntryDt
+                }).ToList();
+
+            if (empBatches.Any())
+                await _context.EmployeeLatestPayrollBatches.AddRangeAsync(empBatches);
+
+            // ========== 4. PROBATION REVIEW ==========
+            bool hasLicense100 = await _context.LicensedCompanyDetails.AnyAsync(l => l.LicenseCode == 100);
+
+            var probationEntries = (
+                from emp in baseEmployees
+                where emp.Emp.ProbationDt != null && emp.Emp.ProbationDt.Value.Date > currentDate.Date
+                join desg in _context.DesignationDetails on emp.Emp.DesigId equals desg.LinkId into desgJoin
+                from desg in desgJoin.DefaultIfEmpty()
+                where !hasLicense100 || desg == null ||
+                      (TrimSpace(desg.Designation) != "FLA SR" && TrimSpace(desg.Designation) != "IT INTERN")
+                select new SurveyRelation
+                {
+                    EmpId = emp.Emp.EmpId,
+                    EntryBy = emp.Emp.EntryBy,
+                    EntryDate = emp.Emp.EntryDt,
+                    ProbationReview = 0,
+                    ReviewDate = emp.Emp.ProbationDt.Value.AddDays(-30)
+                }).ToList();
+
+            if (probationEntries.Any())
+                await _context.SurveyRelations.AddRangeAsync(probationEntries);
+
+            // ========== 5. BIOMETRIC MAPPING ==========
+            //if (isAutoCode == "Y")
+            //{
+            //    var transactionID = await _context.TransactionMasters
+            //        .Where(t => t.TransactionType == "EmpCode")
+            //        .Select(t => t.TransactionId)
+            //        .FirstOrDefaultAsync();
+
+            //    var empBiometricList = new List<dynamic>();
+
+            //    foreach (var emp in baseEmployees)
+            //    {
+            //        var deviceId = await GetDefaultCompanyParameter(emp.Emp.EmpId, "DEVICEID", "ATTN");
+            //        var codeId = GetSequence(0, transactionID, emp.Emp.EmpEntity, int.Parse(emp.Emp.EmpFirstEntity));
+
+            //        empBiometricList.Add(new
+            //        {
+            //            emp.Emp.InstId,
+            //            emp.Emp.EmpId,
+            //            emp.Emp.EmpCode,
+            //            DeviceID = deviceId,
+            //            CodeID = codeId
+            //        });
+            //    }
+
+
+            //    typeID = await (
+            //        from cp in _context.CompanyParameters
+            //        join vt in _context.HrmValueTypes on cp.Value equals vt.Value
+            //        where cp.ParameterCode == "BIOMAPPING" && vt.Type == "BiometricMapping"
+            //        select vt.Code
+            //    ).FirstOrDefaultAsync();
+
+            //    // Optimize: use HashSet for better lookup performance
+            //    var codeIds = empBiometricList.Select(e => e.CodeID).ToHashSet();
+
+            //    // Efficient query using HashSet
+            //    var codeMap = await _context.AdmCodegenerationmasters
+            //        .Where(cg => codeIds.Contains(cg.CodeId.ToString()))
+            //        .ToDictionaryAsync(cg => cg.CodeId);
+
+
+            //    var biometricInsertList = new List<BiometricsDtl>();
+
+            //    foreach (var emp in empBiometricList)
+            //    {
+            //        if (!codeMap.TryGetValue(int.Parse(emp.CodeID), out AdmCodegenerationmaster codeGen)) continue;
+
+
+            //        string biometricCode = emp.EmpCode;
+
+            //        biometricCode = typeID switch
+            //        {
+            //            "SECN" => biometricCode.Replace(codeGen.Code ?? "", "").Replace(codeGen.Suffix ?? "", ""),
+            //            "SEC" => (codeGen.Code ?? "") + biometricCode.Replace(codeGen.Code ?? "", "").Replace(codeGen.Suffix ?? "", ""),
+            //            "SECS" => biometricCode.Replace(codeGen.Code ?? "", "").Replace(codeGen.Suffix ?? "", "") + (codeGen.Suffix ?? ""),
+            //            "SECPS" => (codeGen.Code ?? "") + biometricCode.Replace(codeGen.Code ?? "", "").Replace(codeGen.Suffix ?? "", "") + (codeGen.Suffix ?? ""),
+            //            _ => biometricCode
+            //        };
+
+            //        biometricInsertList.Add(new BiometricsDtl
+            //        {
+            //            CompanyId = emp.InstId,
+            //            EmployeeId = emp.EmpId,
+            //            DeviceId = int.Parse(emp.DeviceID),
+            //            UserId = biometricCode,
+            //            EntryBy = 19,
+            //            EntryDt = currentDate
+            //        });
+            //    }
+
+            //    if (biometricInsertList.Any())
+            //        await _context.BiometricsDtls.AddRangeAsync(biometricInsertList);
+            //}
+            //else
+            //{
+            var fallbackList = baseEmployees.Select(emp => new BiometricsDtl
+            {
+                CompanyId = emp.Emp.InstId,
+                EmployeeId = emp.Emp.EmpId,
+                DeviceId = int.Parse(GetDefaultCompanyParameter(emp.Emp.EmpId, "DEVICEID", "ATTN").Result),
+                UserId = emp.Emp.EmpCode,
+                EntryBy = 19,
+                EntryDt = currentDate
+            }).ToList();
+
+            if (fallbackList.Any())
+                await _context.BiometricsDtls.AddRangeAsync(fallbackList);
+            // }
+
+            // ======== FINAL SAVE =========
+            await _context.SaveChangesAsync();
+
+            var enableAutoDailyRate = await _context.CompanyParameters
+                                        .Where(cp => cp.ParameterCode == "ENABLEDAILYRATETYPEONULOAD" && cp.Type == "EMP1")
+                                        .Select(cp => (int?)cp.Value)
+                                        .FirstOrDefaultAsync() ?? 0;
+
+            if (enableAutoDailyRate == 1)
+            {
+                // Get matching employee codes
+                var empCodesToUpdate = await (from a in _context.HrEmpMasters
+                                              join c in _context.EmployeeDetailsTemps
+                                                  on a.EmpCode equals c.EmployeeCode
+                                              select a).ToListAsync();
+
+                foreach (var emp in empCodesToUpdate)
+                {
+                    emp.DailyRateTypeId = 1;
+                    emp.PayrollMode = 2;
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            var allTempEmpCodes = await _context.EmployeeDetailsTemps.Select(e => e.EmployeeCode).ToListAsync();
+
+            var existingEmpCodes = await (from a in _context.HrEmpMasters
+                                          join id in insertedIds on a.EmpId equals id
+                                          select a.EmpCode).ToListAsync();
+
+            var missingEmpCodes = allTempEmpCodes.Except(existingEmpCodes).ToList();
+
+            string returnMessage = "";
+
+            if (missingEmpCodes.Any())
+            {
+                if (missingEmpCodes.Count == allTempEmpCodes.Count)
+                {
+                    returnMessage = "NotSaved";
+                }
+                else
+                {
+                    returnMessage = string.Join(",", missingEmpCodes);
+                }
+            }
+            else
+            {
+                returnMessage = "Saved";
+            }
+
+            return returnMessage;
+
+
+        }
+        private async Task<object> SaveEmpPersoUpload()
+        {
+            var matchedData = await (from t1 in _context.HrEmpMasters
+                                     join t2 in _context.EmpPersonals on t1.EmpCode.Trim() equals t2.EmployeeCode.Trim()
+                                     where t2.EntryBy == 19
+                                     join country in _context.AdmCountryMasters on t2.Country equals country.CountryName into countryJoin
+                                     from country in countryJoin.DefaultIfEmpty()
+                                     join religion in _context.AdmReligionMasters on t2.Religion equals religion.ReligionName into religionJoin
+                                     from religion in religionJoin.DefaultIfEmpty()
+                                     select new
+                                     {
+                                         t1.EmpId,
+                                         t1.InstId,
+                                         t2.Gender,
+                                         t2.MaritalStatus,
+                                         t2.BirthPlace,
+                                         t2.IdentityMark,
+                                         t2.BloodGroup,
+                                         t2.DateOfBirth,
+                                         CountryId = country != null ? country.CountryId : (int?)null,
+                                         ReligionId = religion != null ? religion.ReligionId : (int?)null
+                                     }).ToListAsync();
+
+            // Update HR_EMP_PERSONAL
+            var matchedEmpIds = matchedData.Select(m => m.EmpId).Distinct().ToList();
+
+            var empPersonalList = await _context.HrEmpPersonals
+                .Where(p => matchedEmpIds.Contains((int)p.EmpId))
+                .ToListAsync();
+
+            foreach (var personal in empPersonalList)
+            {
+                var match = matchedData.First(m => m.EmpId == personal.EmpId);
+
+                personal.InstId = match.InstId;
+                personal.EmpId = match.EmpId;
+                personal.Gender = match.Gender?.ToUpper() switch
+                {
+                    "MALE" or "M" => "M",
+                    "FEMALE" or "F" => "F",
+                    "OTHERS" or "O" => "O",
+                    _ => null
+                };
+                personal.Nationality = match.CountryId;
+                personal.Country = match.CountryId;
+                personal.Religion = match.ReligionId;
+                personal.Dob = match.DateOfBirth;
+                personal.MaritalStatus = match.MaritalStatus?.ToUpper() switch
+                {
+                    "SINGLE" => "S",
+                    "MARRIED" => "M",
+                    "WIDOWED" => "W",
+                    "SEPERATED" => "X",
+                    "DIVORCED" => "D",
+                    _ => null
+                };
+                personal.BirthPlace = match.BirthPlace;
+                personal.IdentMark = match.IdentityMark;
+                personal.BloodGrp = match.BloodGroup;
+            }
+
+            var empMasterList = await _context.HrEmpMasters
+                .Where(e => matchedData.Select(m => m.EmpId).Contains(e.EmpId))
+                .ToListAsync();
+
+            foreach (var emp in empMasterList)
+            {
+                var match = matchedData.First(m => m.EmpId == emp.EmpId);
+
+                emp.Gender = match.Gender?.ToUpper() switch
+                {
+                    "MALE" or "M" => "M",
+                    "FEMALE" or "F" => "F",
+                    "OTHERS" or "O" => "O",
+                    _ => null
+                };
+                emp.DateOfBirth = match.DateOfBirth;
+                emp.ModifiedDate = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+            string returnMessage = "Saved";
+            return returnMessage;
+        }
+        private async Task<object> SaveEmpCommuUpload()
+        {
+            var empData = await (from a in _context.EmpCommunications
+                                 join b in _context.HrEmpMasters
+                                    on a.EmployeeCode.Trim() equals b.EmpCode.Trim()
+                                 where a.EntryBy == 19
+                                 select new { Comm = a, Emp = b }).ToListAsync();
+
+            if (!empData.Any())
+                return "NotSaved";
+
+            foreach (var item in empData)
+            {
+                var comm = item.Comm;
+                var emp = item.Emp;
+
+                var countryId = await _context.AdmCountryMasters
+                    .Where(c => c.CountryName == comm.Country)
+                    .Select(c => c.CountryId)
+                    .FirstOrDefaultAsync();
+
+                var address = await _context.HrEmpAddresses
+                    .FirstOrDefaultAsync(x => x.EmpId == emp.EmpId);
+
+                if (address != null)
+                {
+                    address.InstId = emp.InstId;
+                    address.EmpId = emp.EmpId;
+                    address.Add1 = comm.PermanentAddress;
+                    address.Country = countryId;
+                    address.Pbno = comm.PinZipCode;
+                    address.Phone = comm.PersonalPhone;
+                    address.OfficePhone = comm.OfficePhone;
+                    address.Mobile = comm.MobileNo;
+                    address.HomeCountryPhone = comm.HomeCountryPhone;
+                    address.EntryBy = emp.EntryBy;
+                    address.EntryDt = (DateTime)comm.EntryDate;
+                }
+
+                var countryId2 = await _context.AdmCountryMasters
+                    .Where(c => c.CountryName == comm.Country2)
+                    .Select(c => c.CountryId)
+                    .FirstOrDefaultAsync();
+
+                var address01 = new HrEmpAddress01
+                {
+                    EmpId = emp.EmpId,
+                    Addr1Country = 0,
+                    ContactAddr = comm.ContactAddress,
+                    PinNo2 = comm.PinZipCode2,
+                    Addr2Country = countryId2
+                };
+
+                await _context.HrEmpAddress01s.AddAsync(address01);
+
+                // Update ModifiedDate in HR_EMP_MASTER
+                emp.ModifiedDate = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+            string returnMessage = "Saved";
+            return returnMessage;
+        }
+        private async Task<object> SaveEmpProfUpload()
+        {
+            var profDetailsToInsert = await (from a in _context.EmpProfessionals
+                                             join b in _context.HrEmpMasters
+                                             on a.EmployeeCode.Trim() equals b.EmpCode.Trim()
+                                             join c in _context.CurrencyMasters
+                                             on a.Currency equals c.CurrencyCode into currencyJoin
+                                             from c in currencyJoin.DefaultIfEmpty()
+                                             where a.EntryBy == 19
+                                             select new HrEmpProfdtl
+                                             {
+                                                 InstId = b.InstId,
+                                                 EmpId = b.EmpId,
+                                                 CompName = a.Company,
+                                                 CompAddress = a.CompanyAddress,
+                                                 Designation = a.Designation,
+                                                 Pbno = a.PinZipCode,
+                                                 ContactPer = a.ContactPerson,
+                                                 ContactNo = a.ContactNumber,
+                                                 JobDesc = a.JobDescription,
+                                                 JoinDt = a.JoiningDate,
+                                                 LeavingDt = a.RelievingDate,
+                                                 LeaveReason = a.RelievingReason,
+                                                 Ctc = a.AnnualCtc,
+                                                 CurrencyId = c != null ? c.CurrencyId : (int?)null,
+                                                 EntryBy = (int)a.EntryBy,
+                                                 EntryDt = DateTime.UtcNow
+                                             }).ToListAsync();
+
+            if (profDetailsToInsert.Any())
+            {
+                await _context.HrEmpProfdtls.AddRangeAsync(profDetailsToInsert);
+                await _context.SaveChangesAsync();
+            }
+
+            var empCodesToUpdate = await _context.EmpProfessionals
+                .Where(p => p.EntryBy == 19)
+                .Select(p => p.EmployeeCode.Trim())
+                .ToListAsync();
+
+            var hrEmployeesToUpdate = await _context.HrEmpMasters
+                .Where(e => empCodesToUpdate.Contains(e.EmpCode.Trim()))
+                .ToListAsync();
+
+            foreach (var emp in hrEmployeesToUpdate)
+            {
+                emp.ModifiedDate = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            string returnMessage = "Saved";
+            return returnMessage;
+        }
+        public static string TrimSpace(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return string.Empty;
+
+            return value
+                .Replace('\n', ' ')
+                .Replace('\r', ' ')
+                .Replace('\u00A0', ' ') // Non-breaking space (CHAR(160))
+                .Replace('\t', ' ')     // Tab (CHAR(9))
+                .Trim();
+        }
+
+        int? GetLevelId(dynamic entity, int mapId)
+        {
+            var propName = mapId switch
+            {
+                1 => "LevelOneId",
+                2 => "LevelTwoId",
+                3 => "LevelThreeId",
+                4 => "LevelFourId",
+                5 => "LevelFiveId",
+                6 => "LevelSixId",
+                7 => "LevelSevenId",
+                8 => "LevelEightId",
+                9 => "LevelNineId",
+                10 => "LevelTenId",
+                11 => "LevelElevenId",
+                12 => "LevelTwelveId",
+                _ => null
+            };
+
+            return propName != null ? (int?)entity.GetType().GetProperty(propName)?.GetValue(entity) : null;
+        }
+        int? GetLastEntityId(dynamic entity, int entityLimit)
+        {
+            string propName = $"Level{ToTitleCaseOrdinal(entityLimit)}Id";
+            return (int?)entity.GetType().GetProperty(propName)?.GetValue(entity);
+        }
+        string ToTitleCaseOrdinal(int number) => number switch
+        {
+            1 => "One",
+            2 => "Two",
+            3 => "Three",
+            4 => "Four",
+            5 => "Five",
+            6 => "Six",
+            7 => "Seven",
+            8 => "Eight",
+            9 => "Nine",
+            10 => "Ten",
+            11 => "Eleven",
+            12 => "Twelve",
+            _ => throw new ArgumentException("Invalid level")
+        };
+
+        dynamic GetMatchingEntity(EmployeeDBContext db, EmployeeDetailsTemp emp, int entityLimit)
+        {
+            return entityLimit switch
+            {
+                5 => db.EntityLevelFives.FirstOrDefault(e =>
+                    e.LevelOneDescription == emp.LevelOneDescription &&
+                    e.LevelTwoDescription == emp.LevelTwoDescription &&
+                    e.LevelThreeDescription == emp.LevelThreeDescription &&
+                    e.LevelFourDescription == emp.LevelFourDescription &&
+                    e.LevelFiveDescription == emp.LevelFiveDescription),
+                6 => db.EntityLevelSixes.FirstOrDefault(e =>
+                    e.LevelOneDescription == emp.LevelOneDescription &&
+                    e.LevelTwoDescription == emp.LevelTwoDescription &&
+                    e.LevelThreeDescription == emp.LevelThreeDescription &&
+                    e.LevelFourDescription == emp.LevelFourDescription &&
+                    e.LevelFiveDescription == emp.LevelFiveDescription &&
+                    e.LevelSixDescription == emp.LevelSixDescription),
+                7 => db.EntityLevelSevens.FirstOrDefault(e =>
+                    e.LevelOneDescription == emp.LevelOneDescription &&
+                    e.LevelTwoDescription == emp.LevelTwoDescription &&
+                    e.LevelThreeDescription == emp.LevelThreeDescription &&
+                    e.LevelFourDescription == emp.LevelFourDescription &&
+                    e.LevelFiveDescription == emp.LevelFiveDescription &&
+                    e.LevelSixDescription == emp.LevelSixDescription &&
+                    e.LevelSevenDescription == emp.LevelSevenDescription),
+                8 => db.EntityLevelEights.FirstOrDefault(e =>
+                    e.LevelOneDescription == emp.LevelOneDescription &&
+                    e.LevelTwoDescription == emp.LevelTwoDescription &&
+                    e.LevelThreeDescription == emp.LevelThreeDescription &&
+                    e.LevelFourDescription == emp.LevelFourDescription &&
+                    e.LevelFiveDescription == emp.LevelFiveDescription &&
+                    e.LevelSixDescription == emp.LevelSixDescription &&
+                    e.LevelSevenDescription == emp.LevelSevenDescription &&
+                    e.LevelEightDescription == emp.LevelEightDescription),
+                9 => db.EntityLevelNines.FirstOrDefault(e =>
+                    e.LevelOneDescription == emp.LevelOneDescription &&
+                    e.LevelTwoDescription == emp.LevelTwoDescription &&
+                    e.LevelThreeDescription == emp.LevelThreeDescription &&
+                    e.LevelFourDescription == emp.LevelFourDescription &&
+                    e.LevelFiveDescription == emp.LevelFiveDescription &&
+                    e.LevelSixDescription == emp.LevelSixDescription &&
+                    e.LevelSevenDescription == emp.LevelSevenDescription &&
+                    e.LevelEightDescription == emp.LevelEightDescription &&
+                    e.LevelNineDescription == emp.LevelNineDescription),
+                10 => db.EntityLevelTens.FirstOrDefault(e =>
+                    e.LevelOneDescription == emp.LevelOneDescription &&
+                    e.LevelTwoDescription == emp.LevelTwoDescription &&
+                    e.LevelThreeDescription == emp.LevelThreeDescription &&
+                    e.LevelFourDescription == emp.LevelFourDescription &&
+                    e.LevelFiveDescription == emp.LevelFiveDescription &&
+                    e.LevelSixDescription == emp.LevelSixDescription &&
+                    e.LevelSevenDescription == emp.LevelSevenDescription &&
+                    e.LevelEightDescription == emp.LevelEightDescription &&
+                    e.LevelNineDescription == emp.LevelNineDescription &&
+                    e.LevelTenDescription == emp.LevelTenDescription),
+                11 => db.EntityLevelElevens.FirstOrDefault(e =>
+                    e.LevelOneDescription == emp.LevelOneDescription &&
+                    e.LevelTwoDescription == emp.LevelTwoDescription &&
+                    e.LevelThreeDescription == emp.LevelThreeDescription &&
+                    e.LevelFourDescription == emp.LevelFourDescription &&
+                    e.LevelFiveDescription == emp.LevelFiveDescription &&
+                    e.LevelSixDescription == emp.LevelSixDescription &&
+                    e.LevelSevenDescription == emp.LevelSevenDescription &&
+                    e.LevelEightDescription == emp.LevelEightDescription &&
+                    e.LevelNineDescription == emp.LevelNineDescription &&
+                    e.LevelTenDescription == emp.LevelTenDescription &&
+                    e.LevelElevenDescription == emp.LevelElevenDescription),
+                12 => db.EntityLevelTwelves.FirstOrDefault(e =>
+                    e.LevelOneDescription == emp.LevelOneDescription &&
+                    e.LevelTwoDescription == emp.LevelTwoDescription &&
+                    e.LevelThreeDescription == emp.LevelThreeDescription &&
+                    e.LevelFourDescription == emp.LevelFourDescription &&
+                    e.LevelFiveDescription == emp.LevelFiveDescription &&
+                    e.LevelSixDescription == emp.LevelSixDescription &&
+                    e.LevelSevenDescription == emp.LevelSevenDescription &&
+                    e.LevelEightDescription == emp.LevelEightDescription &&
+                    e.LevelNineDescription == emp.LevelNineDescription &&
+                    e.LevelTenDescription == emp.LevelTenDescription &&
+                    e.LevelElevenDescription == emp.LevelElevenDescription &&
+                    e.LevelTwelveDescription == emp.LevelTwelveDescription),
+                _ => null
+            };
+        }
+        public async Task<List<UploadColumnDto>> GetUploadDetails(string Code)
+        {
+            return await (from a in _context.UploadSettings00s
+                          join b in _context.UploadSettings01s on a.SettingsId equals b.SettingsId
+                          where a.Code == Code
+                          select new UploadColumnDto
+                          {
+                              DtColumnName = b.ExcellColumn,
+                              TableColumnName = b.TableColumn
+                          }).ToListAsync();
+        }
+        public async Task<bool> DeleteTemp1<T>(int userId) where T : class
+        {
+            var records = _context.Set<T>()
+                                  .Where(e => EF.Property<int>(e, "EntryBy") == userId);
+
+            if (await records.AnyAsync())
+            {
+                _context.Set<T>().RemoveRange(records);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            return false;
+        }
+        public async Task<(bool Result, string ErrorMessage)> ValidateDateFormat(DataTable data)
+        {
+            return await Task.Run(() =>
+            {
+                bool result = true;
+                var wrongDob = new List<string>();
+                var wrongJoinDates = new List<string>();
+                var wrongProbDates = new List<string>();
+                var wrongGenders = new List<string>();
+
+                foreach (DataRow row in data.Rows)
+                {
+                    string empCode = row["EmployeeCode"]?.ToString()?.Trim() ?? "";
+                    string dob = row["DateOfBirth(MM/DD/YYYY)"]?.ToString()?.Trim();
+                    string joinDate = row["JoinDate(MM/DD/YYYY)"]?.ToString()?.Trim();
+                    string gender = row["Gender"]?.ToString()?.Trim().ToLower();
+                    string probation = data.Columns.Contains("ProbationEndDate(MM/DD/YYYY)")
+                                        ? row["ProbationEndDate(MM/DD/YYYY)"]?.ToString()?.Trim()
+                                        : null;
+
+                    // DOB Validation
+                    if (string.IsNullOrWhiteSpace(dob) || !DateTime.TryParseExact(dob, "M/d/yy", null, DateTimeStyles.None, out _))
+                    {
+                        wrongDob.Add($"{empCode} {dob}");
+                        result = false;
+                    }
+
+                    // Join Date Validation
+                    if (string.IsNullOrWhiteSpace(joinDate) || !DateTime.TryParseExact(joinDate, "M/d/yy", null, DateTimeStyles.None, out _))
+                    {
+                        wrongJoinDates.Add($"{empCode} {joinDate}");
+                        result = false;
+                    }
+
+                    // Probation Date Validation (if present)
+                    if (!string.IsNullOrWhiteSpace(probation) && !DateTime.TryParseExact(probation, "M/d/yy", null, DateTimeStyles.None, out _))
+                    {
+                        wrongProbDates.Add($"{empCode} {probation}");
+                        result = false;
+                    }
+
+                    // Gender Validation
+                    var validGenders = new[] { "male", "female", "others", "m", "f", "o" };
+                    if (!validGenders.Contains(gender))
+                    {
+                        wrongGenders.Add(empCode);
+                        result = false;
+                    }
+                }
+
+                var msgParts = new List<string>();
+                if (wrongDob.Any()) msgParts.Add($"Wrong Date Format in Date Of Birth: {string.Join(", ", wrongDob)}");
+                if (wrongJoinDates.Any()) msgParts.Add($"Wrong Date Format in Join Date: {string.Join(", ", wrongJoinDates)}");
+                if (wrongProbDates.Any()) msgParts.Add($"Wrong Date Format in Probation End: {string.Join(", ", wrongProbDates)}");
+                if (wrongGenders.Any()) msgParts.Add($"Invalid Gender Format for: {string.Join(", ", wrongGenders)} (Use Male, Female, or Others)");
+
+                var ErrorCode = string.Join(" | ", msgParts);
+                return (result, ErrorCode);
+            });
+        }
+        public async Task<(bool Result, string ErrorMessage)> ValidateEmployeeCodeandDOB(DataTable data, string Method)
+        {
+            return await Task.Run(() =>
+            {
+                bool result = true;
+
+                var empcodelist = FetchEmployeeforvalid().Result;
+
+                var wrongEmpCodes = new List<string>();
+                var wrongDates = new List<string>();
+
+                string dobColumn = Method == "EmpDependentInfoSave" ? "DateOfBirth(MM/DD/YYYY)" : "DOB(MM/DD/YYYY)";
+
+                foreach (DataRow row in data.Rows)
+                {
+                    string empCode = row["EmployeeCode"]?.ToString()?.Trim();
+                    string dobValue = row[dobColumn]?.ToString()?.Trim();
+
+                    if (!string.IsNullOrEmpty(empCode) && !empcodelist.Contains(empCode))
+                    {
+                        wrongEmpCodes.Add(empCode);
+                        result = false;
+                    }
+
+                    if (string.IsNullOrEmpty(dobValue))
+                    {
+                        if (Method == "EmpDependentInfoSave")
+                            row[dobColumn] = DBNull.Value;
+                        continue;
+                    }
+
+                    if (!DateTime.TryParseExact(dobValue, new[] { "MM/dd/yyyy", "M/d/yy" }, null, DateTimeStyles.None, out _))
+                    {
+                        wrongDates.Add(dobValue);
+                        result = false;
+                    }
+                }
+
+                var msgParts = new List<string>();
+                if (wrongEmpCodes.Any())
+                    msgParts.Add($"{string.Join(",", wrongEmpCodes)} were not Uploaded!");
+                if (wrongDates.Any())
+                    msgParts.Add($"Date of Birth {string.Join(",", wrongDates)}");
+
+                var ErrorCode = string.Join(", ", msgParts);
+                return (result, ErrorCode);
+            });
+        }
+        public async Task<(bool Result, string ErrorMessage)> ValidateEmployeeCodeAndDates(DataTable data, string validEmpCodes, string? dateField1 = null, string? dateField2 = null)
+        {
+            bool result = true;
+            string message = "";
+            List<string> invalidEmpCodes = new();
+            string invalidDateMessage = "";
+
+            var EmpCodes = await _context.EmployeeDetails
+                                        .Select(e => e.EmpCode.Trim())
+                                        .Distinct()
+                                        .ToListAsync();
+
+            invalidEmpCodes = data.AsEnumerable()
+                .Select(row => row["EmployeeCode"]?.ToString()?.Trim())
+                .Where(empCode => !string.IsNullOrEmpty(empCode) && !EmpCodes.Contains(empCode))
+                .Distinct()
+                .ToList();
+
+            if (invalidEmpCodes.Any())
+            {
+                result = false;
+                message += string.Join(",", invalidEmpCodes) + " Invalid Employee Code!";
+            }
+
+            // Helper to validate date
+            bool IsValidDate(string? date) =>
+                DateTime.TryParseExact(date, "MM/dd/yyyy", null, DateTimeStyles.None, out _) ||
+                DateTime.TryParseExact(date, "M/d/yy", null, DateTimeStyles.None, out _);
+
+            // Validate dateField1
+            if (!string.IsNullOrWhiteSpace(dateField1) && data.Columns.Contains(dateField1))
+            {
+                for (int i = 0; i < data.Rows.Count; i++)
+                {
+                    var dateVal = data.Rows[i][dateField1]?.ToString();
+                    if (!string.IsNullOrWhiteSpace(dateVal) && !IsValidDate(dateVal))
+                    {
+                        invalidDateMessage = $"Contain Invalid Date Format! Please Provide MM/DD/YYYY at Row {i + 1}";
+                        result = false;
+                        break;
+                    }
+                }
+            }
+
+            // Validate dateField2
+            if (!string.IsNullOrWhiteSpace(dateField2) && data.Columns.Contains(dateField2))
+            {
+                for (int i = 0; i < data.Rows.Count; i++)
+                {
+                    var dateVal = data.Rows[i][dateField2]?.ToString();
+                    if (!string.IsNullOrWhiteSpace(dateVal) && !IsValidDate(dateVal))
+                    {
+                        invalidDateMessage = $"Contain Invalid Date Format! Please Provide MM/DD/YYYY at Row {i + 1}";
+                        result = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(invalidDateMessage))
+            {
+                if (!string.IsNullOrWhiteSpace(message))
+                    message += ", ";
+
+                message += invalidDateMessage;
+            }
+
+            return (result, message);
+        }
+        public async Task<List<string>> FetchEmployeeforvalid()
+        {
+            var distinctEmpCodes = await _context.EmployeeDetails
+                                     .Select(e => e.EmpCode)
+                                     .Distinct()
+                                     .ToListAsync();
+
+            return distinctEmpCodes;
+        }
+        public async Task<(bool Result, string ErrorMessage)> ValidateEnityNull(DataTable data)
+        {
+            return await Task.Run(() =>
+            {
+                bool result = true;
+                string msg = "";
+                //var wrngEmpCodes = new List<string>();
+
+                List<string> Wrngempdates = data.AsEnumerable()
+                                        .Where(row => data.Columns.Cast<DataColumn>()
+                                            .Skip(14)
+                                            .Any(col => Convert.ToString(row[col]) == ""))
+                                        .Select(row => Convert.ToString(row["EmployeeCode"]))
+                                        .Distinct()
+                                        .ToList();
+
+                if (Wrngempdates.Any())
+                {
+                    msg = "Please Fill Entity For " + string.Join(",", Wrngempdates);
+                }
+
+                return (result, msg);
+            });
+        }
+        public async Task<int> BulkInsertDynamicAsync<T>(DataTable dt, List<UploadColumnDto> dtDynamicField, string Dynamic) where T : class, new()
+        {
+            var entityList = new List<T>();
+
+            // Get the properties of the generic type T
+            var properties = typeof(T).GetProperties()
+                .Where(p => p.CanWrite)
+                .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+
+            // Loop through each row in the DataTable
+            foreach (DataRow row in dt.Rows)
+            {
+                var entity = new T();
+
+                foreach (var map in dtDynamicField)
+                {
+                    // map.dtColumnName => column in DataTable
+                    // map.TableColumnName => property in model
+                    if (dt.Columns.Contains(map.DtColumnName) && properties.ContainsKey(map.TableColumnName))
+                    {
+                        var value = row[map.DtColumnName];
+                        if (value != DBNull.Value)
+                        {
+                            var property = properties[map.TableColumnName];
+
+                            // Safe conversion
+                            var convertedValue = Convert.ChangeType(value, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                            property.SetValue(entity, convertedValue);
+                        }
+                    }
+                }
+
+                entityList.Add(entity);
+            }
+
+            await _context.Set<T>().AddRangeAsync(entityList);
+            await _context.SaveChangesAsync();
+
+            return entityList.Count;
+        }
     }
 
 }
