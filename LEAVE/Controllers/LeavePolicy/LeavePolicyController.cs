@@ -87,7 +87,12 @@ namespace LEAVE.Controllers.LeavePolicy
 
             var createPolicy = await _leavePolicyService.DeleteInstanceLimit(LeavePolicyInstanceLimitID);
             return Ok(createPolicy);
-        }        
-
+        }
+        [HttpGet]
+        public async Task<IActionResult> LeavePolicySettingsAttachment(int leavePolicyMasterId, int leavePolicyInstanceLimitId)
+        {
+            var leavePolicySettingsAttachment = await _leavePolicyService.LeavePolicySettingsAttachment(leavePolicyMasterId, leavePolicyInstanceLimitId);
+            return Ok(leavePolicySettingsAttachment);
+        }
     }
 }

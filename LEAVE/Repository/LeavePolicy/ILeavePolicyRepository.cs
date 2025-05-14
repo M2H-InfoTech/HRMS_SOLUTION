@@ -13,6 +13,8 @@ namespace LEAVE.Repository.LeavePolicy
         Task<List<object>> FillHolidayincludeAsync(int LeavePolicyMasterID, int LeavePolicyInstanceLimitID);
         Task<string?> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto leavePolicyInstanceLimitDto, string compLeaveIDs, int empId);
         Task<string?> DeleteInstanceLimit(int LeavePolicyInstanceLimitID);
-       
+        Task<object> LeavePolicySettingsAttachment(int leavePolicyMasterId, int leavePolicyInstanceLimitId);
+
+
     }
 }
