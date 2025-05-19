@@ -41,7 +41,7 @@ namespace LEAVE.Service.LeavePolicy
             return _leavePolicyRepository.FillHolidayincludeAsync(LeavePolicyMasterID, LeavePolicyInstanceLimitID);
         }
 
-        public async Task<string> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto leavePolicyInstanceLimitDto, string compLeaveIDs, int empId)
+        public async Task<string?> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto leavePolicyInstanceLimitDto, string compLeaveIDs, int empId)
         {
             return await _leavePolicyRepository.InsertInstanceLeaveLimitAsync(leavePolicyInstanceLimitDto, compLeaveIDs, empId);
         }
