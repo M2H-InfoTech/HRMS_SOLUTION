@@ -357,7 +357,7 @@ namespace LEAVE.Repository.LeavePolicy
 
             return result.Cast<object>().ToList();
         }
-        public async Task<string> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto dto, string compLeaveIDs, int empId)
+        public async Task<string?> InsertInstanceLeaveLimitAsync(LeavePolicyInstanceLimitDto dto, string compLeaveIDs, int empId)
         {
             if (dto.LeavePolicyInstanceLimitID == 0)
             {
