@@ -44,7 +44,7 @@ namespace LEAVE.Controllers.AssignLeave
             var result = await _assignleaveservice.GetBasicAssignmentAsync (roleId, entryBy);
             return Ok (result);
         }
-        [HttpDelete]//Created by Shan Lal K
+        [HttpGet]//Created by Shan Lal K
         public async Task<IActionResult> DeleteSingleEmpBasicSettingAsync (int leavemasters, int empid)
         {
             if (leavemasters <= 0 || empid <= 0)
