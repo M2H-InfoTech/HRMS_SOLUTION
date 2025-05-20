@@ -33,7 +33,7 @@ namespace LEAVE.Controllers.AssignLeave
             return Ok(fillchildBSdetails);
         }
         [HttpGet]
-        public async Task<IActionResult> Getallbasics(string linkid, int levelid, string transaction, int empid)
+        public async Task<IActionResult> Getallbasics(string linkid, int levelid, string transaction, int? empid)
         {
             var getallbasics = await _assignleaveservice.Getallbasics(linkid, levelid, transaction, empid);
             return Ok(getallbasics);
