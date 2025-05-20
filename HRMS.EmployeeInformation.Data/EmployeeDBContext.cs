@@ -368,7 +368,7 @@ public partial class EmployeeDBContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
-         //=> optionsBuilder.UseSqlServer("Server=10.25.25.250\\sql2017,1435;Database=VELLAPALLY-02-01-2025;User Id=sa;Password=asd@123.;Integrated Security=False;TrustServerCertificate=True;");
+
          => optionsBuilder.UseSqlServer(_configuration.GetConnectionString("Default"));
 
 
@@ -4831,7 +4831,7 @@ public partial class EmployeeDBContext : DbContext
             entity.Property(e => e.ExtraLeaveCountProxy).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Laps).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.LeaveCount).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.LeaveCountBtw).HasColumnType("decimal(18, 2)");
+            //entity.Property(e => e.LeaveCountBtw).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.LeavefromProbationDt).HasColumnName("LeavefromProbationDT");
             entity.Property(e => e.Rollovercount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.RollovercountNj)

@@ -19,6 +19,7 @@ namespace LEAVE.Service.LeaveBalance
         {
             return _leaveBalanceRepository.GetLeaveApplicationsAsync(employeeId, leaveId, approvalStatus, flowStatus, leaveFrom, leaveTo);
         }
+
     }
 
 }

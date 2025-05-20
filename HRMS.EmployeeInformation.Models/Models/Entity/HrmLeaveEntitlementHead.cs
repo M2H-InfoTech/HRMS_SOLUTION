@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace EMPLOYEE_INFORMATION.Models;
+﻿namespace EMPLOYEE_INFORMATION.Models;
 
 public partial class HrmLeaveEntitlementHead
 {
@@ -111,9 +108,9 @@ public partial class HrmLeaveEntitlementHead
 
     public int? IsShowPartialPaymentDays { get; set; }
 
-    public int? JoinDateIn { get; set; }
+    //public int? JoinDateIn { get; set; }
 
-    public int? ToJoinDate { get; set; }
+    // public int? ToJoinDate { get; set; }
 
-    public decimal? LeaveCountBtw { get; set; }
+    //public decimal? LeaveCountBtw { get; set; }
 }
