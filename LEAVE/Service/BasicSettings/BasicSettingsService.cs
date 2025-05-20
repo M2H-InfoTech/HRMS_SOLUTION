@@ -51,9 +51,14 @@ namespace LEAVE.Service.BasicSettings
             return _basicSettingsRepository.GetEditbasicsettingsAsync(masterid);
         }
 
-        public async Task<long?> UpdatetLeaveMasterAndSettingsLinkAsync(int masterId, int basicSettingsId, int createdBy)
+        //public async Task<long?> UpdatetLeaveMasterAndSettingsLinkAsync(int masterId, int basicSettingsId, int createdBy)
+        //{
+        //    return await _basicSettingsRepository.UpdatetLeaveMasterAndSettingsLinkAsync(masterId, basicSettingsId, createdBy);
+        //}
+
+        public async Task<long?> UpsertLeaveMasterAndSettingsLinkAsync(LeaveEntitlementDto leaveEntitlementDto)
         {
-            return await _basicSettingsRepository.UpdatetLeaveMasterAndSettingsLinkAsync(masterId, basicSettingsId, createdBy);
+            return await _basicSettingsRepository.UpsertLeaveMasterAndSettingsLinkAsync(leaveEntitlementDto);
         }
     }
 }

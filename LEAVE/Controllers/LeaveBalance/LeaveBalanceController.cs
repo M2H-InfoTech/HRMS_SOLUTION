@@ -6,7 +6,7 @@ namespace LEAVE.Controllers.LeaveBalance
     [Route("api/[controller]/[action]")]
     public class LeaveBalanceController : Controller
     {
-      
+
         //public IActionResult Index()
         //{
         //    return View();
@@ -32,5 +32,6 @@ namespace LEAVE.Controllers.LeaveBalance
             var fillweekendinclude = await _leaveBalanceService.GetLeaveApplicationsAsync(employeeId, leaveId, approvalStatus, flowStatus, leaveFrom, leaveTo);
             return Ok(fillweekendinclude);
         }
+
     }
 }
