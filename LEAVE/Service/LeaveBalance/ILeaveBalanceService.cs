@@ -9,6 +9,7 @@ namespace LEAVE.Service.LeaveBalance
         Task<List<LeaveApplicationDto>> GetLeaveApplicationsAsync(int employeeId, int leaveId, string approvalStatus, string? flowStatus, DateTime? leaveFrom, DateTime? leaveTo);
         Task<List<EmployeeDto>> GetLeaveAssignmentEligibleEmployeesAsync(int entryByUserId, int? roleId);
 
+        Task<WorkFlowMainDto> EmployeeDetailsWorkFlow (EmployeeDetailWFDto dto);
 
     }
 }

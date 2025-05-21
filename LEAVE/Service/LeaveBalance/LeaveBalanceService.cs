@@ -25,6 +25,10 @@ namespace LEAVE.Service.LeaveBalance
         {
             return await _leaveBalanceRepository.GetLeaveAssignmentEligibleEmployeesAsync(entryByUserId, roleId);
         }
+        public async Task<WorkFlowMainDto> EmployeeDetailsWorkFlow (EmployeeDetailWFDto dto)
+        {
+            return await _leaveBalanceRepository.EmployeeDetailsWorkFlow (dto);
+        }
     }
 
 }
