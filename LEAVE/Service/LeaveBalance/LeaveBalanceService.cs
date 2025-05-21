@@ -1,4 +1,5 @@
-﻿using LEAVE.Dto;
+﻿using HRMS.EmployeeInformation.DTO.DTOs;
+using LEAVE.Dto;
 using LEAVE.Repository.LeaveBalance;
 
 namespace LEAVE.Service.LeaveBalance
@@ -11,15 +12,19 @@ namespace LEAVE.Service.LeaveBalance
 
             _leaveBalanceRepository = leaveBalanceRepository;
         }
-        public Task<List<RetrieveBranchDetailsDto>> RetrieveBranchDetails(int instID, int branchID)
+        public async Task<List<RetrieveBranchDetailsDto>> RetrieveBranchDetails(int instID, int branchID)
         {
-            return _leaveBalanceRepository.RetrieveBranchDetails(instID, branchID);
+            return await _leaveBalanceRepository.RetrieveBranchDetails(instID, branchID);
         }
-        public Task<List<LeaveApplicationDto>> GetLeaveApplicationsAsync(int employeeId, int leaveId, string approvalStatus, string? flowStatus, DateTime? leaveFrom, DateTime? leaveTo)
+        public async Task<List<LeaveApplicationDto>> GetLeaveApplicationsAsync(int employeeId, int leaveId, string approvalStatus, string? flowStatus, DateTime? leaveFrom, DateTime? leaveTo)
         {
-            return _leaveBalanceRepository.GetLeaveApplicationsAsync(employeeId, leaveId, approvalStatus, flowStatus, leaveFrom, leaveTo);
+            return await _leaveBalanceRepository.GetLeaveApplicationsAsync(employeeId, leaveId, approvalStatus, flowStatus, leaveFrom, leaveTo);
         }
 
+        public async Task<List<EmployeeDto>> GetLeaveAssignmentEligibleEmployeesAsync(int entryByUserId, int? roleId)
+        {
+            return await _leaveBalanceRepository.GetLeaveAssignmentEligibleEmployeesAsync(entryByUserId, roleId);
+        }
     }
 
 }

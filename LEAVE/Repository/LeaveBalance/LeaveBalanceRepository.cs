@@ -1,4 +1,5 @@
 ﻿using EMPLOYEE_INFORMATION.Data;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using LEAVE.Dto;
 using LEAVE.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -52,7 +53,6 @@ namespace LEAVE.Repository.LeaveBalance
 
             return result;
         }
-
 
         public async Task<List<LeaveApplicationDto>> GetLeaveApplicationsAsync(int employeeId, int leaveId, string approvalStatus, string? flowStatus, DateTime? leaveFrom, DateTime? leaveTo)
         {
@@ -169,9 +169,45 @@ namespace LEAVE.Repository.LeaveBalance
 
             return await query.ToListAsync();
         }
+        private async Task<bool> IsLinkLevelExists(int? roleId)
+        {
+            var exists = await _context.EntityAccessRights02s
+                .Where(s => s.RoleId == roleId && s.LinkLevel == 15)
+                .Select(x => x.LinkLevel)
+                .FirstOrDefaultAsync(); // Returns default value if no data is found
 
+            return exists > byte.MinValue; // `exists` will be 0 if not found
+        }
+        public async Task<List<EmployeeDto>> GetLeaveAssignmentEligibleEmployeesAsync(int entryByUserId, int? roleId)
+        {
+            var lnkLevelExists = await IsLinkLevelExists(roleId);
+            if (lnkLevelExists)
+            {
+                var result = await (
+                    from a in _context.EmployeeDetails
+                    join b in _context.HighLevelViews
+                        on a.LastEntity equals b.LastEntityId into highJoin
+                    from b in highJoin.DefaultIfEmpty()
+                    where _context.HrmLeaveBasicsettingsaccesses.Any(x => x.EmployeeId == a.EmpId)
+                    select new EmployeeDto
+                    {
+                        EmpId = a.EmpId,
+                        EmpCode = a.EmpCode,
+                        Name = a.Name,
+                        LevelOne = b.LevelOneDescription,
+                        LevelTwo = b.LevelTwoDescription,
+                        LevelThree = b.LevelThreeDescription
+                    }).ToListAsync();
+                return result;
+            }
+            else
+            {
+                return new List<EmployeeDto>();
+            }
+
+
+        }
 
     }
-
 
 }
