@@ -7,7 +7,6 @@ using LEAVE.Dto;
 using LEAVE.Helpers.AccessMetadataService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace LEAVE.Repository.LeaveMaster
 {
@@ -347,7 +346,9 @@ namespace LEAVE.Repository.LeaveMaster
                     if (applicable00.Any())
                     {
                         _context.EntityApplicable00s.RemoveRange(applicable00);
+                        await _context.SaveChangesAsync();//--------newly added code
                     }
+
 
                     if (!string.IsNullOrEmpty(entityApplicableApiDtos.LinkIds))
                     {
@@ -476,10 +477,10 @@ namespace LEAVE.Repository.LeaveMaster
                 }
 
                 // Commit the transaction
-                await _context.SaveChangesAsync();
+                int insertCount = await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return "success"; // Return success message
+                return insertCount > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;// "success"; // Return success message
             }
             catch (Exception)
             {
