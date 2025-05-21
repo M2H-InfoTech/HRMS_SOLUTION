@@ -7,7 +7,6 @@ using LEAVE.Dto;
 using LEAVE.Helpers.AccessMetadataService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using MPLOYEE_INFORMATION.DTO.DTOs;
 
 namespace LEAVE.Repository.LeaveMaster
 {
@@ -330,6 +329,7 @@ namespace LEAVE.Repository.LeaveMaster
                 CompanyIds: string.Join(",", companyIds)
             );
         }
+
         public async Task<string> ProcessEntityApplicableAsync(EntityApplicableApiDto entityApplicableApiDtos)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -347,7 +347,9 @@ namespace LEAVE.Repository.LeaveMaster
                     if (applicable00.Any())
                     {
                         _context.EntityApplicable00s.RemoveRange(applicable00);
+                        await _context.SaveChangesAsync();//--------newly added code
                     }
+
 
                     if (!string.IsNullOrEmpty(entityApplicableApiDtos.LinkIds))
                     {
