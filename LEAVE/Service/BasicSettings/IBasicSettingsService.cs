@@ -15,6 +15,6 @@ namespace LEAVE.Service.BasicSettings
         Task<List<LeaveDetailModelDto>> FillleavetypeListAsync(int SecondEntityId, int Empid);
         Task<List<BasicSettingDto>> GetEditbasicsettingsAsync(int masterid);
         //Task<long?> UpdatetLeaveMasterAndSettingsLinkAsync(int masterId, int basicSettingsId, int createdBy);
-        Task<long?> UpsertLeaveMasterAndSettingsLinkAsync(LeaveEntitlementDto leaveEntitlementDto);
+        Task<long?> UpdateLeaveMasterAndSettingsLinkAsync(LeaveEntitlementDto leaveEntitlementDto);
     }
 }

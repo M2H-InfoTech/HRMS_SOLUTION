@@ -329,6 +329,7 @@ namespace LEAVE.Repository.LeaveMaster
                 CompanyIds: string.Join(",", companyIds)
             );
         }
+
         public async Task<string> ProcessEntityApplicableAsync(EntityApplicableApiDto entityApplicableApiDtos)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();

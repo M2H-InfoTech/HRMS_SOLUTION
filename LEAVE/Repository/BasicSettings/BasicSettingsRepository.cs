@@ -575,37 +575,9 @@ namespace LEAVE.Repository.BasicSettings
                  })
                  .ToListAsync();
         }
-        //public async Task<long?> UpdatetLeaveMasterAndSettingsLinkAsync(int masterId, int basicSettingsId, int createdBy)
-        //{
-        //    if (masterId == 0)
-        //        return null;
-
-        //    var existing = await _context.HrmLeaveMasterandsettingsLinks
-        //        .FirstOrDefaultAsync(x => x.SettingsId == basicSettingsId);
-
-        //    if (existing == null)
-        //    {
-        //        var newLink = new HrmLeaveMasterandsettingsLink
-        //        {
-        //            LeaveMasterId = masterId,
-        //            SettingsId = basicSettingsId,
-        //            CreatedBy = createdBy,
-        //            CreatedDate = DateTime.UtcNow
-        //        };
-
-        //        _context.HrmLeaveMasterandsettingsLinks.Add(newLink);
-        //        await _context.SaveChangesAsync();
 
 
-        //        return newLink.IdMasterandSettingsLink;
-        //    }
-        //    else
-        //    {
-        //        return null;
-        //    }
-        //}
-
-        public async Task<long?> UpsertLeaveMasterAndSettingsLinkAsync(LeaveEntitlementDto leaveEntitlementDto)
+        public async Task<long?> UpdateLeaveMasterAndSettingsLinkAsync(LeaveEntitlementDto leaveEntitlementDto)
         {
             var lastInsertedId = 0;
             if (leaveEntitlementDto.MasterId != 0)
@@ -691,162 +663,225 @@ namespace LEAVE.Repository.BasicSettings
 
                     lastInsertedId = newJoinEntry.LeaveentitlementregId;
                 }
-                if (leaveEntitlementDto.RegType == "Newjoin")
+            }
+            if (leaveEntitlementDto.RegType == "Entitlement")
+            {
+                var existingHead = await _context.HrmLeaveEntitlementHeads.FirstOrDefaultAsync(h => h.SettingsId == leaveEntitlementDto.BasicSettingsId);
+                if (existingHead == null)
                 {
-                    var existingHead = await _context.HrmLeaveEntitlementHeads.FirstOrDefaultAsync(h => h.SettingsId == leaveEntitlementDto.BasicSettingsId);
-                    if (existingHead == null)
+                    var newHead = new HrmLeaveEntitlementHead
                     {
-                        var newHead = new HrmLeaveEntitlementHead
-                        {
-                            SettingsId = leaveEntitlementDto.BasicSettingsId,
-                            EmployeeType = leaveEntitlementDto.EmpType,
-                            AllemployeeLeaveCount = leaveEntitlementDto.AllEmployeeLeave,
-                            DateofJoiningCheck = leaveEntitlementDto.NewJoin,
-                            JoinedDate = leaveEntitlementDto.JoinDate,
-                            LeaveCount = leaveEntitlementDto.NewJoinLeaveCount,
-                            CreatedBy = leaveEntitlementDto.CreatedBy,
-                            LeaveGrantType = leaveEntitlementDto.GrantType,
-                            Experiance = leaveEntitlementDto.Experience,
-                            Monthwise = leaveEntitlementDto.Monthwise,
-                            NewjoinGranttype = leaveEntitlementDto.NJNGrantType,
-                            NewjoinLeavecount = leaveEntitlementDto.NJNLeaveCount,
-                            NewjoinMonthwise = leaveEntitlementDto.NJNMonthwise,
-                            Laps = leaveEntitlementDto.Laps,
-                            StartDate = leaveEntitlementDto.GrantingStartDate,
-                            Eligibility = leaveEntitlementDto.Eligibility,
-                            EligibilityGrant = leaveEntitlementDto.EligibilityGrant,
-                            Carryforward = leaveEntitlementDto.CarryForward,
-                            Cfbasedon = leaveEntitlementDto.CarryForwardType,
-                            Rollovercount = leaveEntitlementDto.Rollover,
-                            CarryforwardNj = leaveEntitlementDto.CarryForwardNJ,
-                            CfbasedonNj = leaveEntitlementDto.CFBasedOnNJ,
-                            RollovercountNj = leaveEntitlementDto.RolloverCountNJ,
-                            CreatedDate = DateTime.UtcNow,
-                            Firstmonthleavecount = leaveEntitlementDto.FirstMonthLeaveCount,
-                            Credetedon = leaveEntitlementDto.CreditedOn,
-                            Yearcount = leaveEntitlementDto.ProbationML,
-                            JoinmonthdayaftrNyear = leaveEntitlementDto.NewJoinML,
-                            JoinmonthleaveaftrNyear = leaveEntitlementDto.OtherML,
-                            Beginningcarryfrwrd = leaveEntitlementDto.BeginningCarryForward,
-                            Vacationaccrualtype = leaveEntitlementDto.VacationType,
-                            Previousexperiance = leaveEntitlementDto.PreviousExperience,
-                            GrantfullleaveforAll = leaveEntitlementDto.GrantFullLeave,
-                            FullleaveProRata = leaveEntitlementDto.FullLeaveProRata,
-                            Settingspaymode = leaveEntitlementDto.SettingsPayMode,
-                            PartialpaymentBalancedays = leaveEntitlementDto.PartialPaymentBalance,
-                            PartialpaymentNextcount = leaveEntitlementDto.PartialPaymentNextCount,
-                            LeaveHours = leaveEntitlementDto.LeaveHours,
-                            LeaveCriteria = leaveEntitlementDto.LeaveCriteria,
-                            CalculateOnFirst = leaveEntitlementDto.CalculateOnFirst,
-                            CalculateOnSecond = leaveEntitlementDto.CalculateOnSecond,
-                            LeaveHoursNewjoin = leaveEntitlementDto.LeaveHoursNj,
-                            LeaveCriteriaNewjoin = leaveEntitlementDto.LeaveCriteriaNj,
-                            CalculateOnFirstNewjoin = leaveEntitlementDto.CalculateOnFirstNj,
-                            CalculateOnSecondNewjoin = leaveEntitlementDto.CalculateOnSecondNj,
-                            NyearBasedOnJoinDate = leaveEntitlementDto.NYearAfterJoinDate,
-                            ConsiderProbationDate = leaveEntitlementDto.ConsiderProbationDate,
-                            IsShowPartialPaymentDays = leaveEntitlementDto.ShowInLeaveBalance,
-                            ExtraLeaveCountProxy = leaveEntitlementDto.ExtraLeaveCountProxy
-                        };
+                        SettingsId = leaveEntitlementDto.BasicSettingsId,
+                        CreatedBy = leaveEntitlementDto.CreatedBy,
+                        CreatedDate = DateTime.UtcNow
+                    };
 
-                        _context.HrmLeaveEntitlementHeads.Add(newHead);
-                        await _context.SaveChangesAsync();
+                    MapEntitlementHeadFields(newHead, leaveEntitlementDto);
+                    _context.HrmLeaveEntitlementHeads.Add(newHead);
+                    await _context.SaveChangesAsync();
+                    lastInsertedId = newHead.LeaveEntitlementId;
+                }
+                else
+                {
+                    MapEntitlementHeadFields(existingHead, leaveEntitlementDto);
+                    await _context.SaveChangesAsync();
+                    lastInsertedId = existingHead.LeaveEntitlementId;
+                }
 
-                        lastInsertedId = newHead.LeaveEntitlementId;
-                    }
-                    else
-                    {
-                        existingHead.EmployeeType = leaveEntitlementDto.EmpType;
-                        existingHead.AllemployeeLeaveCount = leaveEntitlementDto.AllEmployeeLeave;
-                        existingHead.DateofJoiningCheck = leaveEntitlementDto.NewJoin;
-                        existingHead.JoinedDate = leaveEntitlementDto.JoinDate;
-                        existingHead.LeaveCount = leaveEntitlementDto.NewJoinLeaveCount;
-                        existingHead.LeaveGrantType = leaveEntitlementDto.GrantType;// grantType;
-                        existingHead.Experiance = leaveEntitlementDto.Experience;
-                        existingHead.Monthwise = leaveEntitlementDto.Monthwise;
-                        existingHead.NewjoinGranttype = leaveEntitlementDto.NJNGrantType;
-                        existingHead.NewjoinLeavecount = leaveEntitlementDto.NJNLeaveCount;
-                        existingHead.NewjoinMonthwise = leaveEntitlementDto.NJNMonthwise;
-                        existingHead.Laps = leaveEntitlementDto.Laps;
-                        existingHead.StartDate = leaveEntitlementDto.GrantingStartDate;
-                        existingHead.Eligibility = leaveEntitlementDto.Eligibility;
-                        existingHead.EligibilityGrant = leaveEntitlementDto.EligibilityGrant;
-                        existingHead.Carryforward = leaveEntitlementDto.CarryForward;
-                        existingHead.Cfbasedon = leaveEntitlementDto.CarryForwardType;
-                        existingHead.Rollovercount = leaveEntitlementDto.Rollover;
-                        existingHead.CarryforwardNj = leaveEntitlementDto.CarryForwardNJ;
-                        existingHead.CfbasedonNj = leaveEntitlementDto.CFBasedOnNJ;// cfBasedOnNJ;
-                        existingHead.RollovercountNj = leaveEntitlementDto.RolloverCountNJ;// rolloverCountNJ;
-                        existingHead.Firstmonthleavecount = leaveEntitlementDto.FirstMonthLeaveCount;// firstMonthLeaveCount;
-                        existingHead.Credetedon = leaveEntitlementDto.CreditedOn;// creditedOn;
-                        existingHead.Yearcount = leaveEntitlementDto.ProbationML;// probationML;
-                        existingHead.JoinmonthdayaftrNyear = leaveEntitlementDto.NewJoinML;// newJoinML;
-                        existingHead.JoinmonthleaveaftrNyear = leaveEntitlementDto.OtherML;// otherML;
-                        existingHead.Beginningcarryfrwrd = leaveEntitlementDto.BeginningCarryForward;// beginningCarryForward;
-                        existingHead.Vacationaccrualtype = leaveEntitlementDto.VacationType;// vacationType;
-                        existingHead.Previousexperiance = leaveEntitlementDto.PreviousExperience;// previousExperience;
-                        existingHead.GrantfullleaveforAll = leaveEntitlementDto.GrantFullLeave;// grantFullLeave;
-                        existingHead.FullleaveProRata = leaveEntitlementDto.FullLeaveProRata;// fullLeaveProRata;
-                        existingHead.Settingspaymode = leaveEntitlementDto.SettingsPayMode;// settingsPayMode;
-                        existingHead.PartialpaymentBalancedays = leaveEntitlementDto.PartialPaymentBalance;// partialPaymentBalance;
-                        existingHead.PartialpaymentNextcount = leaveEntitlementDto.PartialPaymentNextCount;// partialPaymentNextCount;
-                        existingHead.LeaveHours = leaveEntitlementDto.LeaveHours;// leaveHours;
-                        existingHead.LeaveCriteria = leaveEntitlementDto.LeaveCriteria;// leaveCriteria;
-                        existingHead.CalculateOnFirst = leaveEntitlementDto.CalculateOnFirst;// calculateOnFirst;
-                        existingHead.CalculateOnSecond = leaveEntitlementDto.CalculateOnSecond;// calculateOnSecond;
-                        existingHead.LeaveHoursNewjoin = leaveEntitlementDto.LeaveHoursNj;// leaveHoursNj;
-                        existingHead.LeaveCriteriaNewjoin = leaveEntitlementDto.LeaveCriteriaNj;// leaveCriteriaNj;
-                        existingHead.CalculateOnFirstNewjoin = leaveEntitlementDto.CalculateOnFirstNj;// calculateOnFirstNj;
-                        existingHead.CalculateOnSecondNewjoin = leaveEntitlementDto.CalculateOnSecondNj;// calculateOnSecondNj;
-                        existingHead.NyearBasedOnJoinDate = leaveEntitlementDto.NYearAfterJoinDate;// nYearAfterJoinDate;
-                        existingHead.ConsiderProbationDate = leaveEntitlementDto.ConsiderProbationDate;// considerProbationDate;
-                        existingHead.IsShowPartialPaymentDays = leaveEntitlementDto.ShowInLeaveBalance;// showInLeaveBalance;
-                        existingHead.ExtraLeaveCountProxy = leaveEntitlementDto.ExtraLeaveCountProxy;// extraLeaveCountProxy;
 
-                        await _context.SaveChangesAsync();
+            }
+            await _context.HrmLeaveEntitlementRegs.Where(r => r.LeaveEntitlementId == lastInsertedId && r.Newjoin == 0).ExecuteDeleteAsync();
+            await _context.HrmLeaveEntitlementRegs.Where(r => r.LeaveentitlementregId == lastInsertedId && r.Newjoin == 1).ExecuteDeleteAsync();
+            await _context.HrmLeaveServicedbasedleaves.Where(r => r.LeaveEntitlementId == lastInsertedId).ExecuteDeleteAsync();
+            await _context.HrmLeavePartialPayments.Where(p => p.SettingsDetailsId == lastInsertedId).ExecuteDeleteAsync();
+            var exists = await _context.HrmLeaveBasicsettingsDetails.AnyAsync(b => b.SettingsId == leaveEntitlementDto.BasicSettingsId);
+            if (!exists)
+            {
+                var detail = MapBasicSettingsDetail(leaveEntitlementDto);
+                _context.HrmLeaveBasicsettingsDetails.Add(detail);
+                await _context.SaveChangesAsync();
+                lastInsertedId = detail.SettingsDetailsId;
+                var basicSetting = await _context.HrmLeaveBasicSettings.FirstOrDefaultAsync(s => s.SettingsId == leaveEntitlementDto.BasicSettingsId);
 
-                        lastInsertedId = existingHead.LeaveEntitlementId;
-                    }
+                if (basicSetting != null)
+                {
+                    basicSetting.RejoinWarningShow = leaveEntitlementDto.RejoinWarningShow;
+                    basicSetting.RejoinWarningShowDaysMax = leaveEntitlementDto.RejoinWarningShowDaysMax;
+
+                    await _context.SaveChangesAsync();
                 }
             }
+            else
+            {
+                var recordsToUpdate = await _context.HrmLeaveBasicsettingsDetails.FirstOrDefaultAsync(b => b.SettingsId == leaveEntitlementDto.BasicSettingsId);
+                recordsToUpdate.SettingsId = leaveEntitlementDto.BasicSettingsId;
+                recordsToUpdate.Lopcheck = leaveEntitlementDto.Lopcheck;
+                recordsToUpdate.Gender = leaveEntitlementDto.Gender;
+                recordsToUpdate.MaritalStatus = leaveEntitlementDto.MaritalStatus;
+                recordsToUpdate.Carryforward = leaveEntitlementDto.JoinDate;
+                recordsToUpdate.RolloverCount = leaveEntitlementDto.Rollover;
+                recordsToUpdate.CreatedBy = leaveEntitlementDto.CreatedBy;
+                recordsToUpdate.OndemandLeaveGrand = leaveEntitlementDto.Leaveondemand;
+                recordsToUpdate.EligibilityPeriod = leaveEntitlementDto.Eligibility;
+                recordsToUpdate.PredatedApplication = leaveEntitlementDto.Predatedapp;
+                recordsToUpdate.Maternity = leaveEntitlementDto.Maternity;
+                recordsToUpdate.Compensatory = leaveEntitlementDto.Compensatory;
+                recordsToUpdate.MinServiceDays = leaveEntitlementDto.MinServiceDays;
+                recordsToUpdate.CsectionMaxLeave = leaveEntitlementDto.CsectionMaxLeave;
+                recordsToUpdate.EligibleCount = leaveEntitlementDto.EligibleCount;
+                recordsToUpdate.LeaveType = leaveEntitlementDto.LeaveType;
+                recordsToUpdate.CompCaryfrwrd = leaveEntitlementDto.CompCaryfrwrd;
+                recordsToUpdate.Carryforwardtype = leaveEntitlementDto.CarryForwardType;
+                recordsToUpdate.Defaultreturndate = leaveEntitlementDto.Defaultreturndate;
+                recordsToUpdate.Attachment = leaveEntitlementDto.Attachment;
+                recordsToUpdate.Salaryadvance = leaveEntitlementDto.Salaryadvance;
+                recordsToUpdate.Roledeligation = leaveEntitlementDto.Roledeligation;
+                recordsToUpdate.CreatedDate = DateTime.UtcNow;
+                recordsToUpdate.Weeklyleaveday = leaveEntitlementDto.Weeklyleaveday;
+                recordsToUpdate.Ishalfday = leaveEntitlementDto.Ishalfday;
+                recordsToUpdate.LeaveInclude = leaveEntitlementDto.LeaveInclude;
+                recordsToUpdate.LeavedaysSalaryadvance = leaveEntitlementDto.LeavedaysSalaryadvance;
+                recordsToUpdate.SalaryadvanceApplybeforedays = leaveEntitlementDto.SalaryadvanceApplybeforedays;
+                recordsToUpdate.Returnrequest = leaveEntitlementDto.Returnrequest;
+                recordsToUpdate.Attachmentmandatory = leaveEntitlementDto.Attachmentmandatory;
+                recordsToUpdate.Applywithoutbalance = leaveEntitlementDto.Applywithoutbalance;
+                recordsToUpdate.Casualholiday = leaveEntitlementDto.Casualholiday;
+                recordsToUpdate.PassageeligibilityEnable = leaveEntitlementDto.PassageeligibilityEnable;
+                recordsToUpdate.Passageeligibilitydays = leaveEntitlementDto.Passageeligibilitydays;
+                recordsToUpdate.PassportRequest = leaveEntitlementDto.PassportRequest;
+                recordsToUpdate.EnableLeaveGrander = leaveEntitlementDto.EnableLeaveGrander;
+                recordsToUpdate.Autocarryforward = leaveEntitlementDto.Autocarryforward;
+                recordsToUpdate.Yearlylimit = leaveEntitlementDto.Yearlylimit;
+                recordsToUpdate.Yearlylimitcount = leaveEntitlementDto.Yearlylimitcount;
+                recordsToUpdate.ApplicableOnnotice = leaveEntitlementDto.ApplicableOnnotice;
+                recordsToUpdate.Blockpreviouslap = leaveEntitlementDto.Blockpreviouslap;
+                recordsToUpdate.LeaveEncashment = leaveEntitlementDto.LeaveEncashment;
+                recordsToUpdate.Disableyearlylimit = leaveEntitlementDto.Disableyearlylimit;
+                recordsToUpdate.Allowleavecancel = leaveEntitlementDto.Allowleavecancel;
+                recordsToUpdate.Passportrequireddays = leaveEntitlementDto.Passportrequireddays;
+                recordsToUpdate.LeaveAccrual = leaveEntitlementDto.LeaveAccrual;
+                recordsToUpdate.ShowcurrentmonthWeekoff = leaveEntitlementDto.ShowcurrentmonthWeekoff;
+                recordsToUpdate.Leavebalanceroundoption = leaveEntitlementDto.Leavebalanceroundoption;
+                recordsToUpdate.LeaveEncashmentMnthly = leaveEntitlementDto.LeaveEncashmentMnthly;
+                recordsToUpdate.LeaveReductionForLateIn = leaveEntitlementDto.LeaveReductionForLateIn;
+                await _context.SaveChangesAsync();
+
+            }
+
+
             return lastInsertedId;
+        }
+        private void MapEntitlementHeadFields(HrmLeaveEntitlementHead head, LeaveEntitlementDto dto)
+        {
+            head.EmployeeType = dto.EmpType;
+            head.AllemployeeLeaveCount = dto.AllEmployeeLeave;
+            head.DateofJoiningCheck = dto.NewJoin;
+            head.JoinedDate = dto.JoinDate;
+            head.LeaveCount = dto.NewJoinLeaveCount;
+            head.LeaveGrantType = dto.GrantType;
+            head.Experiance = dto.Experience;
+            head.Monthwise = dto.Monthwise;
+            head.NewjoinGranttype = dto.NJNGrantType;
+            head.NewjoinLeavecount = dto.NJNLeaveCount;
+            head.NewjoinMonthwise = dto.NJNMonthwise;
+            head.Laps = dto.Laps;
+            head.StartDate = dto.GrantingStartDate;
+            head.Eligibility = dto.Eligibility;
+            head.EligibilityGrant = dto.EligibilityGrant;
+            head.Carryforward = dto.CarryForward;
+            head.Cfbasedon = dto.CarryForwardType;
+            head.Rollovercount = dto.Rollover;
+            head.CarryforwardNj = dto.CarryForwardNJ;
+            head.CfbasedonNj = dto.CFBasedOnNJ;
+            head.RollovercountNj = dto.RolloverCountNJ;
+            head.Firstmonthleavecount = dto.FirstMonthLeaveCount;
+            head.Credetedon = dto.CreditedOn;
+            head.Yearcount = dto.ProbationML;
+            head.JoinmonthdayaftrNyear = dto.NewJoinML;
+            head.JoinmonthleaveaftrNyear = dto.OtherML;
+            head.Beginningcarryfrwrd = dto.BeginningCarryForward;
+            head.Vacationaccrualtype = dto.VacationType;
+            head.Previousexperiance = dto.PreviousExperience;
+            head.GrantfullleaveforAll = dto.GrantFullLeave;
+            head.FullleaveProRata = dto.FullLeaveProRata;
+            head.Settingspaymode = dto.SettingsPayMode;
+            head.PartialpaymentBalancedays = dto.PartialPaymentBalance;
+            head.PartialpaymentNextcount = dto.PartialPaymentNextCount;
+            head.LeaveHours = dto.LeaveHours;
+            head.LeaveCriteria = dto.LeaveCriteria;
+            head.CalculateOnFirst = dto.CalculateOnFirst;
+            head.CalculateOnSecond = dto.CalculateOnSecond;
+            head.LeaveHoursNewjoin = dto.LeaveHoursNj;
+            head.LeaveCriteriaNewjoin = dto.LeaveCriteriaNj;
+            head.CalculateOnFirstNewjoin = dto.CalculateOnFirstNj;
+            head.CalculateOnSecondNewjoin = dto.CalculateOnSecondNj;
+            head.NyearBasedOnJoinDate = dto.NYearAfterJoinDate;
+            head.ConsiderProbationDate = dto.ConsiderProbationDate;
+            head.IsShowPartialPaymentDays = dto.ShowInLeaveBalance;
+            head.ExtraLeaveCountProxy = dto.ExtraLeaveCountProxy;
+        }
+
+        private HrmLeaveBasicsettingsDetail MapBasicSettingsDetail(LeaveEntitlementDto leaveEntitlementDto)
+        {
+            return new HrmLeaveBasicsettingsDetail
+            {
+                SettingsId = leaveEntitlementDto.BasicSettingsId,
+                Lopcheck = leaveEntitlementDto.Lopcheck,
+                Gender = leaveEntitlementDto.Gender,
+                MaritalStatus = leaveEntitlementDto.MaritalStatus,
+                Carryforward = leaveEntitlementDto.JoinDate,
+                RolloverCount = leaveEntitlementDto.Rollover,
+                CreatedBy = leaveEntitlementDto.CreatedBy,
+                OndemandLeaveGrand = leaveEntitlementDto.Leaveondemand,
+                EligibilityPeriod = leaveEntitlementDto.Eligibility,
+                PredatedApplication = leaveEntitlementDto.Predatedapp,
+                Maternity = leaveEntitlementDto.Maternity,
+                Compensatory = leaveEntitlementDto.Compensatory,
+                MinServiceDays = leaveEntitlementDto.MinServiceDays,
+                CsectionMaxLeave = leaveEntitlementDto.CsectionMaxLeave,
+                EligibleCount = leaveEntitlementDto.EligibleCount,
+                LeaveType = leaveEntitlementDto.LeaveType,
+                CompCaryfrwrd = leaveEntitlementDto.CompCaryfrwrd,
+                Carryforwardtype = leaveEntitlementDto.CarryForwardType,
+                Defaultreturndate = leaveEntitlementDto.Defaultreturndate,
+                Attachment = leaveEntitlementDto.Attachment,
+                Salaryadvance = leaveEntitlementDto.Salaryadvance,
+                Roledeligation = leaveEntitlementDto.Roledeligation,
+                CreatedDate = DateTime.UtcNow,
+                Weeklyleaveday = leaveEntitlementDto.Weeklyleaveday,
+                Ishalfday = leaveEntitlementDto.Ishalfday,
+                LeaveInclude = leaveEntitlementDto.LeaveInclude,
+                LeavedaysSalaryadvance = leaveEntitlementDto.LeavedaysSalaryadvance,
+                SalaryadvanceApplybeforedays = leaveEntitlementDto.SalaryadvanceApplybeforedays,
+                Returnrequest = leaveEntitlementDto.Returnrequest,
+                Attachmentmandatory = leaveEntitlementDto.Attachmentmandatory,
+                Applywithoutbalance = leaveEntitlementDto.Applywithoutbalance,
+                Casualholiday = leaveEntitlementDto.Casualholiday,
+                PassageeligibilityEnable = leaveEntitlementDto.PassageeligibilityEnable,
+                Passageeligibilitydays = leaveEntitlementDto.Passageeligibilitydays,
+                PassportRequest = leaveEntitlementDto.PassportRequest,
+                EnableLeaveGrander = leaveEntitlementDto.EnableLeaveGrander,
+                Autocarryforward = leaveEntitlementDto.Autocarryforward,
+                Yearlylimit = leaveEntitlementDto.Yearlylimit,
+                Yearlylimitcount = leaveEntitlementDto.Yearlylimitcount,
+                ApplicableOnnotice = leaveEntitlementDto.ApplicableOnnotice,
+                Blockpreviouslap = leaveEntitlementDto.Blockpreviouslap,
+                LeaveEncashment = leaveEntitlementDto.LeaveEncashment,
+                Disableyearlylimit = leaveEntitlementDto.Disableyearlylimit,
+                Allowleavecancel = leaveEntitlementDto.Allowleavecancel,
+                Passportrequireddays = leaveEntitlementDto.Passportrequireddays,
+                LeaveAccrual = leaveEntitlementDto.LeaveAccrual,
+                ShowcurrentmonthWeekoff = leaveEntitlementDto.ShowcurrentmonthWeekoff,
+                Leavebalanceroundoption = leaveEntitlementDto.Leavebalanceroundoption,
+                LeaveEncashmentMnthly = leaveEntitlementDto.LeaveEncashmentMnthly,
+                LeaveReductionForLateIn = leaveEntitlementDto.LeaveReductionForLateIn
+
+            };
         }
 
 
 
-        //public async Task<long?> UpdatetLeaveMasterAndSettingsLinkAsync(int masterId, int basicSettingsId, int createdBy)
-        //{
-        //    if (masterId == 0 || basicSettingsId == 0)
-        //        return null;
 
-        //    var existingLink = await GetExistingLinkAsync(basicSettingsId);
-
-        //    if (existingLink != null)
-        //        return null;
-
-        //    var newLink = CreateNewLink(masterId, basicSettingsId, createdBy);
-
-        //    _context.HrmLeaveMasterandsettingsLinks.Add(newLink);
-        //    await _context.SaveChangesAsync();
-
-        //    return newLink.IdMasterandSettingsLink;
-        //}
-        //private async Task<HrmLeaveMasterandsettingsLink?> GetExistingLinkAsync(int basicSettingsId)
-        //{
-        //    return await _context.HrmLeaveMasterandsettingsLinks
-        //        .FirstOrDefaultAsync(x => x.SettingsId == basicSettingsId);
-        //}
-
-        //private HrmLeaveMasterandsettingsLink CreateNewLink(int masterId, int settingsId, int createdBy)
-        //{
-        //    return new HrmLeaveMasterandsettingsLink
-        //    {
-        //        LeaveMasterId = masterId,
-        //        SettingsId = settingsId,
-        //        CreatedBy = createdBy,
-        //        CreatedDate = DateTime.UtcNow
-        //    };
-        //}
 
     }
 

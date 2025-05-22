@@ -2,6 +2,8 @@
 {
     public class LeaveEntitlementDto
     {
+        public int? RejoinWarningShow;
+
         public int MasterId { get; set; }
         public int? BasicSettingsId { get; set; }
         public int? CreatedBy { get; set; }
@@ -57,5 +59,50 @@
         public int? ConsiderProbationDate { get; set; }
         public int? ShowInLeaveBalance { get; set; }
         public decimal? ExtraLeaveCountProxy { get; set; }
+        public int? Lopcheck { get; set; }
+        public int? Gender { get; set; }
+        public int? MaritalStatus { get; set; }
+        public int? Leaveondemand { get; set; }
+        public int? Predatedapp { get; set; }
+        public int? Maternity { get; set; }
+        public int? Compensatory { get; set; }
+        public decimal? MinServiceDays { get; set; }
+        public decimal? CsectionMaxLeave { get; set; }
+        public int? EligibleCount { get; set; }
+        public int? LeaveType { get; set; }
+        public decimal? CompCaryfrwrd { get; set; }
+
+        public int? Defaultreturndate { get; set; }
+        public int? Attachment { get; set; }
+        public int? Salaryadvance { get; set; }
+        public int? Roledeligation { get; set; }
+        public int? Weeklyleaveday { get; set; }
+        public int? Ishalfday { get; set; }
+        public int? LeaveInclude { get; set; }
+        public double? LeavedaysSalaryadvance { get; set; }
+        public double? SalaryadvanceApplybeforedays { get; set; }
+        public int? Returnrequest { get; set; }
+        public int? Attachmentmandatory { get; set; }
+        public int? Applywithoutbalance { get; set; }
+        public int? Casualholiday { get; set; }
+        public int? PassageeligibilityEnable { get; set; }
+        public double? Passageeligibilitydays { get; set; }
+        public int? PassportRequest { get; set; }
+        public int? EnableLeaveGrander { get; set; }
+        public int? Autocarryforward { get; set; }
+        public int? Yearlylimit { get; set; }
+        public double? Yearlylimitcount { get; set; }
+        public int? ApplicableOnnotice { get; set; }
+        public int? Blockpreviouslap { get; set; }
+        public int? LeaveEncashment { get; set; }
+        public int? Disableyearlylimit { get; set; }
+        public int? Allowleavecancel { get; set; }
+        public int? Passportrequireddays { get; set; }
+        public int? LeaveAccrual { get; set; }
+        public int? ShowcurrentmonthWeekoff { get; set; }
+        public int? Leavebalanceroundoption { get; set; }
+        public int? LeaveReductionForLateIn { get; set; }
+        public int? LeaveEncashmentMnthly { get; set; }
+        public double? RejoinWarningShowDaysMax { get; set; }
     }
 }

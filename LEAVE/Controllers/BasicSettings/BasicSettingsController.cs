@@ -89,9 +89,9 @@ namespace LEAVE.Controllers.BasicSettings
         //    return new JsonResult(updatetLeaveMasterAndSettingsLink);
         //}
         [HttpPost]
-        public async Task<IActionResult> UpsertLeaveMasterAndSettingsLinkAsync([FromBody] LeaveEntitlementDto leaveEntitlementDto)
+        public async Task<IActionResult> UpdateLeaveMasterAndSettingsLink([FromBody] LeaveEntitlementDto leaveEntitlementDto)
         {
-            var upsertLeaveMasterAndSettingsLink = await _basicSettingsService.UpsertLeaveMasterAndSettingsLinkAsync(leaveEntitlementDto);
+            var upsertLeaveMasterAndSettingsLink = await _basicSettingsService.UpdateLeaveMasterAndSettingsLinkAsync(leaveEntitlementDto);
             return new JsonResult(upsertLeaveMasterAndSettingsLink);
         }
     }
