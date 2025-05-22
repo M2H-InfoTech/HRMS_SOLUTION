@@ -1,8 +1,12 @@
 ﻿using System.Data;
 using System.Globalization;
 using System.Xml;
+using System;
+using System.Linq;
+using System.Reflection.Metadata;
 using System.Xml.Linq;
 using AutoMapper;
+using Azure.Core;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.DTO.DTOs;
 using EMPLOYEE_INFORMATION.HRMS.EmployeeInformation.Models.Models.Entity;
@@ -22,6 +26,7 @@ using HRMS.EmployeeInformation.Repository.Common.RepositoryC;
 using HRMS.EmployeeInformation.Repository.Helpers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -17472,8 +17477,4910 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
 
 
             return result;
+        }
+
+        public async Task<int?> WorkFlowIDBasedOnLinkAsync(int? linkId, int transactionID)
+        {
+            bool exists = await _context.ParamWorkFlow01s
+                .AnyAsync(x => x.LinkId == linkId && x.TransactionId == transactionID);
+
+            if (exists)
+            {
+                return await _context.ParamWorkFlow01s
+                    .Where(a => a.LinkId == linkId && a.TransactionId == transactionID)
+                    .Select(a => a.WorkFlowId)
+                    .FirstOrDefaultAsync();
+            }
+
+            return 0;
+        }
+
+        public async Task<int?> GetEmployeeIDBasedOnLinkAsync(int? linkId, int? currRoleId)
+        {
+            bool exists = await _context.ParamRole01s
+                .AnyAsync(x => x.LinkId == linkId && x.ParameterId == currRoleId);
+
+            if (exists)
+            {
+                return await _context.ParamRole01s
+                    .Where(a => a.LinkId == linkId && a.ParameterId == currRoleId)
+                    .Select(a => a.EmpId)
+                    .FirstOrDefaultAsync();
+            }
+
+            return 0;
+        }
+
+        public async Task<int?> GetEmployeeIDOnLinkandLevelAsync(int? linkId, int? value1, int WorkFlowRulevalue1)
+        {
+            bool exists = await _context.ParamRole01s
+                .AnyAsync(x => x.LinkId == linkId && x.ParameterId == value1 && x.LinkLevel == WorkFlowRulevalue1);
+
+            if (exists)
+            {
+                return await _context.ParamRole01s
+                    .Where(a => a.LinkId == linkId && a.ParameterId == value1 && a.LinkLevel == WorkFlowRulevalue1)
+                    .Select(a => a.EmpId)
+                    .FirstOrDefaultAsync();
+            }
+
+            return 0;
+        }
+        public async Task<int?> GetRoleBasedEmployee(int? empId, int? currRoleId)
+        {
+
+            int? linkId = 0, employeeId = 0, workFlowID;
+            var tempLevel = await (from c in _context.HrEmpMasters
+                                   join e in _context.HighLevelViews
+                                   on c.DesigId equals
+                                   (e.LevelSixId == 0 ? e.LevelFiveId :
+                                   e.LevelSevenId == 0 ? e.LevelSixId :
+                                   e.LevelEightId == 0 ? e.LevelSevenId :
+                                   e.LevelNineId == 0 ? e.LevelEightId :
+                                   e.LevelTenId == 0 ? e.LevelNineId :
+                                   e.LevelElevenId == 0 ? e.LevelTenId :
+                                   e.LevelTwelveId == 0 ? e.LevelElevenId :
+                                   e.LevelTwelveId)
+                                   where c.EmpId == empId
+                                   select new TempLevel
+                                   {
+                                       LevelOneId = e.LevelOneId,
+                                       LevelTwoId = e.LevelTwoId,
+                                       LevelThreeId = e.LevelThreeId,
+                                       LevelFourId = e.LevelFourId,
+                                       LevelFiveId = e.LevelFiveId,
+                                       LevelSixId = e.LevelSixId,
+                                       LevelSevenId = e.LevelSevenId,
+                                       LevelEightId = e.LevelEightId,
+                                       LevelNineId = e.LevelNineId,
+                                       LevelTenId = e.LevelTenId,
+                                       LevelElevenId = e.LevelElevenId,
+                                       LevelTwelveId = e.LevelTwelveId
+                                   }).ToListAsync();
+
+            var linkToEntity = await _context.ParamRole00s
+                            .Where(a => a.ParameterId == currRoleId)
+                            .Select(a => a.EntityLevel)
+                            .FirstOrDefaultAsync();
+
+            if (linkToEntity != "0" && linkToEntity != "15" && linkToEntity is not null)
+            {
+                var linkToEntityList = linkToEntity.Split(',').Select(int.Parse).ToList();
+
+                if (linkToEntityList.Contains(1))
+                {
+                    linkId = tempLevel.Select(x => x.LevelOneId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(2))
+                {
+                    linkId = tempLevel.Select(x => x.LevelTwoId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(3))
+                {
+                    linkId = tempLevel.Select(x => x.LevelThreeId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(4))
+                {
+                    linkId = tempLevel.Select(x => x.LevelFourId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(5))
+                {
+                    linkId = tempLevel.Select(x => x.LevelFiveId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(6))
+                {
+                    linkId = tempLevel.Select(x => x.LevelSixId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(7))
+                {
+                    linkId = tempLevel.Select(x => x.LevelSevenId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(8))
+                {
+                    linkId = tempLevel.Select(x => x.LevelEightId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(9))
+                {
+                    linkId = tempLevel.Select(x => x.LevelNineId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(10))
+                {
+                    linkId = tempLevel.Select(x => x.LevelTenId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(11))
+                {
+                    linkId = tempLevel.Select(x => x.LevelElevenId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(12))
+                {
+                    linkId = tempLevel.Select(x => x.LevelTwelveId).FirstOrDefault();
+                    employeeId = await GetEmployeeIDBasedOnLinkAsync(linkId, currRoleId);
+                }
+                if (linkToEntityList.Contains(13))
+                {
+                    bool exists = await _context.ParamRole02s
+                .AnyAsync(x => x.LinkEmpId == empId && x.ParameterId == currRoleId);
+
+                    if (exists)
+                    {
+                        employeeId = await _context.ParamRole02s
+                            .Where(a => a.LinkEmpId == empId && a.ParameterId == currRoleId)
+                            .Select(a => a.EmpId)
+                            .FirstOrDefaultAsync();
+                    }
+                }
+
+            }
+
+            else
+            {
+                employeeId = await _context.ParamRole00s
+                           .Where(a => a.ParameterId == currRoleId)
+                           .Select(a => a.EmpId)
+                           .FirstOrDefaultAsync();
+            }
+            if (employeeId == 0)
+            {
+                employeeId = await _context.ParamRole00s
+                          .Where(a => a.ParameterId == currRoleId)
+                          .Select(a => a.EmpId)
+                          .FirstOrDefaultAsync();
+
+                bool exists = await _context.Categorymasterparameters
+               .AnyAsync(x => x.ParameterId == currRoleId && x.Reporting == 1);
+
+                bool exists1 = await _context.Categorymasterparameters
+               .AnyAsync(x => x.ParameterId == currRoleId && x.Reporting == 2);
+
+                if (exists)
+                {
+                    employeeId = await _context.HrEmpReportings
+                          .Where(a => a.EmpId == empId)
+                          .Select(a => a.ReprotToWhome)
+                          .FirstOrDefaultAsync();
+                }
+                else if (exists1)
+                {
+                    var innerEmpIds = await _context.HrEmpReportings
+                                    .Where(x => x.EmpId == empId)
+                                    .Select(x => x.ReprotToWhome)
+                                    .ToListAsync();
+
+                    employeeId = await _context.HrEmpReportings
+                               .Where(x => innerEmpIds.Contains(x.EmpId))
+                               .Select(x => x.ReprotToWhome)
+                               .FirstOrDefaultAsync();
+
+                }
+            }
+
+            return employeeId;
 
         }
+
+        public class TempLevel
+        {
+            public int? LevelOneId { get; set; }
+            public int? LevelTwoId { get; set; }
+            public int? LevelThreeId { get; set; }
+            public int? LevelFourId { get; set; }
+            public int? LevelFiveId { get; set; }
+            public int? LevelSixId { get; set; }
+            public int? LevelSevenId { get; set; }
+            public int? LevelEightId { get; set; }
+            public int? LevelNineId { get; set; }
+            public int? LevelTenId { get; set; }
+            public int? LevelElevenId { get; set; }
+            public int? LevelTwelveId { get; set; }
+        }
+
+
+        public async Task<int?> WorkFlowIDLinkAsync(int transactionID, List<TempLevel> tempLevel, string? linkToEntity, int EmpId)
+        {
+            int? workFlowID = null, linkID;
+
+            if (linkToEntity != "0" && linkToEntity != "15" && linkToEntity is not null)
+            {
+                var linkToEntityList = linkToEntity.Split(',').Select(int.Parse).ToList();
+
+                if (linkToEntityList.Contains(1))
+                {
+                    linkID = tempLevel.Select(x => x.LevelOneId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(2))
+                {
+                    linkID = tempLevel.Select(x => x.LevelTwoId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(3))
+                {
+                    linkID = tempLevel.Select(x => x.LevelThreeId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(4))
+                {
+                    linkID = tempLevel.Select(x => x.LevelFourId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(5))
+                {
+                    linkID = tempLevel.Select(x => x.LevelFiveId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(6))
+                {
+                    linkID = tempLevel.Select(x => x.LevelSixId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(7))
+                {
+                    linkID = tempLevel.Select(x => x.LevelSevenId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(8))
+                {
+                    linkID = tempLevel.Select(x => x.LevelEightId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(9))
+                {
+                    linkID = tempLevel.Select(x => x.LevelNineId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(10))
+                {
+                    linkID = tempLevel.Select(x => x.LevelTenId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(11))
+                {
+                    linkID = tempLevel.Select(x => x.LevelElevenId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(12))
+                {
+                    linkID = tempLevel.Select(x => x.LevelTwelveId).FirstOrDefault();
+                    workFlowID = await WorkFlowIDBasedOnLinkAsync(linkID, transactionID);
+                }
+                if (linkToEntityList.Contains(13))
+                {
+                    bool exists = await _context.ParamWorkFlow02s
+                        .AnyAsync(x => x.LinkEmpId == EmpId && x.TransactionId == transactionID);
+
+                    if (exists)
+                    {
+                        workFlowID = await _context.ParamWorkFlow02s
+                            .Where(a => a.LinkEmpId == EmpId && a.TransactionId == transactionID)
+                            .Select(a => a.WorkFlowId)
+                            .FirstOrDefaultAsync();
+                    }
+                }
+            }
+
+            return workFlowID;
+        }
+
+        public class TempLeaveWorkFlowDto
+        {
+            public int RequestId { get; set; }
+            public int? ShowStatus { get; set; }
+            public string? ApprovalStatus { get; set; }
+            public int? Rule { get; set; }
+            public int RuleOrder { get; set; }
+            public bool? HierarchyType { get; set; }
+            public int Approver { get; set; }
+            public string? ApprovalRemarks { get; set; }
+            public int Entry_By { get; set; }
+            public DateTime Entry_Dt { get; set; }
+            public int Updated_By { get; set; }
+            public DateTime Updated_Dt { get; set; }
+            public string? Deligate { get; set; }
+            public int WorkFlowID { get; set; }
+            public int ForwardNext { get; set; }
+            public int FlowRoleID { get; set; }
+            public int HideFlow { get; set; }
+        }
+
+        public class TempLeaveWorkFlowNewDto
+        {
+            public int? RequestId { get; set; }
+            public bool? ShowStatus { get; set; }
+            public string? ApprovalStatus { get; set; }
+            public int? Rule { get; set; }
+            public int? RuleOrder { get; set; }
+            public bool? HierarchyType { get; set; }
+            public int? Approver { get; set; }
+            public string? ApprovalRemarks { get; set; }
+            public int? Entry_By { get; set; }
+            public DateTime? Entry_Dt { get; set; }
+            public int? Updated_By { get; set; }
+            public DateTime? Updated_Dt { get; set; }
+            public string? Deligate { get; set; }
+            public int WorkFlowID { get; set; } = 0;
+            public int FlowRoleID { get; set; } = 0;
+            public int ForwardNext { get; set; } = 0;
+        }
+
+        public class GetCommonRequestParametersDto
+        {
+            public string? IsAvailable { get; set; }
+            public int? ForwardNext { get; set; }
+            public int? IsShiftTime { get; set; }
+            public int? LeaveCount { get; set; }
+            public string? HidedValues { get; set; }
+            public int? IsCompoOff { get; set; }
+            public float? MonthlyHours { get; set; }
+            public float? LateInHours { get; set; }
+            public int? IsPredatedallowed { get; set; }
+            public int? MaximumDays { get; set; }
+            public int? IsPredatedallowedproxy { get; set; }
+            public int? MaximumDaysproxy { get; set; }
+            public int? IsAllowFutureDate { get; set; }
+            public int? IsAllowFutureDateProxy { get; set; }
+            public int? Minimumdayslimit { get; set; }
+            public int? MinimumdayslimitProxy { get; set; }
+            public int? MonthlyLimitSelf { get; set; }
+            public int? MonthlyLimitProxy { get; set; }
+            public int? EnableReason { get; set; }
+            public int? AllowOnlyHoliday { get; set; }
+            public int? DisableTime { get; set; }
+            public int? BlockMultipleDays { get; set; }
+            public int? RequestCount { get; set; }
+            public string? MissAvailble { get; set; }
+            public int? MissCount { get; set; }
+            public int? HideMonthlyLimit { get; set; }
+            public int? EnableFullday { get; set; }
+            public int? Disabledefaulttime { get; set; }
+            public int? ApprovRemark { get; set; }
+            public int? Rejectremark { get; set; }
+            public int? PolicyID { get; set; }
+            public int? EnableIdle { get; set; }
+            public int? ConsiderWorkingDays { get; set; }
+            public int? EnablePriorRequestSelf { get; set; }
+            public float? PriorRequestDaysSelf { get; set; }
+            public int? EnablePriorRequestProxy { get; set; }
+            public float? PriorRequestDaysProxy { get; set; }
+            public int? BlockAfterMonthlyLimit { get; set; }
+            public int? BlockIfNoPunch { get; set; }
+            public int? MultipleRequestOnaDay { get; set; }
+            public int? SeperateLateinEarlyOutLimit { get; set; }
+            public int? MonthlyLimitLatein { get; set; }
+            public int? MonthlyLimitEarlyOut { get; set; }
+            public int? BlockDaysTypeSelf { get; set; }
+            public float? RequestBlockDaysSelf { get; set; }
+            public int? BlockDaysTypeProxy { get; set; }
+            public float? RequestBlockDaysProxy { get; set; }
+            public float? InstanceLimit { get; set; }
+            public int? AllowExtraLeaveProxy { get; set; }
+            public DateTime? RequestBlockDaysSelfEnd { get; set; }
+            public DateTime? RequestBlockDaysSelfFrom { get; set; }
+            public DateTime? RequestBlockDaysSelfFromProxy { get; set; }
+            public DateTime? RequestBlockDaysSelfEndProxy { get; set; }
+            public float? regularizationlimit { get; set; }
+            public float? regularizationLimitOut { get; set; }
+            public int? ReqBasedOnTime { get; set; }
+        }
+
+        public class RequestPolicyDto
+        {
+            public int? ForwardNext { get; set; }
+            public int? MonthlyLimit { get; set; }
+            public int? IsShiftTime { get; set; }
+            public int? IsCompoOff { get; set; }
+            public int? IsBlockRequest { get; set; }
+            public int? EnableReason { get; set; }
+            public double? MonthlyHours { get; set; }
+            public int? IsPredatedAllowed { get; set; }
+            public int? HidemnthlyLimit { get; set; }
+            public int? MaximumDays { get; set; }
+            public int? PolicyType { get; set; }
+            public int? IsPredatedallowedproxy { get; set; }
+            public int? EnableFullday { get; set; }
+            public int? MaximumDaysproxy { get; set; }
+            public int? PolicyTypeProxy { get; set; }
+            public int? IsAllowFutureDate { get; set; }
+            public int? Minimumdayslimit { get; set; }
+            public int? IsAllowFutureDateProxy { get; set; }
+            public int? MinimumdayslimitProxy { get; set; }
+            public int? MonthlyLimitSelf { get; set; }
+            public int? MonthlyLimitProxy { get; set; }
+            public int? AllowOnlyHoliday { get; set; }
+            public int? DisableTime { get; set; }
+            public int? BlockMultipleDays { get; set; }
+            public int? Disabledefaulttime { get; set; }
+            public int? Approvremarks { get; set; }
+            public int? Rejectremark { get; set; }
+            public int? EnableIdle { get; set; }
+            public int? ConsidrWorkingDays { get; set; }
+            public int? EnablePriorRequestSelf { get; set; }
+            public double? PriorRequestDaysSelf { get; set; }
+            public int? EnablePriorRequestProxy { get; set; }
+            public double? PriorRequestDaysProxy { get; set; }
+            public int? BlockAfterMonthlyLimit { get; set; }
+            public int? BlockIfNoPunch { get; set; }
+            public int? MultipleRequestOnaDay { get; set; }
+            public int? SeperateLateinEarlyOutLimit { get; set; }
+            public int? MonthlyLimitLatein { get; set; }
+            public int? MonthlyLimitEarlyOut { get; set; }
+            public int? BlockDaysTypeSelf { get; set; }
+            public double? RequestBlockDaysSelf { get; set; }
+            public int? BlockDaysTypeProxy { get; set; }
+            public double? RequestBlockDaysProxy { get; set; }
+            public double? InstanceLimit { get; set; }
+            public int? IsAllowExtraLeaveProxy { get; set; }
+            public DateTime? RequestBlockDaysSelfFrom { get; set; }
+            public DateTime? RequestBlockDaysSelfEnd { get; set; }
+            public double? regularizationlimit { get; set; }
+            public double? regularizationLimitOut { get; set; }
+            public DateTime? RequestBlockDaysSelfFromProxy { get; set; }
+            public DateTime? RequestBlockDaysSelfEndProxy { get; set; }
+            public int? ReqBasedOnTime { get; set; }
+        }
+
+
+        public float MinutesToDuration(int minutes)
+        {
+            float result;
+
+            if (minutes >= 60)
+            {
+                int hours = minutes / 60;
+                int mins = minutes % 60;
+                return float.Parse($"{hours}.{mins:D2}");
+            }
+            else
+            {
+                return (float)Math.Round(minutes / 60.0, 2);
+            }
+
+
+        }
+
+
+        public async Task<GetCommonRequestParametersDto> GetCommonRequestParameters(int employeeID, string? TransactionType, DateTime? currentDate)
+        {
+
+            long? LinkID, PolicyID;
+
+            float HoursApproved = 0, latein = 0, AvailableHours = 0, Breakhours = 0, lateinhours, NeededHours = 0;
+
+            int payperiod, currentMonth, currentYear, TransactionID, missingInOutCount = 0, lateEarlyCount = 0, RequestPolicyParamId = 0, missCount = 0;
+
+            string EntityID, hidedValues, isAvailable = "", missAvailable = "", FirstEntityID;
+
+            GetCommonRequestParametersDto entity = new GetCommonRequestParametersDto();
+
+            DateTime? startdate = null, enddate = null;
+
+            HoursApproved = (float)_context.WorkPermission00s
+                            .Where(wp => wp.EmpId == employeeID)
+                            .Sum(wp => wp.HoursApproved ?? 0);
+            NeededHours = (float)_context.CompoOff00s
+                           .Where(c => c.EmpId == employeeID && c.ApprovalStatus != "R" && c.ApprovalStatus != "D")
+                            .Sum(c => c.NeededHours ?? 0);
+
+            int totalLateMinutes = (int)(from a in _context.LateInEarlyOut01s
+                                         join b in _context.LateInEarlyOut00s
+                                             on a.LateEarly01Id equals b.LateEarlyId into joined
+                                         from b in joined.DefaultIfEmpty()
+                                         where b != null && b.EmployeeId == employeeID && b.IsCompo == 1
+                                         select a.LateHours ?? 0).Sum();
+
+            latein = MinutesToDuration(totalLateMinutes);
+
+            Breakhours = (float)_context.BreakPermission00s
+                           .Where(c => c.EmpId == employeeID && c.IsCompo == 1)
+                            .Sum(c => c.TotalTime ?? 0);
+
+            AvailableHours = HoursApproved - NeededHours - latein - Breakhours;
+
+            payperiod = (int)GetEmployeeSchemeID(employeeID, "ASSPAYROLLPERIOD", "PRL").Result;
+
+            var payrollPeriod = _context.Payroll01s
+                            .FirstOrDefault(p => p.PayrollPeriodId == payperiod &&
+                             currentDate >= p.StartDate &&
+                             currentDate <= p.EndDate);
+
+
+            if (payrollPeriod != null)
+            {
+                startdate = payrollPeriod.StartDate;
+                enddate = payrollPeriod.EndDate;
+            }
+
+            RequestPolicyParamId = _context.CompanyParameters
+                                    .Where(a => a.ParameterCode == "REQUSTPOLICYBASEDON" && a.Type == "EMP1")
+                                    .Select(a => a.Value)
+                                    .FirstOrDefaultAsync()
+                                    .Result ?? 0;
+
+            currentMonth = currentDate.Value.Month;
+            currentYear = currentDate.Value.Year;
+
+            EntityID = await _context.EmployeeDetails
+                        .Where(a => a.EmpId == employeeID)
+                        .Select(a => a.EmpEntity)
+                        .FirstOrDefaultAsync();
+
+            FirstEntityID = await _context.EmployeeDetails
+                                .Where(a => a.EmpId == employeeID)
+                                .Select(a => a.EmpFirstEntity)
+                                .FirstOrDefaultAsync();
+
+            TransactionID = await _context.TransactionMasters
+                                .Where(a => a.TransactionType == "RequestPolicy")
+                                .Select(a => a.TransactionId)
+                                .FirstOrDefaultAsync();
+
+            long firstEntityIdValue = long.Parse(FirstEntityID);
+
+
+            var entityIdList = EntityID.Split(',')
+                           .Where(x => !string.IsNullOrWhiteSpace(x))
+                           .Select(int.Parse)
+                           .ToList();
+
+            var result = await _context.EntityApplicable00s
+                .Where(x =>
+                    (x.LinkLevel == 1 && x.LinkId == firstEntityIdValue && x.TransactionId == TransactionID) ||
+                    (x.LinkLevel == 15 && x.TransactionId == TransactionID) ||
+                    (x.LinkLevel != 1 && entityIdList.Contains((int)x.LinkId) && x.TransactionId == TransactionID)
+                )
+                .Select(x => new
+                {
+                    LinkId = x.LinkId,
+                    MasterId = x.MasterId
+                })
+                .FirstOrDefaultAsync();
+
+            LinkID = result?.LinkId;
+            PolicyID = result?.MasterId;
+
+            var result1 = await (from r in _context.RequestPolicyInstanceLimits
+                                 join t in _context.TransactionMasters
+                                 on r.TypeId equals t.TransactionId
+                                 where r.RequestPolicyMasterId == PolicyID && t.TransactionType == TransactionType
+                                 select new RequestPolicyDto
+                                 {
+                                     ForwardNext = r.ForwardNext,
+                                     MonthlyLimit = r.MonthlyLimit,
+                                     IsShiftTime = r.IsShiftTime,
+                                     IsCompoOff = r.IscompoNeeded,
+                                     IsBlockRequest = r.IsBlockRequest,
+                                     EnableReason = r.EnableReason,
+                                     MonthlyHours = r.MonthlyHours,
+                                     IsPredatedAllowed = r.IsAllowPredatedApplication,
+                                     HidemnthlyLimit = r.HideMnthlylimit,
+                                     MaximumDays = r.Predateddayslimit,
+                                     PolicyType = r.PolicyType,
+                                     IsPredatedallowedproxy = r.IsAllowPredatedApplicationProxy,
+                                     EnableFullday = r.EnableFullDay,
+                                     MaximumDaysproxy = r.PredateddayslimitProxy,
+                                     PolicyTypeProxy = r.PolicyTypeProxy,
+                                     IsAllowFutureDate = r.IsAllowFutureDate,
+                                     Minimumdayslimit = r.Minimumdayslimit,
+                                     IsAllowFutureDateProxy = r.IsAllowFutureDateProxy,
+                                     MinimumdayslimitProxy = r.MinimumdayslimitProxy,
+                                     MonthlyLimitSelf = r.MonthlyLimitSelf,
+                                     MonthlyLimitProxy = r.MonthlyLimitProxy,
+                                     AllowOnlyHoliday = r.Isholiday,
+                                     DisableTime = r.DisableTime,
+                                     BlockMultipleDays = r.BlockMultipleRequest,
+                                     Disabledefaulttime = r.Disabledefaulttime,
+                                     Approvremarks = r.Approvremark,
+                                     Rejectremark = r.Rejectremark,
+                                     EnableIdle = r.EnableIdle,
+                                     ConsidrWorkingDays = r.ConsiderWorkingDays,
+                                     EnablePriorRequestSelf = r.EnablePriorRequestSelf,
+                                     PriorRequestDaysSelf = r.PriorRequestDaysSelf,
+                                     EnablePriorRequestProxy = r.EnablePriorRequestProxy,
+                                     PriorRequestDaysProxy = r.PriorRequestDaysProxy,
+                                     BlockAfterMonthlyLimit = r.BlockAfterMonthlyLimit,
+                                     BlockIfNoPunch = r.BlockIfNoPunch,
+                                     MultipleRequestOnaDay = r.MultipleRequestOnaDay,
+                                     SeperateLateinEarlyOutLimit = r.SeperateLateinEarlyOutLimit,
+                                     MonthlyLimitLatein = r.MonthlyLimitLatein,
+                                     MonthlyLimitEarlyOut = r.MonthlyLimitEarlyOut,
+                                     BlockDaysTypeSelf = r.BlockDaysTypeSelf,
+                                     RequestBlockDaysSelf = r.RequestBlockDaysSelf,
+                                     BlockDaysTypeProxy = r.BlockDaysTypeProxy,
+                                     RequestBlockDaysProxy = r.RequestBlockDaysProxy,
+                                     InstanceLimit = r.InstanceLimit,
+                                     IsAllowExtraLeaveProxy = r.AllowExtraLeaveProxy,
+                                     RequestBlockDaysSelfFrom = r.RequestBlockDaysSelfFrom,
+                                     RequestBlockDaysSelfEnd = r.RequestBlockDaysSelfEnd,
+                                     regularizationlimit = r.Regularizationlimit,
+                                     regularizationLimitOut = r.RegularizationLimitOut,
+                                     RequestBlockDaysSelfFromProxy = r.RequestBlockDaysSelfFromProxy,
+                                     RequestBlockDaysSelfEndProxy = r.RequestBlockDaysSelfEndProxy,
+                                     ReqBasedOnTime = r.ShowReqBasedonTime
+                                 }).FirstOrDefaultAsync();
+
+            int? transactionId = await _context.TransactionMasters
+                                    .Where(t => t.TransactionType == TransactionType)
+                                    .Select(t => t.TransactionId)
+                                    .FirstOrDefaultAsync();
+
+            hidedValues = string.Join(",", from a in _context.HideDetails00s
+                                           join b in _context.RequestPolicyInstanceLimits
+                                           on a.RequestPolicyInstanceLimitId equals b.RequestPolicyInstanceLimitId into gj
+                                           from b in gj.DefaultIfEmpty()
+                                           where b.RequestPolicyMasterId == PolicyID && a.Values != null && b.TypeId == transactionId
+                                           select a.Values);
+
+            var totalLateMinutes1 = await (from a in _context.LateInEarlyOut01s
+                                           join b in _context.LateInEarlyOut00s
+                                               on a.LateEarlyId equals b.LateEarlyId into gj
+                                           from b in gj.DefaultIfEmpty()
+                                           where b.EmployeeId == employeeID
+                                                 && b.Date.HasValue
+                                                 && b.Date.Value.Month == currentMonth
+                                                 && b.Date.Value.Year == currentYear
+                                                 && b.ApprovalStatus != "D"
+                                                 && b.ApprovalStatus != "R"
+                                                 && b.ApprovalStatus != "C"
+                                           select a.LateHours
+                             ).SumAsync() ?? 0;
+
+            lateinhours = MinutesToDuration(totalLateMinutes);
+
+            if (RequestPolicyParamId == 1)
+            {
+                missingInOutCount = await _context.MissingInOut00s
+                                    .Where(x => x.EmployeeId == employeeID && x.RequestDate.HasValue &&
+                                    x.RequestDate.Value.Month == currentMonth && x.RequestDate.Value.Year == currentYear)
+                                    .CountAsync();
+
+                lateEarlyCount = await _context.LateInEarlyOut00s
+                                .Where(x => x.EmployeeId == employeeID && x.Date.HasValue &&
+                                x.Date.Value.Month == currentMonth && x.Date.Value.Year == currentYear &&
+                                x.ApprovalStatus != "D" && x.ApprovalStatus != "R" && x.ApprovalStatus != "C")
+                                .CountAsync();
+
+            }
+            else if (RequestPolicyParamId == 2)
+            {
+                missingInOutCount = await _context.MissingInOut00s
+                                    .Where(x => x.EmployeeId == employeeID && x.RequestDate.HasValue &&
+                                    x.RequestDate.Value >= startdate && x.RequestDate.Value <= enddate)
+                                    .CountAsync();
+
+                lateEarlyCount = await _context.LateInEarlyOut00s
+                                .Where(x => x.EmployeeId == employeeID && x.Date.HasValue &&
+                                x.Date.Value.ToDateTime(TimeOnly.MinValue) >= startdate.Value &&
+                                x.Date.Value.ToDateTime(TimeOnly.MinValue) <= enddate.Value &&
+                                x.ApprovalStatus != "D" && x.ApprovalStatus != "R" && x.ApprovalStatus != "C")
+                                .CountAsync();
+
+
+            }
+            if (TransactionType == "MissingInOut")
+            {
+                if (result1.ForwardNext == 1)
+                {
+                    if (RequestPolicyParamId == 1)
+                    {
+                        missingInOutCount = await _context.MissingInOut00s
+                                            .Where(x => x.EmployeeId == employeeID &&
+                                            x.RequestDate.HasValue &&
+                                            x.RequestDate.Value.Month == currentMonth &&
+                                            x.RequestDate.Value.Year == currentYear &&
+                                            (
+                                                (
+                                                    x.ApprovalStatus != "R" &&
+                                                    x.ApprovalStatus != "D" &&
+                                                    x.ApprovalStatus != "C" &&
+                                                    x.ApprovalStatus != "P"
+                                                )
+                                                || x.ApprovalStatus == "A"
+                                                || x.FlowStatus == "S"
+                                            )).CountAsync();
+
+                        missCount = await _context.MissingInOut00s
+                                    .Where(x => x.EmployeeId == employeeID &&
+                                    x.RequestDate.HasValue &&
+                                    x.RequestDate.Value.Month == currentMonth &&
+                                    x.RequestDate.Value.Year == currentYear &&
+                                    x.ApprovalStatus != "D" &&
+                                    x.ApprovalStatus != "C" &&
+                                    x.ApprovalStatus != "R")
+                                    .CountAsync();
+                    }
+                    else if (RequestPolicyParamId == 2)
+                    {
+                        missingInOutCount = await _context.MissingInOut00s
+                                            .Where(x => x.EmployeeId == employeeID &&
+                                            x.RequestDate.HasValue &&
+                                            x.RequestDate.Value >= startdate &&
+                                            x.RequestDate.Value <= enddate &&
+                                            (
+                                                (
+                                                    x.ApprovalStatus != "R" &&
+                                                    x.ApprovalStatus != "D" &&
+                                                    x.ApprovalStatus != "C" &&
+                                                    x.ApprovalStatus != "P"
+                                                )
+                                                || x.ApprovalStatus == "A"
+                                                || x.FlowStatus == "S"
+                                            )).CountAsync();
+
+                        missCount = await _context.MissingInOut00s
+                                    .Where(x => x.EmployeeId == employeeID &&
+                                    x.RequestDate.HasValue &&
+                                    x.RequestDate.Value >= startdate &&
+                                    x.RequestDate.Value <= enddate &&
+                                    x.ApprovalStatus != "D" &&
+                                    x.ApprovalStatus != "C" &&
+                                    x.ApprovalStatus != "R")
+                                .CountAsync();
+                    }
+                    if (missingInOutCount >= result1.MonthlyLimit)
+                    {
+                        isAvailable = "Y";
+                    }
+                    else
+                    {
+                        isAvailable = "N";
+                    }
+                    if (missCount >= result1.MonthlyLimit)
+                    {
+                        missAvailable = "Y";
+                    }
+                    else
+                    {
+                        missAvailable = "N";
+                    }
+
+                }
+                else
+                {
+                    if (RequestPolicyParamId == 1)
+                    {
+                        missingInOutCount = await _context.MissingInOut00s
+                                            .Where(x => x.EmployeeId == employeeID &&
+                                            x.RequestDate.HasValue &&
+                                            x.RequestDate.Value.Month == currentMonth &&
+                                            x.RequestDate.Value.Year == currentYear &&
+                                            (
+                                                (
+                                                    x.ApprovalStatus != "R" &&
+                                                    x.ApprovalStatus != "D" &&
+                                                    x.ApprovalStatus != "C" &&
+                                                    x.ApprovalStatus != "P"
+                                                )
+                                                || x.ApprovalStatus == "A"
+                                                || x.FlowStatus == "S"
+                                            )).CountAsync();
+
+                        missCount = await _context.MissingInOut00s
+                                    .Where(x => x.EmployeeId == employeeID &&
+                                    x.RequestDate.HasValue &&
+                                    x.RequestDate.Value.Month == currentMonth &&
+                                    x.RequestDate.Value.Year == currentYear &&
+                                    x.ApprovalStatus != "D" &&
+                                    x.ApprovalStatus != "C" &&
+                                    x.ApprovalStatus != "R")
+                                    .CountAsync();
+
+                    }
+                    else if (RequestPolicyParamId == 2)
+                    {
+                        missingInOutCount = await _context.MissingInOut00s
+                                            .Where(x => x.EmployeeId == employeeID &&
+                                            x.RequestDate.HasValue &&
+                                            x.RequestDate.Value >= startdate &&
+                                            x.RequestDate.Value <= enddate &&
+                                            (
+                                                (
+                                                    x.ApprovalStatus != "R" &&
+                                                    x.ApprovalStatus != "C" &&
+                                                    x.ApprovalStatus != "D" &&
+                                                    x.ApprovalStatus != "P"
+                                                ) || x.ApprovalStatus == "A"
+                                                || x.FlowStatus == "S"
+                                            )).CountAsync();
+                        missCount = await _context.MissingInOut00s
+                                    .Where(x => x.EmployeeId == employeeID &&
+                                    x.RequestDate.HasValue &&
+                                    x.RequestDate.Value >= startdate &&
+                                    x.RequestDate.Value <= enddate &&
+                                    x.ApprovalStatus != "D" &&
+                                    x.ApprovalStatus != "R" &&
+                                    x.ApprovalStatus != "C")
+                            .CountAsync();
+                    }
+                }
+
+                entity = new GetCommonRequestParametersDto
+                {
+                    IsAvailable = isAvailable ?? "N",
+                    ForwardNext = result1.ForwardNext ?? 0,
+                    IsShiftTime = result1.IsShiftTime ?? 0,
+                    IsPredatedallowed = result1.IsPredatedAllowed ?? 0,
+                    IsPredatedallowedproxy = result1.IsPredatedallowedproxy ?? 0,
+                    MaximumDays = result1.MaximumDays ?? 0,
+                    MaximumDaysproxy = result1.MaximumDaysproxy ?? 0,
+                    EnableReason = result1.EnableReason ?? 0,
+                    DisableTime = result1.DisableTime ?? 0,
+                    MonthlyLimitSelf = result1.MonthlyLimit ?? 0,
+                    RequestCount = (int?)missingInOutCount ?? 0,
+                    MissAvailble = missAvailable,
+                    MissCount = (int?)missCount ?? 0,
+                    HideMonthlyLimit = result1.HidemnthlyLimit ?? 0,
+                    EnableFullday = result1.EnableFullday ?? 0,
+                    HidedValues = hidedValues,
+                    Disabledefaulttime = result1.Disabledefaulttime ?? 0,
+                    ApprovRemark = result1.Approvremarks ?? 0,
+                    Rejectremark = result1.Rejectremark ?? 0,
+                    PolicyID = (int?)PolicyID ?? 0,
+                    EnableIdle = result1.EnableIdle,
+                    ConsiderWorkingDays = result1.ConsidrWorkingDays,
+                    EnablePriorRequestSelf = result1.EnablePriorRequestSelf,
+                    PriorRequestDaysSelf = (float?)result1.PriorRequestDaysSelf,
+                    EnablePriorRequestProxy = result1.EnablePriorRequestProxy,
+                    PriorRequestDaysProxy = (float?)result1.PriorRequestDaysProxy,
+                    BlockDaysTypeSelf = result1.BlockDaysTypeSelf,
+                    RequestBlockDaysSelf = (float?)result1.RequestBlockDaysSelf,
+                    BlockDaysTypeProxy = result1.BlockDaysTypeProxy,
+                    RequestBlockDaysProxy = (float?)result1.RequestBlockDaysProxy,
+                    BlockAfterMonthlyLimit = result1.BlockAfterMonthlyLimit,
+                    BlockIfNoPunch = result1.BlockIfNoPunch,
+                    RequestBlockDaysSelfFrom = result1.RequestBlockDaysSelfFrom ?? DateTime.MinValue,
+                    RequestBlockDaysSelfEnd = result1.RequestBlockDaysSelfEnd ?? DateTime.MinValue,
+                    RequestBlockDaysSelfFromProxy = result1.RequestBlockDaysSelfFromProxy ?? DateTime.MinValue,
+                    RequestBlockDaysSelfEndProxy = result1.RequestBlockDaysSelfEndProxy ?? DateTime.MinValue,
+                    regularizationlimit = (float?)result1.regularizationlimit ?? 0,
+                    regularizationLimitOut = (float?)result1.regularizationLimitOut ?? 0
+                };
+
+            }
+
+            else if (TransactionType == "ODRequest")
+            {
+                if (result1.ForwardNext == 1)
+                {
+                    if (RequestPolicyParamId == 1)
+                    {
+                        missingInOutCount = await _context.Odrequest00s
+                                            .Where(r => r.EmployeeId == employeeID && r.FromDate.HasValue &&
+                                            r.FromDate.Value.Month == currentMonth && r.FromDate.Value.Year == currentYear &&
+                                            (
+                                                (r.ApprovalStatus != "R" && r.ApprovalStatus != "D" && r.ApprovalStatus != "C" && r.ApprovalStatus != "P")
+                                                || r.ApprovalStatus == "A"
+                                                || r.FlowStatus == "S"
+                                                )
+                                            ).CountAsync();
+
+
+                        missCount = _context.Odrequest00s
+                            .Where(r => r.EmployeeId == employeeID && r.FromDate.HasValue &&
+                                        r.FromDate.Value.Month == currentMonth && r.FromDate.Value.Year == currentYear &&
+                                        r.ApprovalStatus != "D" && r.ApprovalStatus != "R" && r.ApprovalStatus != "C")
+                            .Count();
+
+                    }
+                    else if (RequestPolicyParamId == 2)
+                    {
+                        missingInOutCount = await _context.Odrequest00s
+                                            .Where(r => r.EmployeeId == employeeID && r.FromDate.HasValue &&
+                                            r.FromDate.Value >= startdate && r.FromDate.Value <= enddate &&
+                                            (
+                                                (!new[] { "R", "D", "C", "P" }.Contains(r.ApprovalStatus) || r.ApprovalStatus == "A")
+                                                || r.FlowStatus == "S"
+                                                )
+                                            ).CountAsync();
+                        missCount = await _context.Odrequest00s
+                                            .Where(r => r.EmployeeId == employeeID && r.FromDate.HasValue &&
+                                             r.FromDate.Value >= startdate && r.FromDate.Value <= enddate &&
+                                            !new[] { "D", "R", "C" }.Contains(r.ApprovalStatus)
+    ).CountAsync();
+                    }
+                    if (missingInOutCount >= result1.MonthlyLimit)
+                    {
+                        isAvailable = "Y";
+                    }
+                    else
+                    {
+                        isAvailable = "N";
+                    }
+                    if (missCount >= result1.MonthlyLimit)
+                    {
+                        isAvailable = "Y";
+                    }
+                    else
+                    {
+                        isAvailable = "N";
+                    }
+                }
+                else
+                {
+                    if (RequestPolicyParamId == 1)
+                    {
+
+                        missingInOutCount = await _context.Odrequest00s
+                           .Where(r =>
+                               r.EmployeeId == employeeID &&
+                               r.FromDate.HasValue &&
+                               r.FromDate.Value.Month == currentMonth &&
+                               r.FromDate.Value.Year == currentYear &&
+                               (
+                                   (!new[] { "R", "D", "C", "P" }.Contains(r.ApprovalStatus) || r.ApprovalStatus == "A")
+                                   || r.FlowStatus == "S"
+                               )
+                           )
+                           .CountAsync();
+
+                        missCount = await _context.Odrequest00s
+                           .Where(r =>
+                               r.EmployeeId == employeeID &&
+                               r.FromDate.HasValue &&
+                               r.FromDate.Value.Month == currentMonth &&
+                               r.FromDate.Value.Year == currentYear &&
+                               !new[] { "D", "R", "C" }.Contains(r.ApprovalStatus)
+                           )
+                           .CountAsync();
+
+                    }
+                    if (RequestPolicyParamId == 2)
+                    {
+                        missingInOutCount = await _context.Odrequest00s
+                                           .Where(r => r.EmployeeId == employeeID && r.FromDate.HasValue &&
+                                           r.FromDate.Value >= startdate && r.FromDate.Value <= enddate &&
+                                           (
+                                               (!new[] { "R", "D", "C", "P" }.Contains(r.ApprovalStatus) || r.ApprovalStatus == "A")
+                                               || r.FlowStatus == "S"
+                                           )).CountAsync();
+
+                        missCount = await _context.Odrequest00s
+                           .Where(r => r.EmployeeId == employeeID && r.FromDate.HasValue &&
+                               r.FromDate.Value >= startdate && r.FromDate.Value <= enddate &&
+                               !new[] { "D", "R", "C" }.Contains(r.ApprovalStatus)
+                           ).CountAsync();
+                    }
+
+                }
+                entity = new GetCommonRequestParametersDto
+                {
+                    HidedValues = hidedValues ?? "0",
+                    IsPredatedallowed = result1?.IsPredatedAllowed ?? 0,
+                    IsPredatedallowedproxy = result1?.IsPredatedallowedproxy ?? 0,
+                    MaximumDays = result1?.MaximumDays ?? 0,
+                    MaximumDaysproxy = result1?.MaximumDaysproxy ?? 0,
+                    IsAllowFutureDate = result1?.IsAllowFutureDate ?? 0,
+                    IsAllowFutureDateProxy = result1?.IsAllowFutureDateProxy ?? 0,
+                    Minimumdayslimit = result1?.Minimumdayslimit ?? 0,
+                    MinimumdayslimitProxy = result1?.MinimumdayslimitProxy ?? 0,
+                    ApprovRemark = result1?.Approvremarks ?? 0,
+                    Rejectremark = result1?.Rejectremark ?? 0,
+                    PolicyID = (int?)(PolicyID ?? 0),
+                    ConsiderWorkingDays = result1?.ConsidrWorkingDays ?? 0,
+                    BlockAfterMonthlyLimit = result1?.BlockAfterMonthlyLimit ?? 0,
+                    EnablePriorRequestSelf = result1?.EnablePriorRequestSelf ?? 0,
+                    PriorRequestDaysSelf = (float?)result1?.PriorRequestDaysSelf ?? 0,
+                    EnablePriorRequestProxy = result1?.EnablePriorRequestProxy ?? 0,
+                    PriorRequestDaysProxy = (float?)result1?.PriorRequestDaysProxy ?? 0,
+                    BlockDaysTypeSelf = result1?.BlockDaysTypeSelf ?? 0,
+                    RequestBlockDaysSelf = (float?)result1?.RequestBlockDaysSelf ?? 0,
+                    BlockDaysTypeProxy = result1?.BlockDaysTypeProxy ?? 0,
+                    RequestBlockDaysProxy = (float?)result1?.RequestBlockDaysProxy ?? 0,
+                    IsAvailable = isAvailable ?? "N",
+                    ForwardNext = result1?.ForwardNext ?? 0,
+                    MonthlyLimitSelf = result1?.MonthlyLimit ?? 0,
+                    RequestCount = (int?)missingInOutCount ?? 0,
+                    MissAvailble = missAvailable ?? "N",
+                    MissCount = (int?)missCount ?? 0,
+                    ReqBasedOnTime = result1?.ReqBasedOnTime ?? 0
+                };
+
+            }
+
+            else if (TransactionType == "CompoOff")
+            {
+                entity = new GetCommonRequestParametersDto
+                {
+                    IsCompoOff = (int?)result1.IsCompoOff ?? 0,
+                    IsPredatedallowed = result1?.IsPredatedAllowed ?? 0,
+                    IsPredatedallowedproxy = result1?.IsPredatedallowedproxy ?? 0,
+                    MaximumDays = result1.MaximumDays ?? 0,
+                    MaximumDaysproxy = result1.MaximumDaysproxy ?? 0,
+                    IsAllowFutureDate = result1.IsAllowFutureDate ?? 0,
+                    AllowOnlyHoliday = result1.AllowOnlyHoliday ?? 0,
+                    BlockMultipleDays = (int?)result1.BlockMultipleDays ?? 0,
+                    ApprovRemark = result1.Approvremarks ?? 0,
+                    Rejectremark = result1.Rejectremark ?? 0,
+                    PolicyID = (int?)PolicyID ?? 0,
+                    ConsiderWorkingDays = result1.ConsidrWorkingDays,
+                    EnablePriorRequestSelf = result1.EnablePriorRequestSelf ?? 0,
+                    PriorRequestDaysSelf = (float?)result1.PriorRequestDaysSelf ?? 0,
+                    EnablePriorRequestProxy = result1.EnablePriorRequestProxy ?? 0,
+                    PriorRequestDaysProxy = (float?)result1.PriorRequestDaysProxy ?? 0,
+                    BlockIfNoPunch = result1.BlockIfNoPunch ?? 0,
+                    BlockDaysTypeSelf = result1.BlockDaysTypeSelf ?? 0,
+                    RequestBlockDaysSelf = (float?)result1.RequestBlockDaysSelf ?? 0,
+                    BlockDaysTypeProxy = result1.BlockDaysTypeProxy ?? 0,
+                    RequestBlockDaysProxy = (float?)result1.RequestBlockDaysProxy ?? 0
+                };
+
+            }
+            else if (TransactionType == "LateInEarlyOut")
+            {
+                if (result1.IsCompoOff == 1)
+                {
+                    if (AvailableHours > 0)
+                    {
+                        if (result1.IsBlockRequest == 1)
+                        {
+                            if (RequestPolicyParamId == 1)
+                            {
+                                lateEarlyCount = _context.LateInEarlyOut00s
+                                                   .Count(r => r.EmployeeId == employeeID &&
+                                                   r.Date.Value.Month == currentMonth && r.Date.Value.Year == currentYear &&
+                                                   r.ApprovalStatus != "R" && r.ApprovalStatus != "D" && r.ApprovalStatus != "C" && r.PersonalOrOfficial != 2
+                                                   );
+
+                            }
+                            else if (RequestPolicyParamId == 2)
+                            {
+                                var start = DateOnly.FromDateTime(startdate.Value);
+                                var end = DateOnly.FromDateTime(enddate.Value);
+
+                                lateEarlyCount = await _context.LateInEarlyOut00s
+                                    .Where(r => r.EmployeeId == employeeID && r.Date.HasValue &&
+                                                r.Date.Value >= start && r.Date.Value <= end &&
+                                                r.ApprovalStatus != "R" && r.ApprovalStatus != "D" &&
+                                                r.ApprovalStatus != "C" && r.PersonalOrOfficial != 2)
+                                    .CountAsync();
+
+                            }
+                            result1.MonthlyLimit = (int?)result1.MonthlyLimitSelf;
+                            if (result1.MonthlyLimit > 0)
+                            {
+                                if (lateEarlyCount >= result1.MonthlyLimit)
+                                {
+                                    isAvailable = "Y";
+                                }
+                                else
+                                {
+                                    if (result1.MonthlyHours > 0)
+                                    {
+                                        if (lateinhours > -result1.MonthlyHours)
+                                        {
+                                            isAvailable = "Y";
+                                        }
+                                        else
+                                        {
+                                            isAvailable = "N";
+                                        }
+                                    }
+                                    else
+                                    {
+                                        isAvailable = "N";
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (result1.MonthlyHours > 0)
+                                {
+                                    if (lateinhours >= result1.MonthlyHours)
+                                    {
+                                        isAvailable = "Y";
+                                    }
+                                    else
+                                    {
+                                        isAvailable = "N";
+                                    }
+                                }
+                                else
+                                {
+                                    isAvailable = "N";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            isAvailable = "N";
+                        }
+                    }
+                    else
+                    {
+                        isAvailable = "C";
+                    }
+                }
+                else
+                {
+                    if (result1.IsBlockRequest == 1)
+                    {
+                        if (RequestPolicyParamId == 1)
+                        {
+                            lateEarlyCount = await _context.LateInEarlyOut00s
+                                           .Where(r => r.EmployeeId == employeeID && r.Date.HasValue &&
+                                           r.Date.Value.Month == currentMonth && r.Date.Value.Year == currentYear &&
+                                           r.ApprovalStatus != "R" && r.ApprovalStatus != "D" &&
+                                           r.ApprovalStatus != "C" && r.PersonalOrOfficial != 2)
+                                       .CountAsync();
+
+                        }
+                        else if (RequestPolicyParamId == 2)
+                        {
+                            var start = DateOnly.FromDateTime(startdate.Value);
+                            var end = DateOnly.FromDateTime(enddate.Value);
+
+                            lateEarlyCount = await _context.LateInEarlyOut00s
+                                            .Where(r => r.EmployeeId == employeeID && r.Date.HasValue &&
+                                            r.Date.Value >= start && r.Date.Value <= end &&
+                                            r.ApprovalStatus != "R" && r.ApprovalStatus != "D" &&
+                                            r.ApprovalStatus != "C" && r.PersonalOrOfficial != 2)
+                                            .CountAsync();
+
+                        }
+                        result1.MonthlyLimit = result1.MonthlyLimitSelf;
+                        if (result1.MonthlyLimit > 0)
+                        {
+                            if (lateEarlyCount >= result1.MonthlyLimit)
+                            {
+                                isAvailable = "Y";
+                            }
+                            else
+                            {
+                                if (result1.MonthlyHours > 0)
+                                {
+                                    if (lateinhours >= result1.MonthlyHours)
+                                    {
+                                        isAvailable = "Y";
+                                    }
+                                    else
+                                    {
+                                        isAvailable = "N";
+                                    }
+                                }
+                                else
+                                {
+                                    isAvailable = "N";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (result1.MonthlyHours > 0)
+                            {
+                                if (lateinhours >= result1.MonthlyHours)
+                                {
+                                    isAvailable = "Y";
+                                }
+                                else
+                                {
+                                    isAvailable = "N";
+                                }
+                            }
+                            else
+                            {
+                                isAvailable = "N";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        isAvailable = "N";
+                    }
+                }
+
+                entity = new GetCommonRequestParametersDto
+                {
+                    IsAvailable = isAvailable ?? "N",
+                    MonthlyHours = (float?)result1.MonthlyHours ?? 0,
+                    LateInHours = (float?)lateinhours ?? 0,
+                    IsCompoOff = result1.IsCompoOff ?? 0,
+                    IsPredatedallowed = result1.IsPredatedAllowed ?? 0,
+                    IsPredatedallowedproxy = result1.IsPredatedallowedproxy ?? 0,
+                    MaximumDays = result1.MaximumDays ?? 0,
+                    MaximumDaysproxy = result1.MaximumDaysproxy ?? 0,
+                    IsAllowFutureDate = result1.IsAllowFutureDate ?? 0,
+                    IsAllowFutureDateProxy = result1.IsAllowFutureDateProxy ?? 0,
+                    Minimumdayslimit = result1.Minimumdayslimit ?? 0,
+                    MinimumdayslimitProxy = result1.MinimumdayslimitProxy ?? 0,
+                    ApprovRemark = result1.Approvremarks ?? 0,
+                    Rejectremark = result1.Rejectremark ?? 0,
+                    PolicyID = (int?)PolicyID ?? 0,
+                    MonthlyLimitSelf = result1.MonthlyLimitSelf ?? 0,
+                    MonthlyLimitProxy = result1.MonthlyLimitProxy ?? 0,
+                    RequestCount = (int?)lateEarlyCount ?? 0,
+                    ConsiderWorkingDays = result1.ConsidrWorkingDays ?? 0,
+                    EnablePriorRequestSelf = result1.EnablePriorRequestSelf ?? 0,
+                    PriorRequestDaysSelf = (float)(result1.PriorRequestDaysSelf ?? 0),
+                    EnablePriorRequestProxy = result1.EnablePriorRequestProxy ?? 0,
+                    PriorRequestDaysProxy = (float)(result1.PriorRequestDaysProxy ?? 0),
+                    BlockAfterMonthlyLimit = result1.BlockAfterMonthlyLimit ?? 0,
+                    SeperateLateinEarlyOutLimit = result1.SeperateLateinEarlyOutLimit ?? 0,
+                    MonthlyLimitLatein = result1.MonthlyLimitLatein ?? 0,
+                    MonthlyLimitEarlyOut = result1.MonthlyLimitEarlyOut ?? 0,
+                    BlockDaysTypeSelf = result1.BlockDaysTypeSelf ?? 0,
+                    RequestBlockDaysSelf = (float)(result1.RequestBlockDaysSelf ?? 0),
+                    BlockDaysTypeProxy = result1.BlockDaysTypeProxy ?? 0,
+                    RequestBlockDaysProxy = (float)(result1.RequestBlockDaysProxy ?? 0),
+                    InstanceLimit = (float)(result1.InstanceLimit ?? 0),
+                    RequestBlockDaysSelfFrom = result1.RequestBlockDaysSelfFrom ?? DateTime.MinValue,
+                    RequestBlockDaysSelfEnd = result1.RequestBlockDaysSelfEnd ?? DateTime.MinValue,
+                    RequestBlockDaysSelfFromProxy = result1.RequestBlockDaysSelfFromProxy ?? DateTime.MinValue,
+                    RequestBlockDaysSelfEndProxy = result1.RequestBlockDaysSelfEndProxy ?? DateTime.MinValue
+                };
+
+            }
+            else if (TransactionType == "BreakPermission")
+            {
+                if (result1.IsCompoOff == 1)
+                {
+                    if (result1.IsBlockRequest == 1)
+                    {
+                        if (AvailableHours > 0)
+                        {
+                            isAvailable = "N";
+                        }
+                        else
+                        {
+                            isAvailable = "C";
+                        }
+                    }
+                }
+                else
+                {
+                    isAvailable = "N";
+                }
+                entity = new GetCommonRequestParametersDto
+                {
+                    IsAvailable = isAvailable ?? "N",
+                    IsCompoOff = result1.IsCompoOff ?? 0,
+                    IsPredatedallowed = result1.IsPredatedAllowed ?? 0,
+                    IsPredatedallowedproxy = result1.IsPredatedallowedproxy ?? 0,
+                    MaximumDays = result1.MaximumDays ?? 0,
+                    MaximumDaysproxy = result1.MaximumDaysproxy ?? 0,
+                    IsAllowFutureDate = result1.IsAllowFutureDate ?? 0,
+                    IsAllowFutureDateProxy = result1.IsAllowFutureDateProxy ?? 0,
+                    Minimumdayslimit = result1.Minimumdayslimit ?? 0,
+                    MinimumdayslimitProxy = result1.MinimumdayslimitProxy ?? 0,
+                    ApprovRemark = result1.Approvremarks ?? 0,
+                    Rejectremark = result1.Rejectremark ?? 0,
+                    PolicyID = (int?)PolicyID ?? 0,
+                    ConsiderWorkingDays = result1.ConsidrWorkingDays ?? 0,
+                    EnablePriorRequestSelf = result1.EnablePriorRequestSelf ?? 0,
+                    PriorRequestDaysSelf = (float)(result1.PriorRequestDaysSelf ?? 0),
+                    EnablePriorRequestProxy = result1.EnablePriorRequestProxy ?? 0,
+                    PriorRequestDaysProxy = (float)(result1.PriorRequestDaysProxy ?? 0),
+                    BlockDaysTypeSelf = result1.BlockDaysTypeSelf ?? 0,
+                    RequestBlockDaysSelf = (float)(result1.RequestBlockDaysSelf ?? 0),
+                    BlockDaysTypeProxy = result1.BlockDaysTypeProxy ?? 0,
+                    RequestBlockDaysProxy = (float)(result1.RequestBlockDaysProxy ?? 0),
+                };
+
+            }
+            else if (TransactionType == "WorkPermission")
+            {
+                entity = new GetCommonRequestParametersDto
+                {
+                    IsPredatedallowed = result1.IsPredatedAllowed ?? 0,
+                    IsPredatedallowedproxy = result1.IsPredatedallowedproxy ?? 0,
+                    MaximumDays = result1.MaximumDays ?? 0,
+                    MaximumDaysproxy = result1.MaximumDaysproxy ?? 0,
+                    IsAllowFutureDate = result1.IsAllowFutureDate ?? 0,
+                    IsAllowFutureDateProxy = result1.IsAllowFutureDateProxy ?? 0,
+                    Minimumdayslimit = result1.Minimumdayslimit ?? 0,
+                    MinimumdayslimitProxy = result1.MinimumdayslimitProxy ?? 0,
+                    AllowOnlyHoliday = result1.AllowOnlyHoliday ?? 0,
+                    ApprovRemark = result1.Approvremarks ?? 0,
+                    Rejectremark = result1.Rejectremark ?? 0,
+                    PolicyID = (int?)PolicyID ?? 0,
+                    ConsiderWorkingDays = result1.ConsidrWorkingDays ?? 0,
+                    EnablePriorRequestSelf = result1.EnablePriorRequestSelf ?? 0,
+                    PriorRequestDaysSelf = (float)(result1.PriorRequestDaysSelf ?? 0),
+                    EnablePriorRequestProxy = result1.EnablePriorRequestProxy ?? 0,
+                    PriorRequestDaysProxy = (float)(result1.PriorRequestDaysProxy ?? 0),
+                    MultipleRequestOnaDay = result1.MultipleRequestOnaDay ?? 0,
+                    BlockDaysTypeSelf = result1.BlockDaysTypeSelf ?? 0,
+                    RequestBlockDaysSelf = (float)(result1.RequestBlockDaysSelf ?? 0),
+                    BlockDaysTypeProxy = result1.BlockDaysTypeProxy ?? 0,
+                    RequestBlockDaysProxy = (float)(result1.RequestBlockDaysProxy ?? 0)
+                };
+
+            }
+            else if (TransactionType == "Leave_App")
+            {
+                entity = new GetCommonRequestParametersDto
+                {
+                    IsPredatedallowed = result1.IsPredatedAllowed ?? 0,
+                    IsPredatedallowedproxy = result1.IsPredatedallowedproxy ?? 0,
+                    MaximumDays = result1.MaximumDays ?? 0,
+                    MaximumDaysproxy = result1.MaximumDaysproxy ?? 0,
+                    IsAllowFutureDate = result1.IsAllowFutureDate ?? 0,
+                    IsAllowFutureDateProxy = result1.IsAllowFutureDateProxy ?? 0,
+                    Minimumdayslimit = result1.Minimumdayslimit ?? 0,
+                    MinimumdayslimitProxy = result1.MinimumdayslimitProxy ?? 0,
+                    HidedValues = hidedValues ?? "0",
+                    PolicyID = (int?)PolicyID ?? 0,
+                    ConsiderWorkingDays = result1.ConsidrWorkingDays ?? 0,
+                    EnablePriorRequestSelf = result1.EnablePriorRequestSelf ?? 0,
+                    PriorRequestDaysSelf = (float)(result1.PriorRequestDaysSelf ?? 0),
+                    EnablePriorRequestProxy = result1.EnablePriorRequestProxy ?? 0,
+                    PriorRequestDaysProxy = (float)(result1.PriorRequestDaysProxy ?? 0),
+                    BlockDaysTypeSelf = result1.BlockDaysTypeSelf ?? 0,
+                    RequestBlockDaysSelf = (float)(result1.RequestBlockDaysSelf ?? 0),
+                    BlockDaysTypeProxy = result1.BlockDaysTypeProxy ?? 0,
+                    RequestBlockDaysProxy = (float)(result1.RequestBlockDaysProxy ?? 0),
+                    AllowExtraLeaveProxy = result1.IsAllowExtraLeaveProxy ?? 0,
+                    RequestBlockDaysSelfFrom = result1.RequestBlockDaysSelfFrom ?? DateTime.MinValue,
+                    RequestBlockDaysSelfEnd = result1.RequestBlockDaysSelfEnd ?? DateTime.MinValue,
+                    RequestBlockDaysSelfFromProxy = result1.RequestBlockDaysSelfFromProxy ?? DateTime.MinValue,
+                    RequestBlockDaysSelfEndProxy = result1.RequestBlockDaysSelfEndProxy ?? DateTime.MinValue
+                };
+
+            }
+
+            else if (TransactionType == "Travel_App")
+            {
+                entity = new GetCommonRequestParametersDto
+                {
+                    IsPredatedallowed = result1.IsPredatedAllowed ?? 0,
+                    IsPredatedallowedproxy = result1.IsPredatedallowedproxy ?? 0,
+                    MaximumDays = result1.MaximumDays ?? 0,
+                    MaximumDaysproxy = result1.MaximumDaysproxy ?? 0,
+                    IsAllowFutureDate = result1.IsAllowFutureDate ?? 0,
+                    IsAllowFutureDateProxy = result1.IsAllowFutureDateProxy ?? 0,
+                    Minimumdayslimit = result1.Minimumdayslimit ?? 0,
+                    MinimumdayslimitProxy = result1.MinimumdayslimitProxy ?? 0,
+                    ConsiderWorkingDays = result1.ConsidrWorkingDays ?? 0,
+                    EnablePriorRequestSelf = result1.EnablePriorRequestSelf ?? 0,
+                    PriorRequestDaysSelf = (float)(result1.PriorRequestDaysSelf ?? 0),
+                    EnablePriorRequestProxy = result1.EnablePriorRequestProxy ?? 0,
+                    PriorRequestDaysProxy = (float)(result1.PriorRequestDaysProxy ?? 0),
+                    BlockDaysTypeSelf = result1.BlockDaysTypeSelf ?? 0,
+                    RequestBlockDaysSelf = (float)(result1.RequestBlockDaysSelf ?? 0),
+                    BlockDaysTypeProxy = result1.BlockDaysTypeProxy ?? 0,
+                    RequestBlockDaysProxy = (float)(result1.RequestBlockDaysProxy ?? 0)
+                };
+
+            }
+
+            return entity;
+
+
+        }
+
+        public async Task<object> WorkFlowActivityFlow(WorkFlowActivityFlowDto WorkFlowActivityFlow)
+        {
+            int? linkID, workFlowID = 0, optionenb, frwd = 0, misscount, monthlylimt = 0, employeeid = 0, ShowStatus = 0;
+            string? linkToSpecialEntity, isavailble;
+            string finalRule = "", TransferMessage, missAvailable = "";
+            bool? hierarchyType = false, LinkToEmp = false;
+            int count = 0, workflowruleid = 0, FlowRoleID = 0, RoleValue = 0;
+
+            List<TempLeaveWorkFlowDto> TempLeaveWorkFlow = new List<TempLeaveWorkFlowDto>();
+            List<TempLeaveWorkFlowNewDto> tempLeaveWorkFlowNewList = new List<TempLeaveWorkFlowNewDto>();
+
+            var levels = (from c in _context.HrEmpMasters
+                          join e in _context.HighLevelViewTables
+                          on c.DesigId equals
+                              (e.LevelSixId == 0 ? e.LevelFiveId :
+                               e.LevelSevenId == 0 ? e.LevelSixId :
+                               e.LevelEightId == 0 ? e.LevelSevenId :
+                               e.LevelNineId == 0 ? e.LevelEightId :
+                               e.LevelTenId == 0 ? e.LevelNineId :
+                               e.LevelElevenId == 0 ? e.LevelTenId :
+                               e.LevelTwelveId == 0 ? e.LevelElevenId :
+                               e.LevelTwelveId)
+                          where c.EmpId == WorkFlowActivityFlow.EmpId
+                          select new
+                          {
+                              Employee = c,
+                              LevelInfo = e
+                          })
+                         .AsNoTracking() // prevents tracking, frees context resources sooner
+              .ToList();
+
+            var tempLevel = levels.Select(x => new TempLevel
+            {
+                LevelOneId = x.LevelInfo.LevelOneId,
+                LevelTwoId = x.LevelInfo.LevelTwoId,
+                LevelThreeId = x.LevelInfo.LevelThreeId,
+                LevelFourId = x.LevelInfo.LevelFourId,
+                LevelFiveId = x.LevelInfo.LevelFiveId,
+                LevelSixId = x.LevelInfo.LevelSixId,
+                LevelSevenId = x.LevelInfo.LevelSevenId,
+                LevelEightId = x.LevelInfo.LevelEightId,
+                LevelNineId = x.LevelInfo.LevelNineId,
+                LevelTenId = x.LevelInfo.LevelTenId,
+                LevelElevenId = x.LevelInfo.LevelElevenId,
+                LevelTwelveId = x.LevelInfo.LevelTwelveId
+            }).ToList();
+
+
+            var transactionID = await _context.TransactionMasters
+                            .Where(a => a.TransactionType == WorkFlowActivityFlow.TransactionType)
+                            .Select(a => a.TransactionId)
+                            .FirstOrDefaultAsync();
+
+            var linkToEntity = await _context.ParamWorkFlow00s
+                            .Where(a => a.TransactionId == transactionID)
+                            .Select(a => a.EntityLevel)
+                            .FirstOrDefaultAsync();
+
+            optionenb = GetEmployeeParametersettingsNew(WorkFlowActivityFlow.EmpId, "DisableSpecialworkflow", "LEV");
+
+
+
+            if ((WorkFlowActivityFlow.SpecialWorkFlowID == 0) || (WorkFlowActivityFlow.SpecialWorkFlowID > 0 && optionenb == 1 && WorkFlowActivityFlow.TransactionType == "Leave_App"))
+            {
+
+                workFlowID = await WorkFlowIDLinkAsync(transactionID, tempLevel, linkToEntity, WorkFlowActivityFlow.EmpId);
+
+            }
+            else
+            {
+                if (WorkFlowActivityFlow.TransactionType == "Survey")
+                {
+                    workFlowID = await _context.SpecialWorkFlows
+                                .Where(a => a.SurveyTopic == WorkFlowActivityFlow.SpecialWorkFlowID)
+                                .Select(a => a.WorkFlowId)
+                                .FirstOrDefaultAsync();
+                }
+
+                else if (WorkFlowActivityFlow.TransactionType == "Leave_App" || WorkFlowActivityFlow.TransactionType == "Leave_Cancel")
+                {
+                    if (WorkFlowActivityFlow.SpecialWorkFlowID > 0 && optionenb != 1)
+                    {
+                        linkToSpecialEntity = (await _context.SpecialWorkFlows
+           .Where(a => a.TransactionId == transactionID && a.LeaveType == WorkFlowActivityFlow.SpecialWorkFlowID)
+           .Select(a => a.WorkFlowId)
+           .FirstOrDefaultAsync())?.ToString();
+
+
+                        var linkToSpecialEntityList = linkToSpecialEntity.Split(',').Select(int.Parse).ToList();
+
+                        if (linkToSpecialEntityList.Contains(13))
+                        {
+                            bool exists = await _context.SpecialWorkFlow02s
+        .AnyAsync(x => x.LeaveType == WorkFlowActivityFlow.SpecialWorkFlowID
+                    && x.LinkEmpId == WorkFlowActivityFlow.EmpId
+                    && x.TransactionId == transactionID);
+                            if (exists)
+                            {
+                                workFlowID = await _context.SpecialWorkFlow02s
+                                        .Where(a => a.LeaveType == WorkFlowActivityFlow.SpecialWorkFlowID
+                                        && a.LinkEmpId == WorkFlowActivityFlow.EmpId
+                                        && a.TransactionId == transactionID)
+                                        .Select(a => a.WorkFlowId)
+                                        .FirstOrDefaultAsync();
+                            }
+                        }
+
+                        if (workFlowID == 0)
+                        {
+                            workFlowID = await _context.SpecialWorkFlows
+                                        .Where(a => a.LeaveType == WorkFlowActivityFlow.SpecialWorkFlowID
+                                        && a.TransactionId == transactionID)
+                                        .Select(a => a.WorkFlowId)
+                                        .FirstOrDefaultAsync();
+                        }
+                    }
+                }
+
+                else if (WorkFlowActivityFlow.TransactionType == "GrievanceRegister")
+                {
+                    bool exists = await (from a in _context.SpecialWorkFlows
+                                         join b in _context.WorkFlowDetails on a.WorkFlowId equals b.WorkFlowId
+                                         where a.MainType == WorkFlowActivityFlow.SpecialWorkFlowSubID
+                                         && a.TransactionId == transactionID
+                                         && ((b.WistleBlower ?? false) ? 1 : 0) == WorkFlowActivityFlow.GrievanceWistleBlower
+                                         select 1
+                    ).AnyAsync();
+
+                    if (exists)
+                    {
+                        workFlowID = await (from a in _context.SpecialWorkFlows
+                                            join b in _context.WorkFlowDetails on a.WorkFlowId equals b.WorkFlowId
+                                            where a.MainType == WorkFlowActivityFlow.SpecialWorkFlowSubID
+                                            && a.TransactionId == transactionID
+                                            && ((b.WistleBlower ?? false) ? 1 : 0) == WorkFlowActivityFlow.GrievanceWistleBlower
+                                            select a.WorkFlowId
+                               ).FirstOrDefaultAsync();
+
+                    }
+                    else
+                    {
+                        workFlowID = await (from a in _context.SpecialWorkFlows
+                                            join b in _context.WorkFlowDetails on a.WorkFlowId equals b.WorkFlowId
+                                            where a.GrievanceTypeId == WorkFlowActivityFlow.SpecialWorkFlowID
+                                            && a.TransactionId == transactionID
+                                            && ((b.WistleBlower ?? false) ? 1 : 0) == WorkFlowActivityFlow.GrievanceWistleBlower
+                                            && (a.MainType == 0 || a.MainType == null)
+                                            select a.WorkFlowId
+                                   ).FirstOrDefaultAsync();
+
+                    }
+
+                }
+
+                else if (WorkFlowActivityFlow.TransactionType == "LetterConfig")
+                {
+                    int transId = await _context.TransactionMasters
+                                .Where(a => a.TransactionType == "LetterConfig")
+                                .Select(a => a.TransactionId)
+                                .FirstOrDefaultAsync();
+
+                    workFlowID = await _context.SpecialWorkFlows
+                                        .Where(a => a.MainType == WorkFlowActivityFlow.SpecialWorkFlowID
+                                        && a.TransactionId == transId)
+                                        .Select(a => a.WorkFlowId)
+                                        .FirstOrDefaultAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Travel_App")
+                {
+                    int transId = await _context.TransactionMasters
+                                .Where(a => a.TransactionType == "Travel_App")
+                                .Select(a => a.TransactionId)
+                                .FirstOrDefaultAsync();
+
+                    workFlowID = await _context.SpecialWorkFlows
+                                        .Where(a => a.MainType == WorkFlowActivityFlow.SpecialWorkFlowID
+                                        && a.TransactionId == transId)
+                                        .Select(a => a.WorkFlowId)
+                                        .FirstOrDefaultAsync();
+
+                }
+            }
+            if (workFlowID == 0)
+            {
+                workFlowID = await WorkFlowIDLinkAsync(transactionID, tempLevel, linkToEntity, WorkFlowActivityFlow.EmpId);
+            }
+            if (workFlowID == 0)
+            {
+                workFlowID = await _context.ParamWorkFlow00s
+                                    .Where(a => a.TransactionId == transactionID)
+                                    .Select(a => a.WorkFlowId)
+                                    .FirstOrDefaultAsync();
+            }
+            if (workFlowID > 0)
+            {
+                var detail = await _context.WorkFlowDetails
+                            .Where(w => w.WorkFlowId == workFlowID && w.IsActive == true)
+                            .Select(w => new
+                            {
+                                FinalRule = w.FinalRule,
+                                HierarchyType = w.HierarchyType,
+                                ForwardNext = w.ForwardNext ?? 0
+                            })
+                            .FirstOrDefaultAsync();
+
+                int forwardNext = 0;
+
+                if (detail != null)
+                {
+                    finalRule = detail.FinalRule;
+                    hierarchyType = detail.HierarchyType;
+                    forwardNext = detail.ForwardNext;
+                }
+                bool exists = await _context.WorkFlowDetails
+                                .AnyAsync(w => w.WorkFlowId == workFlowID && w.OldType == 0);
+                if (exists)
+                {
+
+                    var query = await (from a in _context.WorkFlowDetails01s
+                                       join c in _context.WorkFlowDetails on a.WorkFlowId equals c.WorkFlowId
+                                       where a.WorkFlowId == workFlowID && c.OldType == 0
+                                       orderby a.Rules, a.RuleOrder
+                                       select new
+                                       {
+                                           a,
+                                           c,
+                                           ShowStatus = (c.HierarchyType == true || (c.HierarchyType == false && a.RuleOrder == 1)) ? 1 : 0
+                                       }).ToListAsync();
+
+
+
+
+                    foreach (var item in query)
+                    {
+                        int? approver = await GetRoleBasedEmployee(WorkFlowActivityFlow.EmpId, item.a.ParemeterId);
+
+                        if (approver != 0)
+                        {
+                            TempLeaveWorkFlow.Add(new TempLeaveWorkFlowDto
+                            {
+                                RequestId = WorkFlowActivityFlow.RequestID,
+                                ShowStatus = item.ShowStatus,
+                                ApprovalStatus = "P",
+                                Rule = item.a.Rules,
+                                RuleOrder = (int)item.a.RuleOrder,
+                                HierarchyType = item.c.HierarchyType,
+                                Approver = (int)approver,
+                                ApprovalRemarks = WorkFlowActivityFlow.ApprovalRemarks,
+                                Entry_By = WorkFlowActivityFlow.EntryBy,
+                                Entry_Dt = DateTime.UtcNow,
+                                Updated_By = WorkFlowActivityFlow.EntryBy,
+                                Updated_Dt = DateTime.UtcNow,
+                                Deligate = WorkFlowActivityFlow.Deligate,
+                                WorkFlowID = item.c.WorkFlowId,
+                                ForwardNext = forwardNext,
+                                FlowRoleID = (int)item.a.ParemeterId
+                            });
+                        }
+                    }
+
+                }
+                else
+                {
+                    if (finalRule is not null)
+                    {
+                        int pos = 0, len = 0, pos1 = 0, len1 = 0, CheckReporting = 0, rule = 0;
+                        string value, RequestIDs;
+                        string value1;
+                        int outerPos = -1, workflowRuleId = 0;
+                        var ruleGroups = finalRule.Split('+');
+
+                        foreach (var ruleGroup in ruleGroups)
+                        {
+                            int count1 = 0;
+                            workflowRuleId++;
+
+                            var values = ruleGroup.Split(',');
+                            int ruleOrder = 0;
+
+                            rule = (rule != 0) ? rule + 1 : count1 + 1;
+
+                            foreach (var item in values)
+                            {
+                                if (string.IsNullOrWhiteSpace(item))
+                                    continue;
+
+                                count1++;
+                                var flowRoleID = item;
+                                int linkToEmp = 0;
+                                int roleValue = 0;
+                                int parameter = int.Parse(item);
+
+                                if (string.IsNullOrEmpty(item))
+                                {
+                                    Console.WriteLine("value1 is null or empty");
+                                }
+
+
+                                if (!string.IsNullOrEmpty(item))
+                                {
+                                    var checkReporting = await _context.Categorymasterparameters
+                                        .Where(x => x.ParameterId == int.Parse(item))
+                                        .Select(x => x.Reporting)
+                                        .FirstOrDefaultAsync();
+
+                                    linkToEntity = await _context.ParamRole00s
+                                        .Where(x => x.ParameterId == int.Parse(item))
+                                        .Select(x => x.EntityLevel)
+                                        .FirstOrDefaultAsync();
+                                }
+
+                                if (!string.IsNullOrEmpty(linkToEntity) && linkToEntity != "0" && linkToEntity != "15")
+                                {
+                                    int WorkFlowRulevalue1 = 0;
+                                    employeeid = 0;
+                                    if (employeeid == 0)
+                                    {
+                                        count1 = count1 + 1;
+                                        LinkToEmp = false;
+                                        RoleValue = 0;
+
+                                        var linkToEntityList = linkToEntity.Split(',').Select(int.Parse).ToList();
+
+                                        if (linkToEntityList.Contains(1))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelOneId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 1;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(2))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelTwoId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 2;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(3))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelThreeId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 3;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(4))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelFourId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 4;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(5))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelFiveId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 5;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(6))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelSixId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 6;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(7))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelSevenId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 7;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(8))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelEightId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 8;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(9))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelNineId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 9;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(10))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelTenId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 10;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(11))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelElevenId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 11;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (linkToEntityList.Contains(12))
+                                        {
+                                            linkID = tempLevel.Select(x => x.LevelTwelveId).FirstOrDefault();
+                                            WorkFlowRulevalue1 = 12;
+                                            employeeid = (int)await GetEmployeeIDOnLinkandLevelAsync(linkID, parameter, WorkFlowRulevalue1);
+                                        }
+                                        if (employeeid is null)
+                                        {
+                                            employeeid = 0;
+                                        }
+                                        if (linkToEntityList.Contains(13))
+                                        {
+                                            employeeid = (await _context.ParamRole02s
+                                                            .Where(a => a.LinkEmpId == WorkFlowActivityFlow.EmpId && a.ParameterId == parameter)
+                                                            .Select(a => a.EmpId)
+                                                            .FirstOrDefaultAsync()) ?? 0;
+
+
+                                        }
+                                        if (employeeid == 0)
+                                        {
+                                            if (CheckReporting == 1)
+                                            {
+                                                employeeid = await _context.HrEmpReportings
+                                                .Where(x => x.EmpId == WorkFlowActivityFlow.EmpId)
+                                                .Select(x => x.ReprotToWhome)
+                                                .FirstOrDefaultAsync();
+                                            }
+                                            else if (CheckReporting == 2)
+                                            {
+                                                var firstLevel = await _context.HrEmpReportings
+                                                    .Where(x => x.EmpId == WorkFlowActivityFlow.EmpId)
+                                                    .Select(x => x.ReprotToWhome)
+                                                    .ToListAsync();
+
+                                                employeeid = await _context.HrEmpReportings
+                                                .Where(x => firstLevel.Contains(x.EmpId))
+                                                .Select(x => x.ReprotToWhome)
+                                                .FirstOrDefaultAsync();
+                                            }
+                                        }
+
+                                        if (employeeid == 0 || employeeid == null)
+                                        {
+                                            if (!string.IsNullOrEmpty(item))
+                                            {
+                                                employeeid = await _context.ParamRole00s
+                                            .Where(x => x.ParameterId == int.Parse(item))
+                                            .Select(x => x.EmpId)
+                                            .FirstOrDefaultAsync();
+                                            }
+                                        }
+
+                                        if (employeeid != 0)
+                                        {
+                                            ruleOrder++;
+                                        }
+
+                                        if (hierarchyType == false)
+                                        {
+                                            ShowStatus = 1;
+                                        }
+
+                                        else if (hierarchyType == true && ruleOrder == 1)
+                                        {
+                                            ShowStatus = 1;
+                                        }
+                                        else
+                                        {
+                                            ShowStatus = 0;
+                                        }
+
+                                        bool alreadyExists = TempLeaveWorkFlow.Any(x => x.Approver == employeeid);
+
+                                        if (alreadyExists)
+                                        {
+                                            ruleOrder--;
+                                        }
+                                        else
+                                        {
+                                            if (employeeid != 0)
+                                            {
+                                                TempLeaveWorkFlow.Add(new TempLeaveWorkFlowDto
+                                                {
+                                                    RequestId = WorkFlowActivityFlow.RequestID,
+                                                    ShowStatus = ShowStatus,
+                                                    ApprovalStatus = "P",
+                                                    Rule = rule,
+                                                    RuleOrder = ruleOrder,
+                                                    HierarchyType = hierarchyType,
+                                                    Approver = (int)employeeid,
+                                                    ApprovalRemarks = WorkFlowActivityFlow.ApprovalRemarks,
+                                                    Entry_By = WorkFlowActivityFlow.EntryBy,
+                                                    Entry_Dt = DateTime.UtcNow,
+                                                    Updated_By = WorkFlowActivityFlow.EntryBy,
+                                                    Updated_Dt = DateTime.UtcNow,
+                                                    Deligate = WorkFlowActivityFlow.Deligate,
+                                                    WorkFlowID = (int)workFlowID,
+                                                    ForwardNext = forwardNext,
+                                                    FlowRoleID = FlowRoleID
+
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                    if (WorkFlowActivityFlow.TransactionType == "MissingInOut")
+                    {
+                        if (!WorkFlowActivityFlow.CommonDate.HasValue || WorkFlowActivityFlow.CommonDate == DateTime.MinValue)
+                        {
+                            WorkFlowActivityFlow.CommonDate = DateTime.UtcNow;
+                        }
+                        var GetCommonRequestParametersResult = await GetCommonRequestParameters(WorkFlowActivityFlow.EmpId, WorkFlowActivityFlow.TransactionType, WorkFlowActivityFlow.CommonDate);
+
+                        frwd = GetCommonRequestParametersResult.ForwardNext;
+                        missAvailable = GetCommonRequestParametersResult.MissAvailble;
+                        misscount = GetCommonRequestParametersResult.MissCount;
+                        monthlylimt = GetCommonRequestParametersResult.MonthlyLimitSelf;
+                        isavailble = GetCommonRequestParametersResult.IsAvailable;
+
+                        if (frwd == 1)
+                        {
+                            if (WorkFlowActivityFlow.RequestID > 0)
+                            {
+
+                                bool exists1 = await _context.MissingInOutWorkFlowstatuses
+                                    .AnyAsync(x => x.RequestId == WorkFlowActivityFlow.RequestID && x.HideFlow == 1);
+
+                                if (exists1)
+                                {
+
+                                    var recordsToUpdate = TempLeaveWorkFlow
+                                                .Where(wf => wf.RequestId == WorkFlowActivityFlow.RequestID && wf.ShowStatus == 0);
+
+                                    foreach (var record in recordsToUpdate)
+                                    {
+                                        record.HideFlow = 1;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (misscount < monthlylimt)
+                                {
+                                    var recordsToUpdate = TempLeaveWorkFlow
+                                           .Where(wf => wf.RequestId == WorkFlowActivityFlow.RequestID && wf.ShowStatus == 0);
+
+                                    foreach (var record in recordsToUpdate)
+                                    {
+                                        record.HideFlow = 1;
+                                    }
+                                }
+                                else
+                                {
+                                    if (frwd == 1)
+                                    {
+                                        if (missAvailable == "N")
+                                        {
+                                            var recordsToUpdate = TempLeaveWorkFlow
+                                           .Where(wf => wf.RequestId == WorkFlowActivityFlow.RequestID && wf.ShowStatus == 0);
+
+                                            foreach (var record in recordsToUpdate)
+                                            {
+                                                record.HideFlow = 1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+
+                        }
+
+                    }
+
+                }
+
+            }
+            if (WorkFlowActivityFlow.ReturnWorkFlowTable == 0)
+            {
+                if (WorkFlowActivityFlow.TransactionType == "Leave_App")
+                {
+                    foreach (var temp in TempLeaveWorkFlow)
+                    {
+                        var newEntry = new LeaveWorkFlowstatus
+                        {
+                            RequestId = temp.RequestId,
+                            ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                            ApprovalStatus = temp.ApprovalStatus,
+                            Rule = temp.Rule,
+                            RuleOrder = temp.RuleOrder,
+                            HierarchyType = temp.HierarchyType,
+                            Approver = temp.Approver,
+                            ApprovalRemarks = temp.ApprovalRemarks,
+                            EntryBy = temp.Entry_By,
+                            EntryDt = temp.Entry_Dt,
+                            UpdatedBy = temp.Updated_By,
+                            UpdatedDt = temp.Updated_Dt,
+                            Deligate = temp.Deligate,
+                            EntryFrom = WorkFlowActivityFlow.Entryfrom
+                        };
+
+                        _context.LeaveWorkFlowstatuses.AddAsync(newEntry);
+                    }
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.LeaveApplication00s
+                                              on a.RequestId equals b.LeaveApplicationId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.LeaveApplicationId,
+                                                  RequestIdCode = b.RequestId,
+                                                  RequesterEmpId = b.EmployeeId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted a Leave For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+
+                }
+                if (WorkFlowActivityFlow.TransactionType == "Leave_Cancel")
+                {
+                    var cancelWorkflowEntries = TempLeaveWorkFlow.Select(temp => new LeaveCancelWorkFlowstatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.LeaveCancelWorkFlowstatuses.AddRangeAsync(cancelWorkflowEntries);
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.Leavecancel00s
+                                              on a.RequestId equals b.LeavecancelId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.LeavecancelId,
+                                                  RequestIdCode = b.RequestCode,
+                                                  RequesterEmpId = b.EmployeeId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted a Leave Cancellation For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Resignation")
+                {
+                    var resignationEntries = TempLeaveWorkFlow.Select(temp => new ResignationWorkFlowstatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom,
+                        WorkflowId = temp.WorkFlowID,
+                        RoleId = temp.FlowRoleID
+                    }).ToList();
+
+                    await _context.ResignationWorkFlowstatuses.AddRangeAsync(resignationEntries);
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.Resignations
+                                              on a.RequestId equals b.ResignationId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int?)b.ResignationId,
+                                                  RequestIdCode = b.ResignationRequestId,
+                                                  RequesterEmpId = b.EmpId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.RequestDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.RequestDate,
+                                                  NotificationMessage = "Submitted a Resignation For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Rejoin")
+                {
+                    var rejoinWorkflows = TempLeaveWorkFlow.Select(temp => new RejoinWorkFlowstatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.RejoinWorkFlowstatuses.AddRangeAsync(rejoinWorkflows);
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.Resignations
+                                              on a.RequestId equals b.ResignationId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int?)b.ResignationId,
+                                                  RequestIdCode = b.ResignationRequestId,
+                                                  RequesterEmpId = b.EmpId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.RejoinRequestDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.RejoinRequestDate,
+                                                  NotificationMessage = "Submitted a Resignation withdrawal For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Transfer")
+                {
+                    bool condition = (from a in TempLeaveWorkFlow
+                                      join b in _context.TransferDetails00s
+                                      on a.RequestId equals b.TransferBatchId
+                                      where b.ActionId == 2
+                                      select 1).Any()
+                            &&
+                                !(from a in TempLeaveWorkFlow
+                                  join b in _context.TransferDetails00s
+                                  on a.RequestId equals b.TransferBatchId
+                                  where b.ActionId != 2
+                                  select 1).Any();
+
+                    if (condition)
+                    {
+                        TransferMessage = "Submitted a Promotion For Approval";
+                    }
+                    else
+                    {
+                        TransferMessage = "Submitted a Transfer For Approval";
+                    }
+                    var transferWorkflowEntries = TempLeaveWorkFlow.Select(temp => new TransferWorkflowStatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.TransferWorkflowStatuses.AddRangeAsync(transferWorkflowEntries);
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.TransferDetails
+                                              on a.RequestId equals b.TransferBatchId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.TransferBatchId,
+                                                  RequestIdCode = b.TransferSequence,
+                                                  RequesterEmpId = b.ProxyId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = TransferMessage
+                                                  ,
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Travel_App")
+                {
+                    var travelWorkflowEntries = TempLeaveWorkFlow.Select(temp => new TravelWorkFlowStatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+
+                    await _context.TravelWorkFlowStatuses.AddRangeAsync(travelWorkflowEntries);
+                    await _context.SaveChangesAsync();
+
+                    if (WorkFlowActivityFlow.ReqId == 1)
+                    {
+                        var emailNotifications = (from a in TempLeaveWorkFlow
+                                                  join b in _context.TravelApplications
+                                                  on a.RequestId equals b.TravelAppId
+                                                  select new EmailNotification
+                                                  {
+                                                      InstdId = 1,
+                                                      RequestId = b.TravelAppId,
+                                                      RequestIdCode = b.RequestId,
+                                                      RequesterEmpId = b.EmployeeId,
+                                                      ReceiverEmpId = a.Approver,
+                                                      TriggerDate = b.EntryDate,
+                                                      TransactionId = transactionID,
+                                                      ShowStatus = a.ShowStatus,
+                                                      RequesterDate = b.EntryDate,
+                                                      NotificationMessage = "Has Submitted a Travel Extension Request For Approval",
+                                                      MailType = "A"
+                                                  }).ToList();
+
+
+                        await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                        await _context.SaveChangesAsync();
+
+                    }
+                    else
+                    {
+                        var emailNotifications = (from a in TempLeaveWorkFlow
+                                                  join b in _context.TravelApplications
+                                                  on a.RequestId equals b.TravelAppId
+                                                  select new EmailNotification
+                                                  {
+                                                      InstdId = 1,
+                                                      RequestId = b.TravelAppId,
+                                                      RequestIdCode = b.RequestId,
+                                                      RequesterEmpId = b.EmployeeId,
+                                                      ReceiverEmpId = a.Approver,
+                                                      TriggerDate = b.EntryDate,
+                                                      TransactionId = transactionID,
+                                                      ShowStatus = a.ShowStatus,
+                                                      RequesterDate = b.EntryDate,
+                                                      NotificationMessage = "Has Submitted a Travel Request For Approval",
+                                                      MailType = "A"
+                                                  }).ToList();
+
+
+                        await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                        await _context.SaveChangesAsync();
+
+                    }
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "OvertimeBulk")
+                {
+                    var overtimeWorkflows = TempLeaveWorkFlow.Select(temp => new OvertimeBulkWorkFlowstatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.OvertimeBulkWorkFlowstatuses.AddRangeAsync(overtimeWorkflows);
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.ManualOverTime00s
+                                              on a.RequestId equals b.Id
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.Id,
+                                                  RequestIdCode = b.ManualOtsbatch,
+                                                  RequesterEmpId = b.EmployeeId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.CreatedDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.CreatedDate,
+                                                  NotificationMessage = "Submitted a OvertimeBulk For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "ODRequest")
+                {
+                    var odRequestWorkflows = TempLeaveWorkFlow.Select(temp => new OdrequestWorkFlowstatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+
+                    await _context.OdrequestWorkFlowstatuses.AddRangeAsync(odRequestWorkflows);
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.Odrequest00s
+                                              on a.RequestId equals b.OdRequestId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.OdRequestId,
+                                                  RequestIdCode = b.RequestId,
+                                                  RequesterEmpId = b.EmployeeId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted a On Duty For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "LOPReversal")
+                {
+                    var lopReversalWorkflows = TempLeaveWorkFlow.Select(temp => new LopreversalWorkFlowStatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate
+                    }).ToList();
+
+
+                    await _context.LopreversalWorkFlowStatuses.AddRangeAsync(lopReversalWorkflows);
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.Lopreversal00s
+                                              on a.RequestId equals b.LopreversalId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int)b.LopreversalId,
+                                                  RequestIdCode = b.RequestCode,
+                                                  RequesterEmpId = WorkFlowActivityFlow.DubEmpID,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted a LOP Reversal For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+
+                }
+
+                /////////////////////////////////////////////Recruitment Start///////////////////////////
+                else if (WorkFlowActivityFlow.TransactionType == "ManpowerRequisition")
+                {
+                    // Step 1: Assign row numbers based on Approver (simulate ROW_NUMBER with grouping)
+                    var grouped = TempLeaveWorkFlow
+                        .GroupBy(x => x.Approver)
+                        .SelectMany(g => g.Select((item, index) => new
+                        {
+                            item.RequestId,
+                            item.ShowStatus,
+                            item.ApprovalStatus,
+                            item.Rule,
+                            item.RuleOrder,
+                            item.HierarchyType,
+                            item.Approver,
+                            item.ApprovalRemarks,
+                            item.Entry_By,
+                            item.Entry_Dt,
+                            item.Updated_By,
+                            item.Updated_Dt,
+                            item.Deligate,
+                            DuplicateCount = index + 1 // 1-based index like ROW_NUMBER()
+                        }))
+                        .ToList();
+
+                    // Step 2: Filter to keep only the first occurrence (i.e., where DuplicateCount == 1)
+                    var filtered = grouped
+                        .Where(x => x.DuplicateCount == 1)
+                        .Select(x => new
+                        {
+                            x.RequestId,
+                            x.ShowStatus,
+                            x.ApprovalStatus,
+                            x.Rule,
+                            x.RuleOrder,
+                            x.HierarchyType,
+                            x.Approver,
+                            ApprovalRemarks = string.IsNullOrEmpty(x.ApprovalRemarks) ? "" : x.ApprovalRemarks,
+                            x.Entry_By,
+                            x.Entry_Dt,
+                            x.Updated_By,
+                            x.Updated_Dt,
+                            x.Deligate
+                        })
+                        .ToList();
+
+                    return filtered;
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "CandidateOfferRequisition")
+                {
+                    var result = TempLeaveWorkFlow.Select(x => new
+                    {
+                        x.RequestId,
+                        x.ShowStatus,
+                        x.ApprovalStatus,
+                        x.Rule,
+                        x.RuleOrder,
+                        x.HierarchyType,
+                        x.Approver,
+                        ApprovalRemarks = string.IsNullOrEmpty(x.ApprovalRemarks) ? "" : x.ApprovalRemarks,
+                        x.Entry_By,
+                        x.Entry_Dt,
+                        x.Updated_By,
+                        x.Updated_Dt,
+                        x.Deligate
+                    }).ToList();
+
+                    return result;
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "CandidateShortlist")
+                {
+                    var result = TempLeaveWorkFlow.Select(x => new
+                    {
+                        x.RequestId,
+                        x.ShowStatus,
+                        x.ApprovalStatus,
+                        x.Rule,
+                        x.RuleOrder,
+                        x.HierarchyType,
+                        x.Approver,
+                        ApprovalRemarks = string.IsNullOrEmpty(x.ApprovalRemarks) ? "" : x.ApprovalRemarks,
+                        x.Entry_By,
+                        x.Entry_Dt,
+                        x.Updated_By,
+                        x.Updated_Dt,
+                        x.Deligate
+                    }).ToList();
+
+                    return result;
+
+                }
+
+                /////////////////////////////////////////////Recruitment End///////////////////////////
+                else if (WorkFlowActivityFlow.TransactionType == "SalaryOnHold")
+                {
+                    var salaryOnHoldWorkflows = TempLeaveWorkFlow.Select(temp => new SalaryOnHoldWorkFlowStatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate
+                    }).ToList();
+
+                    await _context.SalaryOnHoldWorkFlowStatuses.AddRangeAsync(salaryOnHoldWorkflows);
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.SalaryOnHoldNew00s
+                                              on a.RequestId equals b.SalaryOnHoldId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int)b.SalaryOnHoldId,
+                                                  RequestIdCode = b.RequestCode,
+                                                  RequesterEmpId = WorkFlowActivityFlow.DubEmpID,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = b.BatchType == 1
+                                                      ? "Submitted a Salary on Hold For Approval"
+                                                      : "Submitted a Salary on Hold Release For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "SuspensionNew")
+                {
+                    var suspensionWorkflows = TempLeaveWorkFlow.Select(temp => new SuspensionNewWorkFlowStatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate
+                    }).ToList();
+
+                    await _context.SuspensionNewWorkFlowStatuses.AddRangeAsync(suspensionWorkflows);
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.SuspensionNew00s on a.RequestId equals b.SuspensionId
+                                              join c in _context.HrmValueTypes on b.BatchType equals c.Value
+                                              where c.Type == "Suspension"
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int)b.SuspensionId,
+                                                  RequestIdCode = b.RequestCode,
+                                                  RequesterEmpId = WorkFlowActivityFlow.DubEmpID,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted a " + c.Description + " Request For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "MissingInOut")
+                {
+                    if (!WorkFlowActivityFlow.CommonDate.HasValue || WorkFlowActivityFlow.CommonDate == DateTime.MinValue)
+                    {
+                        WorkFlowActivityFlow.CommonDate = DateTime.UtcNow;
+                    }
+
+                    var missingInOutWorkflows = TempLeaveWorkFlow.Select(temp => new MissingInOutWorkFlowstatus
+                    {
+                        RequestId = temp.RequestId,
+                        ShowStatus = temp.ShowStatus.HasValue ? (bool?)(temp.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = temp.ApprovalStatus,
+                        Rule = temp.Rule,
+                        RuleOrder = temp.RuleOrder,
+                        HierarchyType = temp.HierarchyType,
+                        Approver = temp.Approver,
+                        ApprovalRemarks = temp.ApprovalRemarks,
+                        EntryBy = temp.Entry_By,
+                        EntryDt = temp.Entry_Dt,
+                        UpdatedBy = temp.Updated_By,
+                        UpdatedDt = temp.Updated_Dt,
+                        Deligate = temp.Deligate,
+                        WorkFlowId = temp.WorkFlowID,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+
+                    await _context.MissingInOutWorkFlowstatuses.AddRangeAsync(missingInOutWorkflows);
+                    await _context.SaveChangesAsync();
+
+                    if (monthlylimt > 0)
+                    {
+                        if (frwd == 1)
+                        {
+                            if (missAvailable == "N")
+                            {
+                                var requestIdsToHide = TempLeaveWorkFlow
+                                    .Where(t => t.ShowStatus == 0)
+                                    .Select(t => t.RequestId)
+                                    .ToList();
+
+
+                                var workflowsToUpdate = _context.MissingInOutWorkFlowstatuses
+                                    .Where(m => requestIdsToHide.Contains((int)m.RequestId) && m.ShowStatus.HasValue && m.ShowStatus == false)
+                                    .ToList();
+
+                                foreach (var workflow in workflowsToUpdate)
+                                {
+                                    workflow.HideFlow = 1;
+                                }
+
+
+                                foreach (var temp in TempLeaveWorkFlow.Where(t => t.ShowStatus == 0))
+                                {
+                                    temp.HideFlow = 1;
+                                }
+
+
+                                await _context.SaveChangesAsync();
+
+
+                            }
+                        }
+                    }
+                    var notificationsToInsert = (from a in TempLeaveWorkFlow
+                                                 join b in _context.MissingInOut00s
+                                                 on a.RequestId equals b.MissingInOutId
+                                                 select new EmailNotification
+                                                 {
+                                                     InstdId = 1,
+                                                     RequestId = b.MissingInOutId,
+                                                     RequestIdCode = b.RequestSequenceId,
+                                                     RequesterEmpId = b.EmployeeId,
+                                                     ReceiverEmpId = a.Approver,
+                                                     TriggerDate = b.EntryDate,
+                                                     TransactionId = transactionID,
+                                                     ShowStatus = a.ShowStatus,
+                                                     RequesterDate = b.EntryDate,
+                                                     NotificationMessage = "Submitted a Attendance Regularisation Request For Approval",
+                                                     MailType = "A"
+                                                 }).ToList();
+
+
+                    await _context.EmailNotifications.AddRangeAsync(notificationsToInsert);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "LateInEarlyOut")
+                {
+
+                    var lateInEarlyOutList = TempLeaveWorkFlow.Select(t => new LateInEarlyOutWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+
+                    await _context.LateInEarlyOutWorkFlowstatuses.AddRangeAsync(lateInEarlyOutList);
+
+                    var notificationsToInsert = (from a in TempLeaveWorkFlow
+                                                 join b in _context.LateInEarlyOut00s
+                                                 on a.RequestId equals b.LateEarlyId
+                                                 select new EmailNotification
+                                                 {
+                                                     InstdId = 1,
+                                                     RequestId = b.LateEarlyId,
+                                                     RequestIdCode = b.LateSequenceId,
+                                                     RequesterEmpId = b.EmployeeId,
+                                                     ReceiverEmpId = a.Approver,
+                                                     TriggerDate = b.EntryDate,
+                                                     TransactionId = transactionID,
+                                                     ShowStatus = a.ShowStatus,
+                                                     RequesterDate = b.EntryDate,
+                                                     NotificationMessage = "Submitted a Late In Early Out For Approval",
+                                                     MailType = "A"
+                                                 }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(notificationsToInsert);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Payscale")
+                {
+                    var payscaleWorkflowStatuses = TempLeaveWorkFlow.Select(t => new PayscaleWorkflowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.PayscaleWorkflowStatuses.AddRangeAsync(payscaleWorkflowStatuses);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.PayscaleRequest00s
+                                              on a.RequestId equals b.PayRequestId
+                                              join hr in _context.HrEmployeeUserRelations
+                                              on b.EntryBy equals hr.UserId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int)b.PayRequestId,
+                                                  RequestIdCode = b.PayReqCode,
+                                                  RequesterEmpId = hr.EmpId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted Payscale For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "PayRoll")
+                {
+
+                    var payrollWorkflowEntries = TempLeaveWorkFlow.Select(t => new PayRollWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.PayRollWorkFlowstatuses.AddRangeAsync(payrollWorkflowEntries);
+
+                    var payrollNotifications = (from a in TempLeaveWorkFlow
+                                                join b in _context.ProcessPayRoll00s
+                                                on a.RequestId equals b.ProcessPayRollId
+                                                join hr in _context.HrEmployeeUserRelations
+                                                on b.EntryBy equals hr.UserId
+                                                select new EmailNotification
+                                                {
+                                                    InstdId = 1,
+                                                    RequestId = (int)b.ProcessPayRollId,
+                                                    RequestIdCode = b.BatchCode,
+                                                    RequesterEmpId = hr.EmpId,
+                                                    ReceiverEmpId = a.Approver,
+                                                    TriggerDate = b.EntryDate,
+                                                    TransactionId = transactionID,
+                                                    ShowStatus = a.ShowStatus,
+                                                    RequesterDate = b.EntryDate,
+                                                    NotificationMessage = "Submitted  a Payroll For Approval",
+                                                    MailType = "A"
+                                                }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(payrollNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Document")
+                {
+
+                    var documentWorkflowEntries = TempLeaveWorkFlow.Select(t => new DocumentRequestWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.DocumentRequestWorkFlowstatuses.AddRangeAsync(documentWorkflowEntries);
+
+                    var documentNotifications = (from a in TempLeaveWorkFlow
+                                                 join b in _context.HrmsEmpdocuments00s
+                                                 on a.RequestId equals b.DetailId
+                                                 select new EmailNotification
+                                                 {
+                                                     InstdId = 1,
+                                                     RequestId = b.DetailId,
+                                                     RequestIdCode = b.RequestId,
+                                                     RequesterEmpId = b.EmpId,
+                                                     ReceiverEmpId = a.Approver,
+                                                     TriggerDate = b.EntryDate,
+                                                     TransactionId = transactionID,
+                                                     ShowStatus = a.ShowStatus,
+                                                     RequesterDate = b.EntryDate,
+                                                     NotificationMessage = "Submitted a Document For Approval",
+                                                     MailType = "A"
+                                                 }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(documentNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Professional")
+                {
+
+                    var professionalWorkflowEntries = TempLeaveWorkFlow.Select(t => new ProfessionalRequestWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.ProfessionalRequestWorkFlowstatuses.AddRangeAsync(professionalWorkflowEntries);
+
+                    var professionalNotifications = (from a in TempLeaveWorkFlow
+                                                     join b in _context.HrEmpProfdtlsApprls
+                                                     on a.RequestId equals b.ProfId
+                                                     select new EmailNotification
+                                                     {
+                                                         InstdId = 1,
+                                                         RequestId = b.ProfId,
+                                                         RequestIdCode = b.RequestId,
+                                                         RequesterEmpId = b.EmpId,
+                                                         ReceiverEmpId = a.Approver,
+                                                         TriggerDate = b.EntryDt,
+                                                         TransactionId = transactionID,
+                                                         ShowStatus = a.ShowStatus,
+                                                         RequesterDate = b.EntryDt,
+                                                         NotificationMessage = "Submitted a Professional Details For Approval",
+                                                         MailType = "A"
+                                                     }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(professionalNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Qualification")
+                {
+
+                    var qualificationWorkflowEntries = TempLeaveWorkFlow.Select(t => new QualificationRequestWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.QualificationRequestWorkFlowstatuses.AddRangeAsync(qualificationWorkflowEntries);
+
+                    var qualificationNotifications = (from a in TempLeaveWorkFlow
+                                                      join b in _context.HrEmpQualificationApprls
+                                                      on a.RequestId equals b.QlfId
+                                                      select new EmailNotification
+                                                      {
+                                                          InstdId = 1,
+                                                          RequestId = b.QlfId,
+                                                          RequestIdCode = b.RequestId,
+                                                          RequesterEmpId = b.EmpId,
+                                                          ReceiverEmpId = a.Approver,
+                                                          TriggerDate = b.EntryDt,
+                                                          TransactionId = transactionID,
+                                                          ShowStatus = a.ShowStatus,
+                                                          RequesterDate = b.EntryDt,
+                                                          NotificationMessage = "Submitted a Qualification Details For Approval",
+                                                          MailType = "A"
+                                                      }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(qualificationNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "SkillSet")
+                {
+
+                    var skillSetWorkflowEntries = TempLeaveWorkFlow.Select(t => new SkillSetRequestWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.SkillSetRequestWorkFlowstatuses.AddRangeAsync(skillSetWorkflowEntries);
+
+                    var skillSetNotifications = (from a in TempLeaveWorkFlow
+                                                 join b in _context.HrEmpTechnicalApprls
+                                                 on a.RequestId equals b.TechId
+                                                 select new EmailNotification
+                                                 {
+                                                     InstdId = 1,
+                                                     RequestId = b.TechId,
+                                                     RequestIdCode = b.RequestId,
+                                                     RequesterEmpId = b.EmpId,
+                                                     ReceiverEmpId = a.Approver,
+                                                     TriggerDate = b.EntryDt,
+                                                     TransactionId = transactionID,
+                                                     ShowStatus = a.ShowStatus,
+                                                     RequesterDate = b.EntryDt,
+                                                     NotificationMessage = "Submitted a SkillSet Details For Approval",
+                                                     MailType = "A"
+                                                 }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(skillSetNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "CommunicationAdditional")
+                {
+
+                    var communicationWorkflowEntries = TempLeaveWorkFlow.Select(t => new CommunicationAdditionalRequestWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.CommunicationAdditionalRequestWorkFlowstatuses.AddRangeAsync(communicationWorkflowEntries);
+
+                    var currentUtcTime = DateTime.UtcNow;
+
+                    var communicationNotifications = (from a in TempLeaveWorkFlow
+                                                      join b in _context.HrEmpAddress01Apprls
+                                                      on a.RequestId equals b.AddrId
+                                                      select new EmailNotification
+                                                      {
+                                                          InstdId = 1,
+                                                          RequestId = b.AddrId,
+                                                          RequestIdCode = b.RequestId,
+                                                          RequesterEmpId = b.EmpId,
+                                                          ReceiverEmpId = a.Approver,
+                                                          TriggerDate = currentUtcTime,
+                                                          TransactionId = transactionID,
+                                                          ShowStatus = a.ShowStatus,
+                                                          RequesterDate = currentUtcTime,
+                                                          NotificationMessage = "Submitted a Communication Details For Approval",
+                                                          MailType = "A"
+                                                      }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(communicationNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Communication")
+                {
+
+                    var communicationRequestWorkflowEntries = TempLeaveWorkFlow.Select(t => new CommunicationRequestWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.CommunicationRequestWorkFlowstatuses.AddRangeAsync(communicationRequestWorkflowEntries);
+
+                    var communicationNotifications = (from a in TempLeaveWorkFlow
+                                                      join b in _context.HrEmpAddressApprls
+                                                      on a.RequestId equals b.AddId
+                                                      select new EmailNotification
+                                                      {
+                                                          InstdId = 1,
+                                                          RequestId = b.AddId,
+                                                          RequestIdCode = b.RequestId,
+                                                          RequesterEmpId = b.EmpId,
+                                                          ReceiverEmpId = a.Approver,
+                                                          TriggerDate = DateTime.UtcNow,
+                                                          TransactionId = transactionID,
+                                                          ShowStatus = a.ShowStatus,
+                                                          RequesterDate = DateTime.UtcNow,
+                                                          NotificationMessage = "Submitted a Communication Details For Approval",
+                                                          MailType = "A"
+                                                      }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(communicationNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "CompoOff")
+                {
+
+                    var compoOffWorkflowEntries = TempLeaveWorkFlow.Select(t => new CompoOffWorkflowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.CompoOffWorkflowstatuses.AddRangeAsync(compoOffWorkflowEntries);
+
+                    var currentUtcTime = DateTime.UtcNow;
+
+                    var compoOffNotifications = (from a in TempLeaveWorkFlow
+                                                 join b in _context.CompoOff00s
+                                                 on a.RequestId equals b.CompoId
+                                                 select new EmailNotification
+                                                 {
+                                                     InstdId = 1,
+                                                     RequestId = b.CompoId,
+                                                     RequestIdCode = b.CompoRequestId,
+                                                     RequesterEmpId = b.EmpId,
+                                                     ReceiverEmpId = a.Approver,
+                                                     TriggerDate = currentUtcTime,
+                                                     TransactionId = transactionID,
+                                                     ShowStatus = a.ShowStatus,
+                                                     RequesterDate = b.EntryDate,
+                                                     NotificationMessage = "Submitted a Compensatory Gain For Approval",
+                                                     MailType = "A"
+                                                 }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(compoOffNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "BreakPermission")
+                {
+
+                    var breakPermissionWorkflowEntries = TempLeaveWorkFlow.Select(t => new BreakPermissionWorkFlowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.BreakPermissionWorkFlowStatuses.AddRangeAsync(breakPermissionWorkflowEntries);
+
+                    var currentUtcTime = DateTime.UtcNow;
+
+                    var breakPermissionNotifications = (from a in TempLeaveWorkFlow
+                                                        join b in _context.BreakPermission00s
+                                                        on a.RequestId equals b.BreakPermissionId
+                                                        select new EmailNotification
+                                                        {
+                                                            InstdId = 1,
+                                                            RequestId = b.BreakPermissionId,
+                                                            RequestIdCode = b.BreakPermissionRequestId,
+                                                            RequesterEmpId = b.EmpId,
+                                                            ReceiverEmpId = a.Approver,
+                                                            TriggerDate = currentUtcTime,
+                                                            TransactionId = transactionID,
+                                                            ShowStatus = a.ShowStatus,
+                                                            RequesterDate = b.EntryDate,
+                                                            NotificationMessage = "Submitted a BreakPermission For Approval",
+                                                            MailType = "A"
+                                                        }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(breakPermissionNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Emp_Rep")
+                {
+
+                    var reportingRequestWorkflowEntries = TempLeaveWorkFlow.Select(t => new ReportingRequestWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.ReportingRequestWorkFlowstatuses.AddRangeAsync(reportingRequestWorkflowEntries);
+
+
+                    var currentUtcTime = DateTime.UtcNow;
+
+                    var reportingRequestNotifications = (from a in TempLeaveWorkFlow
+                                                         join b in _context.ReportingRequests
+                                                         on a.RequestId equals b.ReportingId
+                                                         select new EmailNotification
+                                                         {
+                                                             InstdId = 1,
+                                                             RequestId = b.ReportingId,
+                                                             RequestIdCode = b.RequestId,
+                                                             RequesterEmpId = int.TryParse(b.EmpId, out var empId) ? (int?)empId : null,
+                                                             ReceiverEmpId = a.Approver,
+                                                             TriggerDate = currentUtcTime,
+                                                             TransactionId = transactionID,
+                                                             ShowStatus = a.ShowStatus,
+                                                             RequesterDate = b.EntryDate,
+                                                             NotificationMessage = "Submitted a Reporting For Approval",
+                                                             MailType = "A"
+                                                         }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(reportingRequestNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "WorkPermission")
+                {
+                    var description = await _context.TransactionMasters
+                       .Where(t => t.TransactionType == "WorkPermission")
+                       .Select(t => t.Description)
+                       .FirstOrDefaultAsync();
+
+                    var type = "";
+
+                    if (description == "WorkPermission")
+                    {
+                        type = "Submitted a Over Time Request For Approval";
+                    }
+                    else
+                    {
+                        type = "Submitted a Over Time Request For Approval";
+                    }
+
+
+                    var workPermissionWorkflowEntries = TempLeaveWorkFlow.Select(t => new WorkPermissionWorkFlowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.WorkPermissionWorkFlowStatuses.AddRangeAsync(workPermissionWorkflowEntries);
+
+
+                    var currentTime = DateTime.UtcNow;
+
+                    var workPermissionNotifications = (from a in TempLeaveWorkFlow
+                                                       join b in _context.WorkPermission00s
+                                                       on a.RequestId equals b.WorkPermissionId
+                                                       select new EmailNotification
+                                                       {
+                                                           InstdId = 1,
+                                                           RequestId = b.WorkPermissionId,
+                                                           RequestIdCode = b.WorkPermissionRequestId,
+                                                           RequesterEmpId = b.EmpId,
+                                                           ReceiverEmpId = a.Approver,
+                                                           TriggerDate = b.EntryDate,
+                                                           TransactionId = transactionID,
+                                                           ShowStatus = a.ShowStatus,
+                                                           RequesterDate = b.EntryDate,
+                                                           NotificationMessage = type,
+                                                           MailType = "A"
+                                                       }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(workPermissionNotifications);
+                    await _context.SaveChangesAsync();
+
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Suspension")
+                {
+
+                    var requestIds = TempLeaveWorkFlow.Select(t => t.RequestId).ToList();
+
+
+                    var suspensionWorkflows = TempLeaveWorkFlow.Select(t => new SuspensionWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = false,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = true,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.SuspensionWorkFlowstatuses.AddRangeAsync(suspensionWorkflows);
+
+                    foreach (var requestId in requestIds)
+                    {
+                        var topFlow = _context.SuspensionWorkFlowstatuses
+                                              .Where(f => f.RequestId == requestId)
+                                              .OrderBy(f => f.FlowId)
+                                              .FirstOrDefault();
+
+                        if (topFlow != null)
+                        {
+                            topFlow.ShowStatus = true;
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.SuspensionTbs
+                                              on a.RequestId equals b.SuspensionId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.SuspensionId,
+                                                  RequestIdCode = b.SuspensionCode,
+                                                  RequesterEmpId = int.TryParse(b.Employee, out var empId) ? (int?)empId : null,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = 0,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted a Suspension For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+
+                    foreach (var requestId in requestIds)
+                    {
+                        var topEmail = await _context.EmailNotifications
+                                               .Where(e => e.RequestId == requestId && e.TransactionId == transactionID)
+                                               .OrderBy(e => e.Id)
+                                               .FirstOrDefaultAsync();
+
+                        if (topEmail != null)
+                        {
+                            topEmail.ShowStatus = 1;
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Survey")
+                {
+                    var surveyTopicWorkflowEntries = TempLeaveWorkFlow.Select(t => new SurveyTopic00WorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom,
+                        WorkflowId = workFlowID,
+                        Type = WorkFlowActivityFlow.Surveytopic
+                    }).ToList();
+
+                    await _context.SurveyTopic00WorkFlowstatuses.AddRangeAsync(surveyTopicWorkflowEntries);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "GrievanceRegister")
+                {
+
+                    var grievanceWorkflows = TempLeaveWorkFlow.Select(t => new GrievanceWorkFlowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = "O",
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = DateTime.UtcNow,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = DateTime.UtcNow,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.GrievanceWorkFlowStatuses.AddRangeAsync(grievanceWorkflows);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.GrievanceRegistrations
+                                              on a.RequestId equals b.GrievRegId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int)b.GrievRegId,
+                                                  RequestIdCode = b.RequestCode,
+                                                  RequesterEmpId = b.EmployeeId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = DateTime.UtcNow,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = DateTime.UtcNow,
+                                                  NotificationMessage = "Has Submitted a Trouble Ticket",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "LetterConfig")
+                {
+                    var letterWorkflowStatuses = TempLeaveWorkFlow.Select(t => new LetterWorkflowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = DateTime.UtcNow,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = DateTime.UtcNow,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.LetterWorkflowStatuses.AddRangeAsync(letterWorkflowStatuses);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.AssignedLetterTypes on a.RequestId equals b.LetterReqId
+                                              join lm in _context.LetterMaster01s
+                                                  on new { LetterTypeId = (int?)b.LetterTypeId, LetterSubType = (int?)b.LetterSubType }
+                                                  equals new { LetterTypeId = (int?)lm.LetterTypeId, LetterSubType = (int?)lm.ModuleSubId } into lmJoin
+                                              from lm in lmJoin.DefaultIfEmpty()
+                                              join hr in _context.HrEmployeeUserRelations on b.CreatedBy equals hr.UserId into hrJoin
+                                              from hr in hrJoin.DefaultIfEmpty()
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int)b.LetterReqId,
+                                                  RequestIdCode = b.RequestCode,
+                                                  RequesterEmpId = (lm != null && lm.IsEss == true) ? b.EmpId : (hr != null ? hr.EmpId : (int?)null),
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = DateTime.UtcNow,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = DateTime.UtcNow,
+                                                  NotificationMessage = "Has Submitted A Letter Request For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Loan")
+                {
+                    var loanWorkflowStatusList = TempLeaveWorkFlow.Select(x => new LoanNewWorkflowStatus
+                    {
+                        RequestId = x.RequestId,
+                        ShowStatus = x.ShowStatus.HasValue ? (bool?)(x.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = x.ApprovalStatus,
+                        Rule = x.Rule,
+                        RuleOrder = x.RuleOrder,
+                        HierarchyType = x.HierarchyType,
+                        Approver = x.Approver,
+                        ApprovalRemarks = x.ApprovalRemarks,
+                        EntryBy = x.Entry_By,
+                        EntryDt = DateTime.UtcNow,
+                        UpdatedBy = x.Updated_By,
+                        UpdatedDt = DateTime.UtcNow,
+                        Deligate = x.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom,
+                        LoanTypeId = WorkFlowActivityFlow.loanTypeId
+                    }).ToList();
+
+                    await _context.LoanNewWorkflowStatuses.AddRangeAsync(loanWorkflowStatusList);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.LoanApplication00s on a.RequestId equals b.AssignLoanId
+                                              join c in _context.LoanApplication01s on b.AssignLoanId equals (int)c.AssignLoanId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int)b.AssignLoanId,
+                                                  RequestIdCode = b.LoanRequestId,
+                                                  RequesterEmpId = c.EmployeeId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = DateTime.UtcNow,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = DateTime.UtcNow,
+                                                  NotificationMessage = "Has Submitted A Loan Request For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "LoanAmendment")
+                {
+                    var loanAmendmentWorkflowList = TempLeaveWorkFlow.Select(x => new LoanAmendmentWorkflowstatus
+                    {
+                        RequestId = x.RequestId,
+                        ShowStatus = x.ShowStatus.HasValue ? (bool?)(x.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = x.ApprovalStatus,
+                        Rule = x.Rule,
+                        RuleOrder = x.RuleOrder,
+                        HierarchyType = x.HierarchyType,
+                        Approver = x.Approver,
+                        ApprovalRemarks = x.ApprovalRemarks,
+                        EntryBy = x.Entry_By,
+                        EntryDt = x.Entry_Dt,
+                        UpdatedBy = x.Updated_By,
+                        UpdatedDt = x.Updated_Dt,
+                        Deligate = x.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.LoanAmendmentWorkflowstatuses.AddRangeAsync(loanAmendmentWorkflowList);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.LoanAmendment00s on a.RequestId equals b.LoanAmendId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.LoanAmendId,
+                                                  RequestIdCode = b.SequenceId,
+                                                  RequesterEmpId = b.RequestEmpId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.CreatedDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.CreatedDate,
+                                                  NotificationMessage = "Submitted a Loan Amendment For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "IDF")
+                {
+                    var investmentWorkflowList = TempLeaveWorkFlow.Select(t => new InvestmentDeclarationWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom,
+                        IsFinalSubmission = WorkFlowActivityFlow.ReqId
+                    }).ToList();
+
+                    await _context.InvestmentDeclarationWorkFlowstatuses.AddRangeAsync(investmentWorkflowList);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.InvestmentDeclarationStatuses
+                                              on a.RequestId equals b.RequestId
+                                              join c in _context.InvestmentDeclaration00s
+                                              on b.DeclarationId equals c.Declaration00Id
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.RequestId,
+                                                  RequestIdCode = c.SequenceCode,
+                                                  RequesterEmpId = c.EmployeeId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted a Investment Declaration For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "LeavSalaryAdvnc")
+                {
+                    var salaryAdvanceWorkflowList = TempLeaveWorkFlow.Select(t => new SalaryAdvanceWorkflowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom,
+                        LoanTypeId = WorkFlowActivityFlow.loanTypeId
+                    }).ToList();
+
+                    await _context.SalaryAdvanceWorkflowstatuses.AddRangeAsync(salaryAdvanceWorkflowList);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.LoanApplication00s
+                                              on a.RequestId equals b.AssignLoanId
+                                              join c in _context.LoanApplication01s
+                                              on b.AssignLoanId equals (int)c.AssignLoanId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int)b.AssignLoanId,
+                                                  RequestIdCode = b.LoanRequestId,
+                                                  RequesterEmpId = c.EmployeeId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.CreatedDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.CreatedDate,
+                                                  NotificationMessage = "Submitted a Salary Advance Request For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+
+                    await _context.SaveChangesAsync();
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "PMSJD")
+                {
+                    var pmsJdWorkFlowList = TempLeaveWorkFlow.Select(t => new PmsjdworkFlowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = DateTime.UtcNow,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = DateTime.UtcNow,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.PmsjdworkFlowStatuses.AddRangeAsync(pmsJdWorkFlowList);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.AdmPmsjddetails
+                                              on a.RequestId equals b.Pmsjdid
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int)b.Pmsjdid,
+                                                  RequestIdCode = b.JdrequestId,
+                                                  RequesterEmpId = b.EmpId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = DateTime.UtcNow,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = DateTime.UtcNow,
+                                                  NotificationMessage = "Has Submitted A JD Request For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "PMSGoal")
+                {
+                    var paramID_RM = _context.CompanyParameters
+                                    .Where(p => p.ParameterCode == "PMSRM")
+                                    .Select(p => p.Value)
+                                    .FirstOrDefault();
+
+                    var paramID_Skip = _context.CompanyParameters
+                                    .Where(p => p.ParameterCode == "PMSSkip")
+                                    .Select(p => p.Value)
+                                    .FirstOrDefault();
+
+                    var approver = (from b in _context.HrEmpReportings
+                                    where b.EmpId == employeeid
+                                    let pmsReporting = _context.ParamRole02s
+                                    .Where(p => p.ParameterId == paramID_RM && p.LinkEmpId == b.EmpId && p.LinkLevel == 13)
+                                    .Select(p => p.EmpId)
+                                    .FirstOrDefault()
+                                    select pmsReporting ?? b.ReprotToWhome
+                                    ).FirstOrDefault();
+
+                    var workflowStatus = new PmsgoalWorkFlowStatus
+                    {
+                        RequestId = WorkFlowActivityFlow.RequestID,
+                        ShowStatus = true,
+                        ApprovalStatus = "P",
+                        Rule = 1,
+                        RuleOrder = 1,
+                        HierarchyType = true,
+                        Approver = approver,
+                        ApprovalRemarks = "",
+                        EntryBy = WorkFlowActivityFlow.EntryBy,
+                        EntryDt = DateTime.UtcNow,
+                        UpdatedBy = WorkFlowActivityFlow.EntryBy,
+                        UpdatedDt = DateTime.UtcNow,
+                        Deligate = "",
+                        EntryFrom = "S"
+                    };
+
+                    await _context.PmsgoalWorkFlowStatuses.AddAsync(workflowStatus);
+
+                    var emailNotification = (from b in _context.AssignGoals00s
+                                             where b.GoalassignId == WorkFlowActivityFlow.RequestID
+                                             join ks in _context.KpiSubcategories
+                                             on b.GoalId equals ks.KpisubcategoryId into g
+                                             from ks in g.DefaultIfEmpty()
+                                             select new EmailNotification
+                                             {
+                                                 InstdId = 1,
+                                                 RequestId = b.GoalassignId,
+                                                 RequestIdCode = WorkFlowActivityFlow.RequestID.ToString(),
+                                                 RequesterEmpId = b.EmployeeId,
+                                                 ReceiverEmpId = approver,
+                                                 TriggerDate = DateTime.UtcNow,
+                                                 TransactionId = transactionID,
+                                                 ShowStatus = 1,
+                                                 RequesterDate = DateTime.UtcNow,
+                                                 NotificationMessage = (b.NewActionStatus == "N" ? "Has Created The Following New Goal:-" :
+                                                                         b.NewActionStatus == "E" ? "Has Edited The Following Goal:-" :
+                                                                         b.NewActionStatus == "D" ? "Has Deleted The Following Goal:-" : "")
+                                                                         + "-" + (ks.Subcategory ?? "") + " For Approval",
+                                                 MailType = "A"
+                                             }).FirstOrDefault();
+
+                    if (emailNotification != null)
+                    {
+                        await _context.EmailNotifications.AddAsync(emailNotification);
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "PMSREVIEW")
+                {
+                    var pmsReviewWorkflowList = TempLeaveWorkFlow.Select(t => new PmsreviewWorkFlowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = DateTime.UtcNow,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = DateTime.UtcNow,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.PmsreviewWorkFlowStatuses.AddRangeAsync(pmsReviewWorkflowList);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.AdmPmsrating02s
+                                              on a.RequestId equals b.GoalAssignId
+                                              join ag in _context.AssignGoals00s
+                                              on b.GoalAssignId equals ag.GoalassignId into agJoin
+                                              from ag in agJoin.DefaultIfEmpty()
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = (int)b.RatingId,
+                                                  RequestIdCode = b.RevRequestId.ToString(),
+                                                  RequesterEmpId = b.EmpId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = DateTime.UtcNow,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = DateTime.UtcNow,
+                                                  NotificationMessage = "Has Submitted A PMS Review Request For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "JobVacancy")
+                {
+                    var jobVacancyWorkflowList = TempLeaveWorkFlow.Select(t => new JobVacancyRequestWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.JobVacancyRequestWorkFlowstatuses.AddRangeAsync(jobVacancyWorkflowList);
+
+                    var jobVacancyNotifications = (from a in TempLeaveWorkFlow
+                                                   join b in _context.JobOpening00s
+                                                   on a.RequestId equals b.JobOpeningMasterId
+                                                   select new EmailNotification
+                                                   {
+                                                       InstdId = 1,
+                                                       RequestId = b.JobOpeningMasterId,
+                                                       RequestIdCode = b.RequestId,
+                                                       RequesterEmpId = b.EmployeeId,
+                                                       ReceiverEmpId = a.Approver,
+                                                       TriggerDate = b.EntryDate ?? DateTime.UtcNow,
+                                                       TransactionId = transactionID,
+                                                       ShowStatus = a.ShowStatus,
+                                                       RequesterDate = b.EntryDate ?? DateTime.UtcNow,
+                                                       NotificationMessage = "Submitted a Job Vacancy For Approval",
+                                                       MailType = "A"
+                                                   }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(jobVacancyNotifications);
+
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "ClaimsApp")
+                {
+                    var claimsWorkflowList = TempLeaveWorkFlow.Select(t => new ClaimsWorkFlowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.ClaimsWorkFlowStatuses.AddRangeAsync(claimsWorkflowList);
+
+                    var claimsNotifications = (from a in TempLeaveWorkFlow
+                                               join b in _context.ClaimsApplication00s
+                                               on a.RequestId equals b.ClaimsAppId
+                                               select new EmailNotification
+                                               {
+                                                   InstdId = 1,
+                                                   RequestId = b.ClaimsAppId,
+                                                   RequestIdCode = b.RequestId,
+                                                   RequesterEmpId = b.EmployeeId,
+                                                   ReceiverEmpId = a.Approver,
+                                                   TriggerDate = b.EntryDate ?? DateTime.UtcNow,
+                                                   TransactionId = transactionID,
+                                                   ShowStatus = a.ShowStatus,
+                                                   RequesterDate = b.EntryDate ?? DateTime.UtcNow,
+                                                   NotificationMessage = "Submitted a Claims Request For Approval",
+                                                   MailType = "A"
+                                               }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(claimsNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "RestrictHoliday")
+                {
+                    var restrictedHolidayWorkflowList = TempLeaveWorkFlow.Select(t => new RestrictedHolidayWorkFlow
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.RestrictedHolidayWorkFlows.AddRangeAsync(restrictedHolidayWorkflowList);
+
+                    var restrictedHolidayNotifications = (from a in TempLeaveWorkFlow
+                                                          join b in _context.HolidaysMasterApprovals
+                                                          on a.RequestId equals b.HolidayMasterId
+                                                          select new EmailNotification
+                                                          {
+                                                              InstdId = 1,
+                                                              RequestId = b.HolidayMasterId,
+                                                              RequestIdCode = b.SequenceId,
+                                                              RequesterEmpId = b.EmpId,
+                                                              ReceiverEmpId = a.Approver,
+                                                              TriggerDate = DateTime.UtcNow,
+                                                              TransactionId = transactionID,
+                                                              ShowStatus = a.ShowStatus,
+                                                              RequesterDate = DateTime.UtcNow,
+                                                              NotificationMessage = "Submitted a Restricted Holiday Request For Approval",
+                                                              MailType = "A"
+                                                          }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(restrictedHolidayNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Leave_Enhancement_Request")
+                {
+                    var leaveEnhancementWorkflowList = TempLeaveWorkFlow.Select(t => new LeaveEnhancementRequestworkflow
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        Entryfrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.LeaveEnhancementRequestworkflows.AddRangeAsync(leaveEnhancementWorkflowList);
+
+                    var leaveEnhancementNotifications = (from a in TempLeaveWorkFlow
+                                                         join b in _context.LeaveEnhancementRequest00s
+                                                         on a.RequestId equals b.Id
+                                                         join c in _context.TransactionMasters
+                                                         on "Leave_Enhancement_Request" equals c.TransactionType
+                                                         select new EmailNotification
+                                                         {
+                                                             InstdId = 1,
+                                                             RequestId = b.Id,
+                                                             RequestIdCode = b.SequenceId,
+                                                             RequesterEmpId = b.EmployeeId,
+                                                             ReceiverEmpId = a.Approver,
+                                                             TriggerDate = DateTime.UtcNow,
+                                                             TransactionId = c.TransactionId,
+                                                             ShowStatus = a.ShowStatus,
+                                                             RequesterDate = DateTime.UtcNow,
+                                                             NotificationMessage = "Submitted a Leave Enhancement Request For Approval",
+                                                             MailType = "A"
+                                                         }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(leaveEnhancementNotifications);
+
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Leave_Enhancement")
+                {
+                    var leaveEnhancementWorkFlowList = TempLeaveWorkFlow.Select(t => new LeaveEnhancementWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        Entryfrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.LeaveEnhancementWorkFlowstatuses.AddRangeAsync(leaveEnhancementWorkFlowList);
+
+                    var leaveEnhancementNotifications = (from a in TempLeaveWorkFlow
+                                                         join b in _context.LeaveEnhancement00s
+                                                         on a.RequestId equals b.LeaveEnId
+
+                                                         join c in _context.HrEmployeeUserRelations
+                                                         on b.CreatedBy equals c.UserId
+                                                         join d in _context.TransactionMasters
+                                                         on "Leave_Enhancement" equals d.TransactionType
+                                                         select new EmailNotification
+                                                         {
+                                                             InstdId = 1,
+                                                             RequestId = b.LeaveEnId,
+                                                             RequestIdCode = b.SequenceId,
+                                                             RequesterEmpId = c.EmpId,
+                                                             ReceiverEmpId = a.Approver,
+                                                             TriggerDate = DateTime.UtcNow,
+                                                             TransactionId = d.TransactionId,
+                                                             ShowStatus = a.ShowStatus,
+                                                             RequesterDate = DateTime.UtcNow,
+                                                             NotificationMessage = "Submitted a Leave Enhancement Request For Approval",
+                                                             MailType = "A"
+                                                         }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(leaveEnhancementNotifications);
+
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Offcycle")
+                {
+                    var offcycleWorkflowList = TempLeaveWorkFlow.Select(t => new OffcycleWorkFlowstatusNew
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.OffcycleWorkFlowstatusNews.AddRangeAsync(offcycleWorkflowList);
+
+                    var offcycleNotifications = (from a in TempLeaveWorkFlow
+                                                 join b in _context.OffcyclePayroll00s
+                                                 on a.RequestId equals b.OffcyclePayrollId
+                                                 join hr in _context.HrEmployeeUserRelations
+                                                 on b.EntryBy equals hr.UserId
+                                                 select new EmailNotification
+                                                 {
+                                                     InstdId = 1,
+                                                     RequestId = (int)b.OffcyclePayrollId,
+                                                     RequestIdCode = b.BatchCode,
+                                                     RequesterEmpId = hr.EmpId,
+                                                     ReceiverEmpId = a.Approver,
+                                                     TriggerDate = b.EntryDate ?? DateTime.UtcNow,
+                                                     TransactionId = transactionID,
+                                                     ShowStatus = a.ShowStatus,
+                                                     RequesterDate = b.EntryDate ?? DateTime.UtcNow,
+                                                     NotificationMessage = "Submitted an Offcycle Payroll For Approval",
+                                                     MailType = "A"
+                                                 }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(offcycleNotifications);
+
+                    await _context.SaveChangesAsync();
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Leave_BlncAmendment")
+                {
+                    var leaveBalanceWorkflowList = TempLeaveWorkFlow.Select(t => new LeaveBalanceAmedmentWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.LeaveBalanceAmedmentWorkFlowstatuses.AddRangeAsync(leaveBalanceWorkflowList);
+
+                    var transactionId = _context.TransactionMasters
+                                        .Where(t => t.TransactionType == "Leave_BlncAmendment")
+                                        .Select(t => t.TransactionId)
+                                        .FirstOrDefault();
+
+                    var leaveBalanceNotifications = (from a in TempLeaveWorkFlow
+                                                     join b in _context.LeaveBalanceAmedment00s
+                                                     on a.RequestId equals b.LeaveBalanceAmndId
+                                                     join hr in _context.HrEmployeeUserRelations
+                                                     on b.CreatedBy equals hr.UserId
+                                                     select new EmailNotification
+                                                     {
+                                                         InstdId = 1,
+                                                         RequestId = (int)b.LeaveBalanceAmndId,
+                                                         RequestIdCode = b.BatchCode,
+                                                         RequesterEmpId = hr.EmpId,
+                                                         ReceiverEmpId = a.Approver,
+                                                         TriggerDate = DateTime.UtcNow,
+                                                         TransactionId = transactionId,
+                                                         ShowStatus = a.ShowStatus,
+                                                         RequesterDate = DateTime.UtcNow,
+                                                         NotificationMessage = "Submitted a Leave Balance Amendment Request For Approval",
+                                                         MailType = "A"
+                                                     }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(leaveBalanceNotifications);
+
+                    await _context.SaveChangesAsync();
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Passport_Movement")
+                {
+                    var passportWorkflows = TempLeaveWorkFlow.Select(t => new PassportMovementWorkFlowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.PassportMovementWorkFlowStatuses.AddRangeAsync(passportWorkflows);
+
+                    var passportNotifications = (from a in TempLeaveWorkFlow
+                                                 join b in _context.EmpPassportRegisters
+                                                 on a.RequestId equals b.Id
+                                                 select new EmailNotification
+                                                 {
+                                                     InstdId = 1,
+                                                     RequestId = b.Id,
+                                                     RequestIdCode = b.RequestId,
+                                                     RequesterEmpId = b.EmployeeId,
+                                                     ReceiverEmpId = a.Approver,
+                                                     TriggerDate = DateTime.UtcNow,
+                                                     TransactionId = transactionID,
+                                                     ShowStatus = a.ShowStatus,
+                                                     RequesterDate = DateTime.UtcNow,
+                                                     NotificationMessage = "Submitted a Passport " + b.RequestType + " Request For Approval",
+                                                     MailType = "A"
+                                                 }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(passportNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "RejoinRequest")
+                {
+                    var rejoinWorkflowList = TempLeaveWorkFlow.Select(t => new RejoinRequestWorkflowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.RejoinRequestWorkflowstatuses.AddRangeAsync(rejoinWorkflowList);
+
+                    var rejoinNotifications = (from a in TempLeaveWorkFlow
+                                               join b in _context.RejoinReqst00s
+                                               on a.RequestId equals b.RejoinId
+                                               select new EmailNotification
+                                               {
+                                                   InstdId = 1,
+                                                   RequestId = b.RejoinId,
+                                                   RequestIdCode = b.RequestSequenceId,
+                                                   RequesterEmpId = b.Employeeid,
+                                                   ReceiverEmpId = a.Approver,
+                                                   TriggerDate = b.Entrydate ?? DateTime.UtcNow,
+                                                   TransactionId = transactionID,
+                                                   ShowStatus = a.ShowStatus,
+                                                   RequesterDate = b.Entrydate ?? DateTime.UtcNow,
+                                                   NotificationMessage = "Submitted a Rejoin Request For Approval",
+                                                   MailType = "A"
+                                               }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(rejoinNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Finalsettlement")
+                {
+                    var finalSettlementWorkflowList = TempLeaveWorkFlow.Select(t => new FinalsettlementWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.FinalsettlementWorkFlowstatuses.AddRangeAsync(finalSettlementWorkflowList);
+
+                    var finalSettlementNotifications = (from a in TempLeaveWorkFlow
+                                                        join b in _context.ProcessPayRoll00s
+                                                        on a.RequestId equals b.ProcessPayRollId
+                                                        join hr in _context.HrEmployeeUserRelations
+                                                        on b.EntryBy equals hr.UserId
+                                                        select new EmailNotification
+                                                        {
+                                                            InstdId = 1,
+                                                            RequestId = (int)b.ProcessPayRollId,
+                                                            RequestIdCode = b.BatchCode,
+                                                            RequesterEmpId = hr.EmpId,
+                                                            ReceiverEmpId = a.Approver,
+                                                            TriggerDate = b.EntryDate ?? DateTime.UtcNow,
+                                                            TransactionId = transactionID,
+                                                            ShowStatus = a.ShowStatus,
+                                                            RequesterDate = b.EntryDate ?? DateTime.UtcNow,
+                                                            NotificationMessage = "Submitted a Final Settlement For Approval",
+                                                            MailType = "A"
+                                                        }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(finalSettlementNotifications);
+                    await _context.SaveChangesAsync();
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "OverTimeRequest")
+                {
+                    var overtimeWorkflowList = TempLeaveWorkFlow.Select(t => new OverTimeWorkFlowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.OverTimeWorkFlowStatuses.AddRangeAsync(overtimeWorkflowList);
+
+                    var overtimeNotifications = (from a in TempLeaveWorkFlow
+                                                 join b in _context.OvertimeRequest00s
+                                                 on a.RequestId equals b.OverTimeId
+                                                 select new EmailNotification
+                                                 {
+                                                     InstdId = 1,
+                                                     RequestId = b.OverTimeId,
+                                                     RequestIdCode = b.OvertimeRequest,
+                                                     RequesterEmpId = b.EmpId,
+                                                     ReceiverEmpId = a.Approver,
+                                                     TriggerDate = b.EntryDate,
+                                                     TransactionId = transactionID,
+                                                     ShowStatus = a.ShowStatus,
+                                                     RequesterDate = b.EntryDate,
+                                                     NotificationMessage = "Submitted a OverTime Request For Approval",
+                                                     MailType = "A"
+                                                 }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(overtimeNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "Shift")
+                {
+                    var shiftWorkflowList = TempLeaveWorkFlow.Select(t => new ShiftWorkFlowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.ShiftWorkFlowStatuses.AddRangeAsync(shiftWorkflowList);
+
+                    var shiftNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.ShiftApproval00s
+                                              on a.RequestId equals b.Id
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.Id,
+                                                  RequestIdCode = b.RequestId,
+                                                  RequesterEmpId = b.EmployeeId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted a Employee Shift For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(shiftNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "RoleDelegation")
+                {
+                    var roleDelegationWorkflows = TempLeaveWorkFlow.Select(t => new RoleDelegationWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.RoleDelegationWorkFlowstatuses.AddRangeAsync(roleDelegationWorkflows);
+
+                    var roleDelegationNotifications = (from a in TempLeaveWorkFlow
+                                                       join b in _context.RoleDelegation00s
+                                                       on a.RequestId equals b.RoleDelegationId
+                                                       select new EmailNotification
+                                                       {
+                                                           InstdId = 1,
+                                                           RequestId = b.RoleDelegationId,
+                                                           RequestIdCode = b.SequenceId,
+                                                           RequesterEmpId = b.EmpId,
+                                                           ReceiverEmpId = a.Approver,
+                                                           TriggerDate = b.EntryDate,
+                                                           TransactionId = transactionID,
+                                                           ShowStatus = a.ShowStatus,
+                                                           RequesterDate = b.EntryDate,
+                                                           NotificationMessage = "Submitted a RoleDelegation Request For Approval",
+                                                           MailType = "A"
+                                                       }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(roleDelegationNotifications);
+                    await _context.SaveChangesAsync();
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "LeaveSalaryAdvanceProcess")
+                {
+                    var payrollWorkflows = TempLeaveWorkFlow.Select(t => new PayRollWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.PayRollWorkFlowstatuses.AddRangeAsync(payrollWorkflows);
+
+                    var payrollNotifications = (from a in TempLeaveWorkFlow
+                                                join b in _context.ProcessPayRoll00s
+                                                on a.RequestId equals b.ProcessPayRollId
+                                                join emp in _context.HrEmployeeUserRelations
+                                                on b.EntryBy equals emp.UserId
+                                                select new EmailNotification
+                                                {
+                                                    InstdId = 1,
+                                                    RequestId = (int)b.ProcessPayRollId,
+                                                    RequestIdCode = b.BatchCode,
+                                                    RequesterEmpId = emp.EmpId,
+                                                    ReceiverEmpId = a.Approver,
+                                                    TriggerDate = b.EntryDate,
+                                                    TransactionId = transactionID,
+                                                    ShowStatus = a.ShowStatus,
+                                                    RequesterDate = b.EntryDate,
+                                                    NotificationMessage = "Submitted a salary Settlement For Approval",
+                                                    MailType = "A"
+                                                }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(payrollNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "PayscaleCancel")
+                {
+                    var payscaleCancelWorkflows = TempLeaveWorkFlow.Select(t => new PayscaleCancelWorkflowStatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.PayscaleCancelWorkflowStatuses.AddRangeAsync(payscaleCancelWorkflows);
+
+                    var notifications = (from a in TempLeaveWorkFlow
+                                         join b in _context.PayscaleCancel00s
+                                         on a.RequestId equals b.PayCancelId
+                                         join u in _context.HrEmployeeUserRelations
+                                         on b.EntryBy equals u.UserId
+                                         select new EmailNotification
+                                         {
+                                             InstdId = 1,
+                                             RequestId = (int)b.PayCancelId,
+                                             RequestIdCode = b.PayCancelCode,
+                                             RequesterEmpId = u.EmpId,
+                                             ReceiverEmpId = a.Approver,
+                                             TriggerDate = b.EntryDate,
+                                             TransactionId = transactionID,
+                                             ShowStatus = a.ShowStatus,
+                                             RequesterDate = b.EntryDate,
+                                             NotificationMessage = "Submitted Payscale Cancellation For Approval",
+                                             MailType = "A",
+                                             Type = b.BatchId
+                                         }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(notifications);
+                    await _context.SaveChangesAsync();
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "BranchVisit")
+                {
+                    var branchVisitWorkflowStatusList = TempLeaveWorkFlow.Select(t => new BranchVisitWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.BranchVisitWorkFlowstatuses.AddRangeAsync(branchVisitWorkflowStatusList);
+
+                    var branchVisitNotifications = (from a in TempLeaveWorkFlow
+                                                    join b in _context.BranchVisit00s on a.RequestId equals b.BranchVisitId
+                                                    join c in _context.BranchVisit01s on b.BranchVisitId equals c.BranchVisitId
+                                                    select new EmailNotification
+                                                    {
+                                                        InstdId = 1,
+                                                        RequestId = (int)b.BranchVisitId,
+                                                        RequestIdCode = b.BatchCode,
+                                                        RequesterEmpId = c.EmployeeId,
+                                                        ReceiverEmpId = a.Approver,
+                                                        TriggerDate = b.EntryDate,
+                                                        TransactionId = transactionID,
+                                                        ShowStatus = a.ShowStatus,
+                                                        RequesterDate = b.EntryDate,
+                                                        NotificationMessage = "Submitted a Branch Visit For Approval",
+                                                        MailType = "A"
+                                                    }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(branchVisitNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "AirTicketAllowance")
+                {
+                    var airTicketWorkflowList = TempLeaveWorkFlow.Select(t => new AirTicketAllowanceWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.AirTicketAllowanceWorkFlowstatuses.AddRangeAsync(airTicketWorkflowList);
+
+                    var airTicketNotifications = (from a in TempLeaveWorkFlow
+                                                  join b in _context.AirTicketAllowances on a.RequestId equals b.AirTicketAllowanceId
+                                                  select new EmailNotification
+                                                  {
+                                                      InstdId = 1,
+                                                      RequestId = b.AirTicketAllowanceId,
+                                                      RequestIdCode = b.Batchcode,
+                                                      RequesterEmpId = b.EmpId,
+                                                      ReceiverEmpId = a.Approver,
+                                                      TriggerDate = b.EntryDate,
+                                                      TransactionId = transactionID,
+                                                      ShowStatus = a.ShowStatus,
+                                                      RequesterDate = b.EntryDate,
+                                                      NotificationMessage = "Submitted a AirTicket Allowance For Approval",
+                                                      MailType = "A"
+                                                  }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(airTicketNotifications);
+                    await _context.SaveChangesAsync();
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "OD_Cancel")
+                {
+                    var odCancelWorkflows = TempLeaveWorkFlow.Select(t => new OdcancelWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.OdcancelWorkFlowstatuses.AddRangeAsync(odCancelWorkflows);
+
+                    var odCancelNotifications = (from a in TempLeaveWorkFlow
+                                                 join b in _context.Odcancel00s on a.RequestId equals b.OdcancelId
+                                                 select new EmailNotification
+                                                 {
+                                                     InstdId = 1,
+                                                     RequestId = b.OdcancelId,
+                                                     RequestIdCode = b.RequestCode,
+                                                     RequesterEmpId = b.EmployeeId,
+                                                     ReceiverEmpId = a.Approver,
+                                                     TriggerDate = b.EntryDate,
+                                                     TransactionId = transactionID,
+                                                     ShowStatus = a.ShowStatus,
+                                                     RequesterDate = b.EntryDate,
+                                                     NotificationMessage = "Submitted a OD Cancellation For Approval",
+                                                     MailType = "A"
+                                                 }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(odCancelNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "SalaryAdvanceDetails")
+                {
+                    var salaryAdvanceWorkflowList = TempLeaveWorkFlow.Select(t => new SalaryAdvanceDetailsWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.SalaryAdvanceDetailsWorkFlowstatuses.AddRangeAsync(salaryAdvanceWorkflowList);
+
+                    var salaryAdvanceNotifications = (from a in TempLeaveWorkFlow
+                                                      join b in _context.SalaryAdvanceDetails on a.RequestId equals b.SalaryAdvanceId
+                                                      select new EmailNotification
+                                                      {
+                                                          InstdId = 1,
+                                                          RequestId = b.SalaryAdvanceId,
+                                                          RequestIdCode = b.Batchcode,
+                                                          RequesterEmpId = b.EmpId,
+                                                          ReceiverEmpId = a.Approver,
+                                                          TriggerDate = b.EntryDate,
+                                                          TransactionId = transactionID,
+                                                          ShowStatus = a.ShowStatus,
+                                                          RequesterDate = b.EntryDate,
+                                                          NotificationMessage = "Submitted a SalaryAdvance For Approval",
+                                                          MailType = "A"
+                                                      }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(salaryAdvanceNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "LateInEarlyOutCancel")
+                {
+                    var lateInEarlyOutWorkflowList = TempLeaveWorkFlow.Select(t => new LateInEarlyOutCancelWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.LateInEarlyOutCancelWorkFlowstatuses.AddRangeAsync(lateInEarlyOutWorkflowList);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.LateInEarlyOutCancel00s
+                                                  on a.RequestId equals b.LateInCancelId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.LateInCancelId,
+                                                  RequestIdCode = b.LateInReqId.ToString(),
+                                                  RequesterEmpId = b.EmpId,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted a LateIn EarlyOut Cancel For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+                }
+                else if (WorkFlowActivityFlow.TransactionType == "OTAllocationRequest")
+                {
+                    var otWorkflowList = TempLeaveWorkFlow.Select(t => new AttendanceOtempAllottWorkFlowstatus
+                    {
+                        RequestId = t.RequestId,
+                        ShowStatus = t.ShowStatus.HasValue ? (bool?)(t.ShowStatus.Value == 1) : null,
+                        ApprovalStatus = t.ApprovalStatus,
+                        Rule = t.Rule,
+                        RuleOrder = t.RuleOrder,
+                        HierarchyType = t.HierarchyType,
+                        Approver = t.Approver,
+                        ApprovalRemarks = t.ApprovalRemarks,
+                        EntryBy = t.Entry_By,
+                        EntryDt = t.Entry_Dt,
+                        UpdatedBy = t.Updated_By,
+                        UpdatedDt = t.Updated_Dt,
+                        Deligate = t.Deligate,
+                        EntryFrom = WorkFlowActivityFlow.Entryfrom
+                    }).ToList();
+
+                    await _context.AttendanceOtempAllottWorkFlowstatuses.AddRangeAsync(otWorkflowList);
+
+                    var emailNotifications = (from a in TempLeaveWorkFlow
+                                              join b in _context.AttendanceOtempAllotted00s
+                                                  on a.RequestId equals b.OtreqId
+                                              select new EmailNotification
+                                              {
+                                                  InstdId = 1,
+                                                  RequestId = b.OtreqId,
+                                                  RequestIdCode = b.BatchCode,
+                                                  RequesterEmpId = b.EntryBy,
+                                                  ReceiverEmpId = a.Approver,
+                                                  TriggerDate = b.EntryDate,
+                                                  TransactionId = transactionID,
+                                                  ShowStatus = a.ShowStatus,
+                                                  RequesterDate = b.EntryDate,
+                                                  NotificationMessage = "Submitted OverTime Allocation Request For Approval",
+                                                  MailType = "A"
+                                              }).ToList();
+
+                    await _context.EmailNotifications.AddRangeAsync(emailNotifications);
+                    await _context.SaveChangesAsync();
+
+
+                    await _context.SaveChangesAsync();
+                }
+
+            }
+            else
+            {
+                if (WorkFlowActivityFlow.TransactionType == "ManpowerRequisition")
+                {
+                    var joinedData = (from a in TempLeaveWorkFlow
+                                      join b in _context.HrEmpImages on a.Approver equals b.EmpId
+                                      join c in _context.EmployeeDetails on b.EmpId equals c.EmpId
+                                      join d in _context.DesignationDetails on c.DesigId equals d.LinkId
+                                      join e in _context.BranchDetails on c.BranchId equals e.LinkId
+                                      where a.HideFlow != 1
+                                      select new WorkFlowDisplayDto
+                                      {
+                                          EmpName = c.Name,
+                                          Name = c.Name,
+                                          Url = b.ImageUrl,
+                                          Designation = d.Designation,
+                                          ImageUrl = b.ImageUrl,
+                                          ApprovalStatus = "",
+                                          Branch = e.Branch,
+                                          Rule = a.Rule,
+                                          RuleOrder = a.RuleOrder,
+                                          ShowStatus = (bool)(a.ShowStatus.HasValue ? (bool?)(a.ShowStatus.Value == 1) : null),
+                                          FlowRoleID = a.FlowRoleID,
+                                          ForwardNext = a.ForwardNext,
+                                          WorkFlowID = a.WorkFlowID,
+                                          WorkFlowStatus = "",
+                                          EmpId = c.EmpId,
+                                          Code = c.EmpCode
+                                      }).ToList();
+
+
+                    var distinctData = joinedData
+                        .GroupBy(x => x.EmpId)
+                        .Select(g => g.First())
+                        .OrderBy(x => x.Rule)
+                        .ThenBy(x => x.RuleOrder)
+                        .ToList();
+
+                    return distinctData;
+                }
+                else
+                {
+                    var workflowList = (from a in TempLeaveWorkFlow
+                                        join b in _context.HrEmpImages on a.Approver equals b.EmpId
+                                        join c in _context.EmployeeDetails on b.EmpId equals c.EmpId
+                                        join d in _context.DesignationDetails on c.DesigId equals d.LinkId
+                                        join e in _context.BranchDetails on c.BranchId equals e.LinkId
+                                        where a.HideFlow != 1
+                                        orderby a.Rule, a.RuleOrder
+                                        select new WorkFlowDisplayDto
+                                        {
+                                            EmpName = c.Name,
+                                            Name = c.Name,
+                                            Url = b.ImageUrl,
+                                            Designation = d.Designation,
+                                            ImageUrl = b.ImageUrl,
+                                            ApprovalStatus = "",
+                                            Branch = e.Branch,
+                                            Rule = a.Rule,
+                                            RuleOrder = a.RuleOrder,
+                                            ShowStatus = (bool)(a.ShowStatus.HasValue ? (bool?)(a.ShowStatus.Value == 1) : null),
+                                            FlowRoleID = a.FlowRoleID,
+                                            ForwardNext = a.ForwardNext,
+                                            WorkFlowID = a.WorkFlowID,
+                                            WorkFlowStatus = "",
+                                            EmpId = c.EmpId,
+                                            Code = c.EmpCode
+                                        }).ToList();
+
+                    return workflowList;
+                }
+            }
+
+            return 1;
+        }
+
+
         private async Task<object> GetEmpProfUpload()
         {
             var result = await (from a in _context.EmpProfessionals
@@ -18682,3 +23589,7 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
     }
 
 }
+
+
+
+

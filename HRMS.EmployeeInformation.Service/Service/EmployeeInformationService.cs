@@ -904,5 +904,9 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.SaveEmployeeUpload(uploadType, selectedrole, categoryLevels);
         }
+        public async Task<object> WorkFlowActivityFlow(WorkFlowActivityFlowDto WorkFlowActivityFlow)
+        {
+            return await _employeeRepository.WorkFlowActivityFlow(WorkFlowActivityFlow);
+        }
     }
 }

@@ -249,5 +249,7 @@ namespace HRMS.EmployeeInformation.Repository.Common
         Task<object> EmployeeUpload(string data, string uploadType);
         Task<object> GetEmployeeUpload(string uploadType, string? isAutoCode, string? categoryType);
         Task<object> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels);
+        Task<object> WorkFlowActivityFlow(WorkFlowActivityFlowDto WorkFlowActivityFlow);
+
     }
 }

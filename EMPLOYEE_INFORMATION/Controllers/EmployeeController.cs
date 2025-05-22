@@ -1498,5 +1498,13 @@ namespace EMPLOYEE_INFORMATION.Controllers
             var result = await _employeeInformation.SaveEmployeeUpload(uploadType, selectedrole, categoryLevels);
             return Ok(result);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> WorkFlowActivityFlow(WorkFlowActivityFlowDto WorkFlowActivityFlow)
+        {
+            var workFlowActivityFlow = await _employeeInformation.WorkFlowActivityFlow(WorkFlowActivityFlow);
+            return Ok(workFlowActivityFlow);
+        }
+
     }
 }
