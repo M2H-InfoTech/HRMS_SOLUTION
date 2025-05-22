@@ -14,8 +14,10 @@ using ATTENDANCE.Service.ShiftMasterUpload;
 using ATTENDANCE.Service.ShiftSettings;
 using ATTENDANCE.Service.ShiftUpload;
 using EMPLOYEE_INFORMATION.Data;
-
+using LEAVE.Helpers;
+using LEAVE.Helpers.AccessMetadataService;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,7 +27,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddDbContext<EmployeeDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-
+builder.Services.Configure<HttpClientSettings>(builder.Configuration.GetSection("HttpClientSettings"));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<HttpClientSettings>>().Value);
 
 
 builder.Services.AddScoped<IAssignPolicyRepository, AssignPolicyRepository>();
@@ -48,6 +51,11 @@ builder.Services.AddScoped<IAttendanceProcessService, AttendanceProcessService>(
 builder.Services.AddScoped<IShiftMasterUploadService, ShiftMasterUploadService>();
 builder.Services.AddScoped<IShiftSettingsService, ShiftSettingsService>();
 builder.Services.AddScoped<IShiftUploadService, ShiftUploadService>();
+
+builder.Services.AddHttpClient<ExternalApiService>();
+builder.Services.AddScoped<IAccessMetadataService, AccessMetadataService>();
+
+
 
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

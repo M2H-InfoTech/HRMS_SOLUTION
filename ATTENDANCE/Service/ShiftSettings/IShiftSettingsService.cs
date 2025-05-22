@@ -1,4 +1,5 @@
 ﻿using ATTENDANCE.DTO.Request;
+using ATTENDANCE.DTO.Response;
 using ATTENDANCE.DTO.Response.shift;
 using EMPLOYEE_INFORMATION.Models.Entity;
 
@@ -13,5 +14,8 @@ namespace ATTENDANCE.Service.ShiftSettings
         Task<string> CreateOpenShiftAsync(ShiftInsertRequestDto Request);
         Task<(int ErrorID, string ErrorMessage)> UpdateOpenShiftAsync(ShiftInsertRequestDto Request);
         Task<int> InsertShiftNormalSeasonAsync(ShiftInsertRequestDto Request);
+        
+        Task<List<FillAllShiftDto>> FillAllShift(ShiftViewDto Request);
+
     }
 }
