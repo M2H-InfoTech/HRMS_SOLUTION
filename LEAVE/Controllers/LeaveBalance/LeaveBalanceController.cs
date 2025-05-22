@@ -1,4 +1,5 @@
-﻿using LEAVE.Service.LeaveBalance;
+﻿using LEAVE.Dto;
+using LEAVE.Service.LeaveBalance;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LEAVE.Controllers.LeaveBalance
@@ -31,6 +32,18 @@ namespace LEAVE.Controllers.LeaveBalance
 
             var fillweekendinclude = await _leaveBalanceService.GetLeaveApplicationsAsync(employeeId, leaveId, approvalStatus, flowStatus, leaveFrom, leaveTo);
             return Ok(fillweekendinclude);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetLeaveAssignmentEligibleEmployeesAsync(int entryByUserId, int? roleId)
+        {
+            var leaveAssignmentEligibleEmployees = await _leaveBalanceService.GetLeaveAssignmentEligibleEmployeesAsync(entryByUserId, roleId);
+            return Ok(leaveAssignmentEligibleEmployees);
+        }
+        [HttpGet]
+        public async Task<IActionResult> EmployeeDetailsWorkFlow (EmployeeDetailWFDto dto)
+        {
+            var result = await _leaveBalanceService.EmployeeDetailsWorkFlow (dto);
+            return Ok (result);
         }
 
     }

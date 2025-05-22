@@ -556,28 +556,34 @@ namespace LEAVE.Repository.AssignLeave
 
                 _context.HrmLeaveBasicsettingsaccesses.RemoveRange (subDelete);
 
-                // Insert new basic settings (cross join: employeeIds × settings)
-                var query = from a in employeeIds
-                            from x in _context.HrmLeaveMasterandsettingsLinks
-                            join y in _context.HrmLeaveEntitlementHeads
-                                on x.SettingsId equals y.SettingsId into yJoin
-                            from y in yJoin.DefaultIfEmpty ( )
-                            where leaveMasterIds.Contains ((int)x.SettingsId)
-                            select new HrmLeaveBasicsettingsaccess
-                            {
-                                EmployeeId = a,
-                                SettingsId = x.SettingsId,
-                                LeaveMasterId = x.LeaveMasterId,
-                                IsCompanyLevel = 0,
-                                CreatedBy = dto.EntryBy,
-                                CreatedDate = DateTime.UtcNow,
-                                LinkLevel = dto.LinkLevel,
-                                FromDateBs = dto.FromDate,
-                                ValidToBs = dto.ValidTo,
-                                Laps = y != null ? y.Laps : null
-                            };
+                var leaveLinks = await _context.HrmLeaveMasterandsettingsLinks
+                .Where (x => leaveMasterIds.Contains ((int)x.SettingsId))
+                .ToListAsync ( );
 
-                await _context.HrmLeaveBasicsettingsaccesses.AddRangeAsync (query);
+                var entitlements = await _context.HrmLeaveEntitlementHeads
+                    .Where (x => leaveMasterIds.Contains ((int)x.SettingsId))
+                    .ToListAsync ( );
+
+                // Now safely do cross-join in memory
+                var newBasicSettings = from empId in employeeIds
+                                       from link in leaveLinks
+                                       let entitlement = entitlements.FirstOrDefault (y => y.SettingsId == link.SettingsId)
+                                       select new HrmLeaveBasicsettingsaccess
+                                       {
+                                           EmployeeId = empId,
+                                           SettingsId = link.SettingsId,
+                                           LeaveMasterId = link.LeaveMasterId,
+                                           IsCompanyLevel = 0,
+                                           CreatedBy = dto.EntryBy,
+                                           CreatedDate = DateTime.UtcNow,
+                                           LinkLevel = dto.LinkLevel,
+                                           FromDateBs = dto.FromDate,
+                                           ValidToBs = dto.ValidTo,
+                                           Laps = entitlement?.Laps
+                                       };
+
+                await _context.HrmLeaveBasicsettingsaccesses.AddRangeAsync (newBasicSettings);
+
 
                 // Update ValidTo of existing LEAVE_ACCESS entries
                 var leaveAccessToUpdate = await _context.HrmLeaveEmployeeleaveaccesses
