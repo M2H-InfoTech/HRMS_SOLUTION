@@ -6,7 +6,7 @@ namespace ATTENDANCE.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AssignShiftController(AssignShiftService assignShift) : ControllerBase
+    public class AssignShiftController(IAssignShiftService assignShift) : ControllerBase
     {
     }
 }

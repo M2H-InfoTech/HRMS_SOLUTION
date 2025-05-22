@@ -28,6 +28,7 @@
     <ProjectReference Include="..\HRMS.EmployeeInformation.Data\HRMS.EmployeeInformation.Data.csproj" />
     <ProjectReference Include="..\HRMS.EmployeeInformation.DTO\HRMS.EmployeeInformation.DTO.csproj" />
     <ProjectReference Include="..\HRMS.EmployeeInformation.Models\HRMS.EmployeeInformation.Models.csproj" />
+    <ProjectReference Include="..\LEAVE\LEAVE.csproj" />
     
   </ItemGroup>
 

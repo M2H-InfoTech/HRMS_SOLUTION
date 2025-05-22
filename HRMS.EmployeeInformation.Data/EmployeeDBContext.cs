@@ -365,6 +365,11 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<EmpCommunication> EmpCommunications { get; set; }
     public virtual DbSet<EmpProfessional> EmpProfessionals { get; set; }
     public virtual DbSet<LeaveFinalSetting> LeaveFinalSettings { get; set; }
+    public virtual DbSet<AutoCalAttendance00> AutoCalAttendance00s { get; set; }
+    public virtual DbSet<Attendancepolicy01> Attendancepolicy01s { get; set; }
+    public virtual DbSet<Attendancepolicy02> Attendancepolicy02s { get; set; }
+    public virtual DbSet<Attendancepolicy03> Attendancepolicy03s { get; set; }
+    public virtual DbSet<AttendancePolicyHistory> AttendancePolicyHistories { get; set; }
     public virtual DbSet<GradeDetail> GradeDetails { get; set; }
     public virtual DbSet<ProcessPayRoll00> ProcessPayRoll00s { get; set; }
     public virtual DbSet<WorkFlowDetails01> WorkFlowDetails01s { get; set; }
@@ -5619,6 +5624,120 @@ public partial class EmployeeDBContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("ID");
         });
+        modelBuilder.Entity<AutoCalAttendance00>(entity =>
+        {
+            entity.HasKey(e => e.AutoCalAttendanceId).HasName("PK__AutoCalA__3932314AAEC3A389");
+
+            entity.ToTable("AutoCalAttendance00");
+
+            entity.Property(e => e.AutoCalAttendanceId).HasColumnName("AutoCalAttendanceID");
+            entity.Property(e => e.EmployeeId)
+                .IsUnicode(false)
+                .HasColumnName("EmployeeID");
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.RequestFrom)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.RequestFromId).HasColumnName("RequestFromID");
+            entity.Property(e => e.RequestId)
+                .IsUnicode(false)
+                .HasColumnName("RequestID");
+            entity.Property(e => e.Status)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+        });
+        modelBuilder.Entity<Attendancepolicy01>(entity =>
+        {
+            entity.HasKey(e => e.AttendancePolicy01Id).HasName("PK__ATTENDAN__21F0E7DF481D3E7E");
+
+            entity.ToTable("ATTENDANCEPOLICY01");
+
+            entity.Property(e => e.AttendancePolicy01Id).HasColumnName("AttendancePolicy01ID");
+            entity.Property(e => e.AttendancePolicyId).HasColumnName("AttendancePolicyID");
+            entity.Property(e => e.CreatedBy).HasColumnName("Created_By");
+            entity.Property(e => e.CreatedOn)
+                .HasColumnType("datetime")
+                .HasColumnName("Created_On");
+            entity.Property(e => e.EarlyGapLimitNo)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("EarlyGap_LimitNo");
+            entity.Property(e => e.LateGapLimitNo)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("LateGap_LimitNo");
+            entity.Property(e => e.MaxEarlyOutLimitMin)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Max_EarlyOut_Limit_Min");
+            entity.Property(e => e.MaxEarlyOutLimitNo)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Max_EarlyOut_LimitNo");
+            entity.Property(e => e.MaxLateComingLimitMin)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Max_LateComing_LimitMin");
+            entity.Property(e => e.MaxLateComingLimitNo)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Max_LateComing_LimitNo");
+            entity.Property(e => e.PolicyConId).HasColumnName("Policy_ConId");
+        });
+        modelBuilder.Entity<Attendancepolicy02>(entity =>
+        {
+            entity.HasKey(e => e.AttendancePolicy02Id).HasName("PK__ATTENDAN__2134F5446266FDD7");
+
+            entity.ToTable("ATTENDANCEPOLICY02");
+
+            entity.Property(e => e.AttendancePolicy02Id).HasColumnName("AttendancePolicy02ID");
+            entity.Property(e => e.AttendancePolicyId).HasColumnName("AttendancePolicyID");
+            entity.Property(e => e.EndTime).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Maximum).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Minimum).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.OthoursAfterConsider).HasColumnName("OTHoursAfterConsider");
+            entity.Property(e => e.OverTimeTypeId).HasColumnName("OverTimeTypeID");
+            entity.Property(e => e.PolicyDayType).HasDefaultValue(0);
+            entity.Property(e => e.StartTime).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.WeekDay)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+        });
+        modelBuilder.Entity<Attendancepolicy03>(entity =>
+        {
+            entity.HasKey(e => e.Attendancepolicy03id).HasName("PK__ATTENDAN__3DE9B9DCE25BD071");
+
+            entity.ToTable("ATTENDANCEPOLICY03");
+
+            entity.Property(e => e.Attendancepolicy03id).HasColumnName("ATTENDANCEPOLICY03ID");
+            entity.Property(e => e.AttendancePolicyId).HasColumnName("AttendancePolicyID");
+            entity.Property(e => e.ShortageId).HasColumnName("ShortageID");
+        });
+        OnModelCreatingPartial(modelBuilder);
+        modelBuilder.Entity<AttendancePolicyHistory>(entity =>
+        {
+            entity.ToTable("ATTENDANCE_POLICY_HISTORY");
+
+            entity.HasKey(e => e.AttendancePolicyHistoryId); // Set PK here
+
+            entity.Property(e => e.AttendancePolicyHistoryId)
+                .HasColumnName("AttendancePolicyHistoryId")
+                .ValueGeneratedOnAdd();
+
+            entity.Property(e => e.AttendancePolicyId)
+                .HasColumnName("AttendancePolicyID");
+
+            entity.Property(e => e.Ipaddress)
+                .HasColumnName("IPAddress");
+
+            entity.Property(e => e.UpdatedDate)
+                .HasColumnType("datetime");
+        });
+
+
+        OnModelCreatingPartial(modelBuilder);
         modelBuilder.Entity<GradeDetail> (entity =>
         {
             entity

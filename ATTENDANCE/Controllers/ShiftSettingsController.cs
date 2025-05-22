@@ -61,6 +61,13 @@ namespace ATTENDANCE.Controllers
             return Ok(result);
 
         }
+    
+        [HttpPost]
+        public async Task<IActionResult> FillAllShift(ShiftViewDto shiftViewDto)
+        {
+            var result = await service.FillAllShift(shiftViewDto);
+            return Ok(result);
+        }
 
     }
 }
