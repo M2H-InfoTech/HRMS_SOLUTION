@@ -56,9 +56,9 @@ namespace LEAVE.Service.BasicSettings
         //    return await _basicSettingsRepository.UpdatetLeaveMasterAndSettingsLinkAsync(masterId, basicSettingsId, createdBy);
         //}
 
-        public async Task<long?> UpsertLeaveMasterAndSettingsLinkAsync(LeaveEntitlementDto leaveEntitlementDto)
+        public async Task<long?> UpdateLeaveMasterAndSettingsLinkAsync(LeaveEntitlementDto leaveEntitlementDto)
         {
-            return await _basicSettingsRepository.UpsertLeaveMasterAndSettingsLinkAsync(leaveEntitlementDto);
+            return await _basicSettingsRepository.UpdateLeaveMasterAndSettingsLinkAsync(leaveEntitlementDto);
         }
     }
 }
