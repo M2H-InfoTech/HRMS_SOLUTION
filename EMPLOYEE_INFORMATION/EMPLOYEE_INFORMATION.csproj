@@ -7,6 +7,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+
 		<None Remove="EMPLOYEE_INFORMATION.http" />
 	</ItemGroup>
 
@@ -37,8 +38,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Resoucres\" />
-		<Folder Include="scaffoldData\" />
 		<Folder Include="wwwroot" />
 	</ItemGroup>
 

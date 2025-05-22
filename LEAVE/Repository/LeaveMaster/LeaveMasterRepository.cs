@@ -478,10 +478,10 @@ namespace LEAVE.Repository.LeaveMaster
                 }
 
                 // Commit the transaction
-                await _context.SaveChangesAsync();
+                int insertCount = await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return "success"; // Return success message
+                return insertCount > 0 ? _employeeSettings.DataInsertSuccessStatus : _employeeSettings.DataInsertFailedStatus;// "success"; // Return success message
             }
             catch (Exception)
             {

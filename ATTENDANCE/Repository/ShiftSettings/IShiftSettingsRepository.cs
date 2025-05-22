@@ -16,7 +16,8 @@ namespace ATTENDANCE.Repository.ShiftSettings
         Task<(int ErrorID, string ErrorMessage)> UpdateOpenShiftAsync(ShiftInsertRequestDto Request);
         Task<int> InsertShiftNormalSeasonAsync(ShiftInsertRequestDto Request);
 
-        //Task<List<FillAllShiftDto>> FillAllShift(ShiftViewDto Request);
+        Task<List<FillAllShiftDto>> FillAllShift(ShiftViewDto Request);
+        
 
     }
 }

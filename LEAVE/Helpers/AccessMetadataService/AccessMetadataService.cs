@@ -62,7 +62,7 @@ namespace LEAVE.Helpers.AccessMetadataService
             var accessRights = await _context.EntityAccessRights02s
                 .Where(s => s.RoleId == roleId && !string.IsNullOrEmpty(s.LinkId))
                 .ToListAsync();
-
+             
             var accessLinkItems = accessRights
                 .SelectMany(s => SplitStrings_XML(s.LinkId)
                     .Select(item => new LinkItemDto { Item = item, LinkLevel = s.LinkLevel }));

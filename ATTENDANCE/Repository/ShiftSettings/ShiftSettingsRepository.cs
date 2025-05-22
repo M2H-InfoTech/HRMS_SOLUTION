@@ -5,8 +5,11 @@ using ATTENDANCE.DTO.Response.shift;
 using Azure.Core;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.Models.Entity;
+using HRMS.EmployeeInformation.DTO.DTOs.AccessLevel;
+using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
 using HRMS.EmployeeInformation.Repository.Common;
+using LEAVE.Helpers.AccessMetadataService;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +17,7 @@ using System.Reflection.Metadata.Ecma335;
 
 namespace ATTENDANCE.Repository.ShiftSettings
 {
-    public class ShiftSettingsRepository(EmployeeDBContext _context) : IShiftSettingsRepository
+    public class ShiftSettingsRepository(EmployeeDBContext _context, IAccessMetadataService _accessMetadataService) : IShiftSettingsRepository
     {
         private static IEnumerable<string> SplitStrings_XML(string list)
         {
@@ -801,43 +804,115 @@ namespace ATTENDANCE.Repository.ShiftSettings
             return 0;
         }
 
-        //public async Task<List<FillAllShiftDto>> FillAllShift(ShiftViewDto Request)
+        public async Task<List<FillAllShiftDto>> FillAllShift(ShiftViewDto Request)
+        {
+            var transId = await _context.TransactionMasters.Where(t => t.TransactionType == "Shift")
+                .Select(t => t.TransactionId)
+                .FirstOrDefaultAsync();
+            var newEmpId = await _context.HrEmployeeUserRelations
+                .Where(r => r.UserId == Request.EntryBy)
+                .Select(r => r.EmpId)
+                .FirstOrDefaultAsync();
+            var LinkLevel = await _context.SpecialAccessRights
+                .Where(r => r.RoleId == Request.RoleId)
+                .Select(r => r.LinkLevel)
+                .FirstOrDefaultAsync();
+
+            var ifLevel15Exist = _context.EntityAccessRights02s
+                .AsEnumerable()
+                .Where(s => s.RoleId == Request.RoleId && s.LinkLevel == 15)
+                .SelectMany(s => SplitStrings_XML(s.LinkId))
+                .Any();
+
+
+            if (ifLevel15Exist)
+            {
+                var shiftData = await _context.HrShift00s
+                     .Where(s => s.ShiftId == Request.ShiftId || Request.ShiftId == 0)
+                     .Select(s => new FillAllShiftDto
+                     {
+                         ShiftId = s.ShiftId,
+                         ShiftCode = s.ShiftCode,
+                         ShiftName = s.ShiftName,
+                         ShiftType = s.ShiftType,
+                         EndwithNextDay = s.EndwithNextDay
+                     }).ToListAsync();
+
+                return shiftData;
+            }
+
+            else
+            {
+                var NewHighList = await _accessMetadataService.GetNewHighListAsync(newEmpId, Request.RoleId, transId, LinkLevel);
+
+                var shiftData = await _context.HrShift00s
+                    .Where(h => NewHighList.Contains(h.ShiftId) && (h.ShiftId == Request.ShiftId || Request.ShiftId == 0))
+                    .Select(s => new FillAllShiftDto
+                    {
+                        ShiftId = s.ShiftId,
+                        ShiftCode = s.ShiftCode,
+                        ShiftName = s.ShiftName,
+                        ShiftType = s.ShiftType,
+                        EndwithNextDay = s.EndwithNextDay
+                    }).ToListAsync();
+                return shiftData;
+
+
+            }
+
+
+            //var entityApplicableMapped = await (
+            //                from ea in _context.EntityApplicable00s
+            //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelOneId
+            //                where ea.TransactionId == transId && ea.LinkLevel == 1
+            //                select new { hlv.LastEntityId, ea.MasterId }
+            //            ).Union(
+            //                from ea in _context.EntityApplicable00s
+            //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelTwoId
+            //                where ea.TransactionId == transId && ea.LinkLevel == 2
+            //                select new { hlv.LastEntityId, ea.MasterId }
+            //            ).Union(
+            //                from ea in _context.EntityApplicable00s
+            //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelThreeId
+            //                where ea.TransactionId == transId && ea.LinkLevel == 3
+            //                select new { hlv.LastEntityId, ea.MasterId }
+            //            ).Union(
+            //                from ea in _context.EntityApplicable00s
+            //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelFourId
+            //                where ea.TransactionId == transId && ea.LinkLevel == 4
+            //                select new { hlv.LastEntityId, ea.MasterId }
+            //            ).Union(
+            //                from ea in _context.EntityApplicable00s
+            //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelFiveId
+            //                where ea.TransactionId == transId && ea.LinkLevel == 5
+            //                select new { hlv.LastEntityId, ea.MasterId }
+            //            ).Union(
+            //                from ea in _context.EntityApplicable00s
+            //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelSixId
+            //                where ea.TransactionId == transId && ea.LinkLevel == 6
+            //                select new { hlv.LastEntityId, ea.MasterId }
+            //            ).Union(
+            //                from ea in _context.EntityApplicable00s
+            //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelSevenId
+            //                where ea.TransactionId == transId && ea.LinkLevel == 7
+            //                select new { hlv.LastEntityId, ea.MasterId }
+            //            ).Union(
+            //                from ea in _context.EntityApplicable00s
+            //                join hlv in _context.HighLevelViewTables on
+        }
+
+        //public async Task<int> GetTransIDForAttenPolicy()
         //{
-        //    var transId = await _context.TransactionMasters.Where(t=>t.TransactionType == "Shift")
+        //    return await _context.TransactionMasters
+        //        .Where(t => t.TransactionType == "AtnPolicy")
         //        .Select(t => t.TransactionId)
         //        .FirstOrDefaultAsync();
-        //    var newEmpId = await _context.HrEmployeeUserRelations
-        //        .Where(r => r.UserId == Request.EntryBy)
-        //        .Select(r => r.EmpId)
-        //        .FirstOrDefaultAsync();
-        //    var LinkLevel = await _context.SpecialAccessRights
-        //        .Where(r=>r.RoleId == Request.RoleId)
-        //        .Select(r => r.LinkLevel)
-        //        .FirstOrDefaultAsync();
-
-        //    var ifLevel15Exist = await _context.EntityAccessRights02s
-        //        .Where(s=>s.RoleId == Request.RoleId && s.LinkLevel == 15)
-        //        .SelectMany(s=>SplitStrings_XML(s.LinkId))
-        //        .AnyAsync();
-
-        //    if (ifLevel15Exist)
-        //    {
-        //       var shiftData = await _context.HrShift00s
-        //            .Where(s=>s.ShiftId == Request.ShiftId || Request.ShiftId == 0)
-        //            .Select(s=> new FillAllShiftDto
-        //            {
-        //                ShiftId = s.ShiftId,
-        //                ShiftCode = s.ShiftCode,
-        //                ShiftName = s.ShiftName,
-        //                ShiftType = s.ShiftType,
-        //                EndwithNextDay = s.EndwithNextDay
-        //            }).ToListAsync();
-
-        //        return shiftData;
-        //    }
-
-
         //}
+        
+
+       
+        
+
     }
 }
 

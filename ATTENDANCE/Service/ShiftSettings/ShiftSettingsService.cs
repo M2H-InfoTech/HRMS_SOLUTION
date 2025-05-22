@@ -1,4 +1,5 @@
 ﻿using ATTENDANCE.DTO.Request;
+using ATTENDANCE.DTO.Response;
 using ATTENDANCE.DTO.Response.shift;
 using ATTENDANCE.Repository.ShiftSettings;
 using EMPLOYEE_INFORMATION.Models.Entity;
@@ -22,6 +23,13 @@ namespace ATTENDANCE.Service.ShiftSettings
         {
             return await repository.CreateSplitShiftAsync(Request);
         }
+
+        public async Task<List<FillAllShiftDto>> FillAllShift(ShiftViewDto Request)
+        {
+            return await repository.FillAllShift(Request);
+        }
+
+          
 
         public async Task<List<HrmValueType>> GetShiftDayTypesAsync()
         {
