@@ -40,17 +40,7 @@ namespace ATTENDANCE.Controllers
             var result = await service.ViewEmployeeShiftPolicy(request);
             return Ok(result);
         }
-        [HttpGet]
-        public async Task<IActionResult> FillOverTime()
-        {
-            var result = await service.FillOverTime();
-            return Ok(result);
-        }
-        [HttpPost]
-        public async Task<IActionResult> InsertAttendancePolicy(InsertAttendancePolicyDto request)
-        {
-            var result = await service.InsertAttendancePolicy(request);
-            return Ok(result);
-        }
+
+
     }
 }

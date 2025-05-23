@@ -10,7 +10,7 @@ namespace ATTENDANCE.Service.AssignPolicy
         Task<List<AttendancePolicyAccessDto>> ViewEmployeeShiftPolicyFiltered(int attendanceAccessId, string employeeIds);
         Task<int> BulkDeleteEmpPolicy(string ShiftIDs);
         Task<List<AttendancePolicyAccessDto>> ViewEmployeeShiftPolicy(ViewEmployeeShiftPolicyDto request);
-        Task<List<OvertimeValueDto>> FillOverTime();
-        Task<int> InsertAttendancePolicy(InsertAttendancePolicyDto request);
+ 
+      
     }
 }
