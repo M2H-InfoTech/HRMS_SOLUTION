@@ -69,5 +69,12 @@ namespace ATTENDANCE.Controllers
             return Ok(result);
         }
 
+        [HttpGet]//Created By Shan Lal k
+        public async Task<IActionResult> FillCriteriaAsync()
+        {
+            var result = await service.FillCriteriaAsync( );
+            return Ok(result);
+        }
+
     }
 }

@@ -1,3 +1,4 @@
+using ATTENDANCE.Mapping;
 using ATTENDANCE.Repository.AssignPolicy;
 using ATTENDANCE.Repository.AttendanceLog;
 using ATTENDANCE.Repository.AttendancePolicy;
@@ -55,7 +56,7 @@ builder.Services.AddScoped<IShiftUploadService, ShiftUploadService>();
 builder.Services.AddHttpClient<ExternalApiService>();
 builder.Services.AddScoped<IAccessMetadataService, AccessMetadataService>();
 
-
+builder.Services.AddAutoMapper(typeof(AttendenceMapper));
 
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
