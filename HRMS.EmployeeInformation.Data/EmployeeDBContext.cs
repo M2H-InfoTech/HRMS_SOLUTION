@@ -375,6 +375,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<WorkFlowDetails01> WorkFlowDetails01s { get; set; }
     public virtual DbSet<LeaveWorkFlowstatus> LeaveWorkFlowstatuses { get; set; }
     public virtual DbSet<SpecialWorkFlow02> SpecialWorkFlow02s { get; set; }
+    public virtual DbSet<PayLeaveType> PayLeaveTypes { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -5839,6 +5840,27 @@ public partial class EmployeeDBContext : DbContext
             entity.Property (e => e.CreatedDate).HasColumnType ("datetime");
             entity.Property (e => e.GrievanceTypeId).HasColumnName ("GrievanceTypeID");
             entity.Property (e => e.ModifiedDate).HasColumnType ("datetime");
+        });
+        modelBuilder.Entity<PayLeaveType>(entity =>
+        {
+            entity.HasKey(e => e.LeaveTypeId).HasName("PK__PAY_LEAV__357FFCA8BB74C586");
+
+            entity.ToTable("PAY_LEAVE_TYPE");
+
+            entity.Property(e => e.LeaveTypeId).HasColumnName("Leave_type_id");
+            entity.Property(e => e.Active)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("active");
+            entity.Property(e => e.Descriptions)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.InstId).HasColumnName("Inst_id");
+            entity.Property(e => e.LeaveDesc)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("Leave_desc");
         });
         OnModelCreatingPartial (modelBuilder);
     }

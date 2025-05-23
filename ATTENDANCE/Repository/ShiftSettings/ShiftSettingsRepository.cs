@@ -43,349 +43,282 @@ namespace ATTENDANCE.Repository.ShiftSettings
                 })
                 .ToListAsync();
         }
-        //public async Task<ShiftDetailsCollectionDto> ViewAllshiftAsync(int shiftId,int entryBy, int roleId)
-        //{
-        //   var shiftResponse = new ShiftDetailsCollectionDto();
-        //    if (shiftId != 0)
-        //    {
-        //        var shifts = await _context.HrShift00s
-        //            .Where(s => s.ShiftId == shiftId)
-        //            .Select(s => new ShiftDto
-        //            {
-        //                ShiftId = s.ShiftId,
-        //                ShiftCode = s.ShiftCode,
-        //                ShiftName = s.ShiftName,
-        //                ShiftType = s.ShiftType,
-        //                EndwithNextDay = s.EndwithNextDay,
-        //                ToleranceForward = s.ToleranceForward,
-        //                ToleranceBackward = s.ToleranceBackward
-        //            }).ToListAsync();
+        public async Task<ShiftDetailsCollectionDto> ViewAllshiftAsync(int shiftId, int entryBy, int roleId)
+        {
+            var shiftResponse = new ShiftDetailsCollectionDto();
+            if (shiftId != 0)
+            {
+                var shifts = await _context.HrShift00s
+                    .Where(s => s.ShiftId == shiftId)
+                    .Select(s => new ShiftDto
+                    {
+                        ShiftId = s.ShiftId,
+                        ShiftCode = s.ShiftCode,
+                        ShiftName = s.ShiftName,
+                        ShiftType = s.ShiftType,
+                        EndwithNextDay = s.EndwithNextDay,
+                        ToleranceForward = s.ToleranceForward,
+                        ToleranceBackward = s.ToleranceBackward
+                    }).ToListAsync();
 
-        //        shiftResponse.Shifts = shifts;
+                shiftResponse.Shifts = shifts;
 
-        //    }
+            }
 
-        //    else
-        //    {
-        //        int transId =await  _context.TransactionMasters
-        //            .Where(t => t.TransactionType == "Shift")
-        //            .Select(t => t.TransactionId)
-        //            .FirstOrDefaultAsync();
+            else
+            {
+                int transId = await _context.TransactionMasters
+                    .Where(t => t.TransactionType == "Shift")
+                    .Select(t => t.TransactionId)
+                    .FirstOrDefaultAsync();
 
-        //        int newEmpId = await _context.HrEmployeeUserRelations
-        //            .Where(r => r.UserId == entryBy)
-        //            .Select(r => r.EmpId)
-        //            .FirstOrDefaultAsync();
+                int newEmpId = await _context.HrEmployeeUserRelations
+                    .Where(r => r.UserId == entryBy)
+                    .Select(r => r.EmpId)
+                    .FirstOrDefaultAsync();
 
-        //        int? linkLevel =await  _context.SpecialAccessRights
-        //            .Where(r => r.RoleId == roleId)
-        //            .Select(r => r.LinkLevel)
-        //            .FirstOrDefaultAsync();
-
-
-        //        string empEntity = await _context.HrEmpMasters
-        //            .Where(e => e.EmpId == newEmpId)
-        //            .Select(e => e.EmpEntity)
-        //            .FirstOrDefaultAsync();
-
-        //        var level15Exists = await  _context.EntityAccessRights02s
-        //            .Where(s => s.RoleId == roleId && s.LinkLevel == 15)
-        //            .SelectMany(s => SplitStrings_XML(s.LinkId),
-        //                        (s, link) => new { s.LinkLevel, LinkId = link })
-        //            .AnyAsync();
-
-        //        if (level15Exists) {
-        //            var shifts =await  _context.HrShift00s
-        //                .Where(s => shiftId == 0 || s.ShiftId == shiftId)
-        //            .Select(s => new ShiftDto
-        //            {
-        //                ShiftId = s.ShiftId,
-        //                ShiftCode = s.ShiftCode,
-        //                ShiftName = s.ShiftName,
-        //                ShiftType = s.ShiftType,
-        //                EndwithNextDay = s.EndwithNextDay
-        //            }).ToListAsync();
-
-        //            shiftResponse.Shifts = shifts;
-
-        //        }
-        //        else
-        //        {
-        //            var newHighList = await employeeRepository.GetNewHighListAsync(newEmpId, roleId, transId, linkLevel);
+                int? linkLevel = await _context.SpecialAccessRights
+                    .Where(r => r.RoleId == roleId)
+                    .Select(r => r.LinkLevel)
+                    .FirstOrDefaultAsync();
 
 
-        //            // Step 1: Union ApplicableFinal + ApplicableFinal02
+                string empEntity = await _context.HrEmpMasters
+                    .Where(e => e.EmpId == newEmpId)
+                    .Select(e => e.EmpEntity)
+                    .FirstOrDefaultAsync();
 
+                var level15Exists = await _context.EntityAccessRights02s
+                    .Where(s => s.RoleId == roleId && s.LinkLevel == 15)
+                    .SelectMany(s => SplitStrings_XML(s.LinkId),
+                                (s, link) => new { s.LinkLevel, LinkId = link })
+                    .AnyAsync();
 
-        //            // Step 2: Flatten EntityApplicable00 joins by level
-        //            var entityApplicableMapped = await (
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelOneId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 1
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelTwoId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 2
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelThreeId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 3
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelFourId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 4
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelFiveId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 5
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelSixId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 6
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelSevenId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 7
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelEightId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 8
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelNineId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 9
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelTenId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 10
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelElevenId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 11
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).Union(
-        //                from ea in _context.EntityApplicable00s
-        //                join hlv in _context.HighLevelViewTables on ea.LinkId equals hlv.LevelTwelveId
-        //                where ea.TransactionId == transId && ea.LinkLevel == 12
-        //                select new { hlv.LastEntityId, ea.MasterId }
-        //            ).ToListAsync();
+                if (level15Exists)
+                {
+                    var shifts = await _context.HrShift00s
+                        .Where(s => shiftId == 0 || s.ShiftId == shiftId)
+                    .Select(s => new ShiftDto
+                    {
+                        ShiftId = s.ShiftId,
+                        ShiftCode = s.ShiftCode,
+                        ShiftName = s.ShiftName,
+                        ShiftType = s.ShiftType,
+                        EndwithNextDay = s.EndwithNextDay
+                    }).ToListAsync();
 
-        //            var finalMasterIds =
-        //                from map in entityApplicableMapped
-        //                join hlv in _context.HighLevelViewTables on map.LastEntityId equals hlv.LastEntityId
-        //                where newHighList.Contains(map.MasterId)
-        //                select map.MasterId;
+                    shiftResponse.Shifts = shifts;
 
-        //            // Step 3: Final Join
+                }
+                else
+                {
+                    var newHighList = await _accessMetadataService.GetNewHighListAsync(newEmpId, roleId, transId, linkLevel);
 
 
 
-        //            var Shifts = await _context.HrShift00s
-        //                .Where(h => (shiftId == 0 || h.ShiftId == shiftId) && finalMasterIds.Contains(h.ShiftId))
-        //                .Select(s => new ShiftDto
-        //                {
-        //                    ShiftId = s.ShiftId,
-        //                    ShiftCode = s.ShiftCode,
-        //                    ShiftName = s.ShiftName,
-        //                    ShiftType = s.ShiftType,
-        //                    EndwithNextDay = s.EndwithNextDay
-        //                }).ToListAsync();
-        //            shiftResponse.Shifts = Shifts;
-
-
-        //        }
 
 
 
-        //    }
-
-        //    var shiftIdParam = shiftId; // your input ShiftID
-
-        //    var shiftdata1 = await (
-        //        from s in _context.HrShift01s
-        //        where shiftIdParam == 0 || s.ShiftId == shiftIdParam
-        //        select new ShiftDetailDto
-        //        {
-        //            Shift01Id = s.Shift01Id,
-        //            ShiftId = s.ShiftId,
-        //            ShiftStartTypeID = s.ShiftStartType,
-        //            ShiftStartType = _context.HrmValueTypes
-        //                   .Where(v => v.Type == "ShiftDayType" && v.Value == s.ShiftStartType)
-        //                   .Select(v => v.Description)
-        //                   .FirstOrDefault(),
-        //            FirstHalf = s.FirstHalf,
-        //            SecondHalf = s.SecondHalf,
-        //            ShiftEndTypeID = s.ShiftEndType,
-        //            StartTime = s.StartTime.ToString().Replace(".", ":"),
-        //            ShiftEndType = _context.HrmValueTypes
-        //                   .Where(v => v.Type == "ShiftDayType" && v.Value == s.ShiftEndType)
-        //                   .Select(v => v.Description)
-        //                   .FirstOrDefault(),
-        //            EndTime = s.EndTime.ToString().Replace(".", ":"),
-        //            TotalHours = s.TotalHours,
-        //            EffectiveFrom = s.EffectiveFrom.HasValue ? s.EffectiveFrom.Value.ToString("MM/dd/yyyy") : null,
-        //            MinimumWorkHours = s.MinimumWorkHours
-        //        }
-
-        //    ).ToListAsync();  
-        //    shiftResponse.ShiftDetails = shiftdata1;
-
-        //    // Check if ShiftType is "Split"
-        //    var isSplitShift = await _context.HrShift00s
-        //        .Where(s => s.ShiftId == shiftId)
-        //        .Select(s => s.ShiftType)
-        //        .FirstOrDefaultAsync() == "Split";
-
-        //    if (isSplitShift)
-        //    {
-        //        var shiftTable = await (
-        //            from s2 in _context.HrShift02s
-        //            join s1 in _context.HrShift01s on s2.Shift01Id equals s1.Shift01Id
-        //            where shiftId == 0 || s2.ShiftId == shiftId
-        //            select new ShiftBreakDto
-        //            {
-        //                StartTime = Math.Round((decimal)s1.StartTime, 2),
-
-        //                EndTime = Math.Round((decimal)s1.EndTime, 2),
-        //                Shift02Id = s2.Shift02Id,
-        //                ShiftId = s2.ShiftId,
-        //                BreakStartTypeID = s2.BreakStartType,
-        //                BreakStartType = _context.HrmValueTypes
-        //                    .Where(v => v.Type == "ShiftDayType" && v.Value == s2.BreakStartType)
-        //                    .Select(v => v.Description)
-        //                    .FirstOrDefault(),
-        //                BreakStartTime = ((int)s2.BreakStartTime / 100).ToString("D2") + ":" + ((int)s2.BreakStartTime % 100).ToString("D2"),
-        //                BreakEndTypeID = s2.BreakEndType,
-        //                BreakEndTime = ((int)s2.BreakEndTime / 100).ToString("D2") + ":" + ((int)s2.BreakEndTime % 100).ToString("D2"),
-        //                BreakEndType = _context.HrmValueTypes
-        //                    .Where(v => v.Type == "ShiftDayType" && v.Value == s2.BreakEndType)
-        //                    .Select(v => v.Description)
-        //                    .FirstOrDefault(),
-        //                TotalBreakHours = s2.TotalBreakHours,
-        //                EffectiveFrom = s2.EffectiveFrom.HasValue
-        //                    ? s2.EffectiveFrom.Value.ToString("MM/dd/yyyy")
-        //                    : null,
-        //                IsPaid = s2.IsPaid
-        //            }
-        //        ).ToListAsync();
-        //        shiftResponse.ShiftBreaks = shiftTable;
-        //    }
-        //    else
-        //    {
-        //        var shiftTable = await (
-        //            from s in _context.HrShift02s
-        //            where shiftId == 0 || s.ShiftId == shiftId
-        //            select new ShiftBreakDto
-        //            {
-        //                Shift02Id = s.Shift02Id,
-        //                ShiftId = s.ShiftId,
-        //                BreakStartTypeID = s.BreakStartType,
-        //                BreakStartType = _context.HrmValueTypes
-        //                    .Where(v => v.Type == "ShiftDayType" && v.Value == s.BreakStartType)
-        //                    .Select(v => v.Description)
-        //                    .FirstOrDefault(),
-        //                BreakStartTime = ((int)s.BreakStartTime / 100).ToString("D2") + ":" + ((int)s.BreakStartTime % 100).ToString("D2"),
-        //                BreakEndTypeID = s.BreakEndType,
-        //                BreakEndTime = ((int)s.BreakEndTime / 100).ToString("D2") + ":" + ((int)s.BreakEndTime % 100).ToString("D2"),
-        //                BreakEndType = _context.HrmValueTypes
-        //                    .Where(v => v.Type == "ShiftDayType" && v.Value == s.BreakEndType)
-        //                    .Select(v => v.Description)
-        //                    .FirstOrDefault(),
-        //                TotalBreakHours = s.TotalBreakHours,
-        //                EffectiveFrom = s.EffectiveFrom.HasValue
-        //                    ? s.EffectiveFrom.Value.ToString("MM/dd/yyyy")
-        //                    : null,
-        //                IsPaid = s.IsPaid
-        //            }).ToListAsync();
-
-        //        shiftResponse.ShiftBreaks = shiftTable;
+                    var Shifts = await _context.HrShift00s
+                        .Where(h => newHighList.Contains(h.ShiftId) && (shiftId == 0 || h.ShiftId == shiftId))
+                        .Select(h => new ShiftDto
+                        {
+                            ShiftId = h.ShiftId,
+                            ShiftCode = h.ShiftCode,
+                            ShiftName = h.ShiftName,
+                            ShiftType = h.ShiftType,
+                            EndwithNextDay = h.EndwithNextDay,
+                            ToleranceForward = h.ToleranceForward,
+                            ToleranceBackward = h.ToleranceBackward
+                        })
+                        .ToListAsync();
 
 
-        //    }
-        //    var result = await (
-        //        from a in _context.HrShiftOpens
-        //        join b in _context.HrShift00s on a.ShiftMasterId equals b.ShiftId
-        //        join c in _context.HrShift00s on a.ShiftId equals c.ShiftId
-        //        where a.ShiftMasterId == shiftId
-        //        select new ShiftMasterDto
-        //        {
-        //            ShiftMasterId = a.ShiftMasterId,
-        //            ShiftId = a.ShiftId,
-        //            ShiftName = c.ShiftName
-        //        }).ToListAsync();
-        //    shiftResponse.ShiftMasters = result;
 
 
-        //    var shiftSeasons = await _context.HrShiftseason00s
-        //        .Where(s => s.ShiftId == shiftId || shiftId == 0)
-        //        .Select(s => new ShiftSeasonDto
-        //        {
-        //            ShiftSeason01Id = s.ShiftSeason01Id,
-        //            ShiftId = s.ShiftId,
-        //            ShiftStartTypeID = s.ShiftStartType,
-        //            ShiftStartType = _context.HrmValueTypes
-        //                .Where(v => v.Type == "ShiftDayType" && v.Value == s.ShiftStartType)
-        //                .Select(v => v.Description)
-        //                .FirstOrDefault(),
-        //            ShiftEndTypeID = s.ShiftEndType,
-        //            StartTime = s.StartTime.ToString().Replace(".", ":"),
-        //            ShiftEndType = _context.HrmValueTypes
-        //                .Where(v => v.Type == "ShiftDayType" && v.Value == s.ShiftEndType)
-        //                .Select(v => v.Description)
-        //                .FirstOrDefault(),
-        //            EndTime = s.EndTime.ToString().Replace(".", ":"),
-        //            TotalHours = s.TotalHours,
-        //            EffectiveFrom = s.EffectiveFrom.HasValue
-        //                ? s.EffectiveFrom.Value.ToString("MM/dd/yyyy")
-        //                : null,
-        //            MinimumWorkHours = s.MinimumWorkHours
-        //        })
-        //        .ToListAsync();
-        //    shiftResponse.ShiftSeasons = shiftSeasons;
+                }
 
 
-        //    var shiftSeasonBreaks = await _context.HrShiftseason01s
-        //        .Where(s => s.ShiftId == shiftId || shiftId == 0)
-        //        .Select(s => new ShiftSeasonBreakDto
-        //        {
-        //            ShiftSeason02Id = s.Shiftseason02Id,
-        //            ShiftId = s.ShiftId,
-        //            BreakStartTypeID = s.BreakStartType,
-        //            BreakStartType = _context.HrmValueTypes
-        //                .Where(v => v.Type == "ShiftDayType" && v.Value == s.BreakStartType)
-        //                .Select(v => v.Description)
-        //                .FirstOrDefault(),
-        //            BreakStartTime = s.BreakStartTime.ToString().Replace(".", ":"),
-        //            BreakEndTypeID = s.BreakEndType,
-        //            BreakEndTime = s.BreakEndTime.ToString().Replace(".", ":"),
-        //            BreakEndType = _context.HrmValueTypes
-        //                .Where(v => v.Type == "ShiftDayType" && v.Value == s.BreakEndType)
-        //                .Select(v => v.Description)
-        //                .FirstOrDefault(),
-        //            TotalBreakHours = s.TotalBreakHours,
-        //            EffectiveFrom = s.EffectiveFrom.HasValue
-        //                ? s.EffectiveFrom.Value.ToString("MM/dd/yyyy")
-        //                : null,
-        //            IsPaid = s.IsPaid
-        //        })
-        //        .ToListAsync();
-        //    shiftResponse.ShiftSeasonBreaks = shiftSeasonBreaks;
+
+            }
+
+            var shiftIdParam = shiftId; // your input ShiftID
+            
+            var shiftdata1 = await (
+                from s in _context.HrShift01s
+                where shiftIdParam == 0 || s.ShiftId == shiftIdParam
+                select new ShiftDetailDto
+                {
+                    Shift01Id = s.Shift01Id,
+                    ShiftId = s.ShiftId,
+                    ShiftStartTypeID = s.ShiftStartType,
+                    ShiftStartType = _context.HrmValueTypes
+                           .Where(v => v.Type == "ShiftDayType" && v.Value == s.ShiftStartType)
+                           .Select(v => v.Description)
+                           .FirstOrDefault(),
+                    FirstHalf = s.FirstHalf,
+                    SecondHalf = s.SecondHalf,
+                    ShiftEndTypeID = s.ShiftEndType,
+                    StartTime = s.StartTime.ToString().Replace(".", ":"),
+                    ShiftEndType = _context.HrmValueTypes
+                           .Where(v => v.Type == "ShiftDayType" && v.Value == s.ShiftEndType)
+                           .Select(v => v.Description)
+                           .FirstOrDefault(),
+                    EndTime = s.EndTime.ToString().Replace(".", ":"),
+                    TotalHours = s.TotalHours,
+                    EffectiveFrom = s.EffectiveFrom.HasValue ? s.EffectiveFrom.Value.ToString("MM/dd/yyyy") : null,
+                    MinimumWorkHours = s.MinimumWorkHours
+                }
+
+            ).ToListAsync();
+            shiftResponse.ShiftDetails = shiftdata1;
+
+            // Check if ShiftType is "Split"
+            var isSplitShift = await _context.HrShift00s
+                .Where(s => s.ShiftId == shiftId)
+                .Select(s => s.ShiftType)
+                .FirstOrDefaultAsync() == "Split";
+
+            if (isSplitShift)
+            {
+                var shiftTable = await (
+                    from s2 in _context.HrShift02s
+                    join s1 in _context.HrShift01s on s2.Shift01Id equals s1.Shift01Id
+                    where shiftId == 0 || s2.ShiftId == shiftId
+                    select new ShiftBreakDto
+                    {
+                        StartTime = Math.Round((decimal)s1.StartTime, 2),
+
+                        EndTime = Math.Round((decimal)s1.EndTime, 2),
+                        Shift02Id = s2.Shift02Id,
+                        ShiftId = s2.ShiftId,
+                        BreakStartTypeID = s2.BreakStartType,
+                        BreakStartType = _context.HrmValueTypes
+                            .Where(v => v.Type == "ShiftDayType" && v.Value == s2.BreakStartType)
+                            .Select(v => v.Description)
+                            .FirstOrDefault(),
+                        BreakStartTime = s2.BreakStartTime.ToString().Replace(".", ":"),
+                        BreakEndTypeID = s2.BreakEndType,
+                        BreakEndTime = s2.BreakEndTime.ToString().Replace(".", ":"),
+                        BreakEndType = _context.HrmValueTypes
+                            .Where(v => v.Type == "ShiftDayType" && v.Value == s2.BreakEndType)
+                            .Select(v => v.Description)
+                            .FirstOrDefault(),
+                        TotalBreakHours = s2.TotalBreakHours,
+                        EffectiveFrom = s2.EffectiveFrom.HasValue
+                            ? s2.EffectiveFrom.Value.ToString("MM/dd/yyyy")
+                            : null,
+                        IsPaid = s2.IsPaid
+                    }
+                ).ToListAsync();
+                shiftResponse.ShiftBreaks = shiftTable;
+            }
+            else
+            {
+                var shiftTable = await (
+                    from s in _context.HrShift02s
+                    where shiftId == 0 || s.ShiftId == shiftId
+                    select new ShiftBreakDto
+                    {
+                        Shift02Id = s.Shift02Id,
+                        ShiftId = s.ShiftId,
+                        BreakStartTypeID = s.BreakStartType,
+                        BreakStartType = _context.HrmValueTypes
+                            .Where(v => v.Type == "ShiftDayType" && v.Value == s.BreakStartType)
+                            .Select(v => v.Description)
+                            .FirstOrDefault(),
+                        BreakStartTime = s.BreakStartTime.ToString().Replace(".", ":"),
+                        BreakEndTypeID = s.BreakEndType,
+                        BreakEndTime = s.BreakEndTime.ToString().Replace(".", ":"),
+                        BreakEndType = _context.HrmValueTypes
+                            .Where(v => v.Type == "ShiftDayType" && v.Value == s.BreakEndType)
+                            .Select(v => v.Description)
+                            .FirstOrDefault(),
+                        TotalBreakHours = s.TotalBreakHours,
+                        EffectiveFrom = s.EffectiveFrom.HasValue
+                            ? s.EffectiveFrom.Value.ToString("MM/dd/yyyy")
+                            : null,
+                        IsPaid = s.IsPaid
+                    }).ToListAsync();
+
+                shiftResponse.ShiftBreaks = shiftTable;
 
 
-        //    return shiftResponse;
-        //}
+            }
+            var result = await (
+                from a in _context.HrShiftOpens
+                join b in _context.HrShift00s on a.ShiftMasterId equals b.ShiftId
+                join c in _context.HrShift00s on a.ShiftId equals c.ShiftId
+                where a.ShiftMasterId == shiftId
+                select new ShiftMasterDto
+                {
+                    ShiftMasterId = a.ShiftMasterId,
+                    ShiftId = a.ShiftId,
+                    ShiftName = c.ShiftName
+                }).ToListAsync();
+            shiftResponse.ShiftMasters = result;
 
-        // Helper function to convert decimal time (hh.mm) to minutes
+
+            var shiftSeasons = await _context.HrShiftseason00s
+                .Where(s => s.ShiftId == shiftId || shiftId == 0)
+                .Select(s => new ShiftSeasonDto
+                {
+                    ShiftSeason01Id = s.ShiftSeason01Id,
+                    ShiftId = s.ShiftId,
+                    ShiftStartTypeID = s.ShiftStartType,
+                    ShiftStartType = _context.HrmValueTypes
+                        .Where(v => v.Type == "ShiftDayType" && v.Value == s.ShiftStartType)
+                        .Select(v => v.Description)
+                        .FirstOrDefault(),
+                    ShiftEndTypeID = s.ShiftEndType,
+                    StartTime = s.StartTime.ToString().Replace(".", ":"),
+                    ShiftEndType = _context.HrmValueTypes
+                        .Where(v => v.Type == "ShiftDayType" && v.Value == s.ShiftEndType)
+                        .Select(v => v.Description)
+                        .FirstOrDefault(),
+                    EndTime = s.EndTime.ToString().Replace(".", ":"),
+                    TotalHours = s.TotalHours,
+                    EffectiveFrom = s.EffectiveFrom.HasValue
+                        ? s.EffectiveFrom.Value.ToString("MM/dd/yyyy")
+                        : null,
+                    MinimumWorkHours = s.MinimumWorkHours
+                })
+                .ToListAsync();
+            shiftResponse.ShiftSeasons = shiftSeasons;
+
+
+            var shiftSeasonBreaks = await _context.HrShiftseason01s
+                .Where(s => s.ShiftId == shiftId || shiftId == 0)
+                .Select(s => new ShiftSeasonBreakDto
+                {
+                    ShiftSeason02Id = s.Shiftseason02Id,
+                    ShiftId = s.ShiftId,
+                    BreakStartTypeID = s.BreakStartType,
+                    BreakStartType = _context.HrmValueTypes
+                        .Where(v => v.Type == "ShiftDayType" && v.Value == s.BreakStartType)
+                        .Select(v => v.Description)
+                        .FirstOrDefault(),
+                    BreakStartTime = s.BreakStartTime.ToString().Replace(".", ":"),
+                    BreakEndTypeID = s.BreakEndType,
+                    BreakEndTime = s.BreakEndTime.ToString().Replace(".", ":"),
+                    BreakEndType = _context.HrmValueTypes
+                        .Where(v => v.Type == "ShiftDayType" && v.Value == s.BreakEndType)
+                        .Select(v => v.Description)
+                        .FirstOrDefault(),
+                    TotalBreakHours = s.TotalBreakHours,
+                    EffectiveFrom = s.EffectiveFrom.HasValue
+                        ? s.EffectiveFrom.Value.ToString("MM/dd/yyyy")
+                        : null,
+                    IsPaid = s.IsPaid
+                })
+                .ToListAsync();
+            shiftResponse.ShiftSeasonBreaks = shiftSeasonBreaks;
+
+
+            return shiftResponse;
+        }
+
+        //Helper function to convert decimal time(hh.mm) to minutes
         public int HourToMinutes(decimal time)
         {
             // Convert decimal time to string in 'hh:mm' format

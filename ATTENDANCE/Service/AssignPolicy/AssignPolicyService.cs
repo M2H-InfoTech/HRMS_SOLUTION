@@ -16,10 +16,6 @@ namespace ATTENDANCE.Service.AssignPolicy
            return await repository.DeleteEmployeeShiftpolicy(shiftId);
         }
 
-        public async Task<List<OvertimeValueDto>> FillOverTime()
-        {
-           return await repository.FillOverTime(); 
-        }
 
         public async Task<List<ShiftPolicyDto>> GetAllShiftPolicy(int levelId, int empId, string linkId)
         {
@@ -35,9 +31,6 @@ namespace ATTENDANCE.Service.AssignPolicy
         {
             return await repository.ViewEmployeeShiftPolicyFiltered(attendanceAccessId, employeeIds);
         }
-        public async Task<int> InsertAttendancePolicy(InsertAttendancePolicyDto request)
-        {
-            return await repository.InsertAttendancePolicy(request);
-        }
+
     }
 }

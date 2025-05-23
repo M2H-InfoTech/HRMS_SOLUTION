@@ -7,7 +7,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-
 		<None Remove="EMPLOYEE_INFORMATION.http" />
 	</ItemGroup>
 
