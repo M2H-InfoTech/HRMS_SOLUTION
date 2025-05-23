@@ -14,7 +14,7 @@ namespace ATTENDANCE.Controllers
         {
             var result = await service.DeleteEmployeeShiftpolicy(shiftId);
             return Ok(result);
-        }
+        } 
 
         [HttpGet]
         public async Task<IActionResult> GetAttendancePolicy(int levelId, int empId, string linkId)

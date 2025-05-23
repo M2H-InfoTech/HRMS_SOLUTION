@@ -3,6 +3,7 @@ using ATTENDANCE.DTO.Response;
 using ATTENDANCE.DTO.Response.shift;
 using ATTENDANCE.Repository.ShiftSettings;
 using EMPLOYEE_INFORMATION.Models.Entity;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using System.Runtime.InteropServices;
 
 namespace ATTENDANCE.Service.ShiftSettings
@@ -44,6 +45,10 @@ namespace ATTENDANCE.Service.ShiftSettings
         public async Task<(int ErrorID, string ErrorMessage)> UpdateOpenShiftAsync(ShiftInsertRequestDto Request)
         {
            return await repository.UpdateOpenShiftAsync(Request);
+        }
+        public async Task<List<HrmValueTypeDto>> FillCriteriaAsync()
+        {
+            return await repository.FillCriteriaAsync( );
         }
 
         //public async Task<ShiftDetailsCollectionDto> ViewAllshiftAsync(int shiftId, int entryBy, int roleId)

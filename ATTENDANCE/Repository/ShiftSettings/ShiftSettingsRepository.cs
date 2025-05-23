@@ -1,10 +1,11 @@
 ﻿using ATTENDANCE.DTO.Request;
 using ATTENDANCE.DTO.Response;
 using ATTENDANCE.DTO.Response.shift;
-
+using AutoMapper;
 using Azure.Core;
 using EMPLOYEE_INFORMATION.Data;
 using EMPLOYEE_INFORMATION.Models.Entity;
+using HRMS.EmployeeInformation.DTO.DTOs;
 using HRMS.EmployeeInformation.DTO.DTOs.AccessLevel;
 using HRMS.EmployeeInformation.Models;
 using HRMS.EmployeeInformation.Models.Models.Entity;
@@ -17,7 +18,7 @@ using System.Reflection.Metadata.Ecma335;
 
 namespace ATTENDANCE.Repository.ShiftSettings
 {
-    public class ShiftSettingsRepository(EmployeeDBContext _context, IAccessMetadataService _accessMetadataService) : IShiftSettingsRepository
+    public class ShiftSettingsRepository(EmployeeDBContext _context, IAccessMetadataService _accessMetadataService,IMapper _mapper) : IShiftSettingsRepository
     {
         private static IEnumerable<string> SplitStrings_XML(string list)
         {
@@ -900,6 +901,18 @@ namespace ATTENDANCE.Repository.ShiftSettings
             //                from ea in _context.EntityApplicable00s
             //                join hlv in _context.HighLevelViewTables on
         }
+        public async Task<List<HrmValueTypeDto>> FillCriteriaAsync()
+        {
+            var valueTypes = await _context.HrmValueTypes
+                .Where(x => x.Type == "AttendanceCriteria" || x.Type == "TimeType")
+                .ToListAsync( );
+
+            if (valueTypes == null || !valueTypes.Any( ))
+                return new List<HrmValueTypeDto>( );
+
+            var result = _mapper.Map<List<HrmValueTypeDto>>(valueTypes);
+            return result;
+        }
 
         //public async Task<int> GetTransIDForAttenPolicy()
         //{
@@ -908,10 +921,10 @@ namespace ATTENDANCE.Repository.ShiftSettings
         //        .Select(t => t.TransactionId)
         //        .FirstOrDefaultAsync();
         //}
-        
 
-       
-        
+
+
+
 
     }
 }
