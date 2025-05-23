@@ -16825,6 +16825,10 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
             {
                 return await EmpProfessionalUpload(data);
             }
+            else if (UploadType == "EmpQuali")
+            {
+                return await EmpQualificationUpload(data);
+            }
             else
             {
                 return 1;
@@ -17159,8 +17163,74 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
 
             return insertedCount;
         }
+        private async Task<object> EmpQualificationUpload(string data)
+        {
+            var json = JsonConvert.DeserializeObject<DataTable>(data);
+            var requiredColumns = new List<(string ColumnName, int Ordinal)>
+                                    {
+                                        ("EmployeeCode", 0), ("Course", 1), ("Board", 2), ("Institution", 3), ("FromDate(MM/DD/YYYY)", 4),
+                                        ("ToDate(MM/DD/YYYY)", 5), ("Percentage", 6), ("Class", 7),("Subjects", 8)
+                                    };
 
+            requiredColumns.ForEach(col =>
+            {
+                if (!json.Columns.Contains(col.ColumnName))
+                    json.Columns.Add(col.ColumnName);
+            });
 
+            requiredColumns.ForEach(col =>
+            {
+                json.Columns[col.ColumnName].SetOrdinal(col.Ordinal);
+            });
+
+            var validationResult = await ValidateEmployeeCodeAndDates(json, "EmployeeCode", "FromDate(MM/DD/YYYY)", "ToDate(MM/DD/YYYY)");
+            if (!validationResult.Result)
+            {
+                await DeleteTemp1<EmpQualification>(19);
+                return JsonConvert.SerializeObject(validationResult.ErrorMessage, Formatting.Indented);
+            }
+
+            var columnMappingTable = new DataTable();
+            columnMappingTable.Columns.Add("dtColumnName", typeof(string));
+            columnMappingTable.Columns.Add("TableColumnName", typeof(string));
+
+            var columnMappings = new List<UploadColumnDto>
+                                   {
+                                    new UploadColumnDto { DtColumnName = "A", TableColumnName = "EmployeeCode" },
+                                    new UploadColumnDto { DtColumnName = "B", TableColumnName = "Course" },
+                                    new UploadColumnDto { DtColumnName = "C", TableColumnName = "Board" },
+                                    new UploadColumnDto { DtColumnName = "D", TableColumnName = "Institution" },
+                                    new UploadColumnDto { DtColumnName = "E", TableColumnName = "FromDate" },
+                                    new UploadColumnDto { DtColumnName = "F", TableColumnName = "ToDate" },
+                                    new UploadColumnDto { DtColumnName = "G", TableColumnName = "Percentage" },
+                                    new UploadColumnDto { DtColumnName = "H", TableColumnName = "Class" },
+                                    new UploadColumnDto { DtColumnName = "I", TableColumnName = "Subjects" },
+                                    new UploadColumnDto { DtColumnName = "J", TableColumnName = "EntryBy" },
+                                    new UploadColumnDto { DtColumnName = "K", TableColumnName = "EntryDate" },
+                                };
+            json.Columns.Add("J", typeof(int));
+            json.Columns.Add("K", typeof(DateTime));
+
+            foreach (DataRow row in json.Rows)
+            {
+                row["J"] = 19;
+                row["K"] = DateTime.UtcNow;
+            }
+
+            columnMappings.ForEach(map =>
+            {
+                columnMappingTable.Rows.Add(map.DtColumnName, map.TableColumnName);
+            });
+            for (int i = 0; i <= 10; i++)
+            {
+                json.Columns[i].ColumnName = columnMappings[i].DtColumnName;
+            }
+
+            await DeleteTemp1<EmpQualification>(19);
+            var insertedCount = await BulkInsertDynamicAsync<EmpQualification>(json, columnMappings, "Y");
+
+            return insertedCount;
+        }
         public async Task<object> GetEmployeeUpload(string uploadType, string? isAutoCode, string? categoryType)
         {
             if (uploadType == "Empdetail")
@@ -17178,6 +17248,10 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
             else if (uploadType == "EmpProf")
             {
                 return await GetEmpProfUpload();
+            }
+            else if (uploadType == "EmpQuali")
+            {
+                return await GetEmpQualiUpload();
             }
             else
             {
@@ -17510,7 +17584,30 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
             return result;
 
         }
-        public async Task<object> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels)
+        private async Task<object> GetEmpQualiUpload()
+        {
+            var result = await (from a in _context.EmpQualifications
+                                join b in _context.EmployeeDetails
+                                    on a.EmployeeCode.Trim() equals b.EmpCode.Trim()
+                                where a.EntryBy == 19
+                                select new
+                                {
+                                    a.EmployeeCode,
+                                    b.Name,
+                                    a.Course,
+                                    a.Board,
+                                    a.Institution,
+                                    FromDate = a.FromDate.HasValue ? a.FromDate.Value.ToString("dd/MM/yyyy") : null,
+                                    ToDate = a.ToDate.HasValue ? a.ToDate.Value.ToString("dd/MM/yyyy") : null,
+                                    a.Percentage,
+                                    a.Class,
+                                    a.Subjects,
+                                    EntryDate = a.EntryDate.HasValue ? a.EntryDate.Value.ToString("dd/MM/yyyy") : null
+                                }).ToListAsync();
+
+            return result;
+        }
+        public async Task<object> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels, string? data)
         {
             if (uploadType == "Empdetail")
             {
@@ -17527,6 +17624,22 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
             else if (uploadType == "EmpProf")
             {
                 return await SaveEmpProfUpload();
+            }
+            else if (uploadType == "EmpQuali")
+            {
+                return await SaveEmpQualiUpload();
+            }
+            else if (uploadType == "EmpDepend")
+            {
+                return await SaveEmpDependUpload(data);
+            }
+            else if (uploadType == "EmpEmeCon")
+            {
+                return await SaveEmpEmeConUpload(data);
+            }
+            else if (uploadType == "EmpRewrd")
+            {
+                return await SaveEmpRewrdUpload(data);
             }
             else
             {
@@ -18265,6 +18378,531 @@ new EntityDetailDto { EntityID = 938, Description = "DESIGNATION" }
             string returnMessage = "Saved";
             return returnMessage;
         }
+        private async Task<object> SaveEmpQualiUpload()
+        {
+            var qualificationInsertList = await (
+                                            from a in _context.EmpQualifications
+                                            join b in _context.EmployeeDetails
+                                                on a.EmployeeCode.Trim() equals b.EmpCode.Trim()
+                                            where a.EntryBy == 19
+                                            select new HrEmpQualification
+                                            {
+                                                InstId = b.InstId,
+                                                EmpId = b.EmpId,
+                                                Course = a.Course,
+                                                University = a.Board,
+                                                InstName = a.Institution,
+                                                DurFrm = a.FromDate,
+                                                DurTo = a.ToDate,
+                                                MarkPer = a.Percentage,
+                                                Class = a.Class,
+                                                Subjects = a.Subjects,
+                                                EntryBy = (int)a.EntryBy,
+                                                EntryDt = DateTime.UtcNow
+                                            }).ToListAsync();
+
+            if (qualificationInsertList.Any())
+            {
+                await _context.HrEmpQualifications.AddRangeAsync(qualificationInsertList);
+                await _context.SaveChangesAsync();
+            }
+
+            var matchingEmpCodes = await _context.EmpQualifications
+                                    .Where(x => x.EntryBy == 19)
+                                    .Select(x => x.EmployeeCode.Trim())
+                                    .ToListAsync();
+
+            var empMastersToUpdate = await _context.HrEmpMasters
+                .Where(x => matchingEmpCodes.Contains(x.EmpCode.Trim()))
+                .ToListAsync();
+
+            foreach (var emp in empMastersToUpdate)
+            {
+                emp.ModifiedDate = DateTime.UtcNow;
+            }
+
+            if (empMastersToUpdate.Any())
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            string returnMessage = "Saved";
+            return returnMessage;
+        }
+        private async Task<object> SaveEmpDependUpload(string data)
+
+
+        {
+            var tmpEmpDepList = JsonConvert.DeserializeObject<List<TempdependentDto>>(data);
+
+            var dependentEntries = (
+                from a in tmpEmpDepList
+                join c in _context.EmployeeDetails
+                    on a.EmployeeCode.Trim() equals c.EmpCode.Trim()
+                join b in _context.DependentMasters
+                    on a.Relationship.Trim() equals b.Description.Trim()
+                    into bJoin
+                from b in bJoin.DefaultIfEmpty()
+                select new Dependent00
+                {
+                    Name = a.DependentName,
+                    Gender = (a.Gender == "Male" || a.Gender == "M") ? "M" :
+                             (a.Gender == "Female" || a.Gender == "F") ? "F" :
+                             (a.Gender == "Other" || a.Gender == "O") ? "O" : a.Gender,
+                    DateOfBirth = a.DateOfBirth,
+                    RelationshipId = b != null ? b.DependentId : (int?)null,
+                    Description = a.Description,
+                    EntryBy = c.EmpId, // Assuming c.EntryBy exists
+                    EntryDate = DateTime.UtcNow,
+                    DepEmpId = c.EmpId,
+                    Type = "2",
+                    IdentificationNo = a.IdentificationNo
+                }).ToList();
+
+            // Insert into DB
+            await _context.Dependent00s.AddRangeAsync(dependentEntries);
+            await _context.SaveChangesAsync();
+
+            string returnMessage = "Saved";
+            return returnMessage;
+        }
+        private async Task<object> SaveEmpEmeConUpload(string data)
+
+        {
+            var tmpEmpEmeList = JsonConvert.DeserializeObject<List<TmpEmpEmeDto>>(data);
+
+            var countryList = await _context.AdmCountryMasters
+                .Select(c => new { c.CountryId, CountryName = c.CountryName.Trim() })
+                .ToListAsync();
+
+            var employeeList = await _context.EmployeeDetails
+                .Select(e => new { e.EmpId, EmpCode = e.EmpCode.Trim() })
+                .ToListAsync();
+
+            var apprlEntities = tmpEmpEmeList
+                .Select(a =>
+                {
+                    var emp = employeeList.FirstOrDefault(e => e.EmpCode == a.EmployeeCode.Trim());
+                    var country = countryList.FirstOrDefault(c => c.CountryName == a.Country.Trim());
+
+                    return emp != null && country != null
+                        ? new HrEmpEmergaddressApprl
+                        {
+                            EmpId = emp.EmpId,
+                            Address = a.Address,
+                            PinNo = a.PinNo,
+                            Country = country.CountryId,
+                            PhoneNo = a.PhoneNo,
+                            AlterPhoneNo = a.AlternatePhoneNo,
+                            MobileNo = a.MobileNo,
+                            RequestId = null,
+                            Status = "A",
+                            FlowStatus = "E",
+                            DateFrom = DateTime.UtcNow
+                        }
+                        : null;
+                })
+                .Where(x => x != null)
+                .ToList();
+
+            await _context.HrEmpEmergaddressApprls.AddRangeAsync(apprlEntities);
+            await _context.SaveChangesAsync();
+
+            // Insert into HR_EMP_EMERGADDRESS
+            var emergEntities = tmpEmpEmeList
+                .Select(a =>
+                {
+                    var emp = employeeList.FirstOrDefault(e => e.EmpCode == a.EmployeeCode.Trim());
+                    var country = countryList.FirstOrDefault(c => c.CountryName == a.Country.Trim());
+
+                    return emp != null && country != null
+                        ? new HrEmpEmergaddress
+                        {
+                            EmpId = emp.EmpId,
+                            Address = a.Address,
+                            PinNo = a.PinNo,
+                            Country = country.CountryId,
+                            PhoneNo = a.PhoneNo,
+                            AlterPhoneNo = a.AlternatePhoneNo,
+                            MobileNo = a.MobileNo,
+                            EntryBy = 19,
+                            EntryDate = DateTime.UtcNow,
+                            EmerName = a.EmergencyContactName,
+                            EmerRelation = a.Relation
+                        }
+                        : null;
+                })
+                .Where(x => x != null)
+                .ToList();
+
+            await _context.HrEmpEmergaddresses.AddRangeAsync(emergEntities);
+            await _context.SaveChangesAsync();
+
+            string returnMessage = "Saved";
+            return returnMessage;
+        }
+        private async Task<object> SaveEmpRewrdUpload(string data)
+
+        {
+            var tmpRewardList = JsonConvert.DeserializeObject<List<TmpRewardInsertDto>>(data);
+
+            var existingAchievements = await _context.AchievementMasters
+                                        .Select(a => a.Description.Trim())
+                                        .ToListAsync();
+
+            var newAchievements = tmpRewardList
+                .Select(r => r.Achievement?.Trim())
+                .Where(desc => !string.IsNullOrWhiteSpace(desc) && !existingAchievements.Contains(desc))
+                .Distinct()
+                .ToList();
+
+            var newAchievementEntities = newAchievements.Select(desc => new AchievementMaster
+            {
+                Description = desc
+            }).ToList();
+
+            if (newAchievementEntities.Any())
+            {
+                await _context.AchievementMasters.AddRangeAsync(newAchievementEntities);
+                await _context.SaveChangesAsync();
+            }
+
+            var rewardTypeDefault = await _context.HrmValueTypes
+                .Where(x => x.Type == "Reward" && x.Code == "OTHERS")
+                .Select(x => x.Description)
+                .FirstOrDefaultAsync();
+
+            var allAchievements = await _context.AchievementMasters.ToListAsync();
+            var allRewardTypes = await _context.HrmValueTypes.ToListAsync();
+            var allEmployees = await _context.HrEmpMasters.ToListAsync();
+
+            // Build the final list
+            var empRewardEntities = (from t in tmpRewardList
+                                     let emp = allEmployees.FirstOrDefault(e => e.EmpCode.Trim() == t.EmployeeCode.Trim())
+                                     let ach = allAchievements.FirstOrDefault(a => a.Description.Trim() == t.Achievement.Trim())
+                                     let rewardTypeDesc = string.IsNullOrWhiteSpace(t.RewardType) ? rewardTypeDefault : t.RewardType.Trim()
+                                     let rewardType = allRewardTypes.FirstOrDefault(r => r.Description.Trim() == rewardTypeDesc)
+
+                                     where ach != null && rewardType != null // optional: filter out missing mappings
+                                     select new EmpReward
+                                     {
+                                         EmpId = emp?.EmpId,
+                                         AchievementId = ach.AchievementId,
+                                         RewardType = rewardType.Id,
+                                         Reason = t.RewardsReason,
+                                         RewardDate = t.RewardDate,
+                                         Amount = t.Amount
+                                     }).ToList();
+
+            if (empRewardEntities.Any())
+            {
+                await _context.EmpRewards.AddRangeAsync(empRewardEntities);
+                await _context.SaveChangesAsync();
+            }
+
+            string returnMessage = "Saved";
+            return returnMessage;
+        }
+        public async Task<object> SaveUploadDocuments(string DocId, string datas, int isClear = 0, int? DetailId = 0)
+        {
+            var json = JsonConvert.DeserializeObject<DataTable>(datas);
+
+            var clonedList = json.AsEnumerable()
+                .Select((row, index) => new
+                {
+                    DocNewId = index + 1,
+                    DataRow = row
+                })
+                .ToList();
+
+            var docIdInt = Convert.ToInt32(DocId);
+
+            var unpivotedData = new List<UnpivotedData>();
+
+            foreach (var item in clonedList)
+            {
+                foreach (DataColumn column in json.Columns)
+                {
+                    if (column.ColumnName.Equals("EmployeeCode", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    unpivotedData.Add(new UnpivotedData
+                    {
+                        EmployeeCode = item.DataRow["EmployeeCode"]?.ToString(),
+                        DocNewId = item.DocNewId,
+                        ColumnName = column.ColumnName,
+                        ColumnValue = item.DataRow[column]?.ToString(),
+                        DocID = docIdInt
+                    });
+                }
+            }
+            var transactionID = await _context.TransactionMasters
+                .Where(x => x.TransactionType == "Document")
+                .Select(x => x.TransactionId)
+                .Distinct()
+                .FirstOrDefaultAsync();
+
+            var trimmedUploadData = unpivotedData
+                .Select(x => new
+                {
+                    x.DocNewId,
+                    EmployeeCode = x.EmployeeCode?.Trim()
+                })
+                .Distinct()
+                .ToList();
+
+            var employeeList = await _context.EmployeeDetails
+                                .Select(emp => new
+                                {
+                                    emp.EmpId,
+                                    EmpCode = emp.EmpCode.Trim()
+                                })
+                                .ToListAsync();
+
+            var tmpNewDocList = (
+                from upload in trimmedUploadData
+                join emp in employeeList
+                on upload.EmployeeCode equals emp.EmpCode
+                select new
+                {
+                    DocNewId = upload.DocNewId,
+                    EmployeeCode = upload.EmployeeCode,
+                    EmpId = emp.EmpId,
+                    DocId = docIdInt
+                }
+            ).ToList();
+            if (isClear == 1)
+            {
+                var now = DateTime.UtcNow;
+                var docFilter = await (from a in _context.HrmsEmpdocumentsApproved00s
+                                       join b in tmpNewDocList
+                                       on new { docid = a.DocId, empid = a.EmpId } equals new { docid = (int?)b.DocId, empid = (int?)b.EmpId }
+                                       select a
+                                 ).ToListAsync();
+
+                var docHistories = docFilter.Select(a => new HrmsEmpdocumentsHistory00
+                {
+                    DocApprovedId = a.DocApprovedId,
+                    DetailId = a.DetailId,
+                    DocId = a.DocId,
+                    EmpId = a.EmpId,
+                    Status = "D",
+                    RequestId = a.RequestId,
+                    DateFrom = now,
+                    EntryBy = 19,
+                    EntryDate = now
+                }).ToList();
+
+                await _context.HrmsEmpdocumentsHistory00s.AddRangeAsync(docHistories);
+                await _context.SaveChangesAsync();
+
+                // Step 2: Get inserted DocHisID and DetailID
+                var outputDocHist2 = await (from h in _context.HrmsEmpdocumentsHistory00s
+                                            where docHistories.Select(d => d.DetailId).Contains(h.DetailId)
+                                            select new { h.DocHistId, h.DetailId }).ToListAsync();
+
+                // Step 3: Insert into HRMS_EMPDocumentsHistory01
+                var hist01 = from a in _context.HrmsEmpdocumentsApproved01s
+                             join d in outputDocHist2
+                                on a.DetailId equals d.DetailId
+                             select new HrmsEmpdocumentsHistory01
+                             {
+                                 DocHisId = d.DocHistId,
+                                 DetailId = d.DetailId,
+                                 DocFields = a.DocFields,
+                                 DocValues = null,
+                                 OldDocValues = a.DocValues
+                             };
+
+                await _context.HrmsEmpdocumentsHistory01s.AddRangeAsync(hist01);
+                await _context.SaveChangesAsync();
+
+                var detailIdList = outputDocHist2.Select(x => x.DetailId).ToList();
+
+                var hist02 = from a in _context.HrmsEmpdocumentsApproved02s
+                             join d in outputDocHist2
+                                on a.DetailId equals d.DetailId
+                             where a.DetailId == DetailId
+                             select new HrmsEmpdocumentsHistory02
+                             {
+                                 DocHisId = d.DocHistId,
+                                 DetailId = a.DetailId,
+                                 FileName = a.FileName,
+                                 FileType = null,
+                                 FileData = null,
+                                 OldFileName = a.FileName
+                             };
+
+                await _context.HrmsEmpdocumentsHistory02s.AddRangeAsync(hist02);
+                await _context.SaveChangesAsync();
+
+                // Step 5: Delete from current and approved tables
+                var detailIdsToDelete = docFilter.Select(a => a.DetailId).Distinct().ToList();
+
+                _context.HrmsEmpdocuments02s.RemoveRange(
+                    _context.HrmsEmpdocuments02s.Where(x => detailIdsToDelete.Contains(x.DetailId)));
+
+                _context.HrmsEmpdocuments01s.RemoveRange(
+                    _context.HrmsEmpdocuments01s.Where(x => detailIdsToDelete.Contains(x.DetailId)));
+
+                _context.HrmsEmpdocuments00s.RemoveRange(
+                    _context.HrmsEmpdocuments00s.Where(x => detailIdsToDelete.Contains(x.DetailId)));
+
+                _context.HrmsEmpdocumentsApproved02s.RemoveRange(
+                    _context.HrmsEmpdocumentsApproved02s.Where(x => detailIdsToDelete.Contains(x.DetailId)));
+
+                _context.HrmsEmpdocumentsApproved01s.RemoveRange(
+                    _context.HrmsEmpdocumentsApproved01s.Where(x => detailIdsToDelete.Contains(x.DetailId)));
+
+                _context.HrmsEmpdocumentsApproved00s.RemoveRange(
+                    _context.HrmsEmpdocumentsApproved00s.Where(x => detailIdsToDelete.Contains(x.DetailId)));
+
+                await _context.SaveChangesAsync();
+                // Sample input: tmpNewDocList = List<TmpNewDocID>
+            }
+            var sequenceData = (from a in tmpNewDocList
+                                join b in employeeList on a.EmpId equals b.EmpId
+                                let codeId = GetSequenceAPI(b.EmpId, transactionID, "", 0)
+                                join cgm in _context.AdmCodegenerationmasters on Convert.ToInt32(codeId) equals cgm.CodeId
+                                let extractString = cgm.NumberFormat.Substring(0, cgm.NumberFormat.Length - cgm.CurrentCodeValue.ToString().Length)
+                                select new
+                                {
+                                    a.DocId,
+                                    a.DocNewId,
+                                    EmpID = b.EmpId,
+                                    Code = cgm.Code,
+                                    ExtractString = extractString,
+                                    CurrentCodeValue = cgm.CurrentCodeValue
+                                }).ToList();
+
+            var finalData = sequenceData
+                    .OrderBy(x => x.EmpID)
+                    .Select((x, index) => new HrmsEmpdocuments00
+                    {
+                        DocId = x.DocId,
+                        EmpId = x.EmpID,
+                        RequestId = x.Code + x.ExtractString + (Convert.ToInt32(x.CurrentCodeValue) + index + 1).ToString(),
+                        TransactionType = "Document",
+                        Status = "A",
+                        ProxyId = 0,
+                        FlowStatus = "E",
+                        DateFrom = DateTime.UtcNow,
+                        EntryBy = 1,
+                        EntryDate = DateTime.UtcNow,
+                        DocNewId = x.DocNewId
+                    }).ToList();
+
+            _context.HrmsEmpdocuments00s.AddRange(finalData);
+            _context.SaveChanges();
+            var inserted = finalData.Select(d => new { d.DetailId, d.EmpId }).ToList();
+            var empDocuments01 = (
+                                    from a in unpivotedData
+                                    join b in employeeList on a.EmployeeCode.Trim() equals b.EmpCode.Trim()
+                                    join c in _context.HrmsEmpdocuments00s on a.DocNewId equals c.DocNewId
+                                    join d in inserted on new { c.DetailId, c.EmpId } equals new { DetailId = d.DetailId, EmpId = d.EmpId }
+                                    join e in _context.HrmsDocumentField00s on new { Docdescription = (string?)a.ColumnName.Trim(), docid = (int?)a.DocID } equals new { Docdescription = e.DocDescription.Trim(), docid = e.DocId }
+                                    join f in _context.HrmsDatatypes on e.DataTypeId equals f.DataTypeId
+                                    join r in _context.GeneralCategories on f.DataTypeId equals r.DataTypeId into rJoin
+                                    from r in rJoin.DefaultIfEmpty()
+                                    join g in _context.AdmCountryMasters on a.ColumnValue equals g.CountryName into gJoin
+                                    from g in gJoin.DefaultIfEmpty()
+                                    join h in _context.ReasonMasters
+                                        on new
+                                        {
+                                            Desc = (string?)a.ColumnValue,
+                                            Val = r != null ? (int?)r.Id : null,
+                                            Status = (string?)"A"
+                                        }
+                                        equals new { Desc = h.Description, Val = h.Value, Status = h.Status } into hJoin
+                                    from h in hJoin.DefaultIfEmpty()
+                                    select new HrmsEmpdocuments01
+                                    {
+                                        DetailId = c.DetailId,
+                                        DocFields = (int)e.DocFieldId,
+                                        DocValues = f.IsDropdown == 1 ? g.CountryId.ToString() :
+                                                    f.IsDropdown == 2 ? h.ReasonId.ToString() :
+                                                    f.IsDate == 1 ? Convert.ToDateTime(a.ColumnValue).ToString("yyyy-MM-dd") + " 00:00:00.000" :
+                                                    a.ColumnValue,
+                                        DocNewId = a.DocNewId
+
+                                    }).ToList();
+
+            await _context.HrmsEmpdocuments01s.AddRangeAsync(empDocuments01);
+            await _context.SaveChangesAsync();
+            var detailIds = inserted.Select(x => x.DetailId).ToList();
+
+            var approvedDocs00 = await _context.HrmsEmpdocuments00s
+                                .Where(x => detailIds.Contains(x.DetailId))
+                                .Select(x => new HrmsEmpdocumentsApproved00
+                                {
+                                    DetailId = x.DetailId,
+                                    DocId = x.DocId,
+                                    EmpId = x.EmpId,
+                                    RequestId = x.RequestId,
+                                    TransactionType = x.TransactionType,
+                                    Status = x.Status,
+                                    ProxyId = x.ProxyId,
+                                    FlowStatus = x.FlowStatus,
+                                    DateFrom = DateTime.UtcNow,
+                                    EntryBy = x.EntryBy,
+                                    EntryDate = x.EntryDate
+                                }).ToListAsync();
+
+            await _context.HrmsEmpdocumentsApproved00s.AddRangeAsync(approvedDocs00);
+            await _context.SaveChangesAsync();
+            var approvedDocs01 = await _context.HrmsEmpdocuments01s
+                                .Where(x => detailIds.Contains((int)x.DetailId))
+                                .Select(x => new HrmsEmpdocumentsApproved01
+                                {
+                                    DetailId = x.DetailId,
+                                    DocFields = x.DocFields,
+                                    DocValues = x.DocValues
+                                }).ToListAsync();
+
+            await _context.HrmsEmpdocumentsApproved01s.AddRangeAsync(approvedDocs01);
+            await _context.SaveChangesAsync();
+            var history00 = await _context.HrmsEmpdocumentsApproved00s
+                            .Where(x => detailIds.Contains((int)x.DetailId))
+                            .Select(x => new HrmsEmpdocumentsHistory00
+                            {
+                                DetailId = x.DetailId,
+                                DocApprovedId = x.DocApprovedId,
+                                DocId = x.DocId,
+                                EmpId = x.EmpId,
+                                Status = "I",
+                                RequestId = x.RequestId,
+                                DateFrom = DateTime.UtcNow,
+                                EntryBy = 19,
+                                EntryDate = DateTime.UtcNow
+                            }).ToListAsync();
+
+            await _context.HrmsEmpdocumentsHistory00s.AddRangeAsync(history00);
+            await _context.SaveChangesAsync();
+
+            var docHistMap = history00.ToDictionary(x => x.DetailId, x => x.DocHistId);
+
+            var history01 = await _context.HrmsEmpdocumentsApproved01s
+                .Where(x => detailIds.Contains((int)x.DetailId))
+                .Select(x => new HrmsEmpdocumentsHistory01
+                {
+                    DetailId = x.DetailId,
+                    DocHisId = docHistMap.ContainsKey(x.DetailId) ? docHistMap[x.DetailId] : 0,
+                    DocFields = x.DocFields,
+                    DocValues = x.DocValues,
+                    OldDocValues = null
+                }).ToListAsync();
+
+            await _context.HrmsEmpdocumentsHistory01s.AddRangeAsync(history01);
+            await _context.SaveChangesAsync();
+
+            string returnMessage = "Saved";
+
+
+            return returnMessage;
+        }
+
         public static string TrimSpace(string value)
         {
             if (string.IsNullOrEmpty(value))

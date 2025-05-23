@@ -376,6 +376,7 @@ public partial class EmployeeDBContext : DbContext
     public virtual DbSet<LeaveWorkFlowstatus> LeaveWorkFlowstatuses { get; set; }
     public virtual DbSet<SpecialWorkFlow02> SpecialWorkFlow02s { get; set; }
     public virtual DbSet<PayLeaveType> PayLeaveTypes { get; set; }
+    public virtual DbSet<EmpQualification> EmpQualifications { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -5861,6 +5862,24 @@ public partial class EmployeeDBContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasColumnName("Leave_desc");
+        });
+        modelBuilder.Entity<EmpQualification>(entity =>
+        {
+            entity.HasKey(e => e.QualId).HasName("PK__EmpQuali__B8C90203BFEDAF2E");
+
+            entity.ToTable("EmpQualification");
+
+            entity.Property(e => e.QualId).HasColumnName("QualID");
+            entity.Property(e => e.Board).IsUnicode(false);
+            entity.Property(e => e.Class).IsUnicode(false);
+            entity.Property(e => e.Course).IsUnicode(false);
+            entity.Property(e => e.EmployeeCode).IsUnicode(false);
+            entity.Property(e => e.EntryDate).HasColumnType("datetime");
+            entity.Property(e => e.FromDate).HasColumnType("datetime");
+            entity.Property(e => e.Institution).IsUnicode(false);
+            entity.Property(e => e.Percentage).IsUnicode(false);
+            entity.Property(e => e.Subjects).IsUnicode(false);
+            entity.Property(e => e.ToDate).HasColumnType("datetime");
         });
         OnModelCreatingPartial (modelBuilder);
     }
