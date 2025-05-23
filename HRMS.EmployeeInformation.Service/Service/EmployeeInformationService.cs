@@ -900,9 +900,13 @@ namespace HRMS.EmployeeInformation.Service.Service
         {
             return await _employeeRepository.GetEmployeeUpload(uploadType, isAutoCode, categoryType);
         }
-        public async Task<object> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels)
+        public async Task<object> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels, string? data)
         {
-            return await _employeeRepository.SaveEmployeeUpload(uploadType, selectedrole, categoryLevels);
+            return await _employeeRepository.SaveEmployeeUpload(uploadType, selectedrole, categoryLevels, data);
+        }
+        public async Task<object> SaveUploadDocuments(string DocId, string datas, int isClear = 0, int? DetailId = 0)
+        {
+            return await _employeeRepository.SaveUploadDocuments(DocId, datas, isClear, DetailId);
         }
     }
 }

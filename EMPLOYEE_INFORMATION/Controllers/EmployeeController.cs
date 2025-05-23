@@ -1492,10 +1492,16 @@ namespace EMPLOYEE_INFORMATION.Controllers
             return Ok(result);
         }
         [HttpPost]
-        public async Task<IActionResult> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels)
+        public async Task<IActionResult> SaveEmployeeUpload(string uploadType, int? selectedrole, string? categoryLevels, string? data)
         {
 
-            var result = await _employeeInformation.SaveEmployeeUpload(uploadType, selectedrole, categoryLevels);
+            var result = await _employeeInformation.SaveEmployeeUpload(uploadType, selectedrole, categoryLevels, data);
+            return Ok(result);
+        }
+        [HttpPost]
+        public async Task<IActionResult> SaveUploadDocuments(string DocId, string datas, int isClear = 0, int? DetailId = 0)
+        {
+            var result = await _employeeInformation.SaveUploadDocuments(DocId, datas, isClear, DetailId);
             return Ok(result);
         }
     }
